@@ -27,6 +27,11 @@ assert "Stop gate wired"        "grep -q '\"Stop\"' '$FRESH/.claude/settings.jso
 assert "SubagentStop gate wired" "grep -q '\"SubagentStop\"' '$FRESH/.claude/settings.json'"
 assert "PreToolUse Bash wired"  "grep -q 'precommit_review_gate.py' '$FRESH/.claude/settings.json'"
 assert "secret deny present"    "grep -q 'Read(.env' '$FRESH/.claude/settings.json'"
+# HUMAN_GATED_COMMANDS fixture (the interview-driven union itself is out of scope
+# for this deterministic harness): both the generic default and the stack-profile-
+# recommended addition the fixture supplies render through into the scaffolded hook.
+assert "human-gated fixture renders (generic default)" "grep -q 'git push origin main' '$FRESH/.claude/hooks/human_gated_commands.py'"
+assert "human-gated fixture renders (stack addition)"  "grep -q 'supabase db push' '$FRESH/.claude/hooks/human_gated_commands.py'"
 # git hook installed + marker + no {{ leftovers
 assert "git pre-commit installed" "test -f '$FRESH/.git/hooks/pre-commit'"
 assert "git hook carries marker"  "grep -q 'agentic-os:' '$FRESH/.git/hooks/pre-commit'"

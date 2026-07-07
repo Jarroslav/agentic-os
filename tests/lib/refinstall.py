@@ -33,7 +33,7 @@ NEWLINE_VARS = {"GATE_COMMANDS", "HUMAN_GATED_COMMANDS", "GUARDED_WRITE_PATHS",
                 "ENV_CHECK_COMMANDS", "SECRET_DENY_PATTERNS"}
 LISTS = {
     "GATE_COMMANDS": ["npx tsc --noEmit", "npm run lint -- --max-warnings 0", "npm test"],
-    "HUMAN_GATED_COMMANDS": ["git push origin main"],
+    "HUMAN_GATED_COMMANDS": ["git push origin main", "supabase db push --linked"],
     "GUARDED_WRITE_PATHS": [],
     "ENV_CHECK_COMMANDS": ["node --version"],
     "SECRET_DENY_PATTERNS": [],  # extras beyond the baked-in three

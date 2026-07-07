@@ -15,7 +15,10 @@ generated agents cite. You do not write agent contracts, hooks, or code.
 ## Inputs (appended below this prompt by the installer)
 
 1. **Stack profile facts** — the relevant `generators/stack-profiles/<profile>.md`
-   content (ORM, test runner, API idiom, migrations dir, gate commands).
+   content (ORM, test runner, API idiom, migrations dir, gate commands). This
+   is installer-supplied background context, not a file that exists in
+   `{{PROJECT_NAME}}` — never cite its path as something a reader of the
+   generated guide could open; state its facts directly instead.
 2. **Instruction-quality rubric** — template ID `guides/instruction-quality-rubric`
    (scaffolded at `.agentic/guides/standards/instruction-quality-rubric.md`).
    Each guide is evidence-audited against it; below `{{SCORE_THRESHOLD}}` it is

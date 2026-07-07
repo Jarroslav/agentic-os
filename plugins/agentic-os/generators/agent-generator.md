@@ -16,7 +16,10 @@ You do not write application code, hooks, guides, or policies.
 
 1. **Stack profile facts** — the relevant `generators/stack-profiles/<profile>.md`
    content: detection facts, `{{MIGRATIONS_DIR}}`, `{{GATE_COMMANDS}}`,
-   `{{MIGRATION_DIFF_COMMAND}}`, ORM, test runner, API idiom.
+   `{{MIGRATION_DIFF_COMMAND}}`, ORM, test runner, API idiom. This is
+   installer-supplied background context, not a file that exists in
+   `{{PROJECT_NAME}}` — never cite its path as something a reader of the
+   generated contract could open; state its facts directly instead.
 2. **Agent slot definition** — from the active role preset: the slot name
    (e.g. `gen/schema-architect`), its purpose, `write_scope` pattern,
    `forbidden_paths` pattern, and whether it is a **writer** or a **read-only gate**.
