@@ -70,7 +70,28 @@ idempotent.
    - On a completed re-run, for each journaled file: if its current sha256
      matches the journal, silently re-render/refresh it; if it differs
      (user-modified), **skip it and warn** — never overwrite; files not yet
-     journaled are scaffolded normally.
+     journaled are scaffolded normally. **One exception**:
+     `.agentic/guides/agent-registry.md` (`template: "governance/agent-registry"`)
+     is **never** blindly re-rendered here, matched sha256 or not — a plain
+     re-render recomputes only the static template portion above the
+     `<!-- generated-agent-rows -->` marker row, which by construction has no
+     knowledge of the rows Phase 5 step 6 appended below it on the prior
+     run, so a naive "refresh" would silently discard them on every
+     `--reinstall` of an already-`done` install, with no diff, no warning,
+     no adversarial action required. Since this file's sha already matches
+     the journal (that's the precondition for reaching this branch at all),
+     there is nothing to refresh — re-rendering the identical template with
+     the identical journaled answers against the identical plugin version
+     produces byte-identical static content to what's already on disk.
+     **Skip it entirely; leave it untouched — no warning needed here even
+     on a genuine sha mismatch** (a user-edited row, or an interrupted prior
+     run): unlike every other file in this sweep, silence isn't a lost
+     signal for this one — Phase 6's `agentic-doctor` run, later in this
+     same pass, already reports any `owner: "managed"` sha drift as
+     `modified` regardless of which file it is. (A plugin-version change is
+     `/agentic-upgrade`'s job, not this phase's — its dedicated Agent
+     registry split-reconcile section, `skills/agentic-upgrade/SKILL.md`,
+     is where a real template-content change to this file gets handled.)
 2. No journal ⇒ fresh install; continue to Phase 1.
 
 ## Phase 1 — Preflight
@@ -363,7 +384,13 @@ Ordered steps:
      are in the union; the `pipeline-orchestrator.md` / `dispatch.md` rows go
      unless the matching command ID is in the union. Never prune the
      `blind-code-reviewer` or `instruction-auditor` rows when their agents
-     install.
+     install. **Never prune the `<!-- generated-agent-rows -->` marker row**
+     (the one with an empty "Owning asset" cell, below the curated rows) —
+     this list is exhaustive, that row is not an omission from it. It isn't
+     a routable intent at all, so "owning asset not in the resolved union"
+     does not apply to it the way it applies to the real rows above; pruning
+     it here would delete the one anchor Phase 5 step 6 needs to append
+     generated-agent rows later in this same install.
 5. **Policies, guides, sdlc adapters.** Render/copy per the map.
    **Existing-guide rule (hard)**: a destination guide file that already
    exists is **skipped** and journaled with `owner: "user"` and the *current*
@@ -497,9 +524,75 @@ only). Otherwise:
    `.claude/agents/<name>.md` pointer, and every generated
    `.agentic/guides/**/*.md` guide. Never touch the `template-inherited`
    entries for files this phase did not produce.
-6. Journal every generated file with `owner: "generated"`, `template:
-   "gen/<slot>"`; registry rows the generators appended stay in
-   `.agentic/guides/agent-registry.md`. Set `phase: "generate"`.
+6. **Registry rows** (you, the orchestrator, do this — **never** a generator
+   subagent: slots run in parallel per step 3 and `.agentic/guides/agent-registry.md`
+   is one shared file, so a parallel per-slot append would race). Skip this
+   step if `.agentic/guides/agent-registry.md` wasn't scaffolded (Phase 4).
+   After every slot in this pass has an audited contract (accepted, retried,
+   or installed degraded per step 4 — never skip a slot here just because it
+   scored low), for each **writer or gate** slot that actually applies this
+   run (`gen/stack-guides` doesn't get a row — it's not dispatchable, it only
+   feeds the other contracts):
+   - **Regeneration case**: if a row already cites this slot's exact
+     `{{AGENTS_CANONICAL_DIR}}<name>.md` path in the "Owning asset" column,
+     **replace that row** — never leave a stale duplicate from a prior
+     install/upgrade pass.
+   - **Fresh case**: otherwise, insert a new row directly below the table row
+     whose first cell is the literal `<!-- generated-agent-rows -->` marker
+     (a real, mostly-empty table row in `agent-registry.md.tmpl`,
+     `templates/governance/agent-registry.md.tmpl` — not a standalone
+     comment line; never remove or edit that marker row itself) — or below
+     the last row this step already inserted in this same pass, when
+     generating more than one slot at once, so multiple fresh rows land in
+     slot-processing order rather than each pushing the previous one down —
+     in the existing
+     table's column order:
+     `| <intent> | {{AGENTS_CANONICAL_DIR}}<name>.md | owner: generated; <note> |`
+     - `<intent>`: paraphrase the slot's Purpose from the table above into
+       the same style as the table's other rows — don't copy Purpose
+       verbatim, its wording doesn't match this table's convention. Example:
+       Purpose `"migrations/schema + access-control DDL"` (for
+       `gen/schema-architect`) → intent `"Design/modify persistence
+       schema"`.
+     - `<note>`: one line — the single most operationally significant
+       trigger from the generated contract's own `## Escalate to human`
+       section. If it lists several, pick the one that fires on every
+       invocation (e.g. a permanent risk flag from `escalation-policy.md`'s
+       `escalate_on` list) over a conditional one; don't try to summarize
+       the whole list. **Escape any literal `|` in the sourced text as
+       `\|`** (or reword around it) — both `<intent>` and this field land
+       inside a GFM table cell, and an unescaped pipe shifts the column
+       count, breaking the row (and every row after it, since the parser
+       keeps reading until a line stops looking like a table row).
+   Read each generated contract's actual triggers/escalation section for the
+   note — don't invent one. This is what makes `pipeline-orchestrator.md`
+   (which spawns agents by reading this exact table) actually able to
+   discover generated writer agents automatically instead of only via
+   explicit `/slash-command` invocation.
+7. Journal every generated file with `owner: "generated"`, `template:
+   "gen/<slot>"`. If step 6 changed `.agentic/guides/agent-registry.md` this
+   pass, that one file needs **two** re-stamps — both against its current
+   on-disk `sha256` **after** step 6's mutation, since Phase 4 journaled and
+   scored it *before* that mutation and neither stamp self-updates:
+   - **Journal**: re-record its `sha256` (`owner: "managed"`, `template`
+     unchanged). Skipping this makes `/agentic-upgrade` see `current sha !=
+     recorded sha` on every future run and treat the file as user-modified —
+     see `skills/agentic-upgrade/SKILL.md` § Agent registry for why that
+     path is handled specially rather than left as an ordinary managed-file
+     diff-and-ask (a plain "overwrite with `NEWRENDER`" would strip every
+     generated-agent row, since the template has no knowledge of them).
+   - **Scorecard**: update its `docs/audits/instruction-scorecard.json`
+     entry's `content_sha256` to match, keeping `composite_score: 100` and
+     `source: "template-inherited"` — the appended rows follow this step's
+     strict mechanical format, not free-form prose, so they don't need a
+     fresh `instruction-auditor` pass the way a generated contract does.
+     Skipping this leaves the *old* pre-mutation hash on record;
+     `.claude/hooks/instruction_gate.py`'s SubagentStart check treats that
+     as "graded content went stale" for **every** agent whose contract cites
+     this guide (`dispatcher.md` does, unconditionally) and hard-blocks its
+     spawn — on every install that generates at least one writer/gate slot,
+     immediately, until a human happens to run `/instruction-auditor`.
+   Set `phase: "generate"`.
 
 ## Phase 6 — Verify
 

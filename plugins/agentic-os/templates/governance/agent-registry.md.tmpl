@@ -31,10 +31,25 @@ flow for the same task; pick the owner and cite anything else as reference.
 | Sync automation ↔ ticket steps after maintenance (QA preset) | `{{AGENTS_CANONICAL_DIR}}test-case-syncer.md` | Every {{TICKET_ADAPTER}} step update is a per-case human-approved write. |
 | Triage a red/flaky test (QA preset) | `{{AGENTS_CANONICAL_DIR}}test-failure-triage.md` | Read-only; fixes follow `.agentic/guides/standards/flaky-protocol.md`. |
 | Create tickets/bugs in {{TICKET_ADAPTER}} (QA preset) | `{{AGENTS_CANONICAL_DIR}}work-item-creator.md` | Every external write listed and human-confirmed before execution. |
+| <!-- generated-agent-rows --> | | |
 
-Stack-specific writer agents generated at install time (schema, API, component,
-i18n, …) register themselves here with `owner: generated` rows — the generator
-appends them below this line.
+Stack-specific writer/gate agents generated at install time (schema, API,
+component, i18n, migration-validator, …) get `owner: generated` rows
+directly below the row above (the one whose first cell is the
+`<!-- generated-agent-rows -->` marker) — a real, mostly-empty table row, not
+a standalone comment line, specifically so appended rows stay part of the
+same contiguous GFM table block instead of rendering as orphaned paragraph
+text (a bare comment line between table rows breaks table continuity on
+GitHub and most Markdown renderers regardless of blank-line spacing). Rows
+appended by the installer orchestrator once generation finishes for all
+applicable slots in a pass (never by an individual generator subagent — they
+run in parallel and would race on this shared file). One row per applicable
+writer/gate slot; `stack-guides` never gets one, it isn't dispatchable.
+Regenerating a slot replaces its existing row rather than duplicating it. A
+fresh install with no `generated` set (a `qa`-only or `pm-delivery`-only
+union, or a repo with zero applicable capabilities) leaves the marker row as
+the last row in the table — that's a complete, valid state, not a
+placeholder waiting to be filled.
 
 ## Orchestration rules
 

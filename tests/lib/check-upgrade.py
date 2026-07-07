@@ -25,6 +25,10 @@ def classify(rel, rec):
         return "offer-regen"                # never silent overwrite
     if rel == "CLAUDE.md" or rec["template"] in ("governance/agents",):
         return "managed-block"              # replaced wholesale between markers
+    if rec["template"] == "governance/agent-registry":
+        return "registry-split-reconcile"   # split at <!-- generated-agent-rows -->,
+                                             # only the static portion above it diffs
+                                             # against NEWRENDER; generated rows preserved
     if cur == rec["sha256"]:
         return "overwrite"                  # unmodified managed -> take new template
     return "prompt"                          # user-modified managed -> ask
@@ -44,6 +48,12 @@ if classify(sub, journal["files"][sub]) != "prompt":
 # CLAUDE.md -> managed-block wholesale
 if classify("CLAUDE.md", journal["files"]["CLAUDE.md"]) != "managed-block":
     print("  CLAUDE.md not managed-block"); sys.exit(1)
+
+# agent-registry.md -> split-reconcile, never a plain managed overwrite
+# (would silently strip Phase 5's appended generated-agent rows)
+registry = ".agentic/guides/agent-registry.md"
+if classify(registry, journal["files"][registry]) != "registry-split-reconcile":
+    print("  agent-registry.md not registry-split-reconcile"); sys.exit(1)
 
 # a user-owned guide (mature case) would be skip — synthesize one
 journal["files"].setdefault("x", {"owner": "user", "template": "guides/x", "sha256": "0"})
