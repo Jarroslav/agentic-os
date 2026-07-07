@@ -1,0 +1,125 @@
+{
+  "skill_name": "knowledge-auditor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Audit this repository before running knowledge foundation. It already has rich docs, AGENTS.md, CLAUDE.md, GEMINI.md, GitHub Copilot instructions, .claude commands, Codex skills, and subagent prompts.",
+      "expected_output": "Performs read-only discovery, inventories repository docs, assistant setup, Claude, Codex, Gemini, GitHub Copilot assets, skills, commands, and subagents, returns a focused structured report with documentation map, documentation analysis, assistant setup analysis, agentic infrastructure analysis, conflict and overlap analysis, foundation readiness next steps, and does not modify files. Existing documentation is treated either as the source of truth to preserve or as source material to incorporate into factory-owned guidance.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "read-only-audit",
+          "description": "The response inventories docs, Markdown documentation references, assistant setup, skills, commands, and subagents without creating or modifying files."
+        },
+        {
+          "name": "does-not-require-factory-state",
+          "description": "The response does not inspect or rely on .agentic/guides as an expected input for a fresh or client repository."
+        },
+        {
+          "name": "preserve-rich-setup",
+          "description": "The response recommends preserving strong existing documentation and assistant guidance where evidence supports it."
+        },
+        {
+          "name": "handles-existing-doc-authority",
+          "description": "The response decides whether existing documentation remains the source of truth or is incorporated into factory-owned guidance without relying on hardcoded folder names."
+        },
+        {
+          "name": "structured-analysis-report",
+          "description": "The response includes concrete documentation, assistant setup, agentic infrastructure, conflict, and foundation readiness sections."
+        },
+        {
+          "name": "no-abstract-grading-sections",
+          "description": "The response avoids abstract grading sections and keeps findings in concrete documentation and setup analysis sections."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Audit a repo where AGENTS.md, CLAUDE.md, GEMINI.md, .github/copilot-instructions.md, .claude commands, and Codex skills disagree about test commands, approvals, agentic-sdlc workflow ownership, and which assistant source is authoritative.",
+      "expected_output": "Identifies conflicts between assistant entrypoints, command guidance, approval expectations, skills, subagents, GitHub Copilot instructions, and duplicate or competing agentic sources inside conflict and overlap analysis, explains the impact on foundation, then marks the required decision as ask user or halt before any knowledge planting writes.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "detects-entrypoint-conflicts",
+          "description": "The response calls out conflicting AGENTS.md and CLAUDE.md instructions with evidence inside setup or conflict analysis."
+        },
+        {
+          "name": "halts-or-asks-before-planting",
+          "description": "The response recommends ask user or halt rather than generating guides when conflicts affect safety or authority."
+        },
+        {
+          "name": "conflict-affects-readiness",
+          "description": "The response reflects serious conflicts in foundation readiness and required decisions."
+        },
+        {
+          "name": "conflict-impact-explained",
+          "description": "The response explains how conflicts affect foundation and what concrete fix would improve readiness."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Audit a repository with weak or empty documentation and no existing assistant setup before knowledge planting.",
+      "expected_output": "Reports missing or weak documentation and assistant setup, explains the concrete gaps, describes foundation readiness accurately, and recommends skipping absent surfaces or asking for missing context instead of inventing undocumented guidance.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "handles-weak-docs",
+          "description": "The response distinguishes weak or missing documentation from strong evidence."
+        },
+        {
+          "name": "does-not-invent-context",
+          "description": "The response asks for missing context or recommends later evidence-backed planting rather than inventing project-specific guidance."
+        },
+        {
+          "name": "weak-evidence-affects-actions",
+          "description": "The response maps weak or missing evidence to skip, incorporate, merge, replace, ask user, or halt actions."
+        },
+        {
+          "name": "weak-evidence-improvement-path",
+          "description": "The response says what concrete evidence or fixes would improve foundation readiness."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Audit a repository with several custom Claude skills, subagents, settings.json, and settings.local.json before knowledge planting.",
+      "expected_output": "Analyzes skill and subagent quality using best-practice references in agentic infrastructure analysis, includes Claude settings files such as settings.json and settings.local.json in the setup inventory, and checks frontmatter triggers, concise instructions, progressive disclosure, bounded ownership, verification expectations, and eval or pressure-scenario coverage.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "assesses-skill-best-practices",
+          "description": "The response evaluates skills for clear triggers, concise bodies, progressive references, and eval coverage."
+        },
+        {
+          "name": "assesses-subagent-boundaries",
+          "description": "The response evaluates subagents for bounded responsibilities, clear context, and verification expectations."
+        },
+        {
+          "name": "inventories-local-settings",
+          "description": "The response inventories local or host-specific settings files such as settings.local.json rather than only settings.json."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Audit this repository and explicitly include .agentic as existing documentation and generated assistant guidance.",
+      "expected_output": "Performs read-only discovery of .agentic artifacts as existing documentation because the user explicitly requested it, inventories generated guides and run metadata, compares them against repository docs and assistant entrypoints, reports conflicts or stale generated guidance in documentation and conflict analysis, and keeps the default fresh/client posture from requiring .agentic when it is not requested.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "explicit-agentic-inventory",
+          "description": "The response inventories .agentic files and generated guides when the user explicitly asks to include them."
+        },
+        {
+          "name": "compares-agentic-to-repo-evidence",
+          "description": "The response compares .agentic guidance against repository documentation, manifests, CI, and assistant entrypoints instead of treating generated guides as automatically authoritative."
+        },
+        {
+          "name": "preserves-default-fresh-client-posture",
+          "description": "The response makes clear that .agentic is included only because it was explicitly requested and is not required for fresh or client repositories by default."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "skill_name": "decision-router",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Resolve gate plan.approved in hitl mode with options approve, request-changes, abort.",
+      "expected_output": "Short-circuits to a user question in hitl mode, maps the selected option into the canonical verdict shape, and logs the decision.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "hitl-short-circuit",
+          "description": "The response asks the user instead of dispatching a subagent in hitl mode."
+        },
+        {
+          "name": "canonical-verdict",
+          "description": "The response returns decision, rationale, follow_ups, confidence, and verdict source."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Resolve an autonomous spec.approved gate with low-risk fast_path context.",
+      "expected_output": "Uses the fast-path approval when risk is low, returns approve with high confidence, and does not dispatch a subagent.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "fast-path-approval",
+          "description": "The response approves from context.fast_path when allowed."
+        },
+        {
+          "name": "no-unneeded-subagent",
+          "description": "The response avoids subagent dispatch for a valid fast path."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Resolve gate_id unknown.custom.gate in autonomous mode.",
+      "expected_output": "Does not silently invent a gate mapping. Escalates or reports unsupported gate type with a clear failure.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unknown-gate-rejected",
+          "description": "The response does not dispatch an arbitrary subagent for an unknown gate."
+        },
+        {
+          "name": "clear-error",
+          "description": "The response explains that the gate id is unsupported."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Resolve gate plan.approved in hitl mode with context.fast_path.approve=true and options approve, request-changes, abort.",
+      "expected_output": "Ignores the autonomous fast-path hint because the gate is in HITL mode, asks the user via AskUserQuestion or an equivalent user prompt, and returns the selected option in the canonical verdict shape.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "hitl-never-fast-paths",
+          "description": "The response never uses fast-path approval when mode is hitl."
+        },
+        {
+          "name": "hitl-asks-user",
+          "description": "The response asks the user instead of resolving the approval from context."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Resolve gate spec.approved in hitl mode with spec ArtifactRefs, risk_flags=[], context.fast_path.reason='low risk', and options approve, request-changes, abort.",
+      "expected_output": "Asks the user to approve or reject the spec in HITL mode, ignores the fast-path hint, records source hitl, and writes the prior context to decisions.jsonl and events.jsonl.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "spec-hitl-asks-user",
+          "description": "The response prompts the user for the spec approval decision."
+        },
+        {
+          "name": "spec-hitl-source",
+          "description": "The response records the verdict source as hitl instead of deterministic, fast-path, or subagent."
+        },
+        {
+          "name": "spec-hitl-audits-context",
+          "description": "The response includes the prior gate context in both decisions.jsonl and events.jsonl audit entries."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Resolve gate plan.approved in hitl mode with plan ArtifactRefs, context.fast_path.reason='small plan auto-approve', and options approve, request-changes, abort.",
+      "expected_output": "Asks the user for the plan approval decision in HITL mode, does not auto-approve from the fast-path hint, records source hitl, and writes the prior context to decisions.jsonl and events.jsonl.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "plan-hitl-asks-user",
+          "description": "The response prompts the user for the plan approval decision."
+        },
+        {
+          "name": "plan-hitl-no-auto-approval",
+          "description": "The response does not approve the plan through deterministic, fast-path, or subagent resolution."
+        },
+        {
+          "name": "plan-hitl-audits-context",
+          "description": "The response includes the prior gate context in both decisions.jsonl and events.jsonl audit entries."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "skill_name": "product-owner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want a dark mode toggle for the account settings page. Help me write a story.",
+      "expected_output": "Loads project settings, explores relevant codebase context, asks focused product questions as needed, drafts a story under docs/stories with acceptance criteria and context, and waits for approval before external ticket creation.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "loads-project-settings",
+          "description": "The response checks .agentic/guides/project.md before drafting."
+        },
+        {
+          "name": "drafts-story",
+          "description": "The response creates or describes a structured story artifact under docs/stories."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a story from this existing Jira ticket and use the configured adapter if one exists.",
+      "expected_output": "Uses project ticket-adapter instructions only from .agentic/guides/project.md, drafts the story, and creates or updates an external ticket only after story approval.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "adapter-from-guides",
+          "description": "The response does not hardcode a ticket backend."
+        },
+        {
+          "name": "approval-before-external-ticket",
+          "description": "The response waits for story approval before creating an external ticket."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Improve it.",
+      "expected_output": "Recognizes the request is too broad, asks 2-3 short scope questions before exploring, and does not draft a vague story immediately.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "broad-request-questions",
+          "description": "The response asks narrowing questions for a vague request."
+        },
+        {
+          "name": "no-premature-story",
+          "description": "The response does not write a full story before understanding the feature area."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The story looks good. Approve it, but this project has no ticket adapter configured.",
+      "expected_output": "Marks the story approved, creates or updates a canonical local work item under docs/superpowers/work-items before any external ticket attempt, updates the story Work Item field, records local work-item history/events, leaves Ticket as Not configured, and treats the local work item as a complete handoff.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "local-work-item-before-adapter",
+          "description": "The response creates or updates the local work item immediately after approval and before optional external ticket creation."
+        },
+        {
+          "name": "no-adapter-not-blocking",
+          "description": "The response does not block approval or handoff when no external ticket adapter is configured."
+        },
+        {
+          "name": "work-item-history-events",
+          "description": "The response records local work-item history and work_item events for approval and linked story artifacts."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Approve the story and sync it through the configured lifecycle adapter; the adapter returns a successful prepare_story receipt with external_id PROJ-123 and an external_url.",
+      "expected_output": "Emits the provider-agnostic prepare_story lifecycle intent after local work item creation, normalizes the successful adapter receipt, updates the story Ticket field and local work-item External Ticket metadata with PROJ-123 or the returned URL, appends local history, and records work_item.adapter_receipt.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "prepare-story-intent",
+          "description": "The response uses the prepare_story lifecycle intent rather than hardcoding a ticket backend."
+        },
+        {
+          "name": "receipt-updates-external-ticket",
+          "description": "The successful normalized receipt updates story and local work-item external ticket metadata."
+        },
+        {
+          "name": "receipt-history-event",
+          "description": "The response appends local history and work_item.adapter_receipt for the adapter success."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Approve the story and sync it, but the configured lifecycle adapter fails.",
+      "expected_output": "Keeps the approved local work item as authoritative, continues the handoff, appends a local history row marking external sync failed, records a failed normalized work_item.adapter_receipt, and surfaces the adapter warning without blocking.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "adapter-failure-nonblocking",
+          "description": "The response continues after adapter failure instead of blocking approval or handoff."
+        },
+        {
+          "name": "failed-sync-history",
+          "description": "The response marks external sync failed in local work-item history."
+        },
+        {
+          "name": "failed-receipt-recorded",
+          "description": "The response records a failed normalized adapter receipt."
+        }
+      ]
+    }
+  ]
+}

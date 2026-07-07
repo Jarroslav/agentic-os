@@ -1,0 +1,93 @@
+{
+  "skill_name": "mr-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create an MR for the current branch.",
+      "expected_output": "Loads git workflow conventions, checks current branch, git status, and existing MR, validates ticket reference before committing, pushes the branch, creates an MR with the required title and description, and suggests babysit-mr after creation.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "loads-git-conventions",
+          "description": "The response reads .agentic/guides/standards/git-workflow.md before committing or creating the MR."
+        },
+        {
+          "name": "checks-state",
+          "description": "The response checks branch, uncommitted changes, and existing MR state."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Commit and create an MR, but my branch name has no ticket prefix.",
+      "expected_output": "Requires a ticket reference before committing, asks for the ticket number if missing, and formats commits and MR title using the project convention.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "requires-ticket",
+          "description": "The response does not commit without a ticket reference."
+        },
+        {
+          "name": "uses-project-format",
+          "description": "The response uses the commit and MR format loaded from the git workflow guide."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create MR; there are uncommitted changes in the current checkout.",
+      "expected_output": "Surfaces uncommitted changes from git status and handles commit requirements before push or MR creation rather than ignoring dirty state.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "detects-dirty-state",
+          "description": "The response reports uncommitted changes."
+        },
+        {
+          "name": "no-push-before-resolution",
+          "description": "The response does not push or create an MR before resolving commit requirements."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Create an MR for a branch with a local work item and a configured lifecycle adapter; the adapter returns a successful prepare_for_review receipt.",
+      "expected_output": "Creates or finds the MR URL, appends it to the local work item, emits prepare_for_review with the standard lifecycle input, normalizes the successful receipt, updates work-item external metadata and review state, and records work_item.adapter_receipt.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "prepare-review-intent",
+          "description": "The response emits prepare_for_review after the MR/PR URL is known."
+        },
+        {
+          "name": "review-receipt-updates-work-item",
+          "description": "The successful normalized receipt updates local work-item metadata, review state, and history."
+        },
+        {
+          "name": "review-receipt-event",
+          "description": "The response records work_item.adapter_receipt for the review sync."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Create an MR, but the configured lifecycle adapter fails after the MR URL is created.",
+      "expected_output": "Keeps the MR handoff successful, appends the MR URL to the local work item, records a failed normalized work_item.adapter_receipt, marks external sync failed in local history, and surfaces the adapter warning without blocking.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "review-adapter-failure-nonblocking",
+          "description": "The response does not discard or block the MR after adapter failure."
+        },
+        {
+          "name": "review-failed-sync-history",
+          "description": "The response marks external sync failed in local work-item history."
+        },
+        {
+          "name": "review-failed-receipt",
+          "description": "The response records a failed normalized adapter receipt."
+        }
+      ]
+    }
+  ]
+}

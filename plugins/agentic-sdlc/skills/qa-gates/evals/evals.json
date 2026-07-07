@@ -1,0 +1,53 @@
+{
+  "skill_name": "qa-gates",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run QA gates for a project with package.json, pnpm-lock.yaml, and scripts lint, build, test, and test:ui.",
+      "expected_output": "Detects pnpm, builds a gate plan, runs lint, build, unit, affected if available, and conditional UI gates, then writes qa-report.md.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "detects-pnpm",
+          "description": "The response chooses pnpm from pnpm-lock.yaml."
+        },
+        {
+          "name": "writes-report",
+          "description": "The response writes a structured QA gate report."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run QA gates in a repo that has package.json and Cargo.toml.",
+      "expected_output": "Selects the first matching runner according to the documented detection order unless a quality-gates guide overrides it, and reports skipped gates for unavailable scripts.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "deterministic-runner-selection",
+          "description": "The response follows documented runner precedence."
+        },
+        {
+          "name": "skips-missing-scripts",
+          "description": "The response marks missing Node scripts as skipped rather than failed."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Run QA gates in a repo with no package.json, Cargo.toml, pyproject.toml, go.mod, or quality-gates guide.",
+      "expected_output": "Reports unknown runner and asks once for lint, build, and test commands or permission to skip.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unknown-runner",
+          "description": "The response does not assume npm when no manifest exists."
+        },
+        {
+          "name": "asks-for-commands",
+          "description": "The response asks the user for quality gate commands."
+        }
+      ]
+    }
+  ]
+}

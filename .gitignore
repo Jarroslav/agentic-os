@@ -1,0 +1,18 @@
+.DS_Store
+*.pyc
+__pycache__/
+.agentic/
+docs/superpowers/
+
+# Local dev-session tooling artifacts (e.g. a pre-commit review-gate stamp) —
+# never part of the shipped product.
+.claude/
+
+# Internal build rationale / audit trail never belongs in this public repo —
+# keep it in a separate private repo (or just locally, uncommitted).
+docs/DESIGN.md
+docs/PLAN.md
+docs/audits/
+docs/workstreams/
+NOTES*.md
+*.internal.md

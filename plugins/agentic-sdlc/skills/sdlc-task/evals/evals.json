@@ -1,0 +1,133 @@
+{
+  "skill_name": "sdlc-task",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "sdlc-task fix typo in the dashboard header",
+      "expected_output": "Runs the lightweight task flow with pre-flight, brainstorm-lite/spec, plan, inline TDD, one code-review round, qa-gates, and handoff under docs/superpowers/tasks without full pipeline ceremony.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "lightweight-flow",
+          "description": "The response uses sdlc-task stages instead of the full sdlc-pipeline phases."
+        },
+        {
+          "name": "inline-tdd",
+          "description": "The response performs implementation inline with test-driven development."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "sdlc-task XS update validation message copy on the profile form",
+      "expected_output": "Accepts the user-classified XS scope, avoids complexity scoring and subagent-per-task implementation, writes task spec and plan, then implements with inline TDD.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "skips-complexity-scoring",
+          "description": "The response does not invoke complexity-scoring for the user-classified XS task."
+        },
+        {
+          "name": "task-artifacts",
+          "description": "The response writes or references task artifacts under docs/superpowers/tasks."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "sdlc-task fix local validation copy while git status --porcelain shows existing modified files.",
+      "expected_output": "Runs a lightweight dirty-branch pre-flight, asks whether to stash, hard reset, proceed with the existing dirty state, or abort, and does not silently mix the task with unrelated local changes.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "task-dirty-branch-guard",
+          "description": "The response detects dirty local state before editing for the task."
+        },
+        {
+          "name": "task-explicit-choices",
+          "description": "The response presents explicit choices for stash, hard reset, proceed with the existing dirty state, and abort."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "sdlc-task implement a local docs fix when no external ticket id or tracker adapter is available.",
+      "expected_output": "Creates or references a local work item under docs/superpowers/tasks, continues with repository-local task artifacts, and does not require an external tracker before planning the work.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "local-work-item-fallback",
+          "description": "The response falls back to a local work item when no external ticket is available."
+        },
+        {
+          "name": "no-external-tracker-blocker",
+          "description": "The response does not block the task solely because no external tracker adapter is configured."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "sdlc-task XS copy fix from dirty main where git status --porcelain reports modified and untracked files.",
+      "expected_output": "Runs the lightweight branch guard before writing task artifacts, reports dirty base-branch state, and asks whether to stash, commit first, hard reset with explicit confirmation, proceed with the existing dirty state after warning, or abort.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "task-dirty-main-guard",
+          "description": "The response detects dirty state on the base branch before task implementation."
+        },
+        {
+          "name": "task-hitl-dirty-choices",
+          "description": "The response includes stash, commit first, hard reset with explicit confirmation, proceed with warning, and abort."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "sdlc-task update docs on an existing dirty feature branch with unique local commits.",
+      "expected_output": "Inspects the existing feature branch for dirty state, unique commits, upstream ahead/behind/diverged state, and target branch existence before continuing; asks the user how to resolve the branch state instead of silently mixing work.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "task-dirty-existing-feature-branch",
+          "description": "The response checks local changes and unique commits on an existing feature branch before editing."
+        },
+        {
+          "name": "task-target-branch-decision",
+          "description": "The response does not silently reuse, overwrite, or recreate an ambiguous target branch."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "sdlc-task update a validation message on an existing clean feature branch based on the latest target branch.",
+      "expected_output": "Confirms the branch guard passed, reuses the clean existing feature branch, and proceeds only after verifying it is based on the latest configured base branch.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "task-clean-existing-feature-branch",
+          "description": "The response allows reuse of a clean existing feature branch after branch guard checks."
+        },
+        {
+          "name": "task-latest-base-confirmed",
+          "description": "The response confirms the branch is based on the latest target branch before implementation."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Run sdlc-task from an autonomous/no-prompt host while git status --porcelain reports modified files.",
+      "expected_output": "Halts because sdlc-task is HITL-only and dirty-state resolution requires a user choice; it does not auto-stash, hard reset, or proceed with the existing dirty state.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "task-autonomous-dirty-halts",
+          "description": "The response halts when dirty state cannot be resolved through HITL prompts."
+        },
+        {
+          "name": "task-no-destructive-autonomous-action",
+          "description": "The response does not auto-stash, hard reset, or proceed dirty without a user choice."
+        }
+      ]
+    }
+  ]
+}

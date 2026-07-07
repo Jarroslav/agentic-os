@@ -1,0 +1,17 @@
+{
+  "skill_name": "sdlc-doctor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Re-run the agentic-sdlc doctor check.",
+      "expected_output": "Checks superpowers, node, and git, then rewrites .agentic/agentic-sdlc/doctor.json.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "doctor-cache",
+          "description": "The response describes rewriting the doctor cache and does not suggest using an unsupported slash command."
+        }
+      ]
+    }
+  ]
+}

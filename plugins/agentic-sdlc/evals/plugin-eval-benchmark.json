@@ -1,0 +1,54 @@
+{
+  "kind": "plugin-eval-benchmark",
+  "schemaVersion": 2,
+  "version": 2,
+  "targetKind": "plugin",
+  "targetName": "agentic-sdlc",
+  "runner": {
+    "type": "codex-cli",
+    "model": "gpt-5.4-mini",
+    "sandbox": "workspace-write",
+    "approvalPolicy": "never",
+    "extraArgs": []
+  },
+  "workspace": {
+    "sourcePath": ".",
+    "setupMode": "copy",
+    "preserve": "on-failure"
+  },
+  "targetProvisioning": {
+    "mode": "workspace-plugin-marketplace"
+  },
+  "verifiers": {
+    "commands": [
+      "test -f .agents/plugins/marketplace.json",
+      "test -d plugins/agentic-sdlc",
+      "test -f plugins/agentic-sdlc/.codex-plugin/plugin.json",
+      "test -f plugins/agentic-sdlc/skills/knowledge-foundation/SKILL.md",
+      "test -f plugins/agentic-sdlc/skills/sdlc-start/SKILL.md",
+      "test -f plugins/agentic-sdlc/skills/sdlc-autonomous/SKILL.md",
+      "test -f plugins/agentic-sdlc/skills/sdlc-status/SKILL.md",
+      "test -f plugins/agentic-sdlc/skills/sdlc-doctor/SKILL.md",
+      "test ! -d plugins/agentic-sdlc/commands"
+    ]
+  },
+  "notes": [
+    "Self-contained agentic-sdlc plugin benchmark.",
+    "Run from the repository root with npm run eval:benchmarks.",
+    "This benchmark verifies plugin installation into a workspace marketplace and smoke-tests plugin discovery."
+  ],
+  "scenarios": [
+    {
+      "id": "plugin-install-smoke",
+      "title": "Plugin install smoke test",
+      "purpose": "Verify agentic-sdlc can be installed into a benchmark workspace and exposes skill-based entry points.",
+      "userInput": "Inspect the installed agentic-sdlc plugin. Confirm that the plugin is available from the workspace marketplace and that knowledge-foundation plus the sdlc-start, sdlc-autonomous, sdlc-status, and sdlc-doctor skills are present. Do not run a full SDLC workflow.",
+      "successChecklist": [
+        "The response identifies the agentic-sdlc plugin installation.",
+        "The response confirms knowledge-foundation is present.",
+        "The response confirms the agentic-sdlc run controls are skills, not slash commands.",
+        "The response does not start a full SDLC workflow."
+      ]
+    }
+  ]
+}

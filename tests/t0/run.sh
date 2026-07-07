@@ -1,0 +1,212 @@
+#!/usr/bin/env bash
+# T0 hook unit tests — renders every WS-A template with default variable values
+# into a scratch target-repo layout, then asserts exit codes on canned events.
+# Run:  bash tests/t0/run.sh
+set -u
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO="$(cd "$HERE/../.." && pwd)"
+TPL="$REPO/plugins/agentic-os/templates"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+PASS=0
+FAIL=0
+
+# check <name> <expected_exit> <stdin-payload|-> <cmd...>
+check() {
+  local name="$1" expected="$2" payload="$3"; shift 3
+  local out rc
+  if [ "$payload" = "-" ]; then
+    out="$("$@" </dev/null 2>&1)"; rc=$?
+  else
+    out="$(printf '%s' "$payload" | "$@" 2>&1)"; rc=$?
+  fi
+  if [ "$rc" -eq "$expected" ]; then
+    PASS=$((PASS + 1)); echo "ok   $name"
+  else
+    FAIL=$((FAIL + 1)); echo "FAIL $name (exit $rc, expected $expected)"; echo "$out" | sed 's/^/     /'
+  fi
+  LAST_OUT="$out"
+}
+
+expect_contains() { # <name> <needle>
+  if printf '%s' "$LAST_OUT" | grep -qF "$2"; then
+    PASS=$((PASS + 1)); echo "ok   $1"
+  else
+    FAIL=$((FAIL + 1)); echo "FAIL $1 (output missing '$2')"; printf '%s\n' "$LAST_OUT" | sed 's/^/     /'
+  fi
+}
+
+render() { # <src.tmpl> <dst> — default-value rendering; fails on leftover {{VAR}}
+  python3 - "$1" "$2" <<'PY'
+import sys, re
+src, dst = sys.argv[1], sys.argv[2]
+vals = {
+    "SCORECARD_PATH": "docs/audits/instruction-scorecard.json",
+    "SCORE_THRESHOLD": "95",
+    "AGENTS_CANONICAL_DIR": ".agentic/agents/",
+    "DEFAULT_BRANCH": "main",
+    "ENV_CHECK_COMMANDS": "true",
+    "HUMAN_GATED_COMMANDS": "git push origin main",
+    "GUARDED_WRITE_PATHS": "design/VISION.json => /refine-vision",
+    "MIGRATIONS_DIR": "supabase/migrations/",
+    "MIGRATION_DIFF_COMMAND": "npm run db:diff",
+    "AGENTIC_OS_VERSION": "0.0.0-test",
+    "PROJECT_NAME": "t0-fixture",
+    "STACK_SUMMARY": "test stack",
+    "ROLE_PRESETS_ACTIVE": "developer",
+    "HITL_MODE": "gated-autonomous",
+    "GATE_COMMANDS": "true",
+    "OUTPUT_CONTRACT_SECTIONS": "Summary,Why,Blocking,Non-blocking,Escalate to human",
+}
+text = open(src, encoding="utf-8").read()
+for k, v in vals.items():
+    text = text.replace("{{%s}}" % k, v)
+left = sorted(set(re.findall(r"\{\{[A-Z_]+\}\}", text)))
+if left:
+    sys.exit(f"unrendered placeholders in {src}: {left}")
+open(dst, "w", encoding="utf-8").write(text)
+PY
+}
+
+# ---------------------------------------------------------------- scaffold
+SCRATCH="$WORK/target"
+mkdir -p "$SCRATCH/.claude/hooks" "$SCRATCH/.agentic/agents" "$SCRATCH/docs/audits" \
+         "$SCRATCH/.githooks" "$SCRATCH/scripts"
+
+for f in precommit_review_gate.py precompact_checkpoint.py instruction_stale_notice.py; do
+  cp "$TPL/hooks/claude/$f" "$SCRATCH/.claude/hooks/$f"
+done
+# subagent_gate.py.tmpl renders + compiles here; its behavior cases live in
+# tests/t0/run-output-contract.sh (WS-B).
+for t in instruction_gate session_start_bootstrap write_scope_guard human_gated_commands guarded_write_paths migration_notice subagent_gate; do
+  render "$TPL/hooks/claude/$t.py.tmpl" "$SCRATCH/.claude/hooks/$t.py"
+done
+cp "$TPL/githooks/pre-commit" "$SCRATCH/.githooks/pre-commit"
+cp "$TPL/scripts/install-git-hooks.sh" "$SCRATCH/scripts/install-git-hooks.sh"
+
+# governance templates render clean (content checked by instruction audit, not here)
+for g in CLAUDE.section.md AGENTS.md PATTERNS.md; do
+  render "$TPL/governance/$g.tmpl" "$WORK/$g"
+done
+
+echo "-- compile + fragment"
+check "py_compile all hooks" 0 - python3 -m py_compile "$SCRATCH"/.claude/hooks/*.py
+check "settings-fragment is valid JSON" 0 - python3 -c "import json;json.load(open('$TPL/hooks/settings-fragment.json.tmpl'))"
+
+git -C "$SCRATCH" init -q -b main
+git -C "$SCRATCH" config user.email t0@test && git -C "$SCRATCH" config user.name t0
+echo base > "$SCRATCH/base.txt"
+git -C "$SCRATCH" add base.txt && git -C "$SCRATCH" -c commit.gpgsign=false commit -qm init
+
+GATE="$SCRATCH/.claude/hooks/precommit_review_gate.py"
+run_in() { (cd "$SCRATCH" && "$@"); }
+ev_bash() { printf '{"tool_name":"Bash","tool_input":{"command":"%s"}}' "$1"; }
+ev_file() { printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$1"; }
+
+echo "-- precommit_review_gate"
+check "gate: non-commit command allowed" 0 "$(ev_bash 'git status')" run_in python3 "$GATE"
+echo change > "$SCRATCH/f.txt"; git -C "$SCRATCH" add f.txt
+check "gate: unreviewed commit blocked" 2 "$(ev_bash 'git commit -m x')" run_in python3 "$GATE"
+check "gate: auto-stage (-am) refused" 2 "$(ev_bash 'git commit -am x')" run_in python3 "$GATE"
+check "precommit mode: unreviewed blocked" 1 - run_in python3 "$GATE" precommit
+check "approve stamps staged diff" 0 - run_in python3 "$GATE" approve
+check "gate: approved commit allowed" 0 "$(ev_bash 'git commit -m x')" run_in python3 "$GATE"
+check "precommit mode: approved allowed" 0 - run_in python3 "$GATE" precommit
+echo more >> "$SCRATCH/f.txt"; git -C "$SCRATCH" add f.txt
+check "gate: restage invalidates stamp" 2 "$(ev_bash 'git commit -m x')" run_in python3 "$GATE"
+check "precommit mode: SKIP_REVIEW=1 bypass" 0 - run_in env SKIP_REVIEW=1 python3 "$GATE" precommit
+check "gate: [skip-review] bypass" 0 "$(ev_bash 'git commit -m merge-x-[skip-review]')" run_in python3 "$GATE"
+git -C "$SCRATCH" reset -q
+
+echo "-- human_gated_commands"
+HG="$SCRATCH/.claude/hooks/human_gated_commands.py"
+check "human-gated command blocked" 2 "$(ev_bash 'git push origin main')" run_in python3 "$HG"
+expect_contains "  ...with escalation pointer" "escalation-policy.md"
+check "ordinary command allowed" 0 "$(ev_bash 'git push origin feature/x')" run_in python3 "$HG"
+
+echo "-- guarded_write_paths"
+GW="$SCRATCH/.claude/hooks/guarded_write_paths.py"
+check "guarded path write blocked" 2 "$(ev_file 'design/VISION.json')" run_in python3 "$GW"
+expect_contains "  ...names the allowed flow" "/refine-vision"
+check "unguarded path write allowed" 0 "$(ev_file 'app/page.tsx')" run_in python3 "$GW"
+
+echo "-- write_scope_guard"
+WS="$SCRATCH/.claude/hooks/write_scope_guard.py"
+printf -- '---\nname: scoped\nwrite_scope:\n  - app/\n---\nbody\n' > "$SCRATCH/.agentic/agents/scoped.md"
+check "no lock: open mode" 0 "$(ev_file "$SCRATCH/lib/x.ts")" run_in python3 "$WS" block
+mkdir -p "$SCRATCH/.agentic/state"
+printf '{"agent":"scoped"}' > "$SCRATCH/.agentic/state/active-agent.json"
+check "locked: in-scope write allowed" 0 "$(ev_file "$SCRATCH/app/x.ts")" run_in python3 "$WS" block
+check "locked: out-of-scope write blocked" 2 "$(ev_file "$SCRATCH/lib/x.ts")" run_in python3 "$WS" block
+expect_contains "  ...names the lane" "outside its lane"
+check "locked: sibling-prefix dir blocked (app/ vs app-legacy/)" 2 "$(ev_file "$SCRATCH/app-legacy/x.ts")" run_in python3 "$WS" block
+printf -- '---\nname: scoped\nwrite_scope:\n  - app/\nforbidden_paths:\n  - app/secrets/\n---\nbody\n' > "$SCRATCH/.agentic/agents/scoped.md"
+check "locked: forbidden path blocked even in scope" 2 "$(ev_file "$SCRATCH/app/secrets/k.ts")" run_in python3 "$WS" block
+check "warn mode never blocks" 0 "$(ev_file "$SCRATCH/lib/x.ts")" run_in python3 "$WS" warn
+rm "$SCRATCH/.agentic/state/active-agent.json"
+
+echo "-- instruction_gate"
+IG="$SCRATCH/.claude/hooks/instruction_gate.py"
+printf -- '---\nname: foo\nwrite_scope:\n  - app/\n---\nbody\n' > "$SCRATCH/.agentic/agents/foo.md"
+ev_spawn() { printf '{"subagent_type":"%s"}' "$1"; }
+check "ungoverned agent allowed" 0 "$(ev_spawn 'not-in-fleet')" run_in python3 "$IG"
+check "governed + no scorecard blocked" 2 "$(ev_spawn 'foo')" run_in python3 "$IG"
+SHA=$(python3 -c "import hashlib;print(hashlib.sha256(open('$SCRATCH/.agentic/agents/foo.md','rb').read()).hexdigest())")
+printf '{"files":{".agentic/agents/foo.md":{"content_sha256":"%s","composite_score":100}}}' "$SHA" \
+  > "$SCRATCH/docs/audits/instruction-scorecard.json"
+check "governed + graded 100 allowed" 0 "$(ev_spawn 'foo')" run_in python3 "$IG"
+printf '{"files":{".agentic/agents/foo.md":{"content_sha256":"deadbeef","composite_score":100}}}' \
+  > "$SCRATCH/docs/audits/instruction-scorecard.json"
+check "stale content blocked" 2 "$(ev_spawn 'foo')" run_in python3 "$IG"
+printf '{"files":{".agentic/agents/foo.md":{"content_sha256":"%s","composite_score":85,"gate_threshold":80}}}' "$SHA" \
+  > "$SCRATCH/docs/audits/instruction-scorecard.json"
+check "per-agent gate_threshold override" 0 "$(ev_spawn 'foo')" run_in python3 "$IG"
+printf -- '---\nname: instruction-auditor\n---\nbody\n' > "$SCRATCH/.agentic/agents/instruction-auditor.md"
+check "instruction-auditor exempt" 0 "$(ev_spawn 'instruction-auditor')" run_in python3 "$IG"
+check "no agent-name key: loud allow" 0 '{"unrelated":"x"}' run_in python3 "$IG"
+
+echo "-- migration_notice + instruction_stale_notice + precompact + session bootstrap"
+MN="$SCRATCH/.claude/hooks/migration_notice.py"
+check "migration edit noticed" 0 "$(ev_file 'supabase/migrations/1_x.sql')" run_in python3 "$MN"
+expect_contains "  ...suggests diff command" "npm run db:diff"
+check "non-migration edit silent" 0 "$(ev_file 'app/page.tsx')" run_in python3 "$MN"
+if [ -n "$LAST_OUT" ]; then FAIL=$((FAIL+1)); echo "FAIL migration_notice not silent"; else PASS=$((PASS+1)); echo "ok     ...and silent"; fi
+
+SN="$SCRATCH/.claude/hooks/instruction_stale_notice.py"
+check "stale notice on ungraded governed file" 0 "$(ev_file '.agentic/guides/standards/x.md')" run_in sh -c "mkdir -p .agentic/guides/standards && echo hi > .agentic/guides/standards/x.md && python3 $SN"
+expect_contains "  ...advisory names the file" "x.md"
+check "stale notice silent on ungoverned file" 0 "$(ev_file 'src/x.ts')" run_in python3 "$SN"
+
+check "precompact checkpoint exits 0" 0 '{"trigger":"manual"}' run_in python3 "$SCRATCH/.claude/hooks/precompact_checkpoint.py"
+[ -f "$SCRATCH/.claude/checkpoints/last-compaction.md" ] && { PASS=$((PASS+1)); echo "ok     ...checkpoint written"; } || { FAIL=$((FAIL+1)); echo "FAIL checkpoint file missing"; }
+
+check "session bootstrap exits 0 (no origin)" 0 '{}' run_in python3 "$SCRATCH/.claude/hooks/session_start_bootstrap.py"
+
+echo "-- git layer (chaining installer)"
+REPO2="$WORK/target2"
+mkdir -p "$REPO2/.claude/hooks" "$REPO2/scripts" "$REPO2/.githooks"
+cp "$TPL/hooks/claude/precommit_review_gate.py" "$REPO2/.claude/hooks/"
+cp "$TPL/githooks/pre-commit" "$REPO2/.githooks/pre-commit"
+cp "$TPL/scripts/install-git-hooks.sh" "$REPO2/scripts/install-git-hooks.sh"
+git -C "$REPO2" init -q -b main
+git -C "$REPO2" config user.email t0@test && git -C "$REPO2" config user.name t0
+# pre-existing foreign hook that must be preserved and chained
+printf '#!/bin/sh\ntouch chained-ran\nexit 0\n' > "$REPO2/.git/hooks/pre-commit"
+chmod +x "$REPO2/.git/hooks/pre-commit"
+check "installer runs" 0 - sh -c "cd '$REPO2' && bash scripts/install-git-hooks.sh"
+[ -x "$REPO2/.git/hooks/pre-commit.local" ] && { PASS=$((PASS+1)); echo "ok     ...foreign hook preserved as .local"; } || { FAIL=$((FAIL+1)); echo "FAIL foreign hook not preserved"; }
+grep -q "agentic-os:" "$REPO2/.git/hooks/pre-commit" && { PASS=$((PASS+1)); echo "ok     ...our hook installed"; } || { FAIL=$((FAIL+1)); echo "FAIL our hook not installed"; }
+check "installer idempotent (re-run)" 0 - sh -c "cd '$REPO2' && bash scripts/install-git-hooks.sh"
+[ -f "$REPO2/.git/hooks/pre-commit.local.local" ] && { FAIL=$((FAIL+1)); echo "FAIL double-chained .local.local"; } || { PASS=$((PASS+1)); echo "ok     ...no double-chaining"; }
+
+echo x > "$REPO2/a.txt" && git -C "$REPO2" add a.txt
+check "native hook blocks unreviewed commit" 1 - sh -c "cd '$REPO2' && git -c commit.gpgsign=false commit -qm x"
+( cd "$REPO2" && python3 .claude/hooks/precommit_review_gate.py approve >/dev/null )
+check "native hook passes approved commit" 0 - sh -c "cd '$REPO2' && git -c commit.gpgsign=false commit -qm x"
+[ -f "$REPO2/chained-ran" ] && { PASS=$((PASS+1)); echo "ok     ...chained .local hook ran"; } || { FAIL=$((FAIL+1)); echo "FAIL chained hook did not run"; }
+
+echo
+echo "T0: $PASS passed, $FAIL failed"
+[ "$FAIL" -eq 0 ]

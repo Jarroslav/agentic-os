@@ -1,0 +1,209 @@
+{
+  "skill_name": "sdlc-pipeline",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "sdlc-start add login feature with remember-me support",
+      "expected_output": "Starts a hitl SDLC run, creates run state, verifies required knowledge guides, loads memory once, runs requirements intake, feature-branch setup, complexity routing, spec or plan gates, TDD implementation evidence, final review, QA gates, feature verification when needed, report generation, and handoff.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "full-phase-flow",
+          "description": "The response follows the numbered SDLC phases rather than jumping directly to implementation."
+        },
+        {
+          "name": "uses-decision-router",
+          "description": "The response routes HITL judgment gates through decision-router."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Resume the interrupted SDLC run in docs/superpowers/runs/20260516-1015-login where phase 6 is still marked running.",
+      "expected_output": "Reads run state, re-executes the phase marked running idempotently, overwrites deterministic phase outputs, and only advances after the resumed phase completes.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "resume-running-phase",
+          "description": "The response resumes the running phase instead of skipping to the next phase."
+        },
+        {
+          "name": "idempotent-outputs",
+          "description": "The response overwrites deterministic artifacts rather than appending duplicate state."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Start an SDLC run from a checkout where git status --porcelain reports modified and untracked files.",
+      "expected_output": "Stops before implementation, reports the dirty working tree, asks the user to choose among stashing, hard reset, proceeding with the existing dirty state, or aborting, and does not silently continue.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "dirty-branch-guard",
+          "description": "The response detects the dirty working tree before any implementation phase."
+        },
+        {
+          "name": "explicit-branch-choices",
+          "description": "The response presents explicit choices including stash, hard reset, proceed with the existing dirty state, and abort."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Start an SDLC run when the local feature branch is behind the latest target branch.",
+      "expected_output": "Checks the base branch state before implementation, asks whether to fast-forward or otherwise reconcile with the latest target branch, and does not begin work from a stale base without confirmation.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "base-branch-checked",
+          "description": "The response checks whether the current work is based on the latest target branch."
+        },
+        {
+          "name": "fast-forward-choice",
+          "description": "The response offers an explicit fast-forward or reconciliation choice before continuing."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Run sdlc-start in hitl mode through the spec.approved and plan.approved gates.",
+      "expected_output": "Routes both approval gates through decision-router in HITL mode, asks the user for each approval, and never uses autonomous fast-path approval for those gates.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "hitl-gates-ask-user",
+          "description": "The response asks the user at HITL approval gates instead of auto-approving."
+        },
+        {
+          "name": "no-hitl-fast-path",
+          "description": "The response does not use autonomous fast-path behavior for HITL gates."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Start an SDLC run from dirty main where git status --porcelain shows modified and untracked files.",
+      "expected_output": "Runs the branch guard before implementation, reports dirty main, inspects the configured base branch and upstream state, and asks whether to stash, commit first, hard reset with explicit confirmation, proceed with the existing dirty state after warning, or abort.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "dirty-main-guard",
+          "description": "The response detects dirty state on the base branch before creating a feature branch."
+        },
+        {
+          "name": "hitl-dirty-choices",
+          "description": "The response includes stash, commit first, hard reset with explicit confirmation, proceed with warning, and abort."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Start an SDLC run when the requested feature branch already exists and git status --porcelain reports local edits on that branch.",
+      "expected_output": "Inspects target branch existence, unique commits, local changes, and upstream ahead/behind/diverged state before continuing; asks whether to stash, commit first, reconcile/recreate, proceed with the existing dirty state after warning, or abort.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "dirty-existing-feature-branch",
+          "description": "The response checks local changes and unique commits on an existing feature branch before implementation."
+        },
+        {
+          "name": "target-branch-decision",
+          "description": "The response does not silently reuse, overwrite, or recreate the existing target branch."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Start an SDLC run when the requested feature branch already exists, is clean, and is based on the latest target branch.",
+      "expected_output": "Confirms the existing feature branch is clean, verifies it is based on the latest configured base branch, records the branch guard decision, and continues without recreating the branch.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "clean-existing-feature-branch",
+          "description": "The response allows reuse of a clean existing feature branch after branch guard checks."
+        },
+        {
+          "name": "latest-base-confirmed",
+          "description": "The response confirms the branch is based on the latest target branch before implementation."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Run sdlc-autonomous while git status --porcelain reports modified files and no project policy allows auto-stash.",
+      "expected_output": "Halts before implementation, records that autonomous dirty-state safety blocked the run, and does not hard reset, commit user changes, or proceed with the existing dirty state.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "autonomous-dirty-halts",
+          "description": "The response halts autonomous mode on dirty state without an explicit auto-stash policy."
+        },
+        {
+          "name": "no-destructive-autonomous-action",
+          "description": "The response does not hard reset, commit, or proceed dirty in autonomous mode."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Start an SDLC run from free-form requirements with no external ticket; requirements intake creates a local work item and the branch guard succeeds.",
+      "expected_output": "After branch guard success, emits the prepare_for_development lifecycle intent with the standard adapter input, updates local work-item history and external sync state from a successful normalized receipt when present, and continues with local history plus pending or failed sync warnings when the adapter is missing or fails.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "prepare-development-after-branch-guard",
+          "description": "The response emits prepare_for_development only after requirements intake resolves a local work item and branch guard succeeds."
+        },
+        {
+          "name": "development-receipt-updates-work-item",
+          "description": "A successful normalized receipt updates local work-item external metadata, state, assignee, and history."
+        },
+        {
+          "name": "development-adapter-warning-continues",
+          "description": "Missing or failing adapters warn, append local history, and do not block the pipeline."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Resume a run where meta.json says phase 7 completed, but events.jsonl has phase.started for phase 7 with no later terminal event, and work-item-events.jsonl contains a newer adapter receipt than work-item.md.",
+      "expected_output": "Reconstructs phase state from events.jsonl instead of trusting skipped meta.json state, asks to repair meta.json before resuming phase 7, reconciles canonical Markdown work-item state from work-item JSONL, appends reconciliation events and Markdown history updates, and never truncates JSONL ledgers.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "resume-from-events",
+          "description": "The response reconstructs the resume phase from phase.started and terminal events in events.jsonl."
+        },
+        {
+          "name": "meta-repair-before-resume",
+          "description": "The response repairs stale meta.json before resuming rather than skipping to a later phase."
+        },
+        {
+          "name": "work-item-reconciliation",
+          "description": "The response reconciles Markdown work-item state from work-item JSONL by appending reconciliation events and history."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "QA gates and feature verification are ready for handoff, but the lifecycle adapter is unavailable.",
+      "expected_output": "Emits record_delivery_audit and complete_or_handoff at the delivery points, treats the missing adapter as a warning, appends local work-item history and work_item.adapter_warning, marks external sync pending, and continues to handoff.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "delivery-audit-intent",
+          "description": "The response emits record_delivery_audit when QA and verification evidence are handoff-ready."
+        },
+        {
+          "name": "handoff-intent",
+          "description": "The response emits complete_or_handoff before final handoff output."
+        },
+        {
+          "name": "missing-delivery-adapter-nonblocking",
+          "description": "The response continues to handoff with warning history and pending external sync."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill_name": "sdlc-autonomous",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run SDLC autonomously for replacing the logging library.",
+      "expected_output": "Invokes sdlc-pipeline in autonomous mode with default escalation flags.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "autonomous-mode",
+          "description": "The response uses sdlc-pipeline mode=autonomous and explains that stand-in subagents handle gates."
+        }
+      ]
+    }
+  ]
+}

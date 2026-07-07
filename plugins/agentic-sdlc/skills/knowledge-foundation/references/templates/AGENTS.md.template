@@ -1,0 +1,40 @@
+# AGENTS.md
+
+Primary AI entrypoint for `[PROJECT_NAME]`. Load the relevant `.agentic/guides/` file before changing code.
+
+## Guide Imports
+
+<!-- agentic-init:guide-imports start -->
+| Category | Guide Path | Purpose |
+|---|---|---|
+| [CATEGORY] | .agentic/guides/[category]/[filename].md | [Brief description extracted from guide] |
+<!-- agentic-init:guide-imports end -->
+
+## Task Classifier
+
+<!-- agentic-init:task-classifier start -->
+| Category | User Intent | Example Requests | P0 Guide | P1 Guide |
+|---|---|---|---|---|
+| [CATEGORY] | [What user is trying to accomplish] | "[Example request]" | .agentic/guides/[path] | [secondary guide or -] |
+<!-- agentic-init:task-classifier end -->
+
+## Critical Rules
+
+<!-- agentic-init:critical-rules start -->
+| Rule | Trigger | Action |
+|---|---|---|
+| Check Guides First | ANY task | Match request to category and load the P0 guide before searching broadly |
+| Testing | "write tests" / "run tests" | Only write or run tests when requested or when needed for verification |
+| Git Operations | "commit" / "push" / "PR" / "MR" | Only then; load `.agentic/guides/standards/git-workflow.md` |
+| Shell | ANY shell command | Use bash/Linux-compatible syntax |
+<!-- agentic-init:critical-rules end -->
+
+## Commands
+
+<!-- agentic-init:commands start -->
+| Need | Source Guide | Source Evidence | Notes |
+|---|---|---|---|
+| Lint / format | .agentic/guides/quality-gates.md | manifest, Makefile, or CI | Load guide before running |
+| Tests | .agentic/guides/quality-gates.md | manifest, Makefile, or CI | Load guide before running |
+| Git / review workflow | .agentic/guides/standards/git-workflow.md | git history and project context | Load guide before git operations |
+<!-- agentic-init:commands end -->

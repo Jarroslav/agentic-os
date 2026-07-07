@@ -1,0 +1,436 @@
+---
+name: agentic-init
+description: Install the agentic-os process layer into the current repo — interview (role presets, HITL dial, autonomy matrix, stack confirm, adapters), dependency registration, template scaffold, stack-specific agent generation with instruction-quality audit, then doctor verification. Journaled and resumable. Use when the user says "/agentic-init", "install agentic-os", "scaffold the agent architecture", "set up the agentic process layer", or "add agentic-os to this repo".
+version: 0.1.0
+license: Apache-2.0
+---
+
+# agentic-init — the installer
+
+You scaffold a governed multi-agent architecture into the **target repo** (the
+current working directory's git root, `TARGET` below). Everything you copy,
+render, or generate is journaled so an interrupted run resumes and a re-run is
+idempotent.
+
+## Conventions (read once, apply everywhere)
+
+- **`PLUGIN`** = the agentic-os plugin root (`${CLAUDE_PLUGIN_ROOT}` when set;
+  otherwise the directory two levels above this SKILL.md). It contains
+  `templates/`, `generators/`, `presets/`, `manifest/`.
+- **`AGENTIC_OS_VERSION`** = `"version"` from `PLUGIN/.claude-plugin/plugin.json`.
+- **Journal** = `TARGET/.agentic/agentic-os/install.json`. Shape:
+
+  ```json
+  {
+    "agentic_os_version": "<AGENTIC_OS_VERSION>",
+    "answers": { "<interview key>": "<value>" },
+    "phase": "preflight|interview|dependencies|scaffold|generate|verify|done",
+    "files": {
+      "<repo-relative path>": {
+        "sha256": "<hex of the file as written>",
+        "template": "<template ID, gen/* slot, or 'derived'>",
+        "owner": "managed|user|generated"
+      }
+    },
+    "follow_ups": ["<human-readable follow-up items>"]
+  }
+  ```
+
+  Update the journal **after every phase** (and after every file write in
+  Phase 4/5). `sha256` of a file: `shasum -a 256 <file> | cut -d' ' -f1`.
+- **Owner semantics**: `managed` = agentic-os wrote it and may overwrite it on
+  upgrade when unmodified; `user` = pre-existed or user-declined — never
+  touched again; `generated` = produced by a generator subagent — upgrades
+  offer regeneration, never overwrite.
+- **Rendering** (registry: `PLUGIN/templates/VARIABLES.md`): plain string
+  substitution of `{{VAR}}` — no logic in templates; every conditional lives
+  here. Files without `.tmpl` are copied verbatim. Two list conventions:
+  - In `.json.tmpl` files, list-valued variables render as **quoted JSON array
+    elements**: `[{{ESCALATE_ON}}]` → `["security","breaking-change","migration","spend"]`.
+    (Applies to `{{ESCALATE_ON}}` in `templates/sdlc/config.json.tmpl`;
+    `templates/hooks/settings-fragment.json.tmpl` intentionally has no placeholders.)
+  - Newline-list variables (`{{GATE_COMMANDS}}`, `{{HUMAN_GATED_COMMANDS}}`,
+    `{{GUARDED_WRITE_PATHS}}`, `{{ENV_CHECK_COMMANDS}}`, `{{SECRET_DENY_PATTERNS}}`)
+    only ever appear inside fenced blocks or triple-quoted Python strings —
+    substitute them as literal newline-joined text, one item per line.
+  - Everywhere else (`.md.tmpl` prose, comma-list vars like `{{ESCALATE_ON}}`
+    outside JSON, e.g. in `templates/commands/core/pipeline-orchestrator.md.tmpl`
+    and `templates/policy/escalation-policy.md.tmpl`): substitute the plain
+    comma-joined string.
+- **Never `git add` or `git commit` in the target repo.** Report what was
+  written; committing is the human's call (and their own review gate applies).
+
+## Phase 0 — Resume / idempotent re-run
+
+1. If `TARGET/.agentic/agentic-os/install.json` exists, this is a re-run or a
+   resume:
+   - Pre-fill every interview answer from `journal.answers`.
+   - If `journal.phase != "done"`, resume at the recorded phase.
+   - On a completed re-run, for each journaled file: if its current sha256
+     matches the journal, silently re-render/refresh it; if it differs
+     (user-modified), **skip it and warn** — never overwrite; files not yet
+     journaled are scaffolded normally.
+2. No journal ⇒ fresh install; continue to Phase 1.
+
+## Phase 1 — Preflight
+
+1. `git -C . rev-parse --show-toplevel` — not a git repo ⇒ AskUserQuestion:
+   run `git init` here, or abort. `TARGET` = the toplevel.
+2. `git status --porcelain` — dirty tree ⇒ warn (the scaffold adds many files;
+   a clean tree makes the diff reviewable) but proceed on confirmation.
+3. `python3 --version` — missing ⇒ abort with install instructions (every
+   enforcement hook is Python).
+4. **Stack detection** — test each profile's "Detection markers" section in
+   this explicit order (this list governs, not directory order), first match
+   wins:
+   `PLUGIN/generators/stack-profiles/nextjs-supabase.md`, `django.md`,
+   `spring.md`, `rails.md`, `go.md`, `playwright-taf.md`; no match ⇒
+   `generic-fallback.md`. Record the profile name and read its
+   "Variable defaults" table — these seed the interview.
+5. **Fresh vs mature**: mature if any of `TARGET/CLAUDE.md`,
+   `TARGET/.claude/`, `TARGET/.agentic/` already exists. Mode changes Phase 4
+   behavior (managed blocks, collision prompts) and the Phase 2 git-sync
+   default.
+6. Detect `{{DEFAULT_BRANCH}}`: `git symbolic-ref refs/remotes/origin/HEAD`
+   (fallback: `main` if it exists, else current branch).
+7. Journal `phase: "preflight"` + detection results.
+
+## Phase 2 — Interview (six AskUserQuestion screens)
+
+Every answer is pre-filled with the detected/journal default. The `--defaults`
+argument skips all screens and takes every default. `--presets a,b` presets
+screen 1. Record all answers under `journal.answers`.
+
+**Screen 1 — Role presets** (multi-select): `developer`, `qa`, `ba-po`,
+`architect`, `pm-delivery` — one JSON each under `PLUGIN/presets/roles/`.
+Union rules (per `PLUGIN/presets/README.md`): `templates`, `generated`, and
+`sdlc_skills` are set-unioned (shared IDs are identical strings —
+presets never fork content); `default_hitl` resolves strictest-wins
+(`strict > gated-autonomous > autonomous`); every orchestration style in the
+union installs, the pre-filled default style comes from the first preset
+listed, and `strict` HITL forces the `dispatcher` default.
+
+**Screen 2 — HITL dial**: `strict` / `gated-autonomous` / `autonomous` →
+`{{HITL_MODE}}`. Pre-fill from the preset union's strictest `default_hitl`.
+
+**Screen 3 — Autonomy matrix**: may agents run tests? commit? push? create
+tickets? (yes/recommend-only per capability — these fill the matrix in
+`policy/ai-policy`), plus `{{MAX_LOC}}`/`{{MAX_FILES}}` (defaults 250/10) and
+`{{ESCALATE_ON}}` (default `security,breaking-change,migration,spend`).
+
+**Screen 4 — Gates to enable** (each independently toggleable; all default
+on): precommit review gate, subagent output-contract gate, instruction-quality
+spawn gate, write-scope guard, human-gated command block, guarded write paths,
+migration notice (auto-off when `{{MIGRATIONS_DIR}}` is empty), session
+bootstrap. **Session git-sync sub-question (explicit opt-in — hand-off c)**:
+`auto-merge` (merge `origin/{{DEFAULT_BRANCH}}` at session start, clean tree
+only) vs `warn-only` (fetch + report how far behind). Default: `auto-merge`
+for fresh repos, **`warn-only` for mature repos**. Record as
+`answers.git_sync_mode`. A disabled gate is neither scaffolded nor wired into
+settings (see the Phase 4 settings-merge pruning rule).
+
+**Screen 5 — Stack confirm**: show the detected profile + its defaults for
+`{{MIGRATIONS_DIR}}`, `{{GATE_COMMANDS}}`, `{{MIGRATION_DIFF_COMMAND}}`,
+`{{ENV_CHECK_COMMANDS}}`, `{{APP_START_COMMAND}}`, `{{BASE_URL}}`,
+`{{TEST_FRAMEWORK}}`; ask for `{{HUMAN_GATED_COMMANDS}}` (always seeded with
+`git push origin {{DEFAULT_BRANCH}}`, **plus** any commands the detected
+profile's own "Variable defaults" table recommends adding — e.g.
+nextjs-supabase recommends `supabase db push --linked`; pre-fill the union,
+never just the generic default alone, so a generated agent's claim that a
+stack-specific operation is human-gated is actually true of the scaffolded
+`escalation-policy.md`), `{{GUARDED_WRITE_PATHS}}` (default
+empty; entries may carry a ` => <flow>` suffix naming the allowed flow),
+extra `{{SECRET_DENY_PATTERNS}}` beyond the baked-in `.env*` / `.auth/**` /
+`*token*.env`, and `{{STAGING_ENV_NAME}}`.
+
+**Screen 6 — Adapters**: `{{TICKET_ADAPTER}}` (ADO / Linear MCP / Jira /
+GitHub / GitLab / none), `{{TICKET_PREFIX}}`, `{{MR_ADAPTER}}` (`gh` / `glab`
+/ MCP / none — pre-fill `gh` when `gh auth status` succeeds and the remote is
+GitHub).
+
+Derived values (no screen): `{{PROJECT_NAME}}` = repo dir name (confirm on
+screen 5), `{{STACK_SUMMARY}}` = one paragraph from the profile + manifest,
+`{{ROLE_PRESETS_ACTIVE}}` = comma list from screen 1,
+`{{AGENTS_CANONICAL_DIR}}` = `.agentic/agents/`, `{{SCORECARD_PATH}}` =
+`docs/audits/instruction-scorecard.json`, `{{SCORE_THRESHOLD}}` = `95`,
+`{{OUTPUT_CONTRACT_SECTIONS}}` =
+`Summary,Why,Blocking,Non-blocking,Escalate to human`,
+`{{AGENTIC_OS_VERSION}}` as defined above.
+
+## Phase 3 — Dependencies
+
+1. Read `PLUGIN/manifest/dependencies.json` (`plugins` array: `name`,
+   `marketplace`, `source`, `min`, `optional`, `fallback_source`).
+2. Check `~/.claude/plugins/installed_plugins.json` for each plugin at ≥ `min`.
+3. For each missing/outdated **non-optional** plugin, register it in
+   `TARGET/.claude/settings.json` (create the file if absent) via deep-merge:
+   - `extraKnownMarketplaces.<marketplace>` ← its `source` object (use
+     `fallback_source` only if the primary is known to be unavailable);
+   - `enabledPlugins` ← append `"<name>@<marketplace>"` if absent.
+   **Unpinned-source guard**: if a dependency's `source` (or the fallback you
+   would use) contains the placeholder `OWNER/`, do **not** register it —
+   record it in `journal.follow_ups` as
+   `pending-source-pin: <name> (marketplace coordinate unpinned)` and warn the
+   user that the marketplace coordinate is unpinned and will be fixed by the
+   release process; never write a placeholder repo into their settings.
+4. Optional plugins (e.g. `ponytail`): offer, don't force.
+5. Announce: **newly registered plugins require a session restart**;
+   `/agentic-doctor` reports them as `pending-restart` until they appear in
+   `installed_plugins.json`.
+6. Record the union's `sdlc_skills` in the journal (informational —
+   they run from the `agentic-sdlc` plugin itself; nothing is copied).
+7. Journal `phase: "dependencies"`.
+
+## Phase 4 — Scaffold
+
+Render/copy every template ID in the preset union. Destination map (IDs from
+`PLUGIN/templates/VARIABLES.md` § Template IDs; sources under
+`PLUGIN/templates/`):
+
+| Template ID(s) | Source | Destination in TARGET |
+|---|---|---|
+| `hooks/precommit-review-gate` | `hooks/claude/precommit_review_gate.py` | `.claude/hooks/precommit_review_gate.py` (verbatim) |
+| `hooks/subagent-gate` | `hooks/claude/subagent_gate.py.tmpl` | `.claude/hooks/subagent_gate.py` |
+| `hooks/instruction-gate` | `hooks/claude/instruction_gate.py.tmpl` | `.claude/hooks/instruction_gate.py` |
+| `hooks/instruction-stale-notice` | `hooks/claude/instruction_stale_notice.py` | `.claude/hooks/instruction_stale_notice.py` (verbatim) |
+| `hooks/write-scope-guard` | `hooks/claude/write_scope_guard.py.tmpl` | `.claude/hooks/write_scope_guard.py` |
+| `hooks/session-bootstrap` | `hooks/claude/session_start_bootstrap.py.tmpl` | `.claude/hooks/session_start_bootstrap.py` |
+| `hooks/precompact-checkpoint` | `hooks/claude/precompact_checkpoint.py` | `.claude/hooks/precompact_checkpoint.py` (verbatim) |
+| `hooks/human-gated-commands` | `hooks/claude/human_gated_commands.py.tmpl` | `.claude/hooks/human_gated_commands.py` |
+| `hooks/guarded-write-paths` | `hooks/claude/guarded_write_paths.py.tmpl` | `.claude/hooks/guarded_write_paths.py` |
+| `hooks/migration-notice` | `hooks/claude/migration_notice.py.tmpl` | `.claude/hooks/migration_notice.py` — **skip when `{{MIGRATIONS_DIR}}` is empty** |
+| `hooks/settings-fragment` | `hooks/settings-fragment.json.tmpl` | deep-merged into `.claude/settings.json` (never copied as a file) |
+| `githooks/pre-commit` | `githooks/pre-commit` | `.githooks/pre-commit` (verbatim) |
+| `scripts/install-git-hooks` | `scripts/install-git-hooks.sh` | `scripts/install-git-hooks.sh` (verbatim) |
+| `governance/claude-section` | `governance/CLAUDE.section.md.tmpl` | managed block inside `CLAUDE.md` (repo root) |
+| `governance/agents` | `governance/AGENTS.md.tmpl` | `AGENTS.md` (repo root) |
+| `governance/patterns` | `governance/PATTERNS.md.tmpl` | `PATTERNS.md` (repo root) |
+| `governance/agent-registry` | `governance/agent-registry.md.tmpl` | `.agentic/guides/agent-registry.md` |
+| `policy/ai-policy`, `policy/escalation-policy`, `policy/safety-policy` | `policy/<name>.md.tmpl` | `.agentic/guides/policy/<name>.md` |
+| `guides/<name>` | `guides/standards/<name>.md` | `.agentic/guides/standards/<name>.md` (verbatim) |
+| `agents/<name>` | `agents/core/<name>.md.tmpl` or `agents/qa/<name>.md.tmpl` | `.agentic/agents/<name>.md` + two synthesized pointers (below) |
+| `commands/pipeline-orchestrator`, `commands/dispatch` | `commands/core/<name>.md.tmpl` | `.claude/commands/<name>.md` (commands are canonical there — the exception noted in `agent-registry.md.tmpl`) |
+| `sdlc/config` | `sdlc/config.json.tmpl` | `.agentic/agentic-sdlc/config.json` |
+| `sdlc/project` | `sdlc/project.md.tmpl` | `.agentic/guides/project.md` |
+
+Ordered steps:
+
+1. **Hooks.** Render/copy per the map. Two installer-side conditionals:
+   - `hooks/human-gated-commands` and `hooks/guarded-write-paths` are
+     scaffolded whenever `hooks/settings-fragment` is in the union even if no
+     preset lists them — the fragment wires
+     `python3 .claude/hooks/human_gated_commands.py` and
+     `.../guarded_write_paths.py`, and a wired-but-missing PreToolUse hook
+     script blocks every tool call (`python3 <missing>` exits 2). With empty
+     lists both hooks are safe no-ops.
+   - **Hand-off (c), git-sync opt-in**: when `answers.git_sync_mode` is
+     `warn-only`, after substituting `{{DEFAULT_BRANCH}}`/`{{ENV_CHECK_COMMANDS}}`
+     into `session_start_bootstrap.py`, replace this exact block inside
+     `git_sync_notes()`:
+
+     ```python
+         code, out = run_git("merge", "--no-edit", f"origin/{DEFAULT_BRANCH}")
+         if code == 0:
+             notes.append(f"[git-sync] git merge origin/{DEFAULT_BRANCH} (on branch `{branch}`) — ok")
+         else:
+             run_git("merge", "--abort")
+             notes.append(
+                 f"[git-sync] merge of origin/{DEFAULT_BRANCH} into `{branch}` FAILED (aborted): {out}"
+             )
+         return notes
+     ```
+
+     with:
+
+     ```python
+         code, out = run_git("rev-list", "--count", f"HEAD..origin/{DEFAULT_BRANCH}")
+         if code == 0 and out and out != "0":
+             notes.append(
+                 f"[git-sync] branch `{branch}` is {out} commit(s) behind origin/{DEFAULT_BRANCH} "
+                 "— auto-merge is off (warn-only); merge manually when ready."
+             )
+         return notes
+     ```
+
+     Then `python3 -m py_compile .claude/hooks/session_start_bootstrap.py` to
+     prove the patch applied cleanly. Journal `template:
+     "hooks/session-bootstrap"` either way.
+2. **Settings deep-merge.** Merge the rendered fragment into
+   `.claude/settings.json`: objects merge recursively; **arrays are
+   set-unions, append-if-absent** (never reorder or drop existing entries);
+   scalar conflicts keep the existing value and are reported. Add
+   interview-provided extra `{{SECRET_DENY_PATTERNS}}` as
+   `Read(<pattern>)` entries into `permissions.deny` (the three defaults are
+   already baked into the fragment). **Pruning rule**: drop any hook command
+   entry whose script file was not scaffolded (disabled gate, or
+   `migration_notice.py` skipped for empty `{{MIGRATIONS_DIR}}`). **Show the
+   user a unified diff of `.claude/settings.json` (old → merged) and get
+   confirmation BEFORE writing** — this is a hard mature-repo rule even on
+   fresh installs.
+3. **Git hooks** — only when `githooks/pre-commit` is in the preset union
+   (the ba-po and pm-delivery unions exclude the git layer; installing the
+   native hook there would reference an absent
+   `.claude/hooks/precommit_review_gate.py`). Copy `.githooks/pre-commit` +
+   `scripts/install-git-hooks.sh`,
+   then run `bash scripts/install-git-hooks.sh`. The script is the documented
+   chaining mechanism: a pre-existing foreign `pre-commit` (no `agentic-os:`
+   marker) is preserved as `pre-commit.local` and chained after the gate —
+   never overwritten. If it reports an existing `.local` conflict, surface
+   that to the user verbatim.
+4. **Governance.**
+   - `CLAUDE.md`: render `CLAUDE.section.md.tmpl` (it already carries the
+     `<!-- agentic-os:begin v{{AGENTIC_OS_VERSION}} -->` /
+     `<!-- agentic-os:end -->` markers). No `CLAUDE.md` ⇒ create it with the
+     block as its body. Existing `CLAUDE.md` ⇒ append the block at the end
+     (or replace an existing agentic-os block between markers); **never touch
+     content outside the markers**. Journal owner `managed` (the block is the
+     managed unit).
+   - `AGENTS.md`: absent ⇒ write the rendered file whole (owner `managed`).
+     Present ⇒ wrap the rendered content in the same begin/end markers and
+     append; content outside markers is untouched.
+   - `PATTERNS.md`: absent ⇒ write. Present ⇒ **collision prompt** (step 6).
+   - `agent-registry.md` → `.agentic/guides/agent-registry.md`, then apply
+     **hand-off (b), row pruning**: the template documents that "the installer
+     removes rows whose preset is not installed" — delete every row of the
+     orchestration matrix whose *owning asset* (agent contract or command
+     file) is not in the resolved union. Concretely: qa-preset rows
+     (`test-case-generator`, `test-automation-author`, `test-case-syncer`,
+     `test-failure-triage`, `work-item-creator`) go unless `qa` is installed;
+     the `dispatcher` row goes unless `agents/dispatcher` is in the union;
+     `security-reviewer` / `pr-pipeline-gate` rows go unless their agent IDs
+     are in the union; the `pipeline-orchestrator.md` / `dispatch.md` rows go
+     unless the matching command ID is in the union. Never prune the
+     `blind-code-reviewer` or `instruction-auditor` rows when their agents
+     install.
+5. **Policies, guides, sdlc adapters.** Render/copy per the map.
+   **Existing-guide rule (hard)**: a destination guide file that already
+   exists is **skipped** and journaled with `owner: "user"` and the *current*
+   file's sha256 — the upgrade skill then knows never to touch it.
+   **Hand-off (a)**: when the `qa` preset is in the union, create an empty
+   ledger at `docs/flaky-ledger.md` if absent (it is referenced by
+   `.agentic/guides/standards/flaky-protocol.md`) with just:
+
+   ```markdown
+   # Flaky-test ledger
+
+   | Spec | Work item | First seen | Root cause | Fix / re-enable condition | Status |
+   |---|---|---|---|---|---|
+   ```
+6. **Collision prompt (all other name collisions).** Any destination file that
+   exists, is not journaled, and is not covered by the managed-block or
+   existing-guide rules ⇒ AskUserQuestion per file:
+   **skip (default)** → journal `owner: "user"`; **rename** → write ours as
+   `ao-<name>` alongside (journal the `ao-` path, owner `managed`);
+   **overwrite** → journal owner `managed`. Never overwrite silently.
+7. **Templated-agent pointers.** For every `agents/<name>` in the union, after
+   rendering the canonical contract to `.agentic/agents/<name>.md`, synthesize
+   the two thin pointers exactly per the pointer formats in
+   `PLUGIN/generators/agent-generator.md` (§ "2. Claude agent pointer" and
+   § "3. Command pointer"): `.claude/agents/<name>.md` (frontmatter `name`,
+   `description`, `tools` — `Read, Grep, Glob` for read-only gates, plus
+   `Edit, Write, Bash` for writers — `model: inherit`; body points at the
+   canonical contract) and `.claude/commands/<name>.md` (arguments + read-first
+   list + write scope + ≤8-bullet digest). Pointers are thin — never restate
+   the rule set. Owner `managed`, `template: "derived"`.
+8. **Seed the instruction-quality scorecard** — ALWAYS runs when
+   `hooks/instruction-gate` is in the union, regardless of whether Phase 5 has
+   anything to generate (a qa-only union has `generated: []` but still spawns
+   governed agents). Rationale: `instruction_gate.py` blocks the spawn of any
+   agent whose checked files (its canonical contract, its
+   `.claude/agents/<name>.md` pointer, `CLAUDE.md`/`AGENTS.md`/`PATTERNS.md`,
+   and every `.agentic/guides/*.md` the contract cites) are absent from the
+   scorecard — without seeding, a fresh install spawn-blocks the entire
+   fleet. Create `docs/audits/instruction-scorecard.json` and seed one entry
+   for **each** of: every canonical contract landed in
+   `{{AGENTS_CANONICAL_DIR}}`, every `.claude/agents/<name>.md` pointer,
+   `CLAUDE.md`, `AGENTS.md`, `PATTERNS.md`,
+   `.agentic/guides/agent-registry.md`, and every scaffolded
+   `.agentic/guides/**/*.md` file. Entry shape:
+
+   ```json
+   {"content_sha256": "<sha256 of the RENDERED file on disk>",
+    "composite_score": 100,
+    "source": "template-inherited"}
+   ```
+
+   Template content is pre-audited in the product's own self-scorecard
+   (`docs/audits/self-scorecard.json`, PLAN.md decision 11), so inheriting a
+   passing score is sound; any local edit makes the entry stale by hash, the
+   stale-notice hook flags it, and the gate then blocks until the file is
+   re-graded via the instruction-auditor. Phase 5 step 5 later **overwrites**
+   the entries of generated files with their real audited scores.
+9. Journal every written file (`sha256`, `template`, `owner`) and set
+   `phase: "scaffold"`.
+
+## Phase 5 — Generate (one subagent per gen/* slot)
+
+Skip entirely when the union's `generated` set is empty (qa/ba-po/pm-delivery
+only). Otherwise:
+
+1. **Applicability filter.** Keep only slots the detected stack profile lists
+   under "Generated-agent slots that apply" (e.g. `gen/i18n-agent` needs an
+   i18n library; `generic-fallback.md` suppresses writer slots entirely —
+   journal each skipped slot in `follow_ups`).
+2. **Slot definitions** (installer-owned; the generator narrows them to real
+   directories, never widens):
+
+   | Slot | Kind | Purpose | write_scope seed | forbidden seed |
+   |---|---|---|---|---|
+   | `gen/schema-architect` | writer | migrations/schema + access-control DDL | `{{MIGRATIONS_DIR}}**` | app code |
+   | `gen/api-author` | writer | server-side mutation/endpoint idiom | API/server dirs per stack profile | `{{MIGRATIONS_DIR}}**`, UI dirs |
+   | `gen/component-generator` | writer | UI components per design conventions | component dirs per stack profile | `{{MIGRATIONS_DIR}}**`, API dirs |
+   | `gen/migration-validator` | read-only gate | deterministic PASS/FAIL migration review | `[]` (readonly) | `**` |
+   | `gen/i18n-agent` | writer | locale/message catalogs in lockstep | locale/message dirs | everything else |
+   | `gen/stack-guides` | writer (guides) | stack coding guides cited by the agents | `.agentic/guides/{data,api,development,architecture}/` | agents, hooks, app code |
+
+3. **Spawn** (parallel, one subagent per slot). Prompt = the full text of
+   `PLUGIN/generators/agent-generator.md` (for `gen/stack-guides`:
+   `PLUGIN/generators/guide-generator.md`) with its `{{VAR}}` placeholders
+   substituted, then append the input blocks it defines: (1) the matching
+   `PLUGIN/generators/stack-profiles/<profile>.md` content, (2) the slot
+   definition row above, (3) the exemplar —
+   `PLUGIN/generators/exemplars/schema-architect.md` for writer slots against
+   a DB/API stack, `PLUGIN/generators/exemplars/test-automation-author.md` for
+   test-authoring slots, (4) the rubric **as scaffolded in Phase 4** at
+   `.agentic/guides/standards/instruction-quality-rubric.md`. Run
+   `gen/stack-guides` **first** (generated agent contracts cite its guides),
+   then the agent slots in parallel.
+4. **Audit loop** (per generated contract): spawn an auditor subagent whose
+   prompt is the scaffolded `.agentic/agents/instruction-auditor.md` contract,
+   target = the generated canonical contract. Grade against the rubric.
+   - `composite_score ≥ 95` → accept.
+   - Below → regenerate with the auditor's findings appended to the generator
+     prompt, **at most 2 retries**.
+   - Still below after retries → **install anyway** (PLAN.md decision 6):
+     record the file in `docs/audits/instruction-scorecard.json` with
+     `"gate_threshold": <achieved score>` so
+     `.claude/hooks/instruction_gate.py` gates at the achieved level instead
+     of hard-blocking; print a visible warning; append a follow-up entry to
+     `journal.follow_ups` ("regenerate <name> to ≥95").
+5. **Scorecard update.** The scorecard file already exists (Phase 4 step 8
+   seeded every templated asset). Here, **overwrite/add entries for generated
+   files only**, with their real audited results, in the shape
+   `instruction_gate.py` reads:
+   `{"files": {"<rel path>": {"content_sha256": "<sha256>", "composite_score": <audited n>, "gate_threshold": <n, only when relaxed per decision 6>}}}`
+   — one entry per generated canonical contract, its
+   `.claude/agents/<name>.md` pointer, and every generated
+   `.agentic/guides/**/*.md` guide. Never touch the `template-inherited`
+   entries for files this phase did not produce.
+6. Journal every generated file with `owner: "generated"`, `template:
+   "gen/<slot>"`; registry rows the generators appended stay in
+   `.agentic/guides/agent-registry.md`. Set `phase: "generate"`.
+
+## Phase 6 — Verify
+
+Invoke the `agentic-doctor` skill (same plugin). It writes
+`.agentic/agentic-os/doctor.json`. Treat any `failures` entry as work to fix
+before declaring the install done; `pending_restart` entries are expected on
+first install (Phase 3 notice).
+
+## Phase 7 — Final report
+
+Set `phase: "done"`, stamp `agentic_os_version`, and report: presets
+installed, HITL mode, files written (managed/user/generated counts), relaxed
+generated agents (if any), pending-restart plugins, and the doctor verdict.
+Remind the user: review the diff, then commit it themselves; run
+`bash scripts/install-git-hooks.sh` once per fresh clone.

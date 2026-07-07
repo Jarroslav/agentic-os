@@ -1,0 +1,53 @@
+{
+  "skill_name": "feature-verification",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Verify a branch that changed src/components/LoginForm.tsx and already has Playwright configured.",
+      "expected_output": "Detects a user-visible UI surface change, resolves Playwright, derives or generates focused verification, captures browser evidence including screenshot, console errors, network failures, and writes per-feature evidence.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "detects-ui-change",
+          "description": "The response identifies the changed component as requiring functional verification."
+        },
+        {
+          "name": "writes-evidence",
+          "description": "The response writes verification evidence with screenshot, assertions, and result."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Verify a branch that only changed README.md and docs/architecture.md.",
+      "expected_output": "Skips browser verification gracefully, writes evidence with applies false and reason no user-visible surface in diff, and returns verified true.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "skip-non-ui",
+          "description": "The response recognizes that documentation-only changes do not require browser verification."
+        },
+        {
+          "name": "skip-evidence",
+          "description": "The response still writes a verification evidence receipt for the skip."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Verify a branch that changed app/login/page.tsx but the project has no Playwright, Cypress, Storybook test runner, or custom verification command.",
+      "expected_output": "Reports BLOCKED because UI changed without configured browser verification tooling, writes remediation in verification-evidence.json, and does not mark the feature verified.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "blocked-unconfigured-tool",
+          "description": "The response blocks user-visible changes when no verification tool is configured."
+        },
+        {
+          "name": "remediation",
+          "description": "The response tells the user to install Playwright or configure feature_verification.command."
+        }
+      ]
+    }
+  ]
+}

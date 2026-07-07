@@ -1,0 +1,17 @@
+{
+  "skill_name": "sdlc-status",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Show agentic-sdlc run status and resume the interrupted run if I confirm.",
+      "expected_output": "Lists docs/superpowers/runs entries and asks for confirmation before invoking sdlc-pipeline resume.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "read-only-default",
+          "description": "The response inspects runs without modifying them unless the user explicitly confirms resume."
+        }
+      ]
+    }
+  ]
+}

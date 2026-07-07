@@ -1,0 +1,7 @@
+# CLAUDE.md
+
+**Purpose**: Claude Code entrypoint for `[PROJECT_NAME]`.
+
+<!-- agentic-init:guide-imports start -->
+@AGENTS.md
+<!-- agentic-init:guide-imports end -->

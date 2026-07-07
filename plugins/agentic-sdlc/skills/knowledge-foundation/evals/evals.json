@@ -1,0 +1,237 @@
+{
+  "skill_name": "knowledge-foundation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Init this project for AI-assisted development.",
+      "expected_output": "Runs read-only detection, proposes a guide-generation plan, waits for explicit approval before writing, generates .agentic/guides content, wires the AI entrypoint, and validates the result.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "detects-before-writing",
+          "description": "The response performs read-only detection and planning before any writes."
+        },
+        {
+          "name": "hard-approval-gate",
+          "description": "The response requires explicit approval before generating guide files."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run knowledge foundation in a repo that already has .agentic/guides and AGENTS.md.",
+      "expected_output": "Detects existing guides and entrypoint wiring, proposes updates rather than duplicating parallel guide trees, and preserves .agentic/guides as the source of truth.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "handles-existing-guides",
+          "description": "The response accounts for existing .agentic/guides."
+        },
+        {
+          "name": "single-source-of-truth",
+          "description": "The response does not create a competing guide tree outside .agentic/guides."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Initialize knowledge foundation in an empty repo with no manifests and no source files.",
+      "expected_output": "Halts after detection because project shape confidence is insufficient or the repo is empty, and asks for required project context instead of generating generic guides.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "halts-empty-repo",
+          "description": "The response does not generate generic guides for an empty repository."
+        },
+        {
+          "name": "asks-for-context",
+          "description": "The response explains what context is needed to continue."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Run knowledge foundation for a monorepo where the host exposes superpowers:brainstorming and superpowers:dispatching-parallel-agents.",
+      "expected_output": "Uses superpowers:brainstorming to drive the Phase 2 planning conversation, waits for explicit approval before writing, uses superpowers:dispatching-parallel-agents for parallel monorepo guide generation, and Never auto-install superpowers or any other tooling.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "uses-brainstorming-when-available",
+          "description": "The response invokes superpowers:brainstorming when the host exposes it instead of presenting only the inline fallback plan."
+        },
+        {
+          "name": "uses-parallel-dispatch-when-available",
+          "description": "The response invokes superpowers:dispatching-parallel-agents for monorepo guide generation when available."
+        },
+        {
+          "name": "does-not-install-superpowers",
+          "description": "The response states or follows the rule: Never auto-install superpowers; fall back when they are unavailable."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Run knowledge foundation in a repo that already contains AGENTS.md, CLAUDE.md, .claude, .codex, and .agentic/guides.",
+      "expected_output": "Calls or consumes knowledge-auditor before writing, summarizes the existing AI guidance surfaces, proposes a merge or update plan, and waits for approval before modifying files.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "uses-knowledge-auditor",
+          "description": "The response calls or consumes knowledge-auditor before generating or editing guides."
+        },
+        {
+          "name": "audits-existing-ai-guidance",
+          "description": "The response accounts for AGENTS.md, CLAUDE.md, .claude, .codex, and .agentic/guides before writing."
+        },
+        {
+          "name": "approval-before-write",
+          "description": "The response does not write until the user approves the proposed guide update plan."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Run knowledge foundation in a repo that has both AGENTS.md and CLAUDE.md with existing assistant instructions plus .codex and .claude directories.",
+      "expected_output": "Consumes the knowledge audit, identifies all assistant surfaces, treats AGENTS.md as the primary generated entrypoint when approved, renders CLAUDE.md as a minimal @AGENTS.md shim, and gates each target diff independently before writing.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "audits-multiple-entrypoints",
+          "description": "The response accounts for both AGENTS.md and CLAUDE.md plus tool-specific directories before planning writes."
+        },
+        {
+          "name": "resolves-authority-before-write",
+          "description": "The response asks the user or presents per-target recommendations when multiple assistant entrypoints may be authoritative."
+        },
+        {
+          "name": "preserves-human-content",
+          "description": "The response keeps content outside managed regions unchanged unless explicitly approved, except for an approved CLAUDE.md shim replacement."
+        },
+        {
+          "name": "claude-shim",
+          "description": "When AGENTS.md is primary, CLAUDE.md contains an @AGENTS.md import and does not duplicate generated guide tables, commands, or task classifiers."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Run knowledge foundation in a repo whose AGENTS.md contains stale agentic-init managed blocks that point to deleted guide paths.",
+      "expected_output": "Uses the audit recommendation to mark stale managed regions for replace or merge, shows a per-file diff, requires approval before updating managed blocks, and does not touch unrelated AGENTS.md content.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "detects-stale-managed-blocks",
+          "description": "The response recognizes stale managed-region content and unresolved guide paths from the audit."
+        },
+        {
+          "name": "managed-region-only-update",
+          "description": "The response confines default entrypoint changes to managed regions."
+        },
+        {
+          "name": "diff-gated-replacement",
+          "description": "The response shows a diff and waits for explicit approval before replacing stale managed blocks."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Run knowledge foundation in a repo where AGENTS.md says to run npm test, CLAUDE.md says tests are forbidden, and CI runs make test.",
+      "expected_output": "Treats the assistant commands as conflicting audit evidence, halts or asks the user to choose the authoritative test command before generating quality gates or entrypoint commands, and avoids encoding a confident command.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "detects-conflicting-commands",
+          "description": "The response identifies incompatible assistant and CI command guidance before planning writes."
+        },
+        {
+          "name": "asks-or-halts-on-conflict",
+          "description": "The response asks the user or halts instead of resolving the conflict silently."
+        },
+        {
+          "name": "does-not-invent-command",
+          "description": "The response does not generate quality gate or entrypoint commands from conflicting evidence without confirmation."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Run knowledge foundation in a repo with a generic README, no docs directory, no tests, and only weak evidence for architecture and workflow guides.",
+      "expected_output": "Rates the weak documentation through the audit, asks for authoritative context or skips unsupported guide categories, and does not generate confident project-specific guidance without concrete file evidence and approval.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "rates-weak-docs",
+          "description": "The response treats generic or sparse docs as weak audit evidence."
+        },
+        {
+          "name": "skips-or-asks-on-weak-evidence",
+          "description": "The response asks for context or skips categories with weak or missing evidence."
+        },
+        {
+          "name": "requires-file-line-evidence",
+          "description": "The response does not plan confident guide generation without concrete repository evidence."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Run knowledge foundation in a repo with enough evidence for concise guides but not enough content to fill 200 lines per file.",
+      "expected_output": "Generates concise guides without padding, does not target a minimum line count, and fails validation if any generated guide contains Review reminder, Foundation reminder, Operating reminder, repeated near-identical filler lines, or placeholder rows.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "no-line-count-minimum",
+          "description": "The response treats guide and entrypoint line counts as hard maximums only, never as minimums."
+        },
+        {
+          "name": "rejects-reminder-padding",
+          "description": "The response rejects generated guides containing reminder/filler padding such as Review reminder, Foundation reminder, or Operating reminder lines."
+        },
+        {
+          "name": "rejects-repeated-filler",
+          "description": "The response detects and rejects repeated near-identical lines that exist only to satisfy a line-count target."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Run knowledge foundation for a project that uses Jira, GitLab merge requests, branch and commit conventions, and Makefile quality gates.",
+      "expected_output": "Writes project.md using the strict Project Context schema with project identity, work item tracker, ticket adapter, source control/review context, and a dedicated MR Adapter section; routes branch/commit/merge conventions to git-workflow.md, exact commands to quality-gates.md, and task routing to the entrypoint.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "project-context-schema",
+          "description": "The generated project.md contains only Project Identity, Work Item Tracker, Ticket Adapter, Source Control And Review, and MR Adapter sections."
+        },
+        {
+          "name": "drift-redistributed",
+          "description": "Git conventions, exact quality commands, task routing, and package ownership are not added to project.md and are written to their owning guides instead."
+        },
+        {
+          "name": "adapter-config-extractable",
+          "description": "The project.md schema exposes ticket adapter configuration and the dedicated MR Adapter section for product-owner, requirements-intake, mr-creator, and babysit-mr."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Run knowledge foundation in a repo where AGENTS.md is the selected target and the repo also has CLAUDE.md plus an existing .agentic/runs/main.json file.",
+      "expected_output": "Generates AGENTS.md as the canonical managed entrypoint, rewrites CLAUDE.md only as a minimal @AGENTS.md shim after showing the CLAUDE.md diff and getting approval, adds .agentic/runs/ to .gitignore, and ensures the run journal is ignored or removed if untracked.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "agents-primary",
+          "description": "The generated guide imports, task classifier, critical rules, and command references live in AGENTS.md."
+        },
+        {
+          "name": "claude-shim-only",
+          "description": "CLAUDE.md is reduced to a short purpose line and managed @AGENTS.md import, without duplicated generated guidance."
+        },
+        {
+          "name": "runs-ignored",
+          "description": "The workflow adds .agentic/runs/ to .gitignore and does not leave an untracked .agentic/runs/<branch>.json to commit."
+        }
+      ]
+    }
+  ]
+}

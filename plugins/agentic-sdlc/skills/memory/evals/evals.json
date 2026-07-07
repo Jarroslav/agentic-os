@@ -1,0 +1,53 @@
+{
+  "skill_name": "memory",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Remember that this project uses pnpm for all Node commands.",
+      "expected_output": "Writes a durable memory entry under .agents/memory/<role>/ with required frontmatter, updates MEMORY.md index, and uses the project/reference type as appropriate.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "writes-curated-entry",
+          "description": "The response creates or updates a curated memory entry with required frontmatter."
+        },
+        {
+          "name": "updates-index",
+          "description": "The response updates MEMORY.md without duplicate entries."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "What did you learn yesterday?",
+      "expected_output": "Reads the relevant daily log under .agents/memory/<role>/daily and summarizes the entries, handling a missing log gracefully.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "reads-daily-log",
+          "description": "The response looks in the daily memory log for the requested date."
+        },
+        {
+          "name": "graceful-missing-log",
+          "description": "The response handles absent memory files without pretending entries exist."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Save this text to a file named notes.md.",
+      "expected_output": "Does not treat a generic file-save request as persistent agent memory unless the user asks to remember or log it.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "distinguishes-file-save",
+          "description": "The response does not write to .agents/memory for a generic file-save request."
+        },
+        {
+          "name": "respects-requested-path",
+          "description": "The response handles the requested notes.md output path instead."
+        }
+      ]
+    }
+  ]
+}

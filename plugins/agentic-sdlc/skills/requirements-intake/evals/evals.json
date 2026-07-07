@@ -1,0 +1,93 @@
+{
+  "skill_name": "requirements-intake",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Normalize this request for a run: users need to export filtered invoices as CSV from the billing screen.",
+      "expected_output": "Writes requirements.md with source free-form, original input, goal, acceptance criteria only if provided, context, and open questions for missing details.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "free-form-funnel",
+          "description": "The response treats the input as free-form requirements."
+        },
+        {
+          "name": "no-invented-criteria",
+          "description": "The response does not invent acceptance criteria not present in the request."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use ticket PROJ-12345 as the requirements source for this SDLC run.",
+      "expected_output": "Attempts ticket-adapter resolution from .agentic/guides, writes ticket-unresolved with an open question if no adapter is configured, and does not fail the whole intake.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "adapter-driven-ticket",
+          "description": "The response resolves tickets only through the configured project adapter."
+        },
+        {
+          "name": "graceful-unresolved-ticket",
+          "description": "The response records ticket-unresolved and an open question if adapter configuration is missing."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add it.",
+      "expected_output": "Writes a requirements document with the vague original input preserved and open questions rather than pretending the goal is clear.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "ambiguous-input-preserved",
+          "description": "The response captures the vague input verbatim."
+        },
+        {
+          "name": "open-questions",
+          "description": "The response lists ambiguity under Open questions."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Start an SDLC run from this task: add CSV export to the billing table. There is no ticket.",
+      "expected_output": "Creates or updates a local work item under docs/superpowers/work-items, writes a run-local work-item.md mirror and work-item-events.jsonl, sets requirements Source or Work Item to the local work item path, and continues without asking for an external ticket.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "free-form-local-work-item",
+          "description": "The response creates or links a local work item for free-form input without a ticket."
+        },
+        {
+          "name": "run-local-mirror",
+          "description": "The response writes or describes the run-local work-item.md mirror and work-item-events.jsonl."
+        },
+        {
+          "name": "missing-ticket-not-blocking",
+          "description": "The response does not treat the absence of an external ticket as a blocker."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Use docs/superpowers/work-items/billing-csv-export.md as the local-only work item; after MR creation, link https://git.example.com/app/merge_requests/42 back to the work item.",
+      "expected_output": "Uses the local work item path as the source of truth, updates or preserves the run-local mirror, and records the MR URL as a linked artifact/history event with work_item.linked_artifact even though no external ticket exists.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "local-only-work-item-source",
+          "description": "The response accepts an existing docs/superpowers/work-items path as the work item source."
+        },
+        {
+          "name": "mr-linked-to-local-history",
+          "description": "The response records the MR URL in local work-item history and event metadata."
+        },
+        {
+          "name": "external-ticket-optional",
+          "description": "The response keeps the workflow valid when the local work item has no external ticket."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "skill_name": "complexity-scoring",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Score this task: fix a typo in one button label in the settings page.",
+      "expected_output": "Dispatches the complexity-assessor only when invoked by the pipeline and returns normalized score, six-part breakdown, routing, and rationale. Low scores route to writing-plans.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "normalized-output",
+          "description": "The response returns score, breakdown, routing, and rationale."
+        },
+        {
+          "name": "low-score-routing",
+          "description": "The response routes simple work to writing-plans."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Score this task: integrate a new external identity provider across backend, UI, configuration, and deployment.",
+      "expected_output": "Uses the complexity-assessor and returns a higher score with routing to brainstorming due to integration scope and risk.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "risk-reflected",
+          "description": "The response reflects provider integration and cross-system risk in the score."
+        },
+        {
+          "name": "brainstorming-route",
+          "description": "The response routes medium or high complexity work through brainstorming."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Score this task: rewrite the entire authentication, authorization, billing, and deployment stack from scratch.",
+      "expected_output": "Returns split-required or clearly halts for decomposition when the assessor flags work too large for one run.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "split-required",
+          "description": "The response identifies the task as needing decomposition."
+        },
+        {
+          "name": "does-not-downplay",
+          "description": "The response does not route a full-system rewrite as a normal small or medium task."
+        }
+      ]
+    }
+  ]
+}

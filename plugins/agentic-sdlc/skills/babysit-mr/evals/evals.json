@@ -1,0 +1,53 @@
+{
+  "skill_name": "babysit-mr",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Babysit MR !99 until it merges.",
+      "expected_output": "Parses MR !99, detects platform from context, verifies CLI authentication, then loops checking MR state, CI, unresolved discussions, rebase needs, and conflicts until merged, closed, stopped, or safety limit reached.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "parses-mr",
+          "description": "The response identifies MR !99 as the target."
+        },
+        {
+          "name": "monitor-loop",
+          "description": "The response follows the monitoring loop for state, CI, discussions, and conflicts."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Watch this merge request. CI is failing on lint.",
+      "expected_output": "Fetches CI failure details, classifies lint/style/type errors, makes a minimal fix, commits with ticket prefix inferred from recent history, pushes, and resumes monitoring.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "ci-failure-handling",
+          "description": "The response fetches and classifies CI failure details."
+        },
+        {
+          "name": "minimal-fix-and-push",
+          "description": "The response fixes only the relevant issue, commits, pushes, and resumes watching."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Keep an eye on MR !77, but it is already merged.",
+      "expected_output": "Detects the merged terminal state, prints a summary, and exits without continuing the watch loop.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "terminal-merged-state",
+          "description": "The response stops when the MR is already merged."
+        },
+        {
+          "name": "no-extra-loop",
+          "description": "The response does not sleep or continue monitoring a terminal MR."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+name: ci
+
+# Gates every pull request into main. Branch protection requires this check to
+# pass before merge, so a red run blocks the PR.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Hook unit tests (t0)
+        run: |
+          bash tests/t0/run.sh
+          bash tests/t0/run-output-contract.sh
+
+      - name: Acceptance matrix (T1–T7)
+        run: bash tests/run-matrix.sh
+
+      - name: Validate JSON manifests & presets
+        run: |
+          python3 - <<'PY'
+          import json, glob
+          files = [
+              ".claude-plugin/marketplace.json",
+              "plugins/agentic-os/.claude-plugin/plugin.json",
+              "plugins/agentic-os/manifest/dependencies.json",
+          ] + glob.glob("plugins/agentic-os/presets/roles/*.json")
+          for f in files:
+              json.load(open(f))
+              print("ok", f)
+          PY

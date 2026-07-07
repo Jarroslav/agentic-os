@@ -1,0 +1,43 @@
+{
+  "name": "agentic-sdlc",
+  "version": "0.4.4",
+  "description": "Consolidated SDLC Factory for coding agents: knowledge foundation, story drafting, requirements -> spec -> plan -> QA, MR/PR creation and watch, knowledge harvester, and HTML report generation.",
+  "author": {
+    "name": "agentic-os"
+  },
+  "homepage": "https://github.com/Jarroslav/agentic-os",
+  "repository": "https://github.com/Jarroslav/agentic-os",
+  "license": "Apache-2.0",
+  "keywords": [
+    "sdlc",
+    "tdd",
+    "orchestration",
+    "knowledge-foundation",
+    "story",
+    "mr",
+    "report",
+    "factory"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SDLC Factory",
+    "shortDescription": "Consolidated SDLC workflow orchestration for Codex",
+    "longDescription": "Runs SDLC workflows from knowledge foundation and story drafting through implementation, QA, MR/PR creation/watch, knowledge harvester, and HTML reporting. Includes the package-level sdlc.html workflow view.",
+    "developerName": "agentic-os",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Build the SDLC knowledge foundation for this repository",
+      "Draft a product story with the product-owner skill",
+      "Start SDLC for this task with the sdlc-start skill",
+      "Run SDLC autonomously with the sdlc-autonomous skill",
+      "Create an MR with the mr-creator skill"
+    ],
+    "brandColor": "#2563EB",
+    "screenshots": []
+  }
+}
