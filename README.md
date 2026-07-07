@@ -36,7 +36,7 @@ This repo is a Claude Code **marketplace** hosting two plugins:
 
 ## Install
 
-From a marketplace (once this repo is published):
+From this marketplace:
 
 ```
 /plugin marketplace add Jarroslav/agentic-os
@@ -73,12 +73,56 @@ leaves the working tree for you to review and commit. Then:
 
 ## Try it in two minutes (throwaway repo)
 
+Nothing here touches a real project — build a disposable repo and watch the
+whole install cycle end-to-end:
+
 ```bash
 mkdir /tmp/try-agentic && cd /tmp/try-agentic && git init
 printf '{"name":"try","dependencies":{"next":"15.0.0"}}' > package.json
-# open Claude Code here, then:
-#   /agentic-init --defaults
-#   /agentic-doctor
+```
+
+Open Claude Code in that directory (after the marketplace/plugin install
+steps above and a session restart), then run:
+
+```
+/agentic-init --defaults
+```
+
+What happens, in order:
+
+1. **Preflight** — detects this is a git repo, detects the `next` dependency
+   and picks the `nextjs-supabase` stack profile (falling back to
+   `generic-fallback` if nothing matches).
+2. **Interview** — with `--defaults`, all six screens (role preset, HITL dial,
+   autonomy matrix, gates, stack confirm, ticket/MR adapter) are accepted at
+   their detected defaults instead of prompted.
+3. **Dependency check** — verifies every non-optional dependency
+   (`agentic-sdlc`, `superpowers`) is registered; prints a pending-restart
+   notice for any that aren't.
+4. **Scaffold** — writes `.agentic/agents/`, `.agentic/guides/`,
+   `.claude/hooks/`, `.githooks/pre-commit`; always writes `CLAUDE.md` as a
+   marker-delimited block, and writes `AGENTS.md` whole on a fresh repo like
+   this one (it only becomes a marker-delimited block when the file already
+   exists). Nothing is committed — it's your working tree to review.
+5. **Generate** — spawns per-slot subagents for the generated set (the union
+   across every selected role preset): writer contracts, any applicable
+   read-only gate like `migration-validator`, and stack guides — each
+   independently audited against the instruction-quality rubric before
+   being armed in the scorecard.
+
+Then:
+
+```
+/agentic-doctor
+```
+
+runs all 7 checks (file manifest vs. install journal, hook compilation,
+canned-event dry-runs of each installed hook, a 3-part HITL smoke test,
+settings registration, git hook + dependencies, and scorecard
+coverage/thresholds) and writes the result to
+`.agentic/agentic-os/doctor.json`.
+
+```bash
 git status         # inspect exactly what was scaffolded; nothing was committed
 ```
 
