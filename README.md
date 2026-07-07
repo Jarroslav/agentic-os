@@ -5,10 +5,25 @@
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-5A2EBB)](https://github.com/Jarroslav/agentic-os)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**A portable, governed multi-agent architecture you install into any repo — new or mature — in one interview.**
+**A governed, portable engineering platform for coding agents — evidence-grounded repository discovery, generated and audited agent contracts, and hard enforcement gates, installed into any repo in one interview.**
 
-`agentic-os` packages a battle-tested agentic SDLC layer as a Claude Code plugin.
-One command interviews you (role, autonomy level, stack) and scaffolds a coherent
+## Why this exists
+
+Left alone, multi-agent coding fails in a few specific, recurring ways: an
+agent's write scope silently creeps into files it wasn't asked to touch; an
+agent reviewing its own work rationalizes away the gaps it should have
+caught; "autonomous mode" is a blunt on/off switch instead of a resolution
+strategy sized to each decision's actual risk; and stack facts get re-guessed
+from scratch every session, with nothing stopping a Postgres-flavored rule
+from leaking into a MongoDB agent's contract. `agentic-os` closes each of
+those with a mechanism that's enforced, not just requested in a prompt — see
+[`docs/PRINCIPLES.md`](docs/PRINCIPLES.md) for what each one does and why a
+plain agent session doesn't already have it.
+
+## What it is
+
+`agentic-os` packages that governance layer as an installable system. One
+command interviews you (role, autonomy level, stack) and scaffolds a coherent
 system into your project: canonical agent contracts, enforcement hooks (blind
 pre-commit review, write-scope guard, instruction-quality spawn gate), a
 human-in-the-loop escalation ladder, and — where it fits your stack — generated
@@ -22,6 +37,11 @@ migration-managed and a schemaless non-curated backend — see
 uses the same discovery mechanism but is earlier in its own verification
 cycle. It is also role-agnostic
 (developer, QA, BA/PO, architect, delivery).
+
+Today it's delivered as a Claude Code (and Codex-compatible) plugin — that's
+the install mechanism, not the architectural boundary: the scaffolded
+contracts are harness-neutral by design (thin per-host pointer files over a
+canonical, host-independent body).
 
 This repo is a Claude Code **marketplace** hosting two plugins:
 
@@ -243,8 +263,12 @@ via `scripts/setup-github.sh`).
 
 ## Docs
 
+- Engineering principles — the ideas behind the enforcement mechanisms, and why a plain agent session doesn't have them: [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md)
 - Upgrade flow & version notes: [`plugins/agentic-os/docs/UPGRADING.md`](plugins/agentic-os/docs/UPGRADING.md)
 - GitHub protection & publish: [`docs/GITHUB-SETUP.md`](docs/GITHUB-SETUP.md)
 - Preset composition rules: [`plugins/agentic-os/presets/README.md`](plugins/agentic-os/presets/README.md)
+- Roadmap: [`ROADMAP.md`](ROADMAP.md)
+- Security policy: [`SECURITY.md`](SECURITY.md)
+- Code of conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 
 License: Apache-2.0.

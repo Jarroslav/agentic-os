@@ -15,7 +15,8 @@ A preset (`roles/<name>.json`) is a **shopping list of IDs, never content**:
 ```
 
 Five presets ship: `developer`, `qa`, `ba-po`, `architect`, `pm-delivery`
-(see `docs/PLAN.md` § Role presets for what each targets).
+(see the README's [Role presets](../../../README.md#role-presets) table for
+what each targets).
 
 ## How presets compose
 
@@ -50,9 +51,11 @@ a preset can therefore never fork an asset.
 Pick one preset per role present on the team and pass them all:
 `/agentic-init --presets developer,qa`. Because composition is a pure union
 of IDs, adding a preset later is safe and idempotent — a re-run scaffolds
-only the IDs not already journaled, and never rewrites user-owned files
-(see the mature-repo rules in `docs/DESIGN.md`). `{{ROLE_PRESETS_ACTIVE}}`
-records the installed set in the scaffolded governance docs.
+only the IDs not already journaled, and never rewrites user-owned files (see
+the mature-repo handling described in the README's
+[What gets scaffolded](../../../README.md#what-gets-scaffolded) section and
+`skills/agentic-init/SKILL.md` Phase 4). `{{ROLE_PRESETS_ACTIVE}}` records
+the installed set in the scaffolded governance docs.
 
 ## Validation
 
