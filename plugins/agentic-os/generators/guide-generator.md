@@ -14,11 +14,18 @@ generated agents cite. You do not write agent contracts, hooks, or code.
 
 ## Inputs (appended below this prompt by the installer)
 
-1. **Stack profile facts** — the relevant `generators/stack-profiles/<profile>.md`
-   content (ORM, test runner, API idiom, migrations dir, gate commands). This
-   is installer-supplied background context, not a file that exists in
-   `{{PROJECT_NAME}}` — never cite its path as something a reader of the
-   generated guide could open; state its facts directly instead.
+1. **The stack-fact record** — `journal.stack_discovery` (schema:
+   `generators/stack-discovery.md`): per-capability paradigm, evidence, and
+   confidence, plus the derived scalars (ORM/migrations-dir shape, test
+   runner, API idiom, gate commands). This is installer-supplied background
+   context, not a file that exists in `{{PROJECT_NAME}}` — never cite it as
+   something a reader of the generated guide could open, and never cite it as
+   a rule's evidence. **Every field is an unverified hint**: re-derive and
+   re-confirm each fact against the live repo (`Glob`/`Grep`/`Read`) and cite
+   the real file — the record exists to save you a rediscovery pass and to
+   flag low-confidence facts (its `unresolved` array), not to be quoted as a
+   source. If the repo contradicts the record, follow the repo and note the
+   discrepancy in `## Non-blocking`.
 2. **Instruction-quality rubric** — template ID `guides/instruction-quality-rubric`
    (scaffolded at `.agentic/guides/standards/instruction-quality-rubric.md`).
    Each guide is evidence-audited against it; below `{{SCORE_THRESHOLD}}` it is
@@ -34,9 +41,10 @@ generated agents cite. You do not write agent contracts, hooks, or code.
 | security-patterns | `.agentic/guides/development/security-patterns.md` | input trust boundaries, secrets handling, authz enforcement points |
 | architecture | `.agentic/guides/architecture/architecture.md` | system layout, module boundaries, where each kind of change lands |
 
-Skip a guide only when the stack profile marks its domain absent (e.g. no
-`{{MIGRATIONS_DIR}}` ⇒ database-patterns reduces to a short "no managed
-schema — escalate schema work to a human" stub, never an invented rulebook).
+Skip a guide only when the stack-fact record marks its domain absent (e.g.
+`capabilities.persistence.applies: false` ⇒ database-patterns reduces to a
+short "no managed schema — escalate schema work to a human" stub, never an
+invented rulebook).
 
 ## Process — evidence first, rules second
 
@@ -87,7 +95,7 @@ End with exactly:
 `<N> guides written under .agentic/guides/ (<list>). <M> rules total, <K> weak-evidence markers.`
 
 ## Why
-Which parts of the codebase anchored each guide; anything skipped per the stack profile.
+Which parts of the codebase anchored each guide; anything skipped per the stack-fact record.
 
 ## Blocking
 `None`, or anything that prevented grounded guides (empty/contradictory codebase areas).

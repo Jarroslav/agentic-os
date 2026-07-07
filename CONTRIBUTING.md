@@ -25,7 +25,8 @@ owner, so the PR requests their review automatically.
 ## Rules that CI enforces
 
 - **The acceptance matrix stays green.** New templates or skills must keep
-  `tests/run-matrix.sh` at 25/25 — add cases when you add behavior.
+  `tests/run-matrix.sh` fully passing (it prints its own `N passed, 0 failed`
+  at the end) — add cases when you add behavior.
 - **JSON manifests and presets parse**, and preset template IDs resolve.
 
 ## Commit style
@@ -41,8 +42,9 @@ GitHub does not let you approve your own PR. If you are the sole maintainer, see
 
 ## Reporting a bug or requesting a feature
 
-Open a GitHub issue. Include the role preset(s) installed, the stack profile
-detected, and (for bugs) the output of `/agentic-doctor`.
+Open a GitHub issue. Include the role preset(s) installed, the discovered
+stack (matched curated profile, or a summary of the full-discovery result if
+none matched), and (for bugs) the output of `/agentic-doctor`.
 
 ## License
 

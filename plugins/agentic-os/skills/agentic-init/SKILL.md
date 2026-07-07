@@ -23,6 +23,7 @@ idempotent.
   ```json
   {
     "agentic_os_version": "<AGENTIC_OS_VERSION>",
+    "stack_discovery": { "...": "the structured record from generators/stack-discovery.md — see templates/VARIABLES.md § The stack-fact record" },
     "answers": { "<interview key>": "<value>" },
     "phase": "preflight|interview|dependencies|scaffold|generate|verify|done",
     "files": {
@@ -80,13 +81,49 @@ idempotent.
    a clean tree makes the diff reviewable) but proceed on confirmation.
 3. `python3 --version` — missing ⇒ abort with install instructions (every
    enforcement hook is Python).
-4. **Stack detection** — test each profile's "Detection markers" section in
-   this explicit order (this list governs, not directory order), first match
-   wins:
-   `PLUGIN/generators/stack-profiles/nextjs-supabase.md`, `django.md`,
-   `spring.md`, `rails.md`, `go.md`, `playwright-taf.md`; no match ⇒
-   `generic-fallback.md`. Record the profile name and read its
-   "Variable defaults" table — these seed the interview.
+4. **Stack discovery** (two tiers — full design and record schema in
+   `PLUGIN/generators/stack-discovery.md`). **Re-run cost guard**: if
+   `journal.stack_discovery` already exists (a prior run reached this step),
+   skip both tiers and reuse the journaled record — same principle as Phase
+   0's per-file sha256 skip and answer pre-fill. Tier 2 is a real subagent
+   spawn, not a free heuristic; re-running it on every `--reinstall` would be
+   wasted cost for a fact that hasn't changed. Re-discovery is out of scope
+   here — it belongs to a future `/agentic-upgrade` flow, not a routine
+   re-install.
+   - **Tier 1 — marker prior** (you do this yourself, no subagent — it's a
+     handful of cheap `Glob`/`Read` checks, and it must stay purely
+     deterministic — no strength/confidence judgment here, that belongs to
+     Tier 2): test each curated profile's "Detection markers" section in this
+     explicit order (this list governs, not directory order), first match
+     wins, exactly as before this change: `nextjs-supabase.md`, `django.md`,
+     `spring.md`, `rails.md`, `go.md`, `playwright-taf.md`. This produces a
+     prior — a matched profile ID, or `none` if no profile's markers matched.
+   - **Tier 2 — spawn `stack-discovery.md`**: substitute its `{{VAR}}`s,
+     append the input block it defines (mode + Tier-1 prior + the resolved
+     role preset union's `generated` set from Phase 2 Screen 1 — but see the
+     note below on sequencing), and spawn it.
+     - Prior matched ⇒ **`confirm-only` mode**, passing the matched profile's
+       full text. Must produce a record whose derived facts match today's
+       profile-lookup behavior; this is the byte-unchanged regression
+       guarantee for the six curated stacks. Tier 2's own confirm-only
+       process re-checks the marker against the real repo and falls back to
+       `full` mode itself if it turns out stale (a concrete fact check, not a
+       Tier-1 judgment call) — Tier 1 never second-guesses its own match.
+     - No prior ⇒ **`full` mode** — the subagent inspects the repo from
+       scratch. This is what makes a non-curated stack (or no stack at all)
+       produce real discovered capabilities instead of nothing.
+   - **Sequencing note**: this step only ever runs on a genuinely fresh
+     install — per Phase 0, any resume jumps straight to
+     `journal.phase`'s recorded phase, which is already past "preflight" by
+     the time `journal.answers` could contain a role-preset union. So there
+     is never a role-preset union available here yet. Always pass
+     `generated: null` (inspect all four capabilities unconditionally;
+     slightly more thorough than scoping to a union, never wrong).
+   - Journal the full record as `journal.stack_discovery`. `{{STACK_SUMMARY}}`
+     = `stack_discovery.stack_summary`. Phase 2 Screen 5 reconciles it with
+     the human (confirms high-confidence findings, resolves anything
+     `unresolved`); Phase 5's applicability filter reads the reconciled
+     `capabilities.*` fields directly — see Phase 5 step 1.
 5. **Fresh vs mature**: mature if any of `TARGET/CLAUDE.md`,
    `TARGET/.claude/`, `TARGET/.agentic/` already exists. Mode changes Phase 4
    behavior (managed blocks, collision prompts) and the Phase 2 git-sync
@@ -129,19 +166,44 @@ for fresh repos, **`warn-only` for mature repos**. Record as
 `answers.git_sync_mode`. A disabled gate is neither scaffolded nor wired into
 settings (see the Phase 4 settings-merge pruning rule).
 
-**Screen 5 — Stack confirm**: show the detected profile + its defaults for
-`{{MIGRATIONS_DIR}}`, `{{GATE_COMMANDS}}`, `{{MIGRATION_DIFF_COMMAND}}`,
-`{{ENV_CHECK_COMMANDS}}`, `{{APP_START_COMMAND}}`, `{{BASE_URL}}`,
-`{{TEST_FRAMEWORK}}`; ask for `{{HUMAN_GATED_COMMANDS}}` (always seeded with
-`git push origin {{DEFAULT_BRANCH}}`, **plus** any commands the detected
-profile's own "Variable defaults" table recommends adding — e.g.
-nextjs-supabase recommends `supabase db push --linked`; pre-fill the union,
-never just the generic default alone, so a generated agent's claim that a
-stack-specific operation is human-gated is actually true of the scaffolded
-`escalation-policy.md`), `{{GUARDED_WRITE_PATHS}}` (default
-empty; entries may carry a ` => <flow>` suffix naming the allowed flow),
-extra `{{SECRET_DENY_PATTERNS}}` beyond the baked-in `.env*` / `.auth/**` /
-`*token*.env`, and `{{STAGING_ENV_NAME}}`.
+**Screen 5 — Stack confirm/correct/fill** (reads `journal.stack_discovery`,
+writes back the human-reconciled `capabilities.*` the rest of the install
+relies on — this is where discovery becomes ground truth):
+
+1. **Show, don't re-ask, what's already confident.** One line per capability
+   at `confidence ≥ 80` and not in `unresolved`: `<capability>: <applies —
+   paradigm/style> (from <matched_profile> | discovered, confidence <n>)`.
+   Like Screen 4's gates, these are pre-filled and displayed for the record,
+   but — unlike Screen 4 — nothing here is an interactive toggle: there is no
+   question to answer, just a summary the user reads before moving on. Also
+   show the scalar defaults this seeded: `{{MIGRATIONS_DIR}}`,
+   `{{GATE_COMMANDS}}`, `{{MIGRATION_DIFF_COMMAND}}`, `{{ENV_CHECK_COMMANDS}}`,
+   `{{APP_START_COMMAND}}`, `{{BASE_URL}}`, `{{TEST_FRAMEWORK}}`.
+2. **Ask only the gaps.** For each entry in `journal.stack_discovery.unresolved`
+   (capability + ambiguity + candidate values, per `stack-discovery.md`'s
+   schema), one `AskUserQuestion` with the named candidates as options plus
+   an explicit "none of these — this capability doesn't apply" option. This
+   is the **only** per-capability prompting Screen 5 does — a confident
+   record (all six curated stacks in `confirm-only` mode, and many `full`-mode
+   repos with unambiguous evidence) asks nothing here at all.
+3. **Write back the answers.** For each resolved gap, update
+   `journal.stack_discovery.capabilities.<cap>` (`applies`, `paradigm` or
+   `api_style`/`catalog_format`, `write_scope` if the human's answer implies
+   a different location than the guessed one — ask a one-line follow-up for
+   the path only if the candidate values didn't already imply it) and remove
+   it from `unresolved`. The record in the journal after this screen is the
+   one Phase 5 reads — there is no separate "confirmed" copy.
+4. **Human-gated commands / write paths / secrets / staging env** (unchanged
+   from before Stage 2): ask for `{{HUMAN_GATED_COMMANDS}}` (always seeded
+   with `git push origin {{DEFAULT_BRANCH}}`, **plus** any commands the
+   matched profile's own "Variable defaults" table recommends adding — e.g.
+   nextjs-supabase recommends `supabase db push --linked`; pre-fill the
+   union, never just the generic default alone, so a generated agent's claim
+   that a stack-specific operation is human-gated is actually true of the
+   scaffolded `escalation-policy.md`), `{{GUARDED_WRITE_PATHS}}` (default
+   empty; entries may carry a ` => <flow>` suffix naming the allowed flow),
+   extra `{{SECRET_DENY_PATTERNS}}` beyond the baked-in `.env*` / `.auth/**` /
+   `*token*.env`, and `{{STAGING_ENV_NAME}}`.
 
 **Screen 6 — Adapters**: `{{TICKET_ADAPTER}}` (ADO / Linear MCP / Jira /
 GitHub / GitLab / none), `{{TICKET_PREFIX}}`, `{{MR_ADAPTER}}` (`gh` / `glab`
@@ -149,7 +211,7 @@ GitHub / GitLab / none), `{{TICKET_PREFIX}}`, `{{MR_ADAPTER}}` (`gh` / `glab`
 GitHub).
 
 Derived values (no screen): `{{PROJECT_NAME}}` = repo dir name (confirm on
-screen 5), `{{STACK_SUMMARY}}` = one paragraph from the profile + manifest,
+screen 5), `{{STACK_SUMMARY}}` = `journal.stack_discovery.stack_summary`,
 `{{ROLE_PRESETS_ACTIVE}}` = comma list from screen 1,
 `{{AGENTS_CANONICAL_DIR}}` = `.agentic/agents/`, `{{SCORECARD_PATH}}` =
 `docs/audits/instruction-scorecard.json`, `{{SCORE_THRESHOLD}}` = `95`,
@@ -367,27 +429,46 @@ Ordered steps:
 Skip entirely when the union's `generated` set is empty (qa/ba-po/pm-delivery
 only). Otherwise:
 
-1. **Applicability filter.** Keep only slots the detected stack profile lists
-   under "Generated-agent slots that apply" (e.g. `gen/i18n-agent` needs an
-   i18n library; `generic-fallback.md` suppresses writer slots entirely —
-   journal each skipped slot in `follow_ups`).
-2. **Slot definitions** (installer-owned; the generator narrows them to real
-   directories, never widens):
+1. **Applicability filter — capability-driven** (the flip from Stage 1: this
+   now reads `journal.stack_discovery.capabilities` directly, not the matched
+   profile's prose list — this is what makes a non-curated stack's `full`-mode
+   discovery produce real writer agents instead of nothing). By the time this
+   step runs, Phase 2 Screen 5 has already resolved every entry that was in
+   `unresolved` to a definite answer — including "none of these, it doesn't
+   apply" as a valid, definite answer — so every capability's `applies`/
+   paradigm here is either a high-confidence discovery finding or a direct
+   human decision, never a guess. Per-slot rule (see the table's
+   Applicability column). A capability with `applies: false` skips its
+   slot(s) silently (a true fact, not a gap); journal every skipped slot in
+   `follow_ups` regardless of why, so `/agentic-doctor` can report what was
+   and wasn't generated. There is no `generic-fallback.md` special case
+   anymore — a repo with zero applicable capabilities (e.g. a genuinely
+   stateless service) simply produces `generated: []` for this install, the
+   same shape a `qa`-only or `pm-delivery`-only union already produces;
+   `generic-fallback.md` becomes a documentation stub pointing here (Stage 3
+   cleans up its wording).
+2. **Slot definitions** (installer-owned; the generator narrows `write_scope`/
+   `forbidden_paths` to real directories, never widens):
 
-   | Slot | Kind | Purpose | write_scope seed | forbidden seed |
-   |---|---|---|---|---|
-   | `gen/schema-architect` | writer | migrations/schema + access-control DDL | `{{MIGRATIONS_DIR}}**` | app code |
-   | `gen/api-author` | writer | server-side mutation/endpoint idiom | API/server dirs per stack profile | `{{MIGRATIONS_DIR}}**`, UI dirs |
-   | `gen/component-generator` | writer | UI components per design conventions | component dirs per stack profile | `{{MIGRATIONS_DIR}}**`, API dirs |
-   | `gen/migration-validator` | read-only gate | deterministic PASS/FAIL migration review | `[]` (readonly) | `**` |
-   | `gen/i18n-agent` | writer | locale/message catalogs in lockstep | locale/message dirs | everything else |
-   | `gen/stack-guides` | writer (guides) | stack coding guides cited by the agents | `.agentic/guides/{data,api,development,architecture}/` | agents, hooks, app code |
+   | Slot | Kind | Purpose | Applicability | write_scope seed | forbidden seed |
+   |---|---|---|---|---|---|
+   | `gen/schema-architect` | writer | migrations/schema + access-control DDL | `persistence.applies` and `paradigm != external-or-none` | `{{PERSISTENCE_WRITE_SCOPE}}` | `capabilities.server_writes.write_scope`, `capabilities.ui.write_scope` |
+   | `gen/api-author` | writer | server-side mutation/endpoint idiom | `server_writes.applies` | `capabilities.server_writes.write_scope` | `{{PERSISTENCE_WRITE_SCOPE}}`, `capabilities.ui.write_scope` |
+   | `gen/component-generator` | writer | UI components/views per the repo's rendering paradigm | `ui.applies` and `paradigm != none` (covers both `component-framework` and `template-engine` — e.g. Rails views/Hotwire count, per `stack-profiles/rails.md`) | `capabilities.ui.write_scope` | `{{PERSISTENCE_WRITE_SCOPE}}`, `capabilities.server_writes.write_scope` |
+   | `gen/migration-validator` | read-only gate | deterministic PASS/FAIL migration review | `persistence.applies` and `paradigm == migration-managed` (a `model-defined-no-migration` stack has no migration files to validate — no migration gate, not a degraded one) | `[]` (readonly) | `**` |
+   | `gen/i18n-agent` | writer | locale/message catalogs in lockstep | `i18n.applies` | `capabilities.i18n.write_scope` | everything else |
+   | `gen/stack-guides` | writer (guides) | stack coding guides cited by the agents | always | `.agentic/guides/{data,api,development,architecture}/` | agents, hooks, app code |
+
+   All `capabilities.*` paths above are `journal.stack_discovery.capabilities.<cap>.<field>` after Screen 5's reconciliation. Only persistence's write location has a registered `{{VAR}}` (`{{PERSISTENCE_WRITE_SCOPE}}`, `templates/VARIABLES.md`) — Stage 1 introduced it specifically because `gen/schema-architect`'s slot seed predates capability-driven applicability and was already a named variable (`{{MIGRATIONS_DIR}}**`) before this stage. `server_writes`/`ui`/`i18n` write locations never had a named variable to begin with — they were "per stack profile" prose seeds — so this stage reads their journal paths directly rather than minting three more single-use `{{VAR}}`s for values only the Phase 5 subagent prompt ever consumes (step 3, input block 1 passes the whole record already).
 
 3. **Spawn** (parallel, one subagent per slot). Prompt = the full text of
    `PLUGIN/generators/agent-generator.md` (for `gen/stack-guides`:
    `PLUGIN/generators/guide-generator.md`) with its `{{VAR}}` placeholders
-   substituted, then append the input blocks it defines: (1) the matching
-   `PLUGIN/generators/stack-profiles/<profile>.md` content, (2) the slot
+   substituted, then append the input blocks it defines: (1) `journal.stack_discovery`
+   — the structured record from Phase 1 step 4, not the raw profile file (in
+   `confirm-only` mode the record was itself derived from
+   `PLUGIN/generators/stack-profiles/<profile>.md`, so this is a strict
+   superset of what was passed here before Stage 1), (2) the slot
    definition row above, (3) the exemplar —
    `PLUGIN/generators/exemplars/schema-architect.md` for writer slots against
    a DB/API stack, `PLUGIN/generators/exemplars/test-automation-author.md` for

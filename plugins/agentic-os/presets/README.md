@@ -38,9 +38,12 @@ a preset can therefore never fork an asset.
    both `commands/pipeline-orchestrator` and `commands/dispatch`). The
    *default* style pre-filled in the interview comes from the first preset
    the user listed; `strict` HITL forces the `dispatcher` default.
-4. **Generated slots** run only where the stack profile says they apply
-   (e.g. `gen/i18n-agent` is skipped when no i18n library is detected;
-   `generic-fallback` suppresses writer slots entirely).
+4. **Generated slots** run only where the discovered stack-fact record says
+   the capability applies (e.g. `gen/i18n-agent` is skipped when no i18n
+   library is detected, `gen/migration-validator` is skipped when persistence
+   isn't migration-managed) — see `skills/agentic-init/SKILL.md` § Phase 5
+   step 1. A repo with no applicable capability at all just produces
+   `generated: []`, same as a code-free role preset.
 
 ## Layering for a team
 

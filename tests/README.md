@@ -34,7 +34,7 @@ updates every run and is therefore excluded from the idempotency snapshot.
 |---|---|
 | T1 fresh | hooks `py_compile`; settings valid + Stop/SubagentStop/PreToolUse/secret-deny wiring; git hook installed + `agentic-os:` marker; zero unresolved `{{ }}`; scorecard has an entry for every canonical contract + pointer + governance file (the fleet is spawnable out of the box); unreviewed `git commit` blocked by the native hook; scaffold tree matches `tests/golden/fresh-developer-manifest.txt` |
 | T2 mature | `CLAUDE.md` changes only between markers (house rules survive); pre-existing settings hook preserved; colliding `.agentic/agents/security-reviewer.md` NOT overwritten (skip default); foreign `pre-commit` chained to `pre-commit.local`, not replaced |
-| T3 role matrix | every preset template ID resolves to a real file via the VARIABLES.md mapping; no duplicate IDs; qa preset = strict HITL + dispatcher + `test-failure-triage` + `work-item-creator` |
+| T3 role matrix | every preset template ID resolves to a real file via the VARIABLES.md mapping; no duplicate IDs; qa preset = strict HITL + dispatcher + `test-failure-triage` + `work-item-creator`; the Tier-1 marker-prior's ordered profile list (SKILL.md Phase 1 step 4) matches the real files under `generators/stack-profiles/` |
 | T4 idempotency | a `--reinstall` leaves every scaffolded file byte-identical (journal excluded) |
 | T5 upgrade | Phase-2 three-way classification: unmodified managed → overwrite, user-edited managed → prompt, `CLAUDE.md` → managed-block wholesale, user-owned → skip |
 | T6 deps | pinned non-optional sources produce `extraKnownMarketplaces`+`enabledPlugins` entries; an `OWNER/` placeholder source is skipped and journaled `pending-source-pin` |
@@ -47,7 +47,9 @@ updates every run and is therefore excluded from the idempotency snapshot.
   parser exiting 2 with the `AskUserQuestion` instruction on stderr (T7), and by
   `agentic-doctor`'s HITL smoke at install time. It is not driven through a real
   interactive prompt in this offline matrix.
-- **Generation quality** (Phase 5 stack agents) depends on live subagent runs
-  and the rubric audit loop; not covered here.
+- **Generation quality** (Phase 5 stack agents) and **stack discovery**
+  (Phase 1 step 4's Tier-2 subagent) both depend on live subagent runs and
+  can't be scripted here — see `tests/universal/README.md` for the manual,
+  model-driven verification procedure and its recorded results.
 - Fixtures are built by `tests/fixtures/make-{fresh,mature}.sh` into a temp dir;
   nothing is committed as a full fixture repo.

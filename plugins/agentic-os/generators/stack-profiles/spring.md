@@ -26,6 +26,19 @@ append-only), `gen/api-author`, `gen/migration-validator`,
 `gen/stack-guides`. `gen/component-generator` and `gen/i18n-agent` only when
 a frontend module / `messages*.properties` bundles are detected.
 
+## Capability map
+
+Structured counterpart to "Generated-agent slots that apply" above, in the
+exact field names `generators/stack-discovery.md`'s confirm-only mode emits
+— read this table directly instead of re-deriving it from prose.
+
+| Capability | `applies` | paradigm / style | `write_scope` |
+|---|---|---|---|
+| `persistence` | `true` | `migration-managed`; `access_control_style: "Spring Security method security (@PreAuthorize)"` | `{{MIGRATIONS_DIR}}**` |
+| `server_writes` | `true` | `api_style: "REST (@RestController + DTOs)"` | `src/main/{java,kotlin}/**` |
+| `ui` | conditional — `true` only when a frontend module is detected, else `false` | `component-framework` (when present) | the frontend module's own component directory |
+| `i18n` | conditional — `true` only when `messages*.properties` bundles are detected, else `false` | `catalog_format: "Java ResourceBundle .properties"` | `src/main/resources/messages*.properties` |
+
 ## Stack facts for the generators
 
 - **ORM**: JPA/Hibernate entities; schema truth lives in the migration files,

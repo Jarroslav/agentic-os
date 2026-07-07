@@ -27,6 +27,19 @@ backend. Derived from a production forum codebase.
 `gen/migration-validator`, `gen/i18n-agent` (only if an i18n library such as
 `next-intl` / `next-i18next` is in the manifest), `gen/stack-guides`.
 
+## Capability map
+
+Structured counterpart to "Generated-agent slots that apply" above, in the
+exact field names `generators/stack-discovery.md`'s confirm-only mode emits
+— read this table directly instead of re-deriving it from prose.
+
+| Capability | `applies` | paradigm / style | `write_scope` |
+|---|---|---|---|
+| `persistence` | `true` | `migration-managed`; `access_control_style: "Postgres RLS"` | `{{MIGRATIONS_DIR}}**` |
+| `server_writes` | `true` | `api_style: "Server Actions"` (+ `app/api/**` routes when present) | `app/_actions/**`, `app/api/**` |
+| `ui` | `true` | `component-framework` (React) | `components/**`, `app/**/*.tsx` |
+| `i18n` | conditional — `true` only when `next-intl`/`next-i18next` is in the manifest, else `false` | `catalog_format: "next-intl/next-i18next JSON"` | `messages/**` |
+
 ## Stack facts for the generators
 
 - **Database**: Postgres via Supabase. Row Level Security is the access-control

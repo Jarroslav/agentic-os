@@ -29,6 +29,19 @@ if `USE_I18N`/`locale/` directories are in use), `gen/stack-guides`.
 `gen/component-generator` applies only when a JS frontend (its own
 `package.json` with a framework dep) is detected alongside.
 
+## Capability map
+
+Structured counterpart to "Generated-agent slots that apply" above, in the
+exact field names `generators/stack-discovery.md`'s confirm-only mode emits
+— read this table directly instead of re-deriving it from prose.
+
+| Capability | `applies` | paradigm / style | `write_scope` |
+|---|---|---|---|
+| `persistence` | `true` | `migration-managed`; `access_control_style: "Django auth + permission classes/decorators"` | `**/migrations/**` (per-app) |
+| `server_writes` | `true` | `api_style: "DRF ViewSet/APIView"` when DRF is installed, else `"Django views + forms"` | `**/views.py`, `**/serializers.py`, `**/urls.py` |
+| `ui` | conditional — `true` only when a separate JS frontend (`package.json` with a framework dependency) is detected alongside, else `false` | `component-framework` (when present) | the JS frontend's own component directory |
+| `i18n` | conditional — `true` only when `USE_I18N`/`locale/` directories are in use, else `false` | `catalog_format: "Django gettext .po"` | `locale/**` |
+
 ## Stack facts for the generators
 
 - **ORM**: Django ORM. Schema changes go through `models.py` +

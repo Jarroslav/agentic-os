@@ -31,6 +31,23 @@ writer agents are **templates**, not generated slots: `agents/test-case-generato
 `agents/test-failure-triage`, `agents/work-item-creator` (see the qa preset).
 No schema/api/component/i18n slots.
 
+## Capability map
+
+Structured counterpart to "Generated-agent slots that apply" above, in the
+exact field names `generators/stack-discovery.md`'s confirm-only mode emits
+— read this table directly instead of re-deriving it from prose.
+
+| Capability | `applies` | paradigm / style | `write_scope` |
+|---|---|---|---|
+| `persistence` | `false` | `external-or-none` — a TAF repo has no schema of its own | n/a |
+| `server_writes` | `false` | n/a — this repo tests an app deployed elsewhere, it doesn't serve one | n/a |
+| `ui` | `false` | n/a — same reason; `gen/component-generator` never applies here | n/a |
+| `i18n` | `false` | n/a | n/a |
+
+All four `gen/*` writer/gate slots are suppressed for every install on this
+profile — only `gen/stack-guides` runs, feeding the test-architecture facts
+below into the scaffolded guides the QA preset's template agents read.
+
 ## Stack facts for the generators
 
 - **Layering**: spec files (tests) → page objects → helpers/fixtures →

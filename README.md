@@ -12,9 +12,16 @@ One command interviews you (role, autonomy level, stack) and scaffolds a coheren
 system into your project: canonical agent contracts, enforcement hooks (blind
 pre-commit review, write-scope guard, instruction-quality spawn gate), a
 human-in-the-loop escalation ladder, and — where it fits your stack — generated
-stack-specific agents. It is stack-agnostic (Next.js, Django, Spring, Rails, Go,
-or a generic fallback) and role-agnostic (developer, QA, BA/PO, architect,
-delivery).
+stack-specific agents. It is **stack-universal**: six curated profiles
+(Next.js, Django, Spring, Rails, Go, Playwright) are recognized instantly,
+and anything else — a NestJS backend, a schemaless Mongo service, or no code
+stack at all — gets real, evidence-grounded persistence and API agents via
+live repo discovery instead of a degraded stub (proven live against both a
+migration-managed and a schemaless non-curated backend — see
+`tests/universal/README.md`). Frontend/UI generation on a non-curated stack
+uses the same discovery mechanism but is earlier in its own verification
+cycle. It is also role-agnostic
+(developer, QA, BA/PO, architect, delivery).
 
 This repo is a Claude Code **marketplace** hosting two plugins:
 
@@ -62,9 +69,11 @@ session start). Then, in the repo you want to equip:
 /agentic-init --defaults # accept every detected default, no questions
 ```
 
-The interview has six screens, each pre-filled from stack detection. It **never
-commits** — it scaffolds files, shows you a settings diff before merging, and
-leaves the working tree for you to review and commit. Then:
+The interview has six screens, each pre-filled from stack discovery (a cheap
+marker check confirmed against the repo for one of six curated stacks, or a
+full inspection otherwise). It **never commits** — it scaffolds files, shows
+you a settings diff before merging, and leaves the working tree for you to
+review and commit. Then:
 
 ```
 /agentic-doctor          # verify the install (writes .agentic/agentic-os/doctor.json)
@@ -90,9 +99,11 @@ steps above and a session restart), then run:
 
 What happens, in order:
 
-1. **Preflight** — detects this is a git repo, detects the `next` dependency
-   and picks the `nextjs-supabase` stack profile (falling back to
-   `generic-fallback` if nothing matches).
+1. **Preflight** — detects this is a git repo, then runs stack discovery: a
+   cheap marker check spots the `next` dependency and matches the
+   `nextjs-supabase` profile, then a subagent confirms that match against the
+   real repo (a non-matching repo gets a full from-scratch inspection
+   instead, not a dead-end fallback).
 2. **Interview** — with `--defaults`, all six screens (role preset, HITL dial,
    autonomy matrix, gates, stack confirm, ticket/MR adapter) are accepted at
    their detected defaults instead of prompted.
@@ -213,7 +224,7 @@ anything proceeds.
 The two gates that CI also runs:
 
 ```bash
-bash tests/run-matrix.sh             # T1–T7 acceptance (includes the two t0 suites) — 25 checks
+bash tests/run-matrix.sh             # T1–T7 acceptance (includes the two t0 suites)
 ```
 
 The matrix **executes the installer's deterministic phases** against fresh and

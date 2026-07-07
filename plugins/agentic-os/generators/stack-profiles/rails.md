@@ -27,6 +27,19 @@ Ruby on Rails application.
 `gen/migration-validator`, `gen/i18n-agent` (Rails i18n is built in — apply
 when `config/locales/` has more than the default file), `gen/stack-guides`.
 
+## Capability map
+
+Structured counterpart to "Generated-agent slots that apply" above, in the
+exact field names `generators/stack-discovery.md`'s confirm-only mode emits
+— read this table directly instead of re-deriving it from prose.
+
+| Capability | `applies` | paradigm / style | `write_scope` |
+|---|---|---|---|
+| `persistence` | `true` | `migration-managed`; `access_control_style: "Pundit/CanCanCan policy objects (reuse the existing policy layer; never inline role checks when one exists)"` | `{{MIGRATIONS_DIR}}**` |
+| `server_writes` | `true` | `api_style: "RESTful controllers, strong params"` | `app/controllers/**` |
+| `ui` | `true` | `template-engine` (views/Hotwire/ViewComponent) — the one curated profile where `gen/component-generator` targets server-rendered views, not a component-framework | `app/views/**`, `app/components/**` |
+| `i18n` | conditional — `true` only when `config/locales/` has more than the default file, else `false` | `catalog_format: "Rails i18n YAML"` | `config/locales/**` |
+
 ## Stack facts for the generators
 
 - **ORM**: ActiveRecord. Migrations are timestamped

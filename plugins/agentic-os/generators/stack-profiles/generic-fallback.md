@@ -1,62 +1,68 @@
-# Stack profile: generic-fallback
+# Stack profile: generic-fallback (historical — no longer an active code path)
 
-Applied when no other profile's detection markers match. This profile makes
-**degraded expectations explicit** (PLAN.md decision 6) — it never pretends
-to know the stack.
+> **This file is a documentation stub, not something the installer routes to
+> anymore.** Before Stage 2 of the universal-stack-support program, "no
+> curated profile matched" meant this profile applied and writer slots were
+> unconditionally suppressed. As of Stage 2, "no curated profile matched"
+> means `generators/stack-discovery.md` runs in `full` mode instead — it
+> inspects the real repo and produces genuine, evidence-grounded
+> per-capability facts, and Phase 5's applicability filter
+> (`skills/agentic-init/SKILL.md` § Phase 5 step 1) reads those facts
+> directly. Nothing in the installer reads this file at install time; it is
+> kept only as a record of what the old all-or-nothing behavior was and why
+> the new one is better, in case that history is useful.
 
-## Detection markers
+## What actually happens now for a non-curated stack
 
-- None matched. This is the else-branch, chosen only after every other
-  profile has been tested.
+Read `generators/stack-discovery.md` — specifically its "Process — `full`
+mode" section — for the real behavior. In one line: **slots follow
+discovery; only what discovery genuinely can't ground gets degraded**, not
+the whole install. A repo with a real, evidence-backed `persistence` capability
+still gets a real `gen/schema-architect`, even with zero curated-profile
+match — proven live against two non-curated fixtures (a FastAPI+Alembic
+backend and a schemaless Express+Mongoose backend) in Stage 2's golden runs,
+`tests/universal/README.md`.
 
-## Variable defaults
+## What was wrong with the old all-or-nothing model
 
-| Variable | Default |
-|---|---|
-| `{{MIGRATIONS_DIR}}` | empty — migration hooks skipped unless the interview supplies a directory |
-| `{{GATE_COMMANDS}}` | none detected — **must** come from the interview; if the human supplies none, gate agents record "no automated gates configured" under `## Non-blocking` in every run |
-| `{{MIGRATION_DIFF_COMMAND}}` | empty |
-| `{{ENV_CHECK_COMMANDS}}` | `git status --short` only |
-| `{{APP_START_COMMAND}}` | empty — feature verification degraded to manual |
-| `{{BASE_URL}}` | interview |
+The old model conflated two different things: "no curated profile matched"
+(a fact about a lookup table) and "this repo's facts can't be grounded" (a
+fact about evidence). The first is common — most real stacks aren't one of
+six curated profiles — and doesn't imply the second at all. Suppressing
+every writer slot for every non-curated repo, regardless of how much real
+evidence the repo actually offered, was the core universality gap this whole
+program exists to close.
 
-## Generated-agent slots that apply
+## What's still true, reframed per-capability instead of install-wide
 
-`gen/stack-guides` only, and even that in degraded form (see below).
-Writer slots (`gen/schema-architect`, `gen/api-author`,
-`gen/component-generator`, `gen/i18n-agent`) and `gen/migration-validator`
-are **not generated** — without detected stack facts their contracts cannot
-be evidence-grounded, and an ungrounded writer agent is worse than none.
-The templated core agents (reviewer, gates, dispatcher) still install — they
-are stack-agnostic.
+The old "degraded expectations" mechanism itself was sound — it just applied
+at the wrong granularity (the whole install) instead of the right one (a
+single low-confidence capability). Per `stack-discovery.md`'s full-mode
+process, when a specific capability's evidence is thin or absent:
 
-## Degraded expectations (stated to the user at install time)
+1. Confidence honestly reflects that (below 80, not a confident guess) and
+   the capability is named in the record's `unresolved` array with candidate
+   values — Screen 5 asks the human directly instead of the installer
+   guessing.
+2. If a human answer still leaves a generated contract scoring below
+   `{{SCORE_THRESHOLD}}` after the retry loop, it installs with a **relaxed
+   per-agent threshold** recorded in the scorecard at `{{SCORECARD_PATH}}`,
+   never silently at the default threshold — a **visible warning** names the
+   degraded asset and its score, and a **tracked follow-up** is journaled.
+3. A capability that's genuinely absent (e.g. `persistence.paradigm =
+   external-or-none`, or `ui.applies = false` for an API-only service) skips
+   its slot(s) — a true fact about this repo, not a degradation to apologize
+   for.
 
-Per PLAN.md decision 6, when generation must proceed anyway (user opts in):
+None of this is unique to "no curated profile matched" anymore — it's just
+what happens whenever a capability's real-world evidence is thin, curated
+stack or not.
 
-1. Generated output that scores below `{{SCORE_THRESHOLD}}` on the
-   instruction-quality rubric installs with a **relaxed per-agent threshold**
-   recorded in the scorecard at `{{SCORECARD_PATH}}`, never silently at the
-   default threshold.
-2. The installer prints a **visible warning** naming each degraded asset and
-   its actual score.
-3. A **tracked follow-up** is journaled (install journal + `## Escalate to
-   human` in the installer's report): re-run generation after the human
-   fills in stack facts, or hand-write the contract.
+## Historical note
 
-Additional degradations the user must expect:
-
-- Stack guides reduce to structure-only documents: repo layout, observed
-  file types, and TODO sections for the human — rules without evidence are
-  not invented.
-- No migration safety net: the migration-validator slot is absent, so any
-  schema work is escalated to a human by policy.
-- Feature verification is manual: no `{{APP_START_COMMAND}}` means the
-  verification step reports "not verifiable autonomously".
-
-## Stack facts for the generators
-
-Only what is observable without stack knowledge: directory tree, dominant
-file extensions, presence of a CI config (`.github/workflows/`,
-`.gitlab-ci.yml`), presence of a Dockerfile/compose file, README claims
-(cited as claims, not facts). Everything else: interview.
+The original rationale ("an ungrounded writer agent is worse than none")
+is still correct — it's *why* confidence gating and the `unresolved`
+mechanism exist. What changed is the unit of measurement: it used to be
+"the whole stack is unknown," now it's "this one capability's evidence is
+thin," which is both more accurate and, per the Stage 2 golden runs, far
+less pessimistic than the old default assumed.

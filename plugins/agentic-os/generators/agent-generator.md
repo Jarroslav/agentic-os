@@ -14,12 +14,20 @@ You do not write application code, hooks, guides, or policies.
 
 ## Inputs (appended below this prompt by the installer)
 
-1. **Stack profile facts** — the relevant `generators/stack-profiles/<profile>.md`
-   content: detection facts, `{{MIGRATIONS_DIR}}`, `{{GATE_COMMANDS}}`,
-   `{{MIGRATION_DIFF_COMMAND}}`, ORM, test runner, API idiom. This is
+1. **The stack-fact record** — `journal.stack_discovery` (schema:
+   `generators/stack-discovery.md`): per-capability paradigm/write-scope/
+   evidence/confidence, plus derived scalars (`{{MIGRATIONS_DIR}}`,
+   `{{PERSISTENCE_WRITE_SCOPE}}`, `{{GATE_COMMANDS}}`,
+   `{{MIGRATION_DIFF_COMMAND}}`, ORM, test runner, API idiom). This is
    installer-supplied background context, not a file that exists in
-   `{{PROJECT_NAME}}` — never cite its path as something a reader of the
-   generated contract could open; state its facts directly instead.
+   `{{PROJECT_NAME}}` — never cite it as something a reader of the generated
+   contract could open, and never cite it as a rule's evidence. **Every field
+   is an unverified hint**: re-derive and re-confirm each fact against the
+   live repo (`Glob`/`Grep`/`Read`) and cite the real file. If the repo
+   contradicts the record, follow the repo and note the discrepancy in
+   `## Non-blocking` — the record exists to save a rediscovery pass and to
+   flag low-confidence facts (its `unresolved` array), never to be quoted as
+   a source.
 2. **Agent slot definition** — from the active role preset: the slot name
    (e.g. `gen/schema-architect`), its purpose, `write_scope` pattern,
    `forbidden_paths` pattern, and whether it is a **writer** or a **read-only gate**.

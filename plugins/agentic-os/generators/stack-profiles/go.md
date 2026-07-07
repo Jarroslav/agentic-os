@@ -26,6 +26,19 @@ detected. `gen/component-generator` and `gen/i18n-agent` normally do not
 apply (no frontend); include only if a JS frontend module is detected
 alongside.
 
+## Capability map
+
+Structured counterpart to "Generated-agent slots that apply" above, in the
+exact field names `generators/stack-discovery.md`'s confirm-only mode emits
+— read this table directly instead of re-deriving it from prose.
+
+| Capability | `applies` | paradigm / style | `write_scope` |
+|---|---|---|---|
+| `persistence` | conditional — `true` only when a migrations directory + tool is detected, else `false` (`external-or-none` — plenty of Go services genuinely have no schema in-repo) | `migration-managed` (when present); `access_control_style`: no framework default, check for existing auth middleware first | `{{MIGRATIONS_DIR}}**` |
+| `server_writes` | `true` | `api_style: "net/http handlers or the detected router (chi/gin/echo)"` | `internal/**`, `cmd/**` (respect existing package boundaries) |
+| `ui` | conditional — `true` only when a JS frontend module is detected alongside, else `false` (no UI by default — Go services are typically API-only) | `component-framework` (when present) | the JS frontend's own component directory |
+| `i18n` | conditional — same detection as `ui`, else `false` | n/a unless a JS frontend is present | n/a unless a JS frontend is present |
+
 ## Stack facts for the generators
 
 - **Data access**: often no ORM — `database/sql` + sqlc/sqlx, or GORM/ent

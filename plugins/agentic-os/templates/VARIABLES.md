@@ -22,18 +22,19 @@ comma-separated — so `[{{ESCALATE_ON}}]` becomes `["security","breaking-change
 | Variable | Meaning | Default |
 |---|---|---|
 | `{{PROJECT_NAME}}` | Human name of the target project | git repo dir name |
-| `{{STACK_SUMMARY}}` | One-paragraph detected stack description | from preflight detection |
+| `{{STACK_SUMMARY}}` | One-paragraph detected stack description | stack-fact record (`stack_discovery.stack_summary`) |
 | `{{DEFAULT_BRANCH}}` | Integration branch agents sync/PR against | detected (`main`/`dev`) |
 | `{{AGENTS_CANONICAL_DIR}}` | Canonical agent-contract directory | `.agentic/agents/` |
 | `{{SCORECARD_PATH}}` | Instruction-quality scorecard JSON | `docs/audits/instruction-scorecard.json` |
 | `{{SCORE_THRESHOLD}}` | Default instruction-quality gate threshold (per-agent overrides recorded in scorecard) | `95` |
-| `{{GATE_COMMANDS}}` | Quality-gate commands (lint/typecheck/test), newline list | detected from manifests |
+| `{{GATE_COMMANDS}}` | Quality-gate commands (lint/typecheck/test), newline list | stack-fact record (`variable_defaults.GATE_COMMANDS`) |
 | `{{HUMAN_GATED_COMMANDS}}` | Shell commands always blocked pending human action, newline list | `git push origin {{DEFAULT_BRANCH}}` + interview |
 | `{{GUARDED_WRITE_PATHS}}` | Paths writable only via a named flow, newline list | empty + interview |
 | `{{SECRET_DENY_PATTERNS}}` | File patterns agents must never read, newline list (only ever rendered inside fenced blocks / deny arrays) | `.env*`, `.auth/**`, `*token*.env` |
-| `{{MIGRATIONS_DIR}}` | DB migrations directory (empty ⇒ migration hooks skipped) | detected |
-| `{{MIGRATION_DIFF_COMMAND}}` | Command to verify schema drift after migration edits | stack profile |
-| `{{ENV_CHECK_COMMANDS}}` | SessionStart environment checks, newline list | stack profile |
+| `{{MIGRATIONS_DIR}}` | DB migrations directory (empty ⇒ migration hooks skipped) | stack-fact record (`capabilities.persistence.migrations_dir`) |
+| `{{PERSISTENCE_WRITE_SCOPE}}` | Change-unit location for `gen/schema-architect`'s `write_scope` — the discovery record's `capabilities.persistence.write_scope`. Equals `{{MIGRATIONS_DIR}}**` for `migration-managed`; a model/schema directory for `model-defined-no-migration`; empty for `external-or-none` (slot suppressed). Diverges from `{{MIGRATIONS_DIR}}` only in the no-migration case — see `generators/stack-discovery.md`. | stack-fact record (Stage 1 defines it; Phase 5 starts consuming it in Stage 2) |
+| `{{MIGRATION_DIFF_COMMAND}}` | Command to verify schema drift after migration edits | stack-fact record (`capabilities.persistence.migration_diff_command`) |
+| `{{ENV_CHECK_COMMANDS}}` | SessionStart environment checks, newline list | stack-fact record (`variable_defaults.ENV_CHECK_COMMANDS`) |
 | `{{HITL_MODE}}` | `strict` \| `gated-autonomous` \| `autonomous` | `gated-autonomous` (QA preset: `strict`) |
 | `{{MAX_LOC}}` / `{{MAX_FILES}}` | AI-change size ceiling (breach ⇒ escalate) | `250` / `10` |
 | `{{ESCALATE_ON}}` | Risk flags that force human escalation, comma list | `security,breaking-change,migration,spend` |
@@ -41,12 +42,25 @@ comma-separated — so `[{{ESCALATE_ON}}]` becomes `["security","breaking-change
 | `{{TICKET_ADAPTER}}` | Work-item system + access method (ADO / Linear MCP / Jira / GitHub / GitLab / none) | interview |
 | `{{TICKET_PREFIX}}` | Work-item reference prefix in commits/titles | interview |
 | `{{MR_ADAPTER}}` | MR/PR mechanism (`gh` / `glab` / MCP / none) | detected |
-| `{{TEST_FRAMEWORK}}` | E2E/test framework for QA preset (playwright / cypress / other) | detected |
-| `{{APP_START_COMMAND}}` | Command to launch the app for verification | detected |
-| `{{BASE_URL}}` | Local base URL for feature verification | `http://localhost:3000` |
+| `{{TEST_FRAMEWORK}}` | E2E/test framework for QA preset (playwright / cypress / other) | stack-fact record (`variable_defaults.TEST_FRAMEWORK`) |
+| `{{APP_START_COMMAND}}` | Command to launch the app for verification | stack-fact record (`variable_defaults.APP_START_COMMAND`) |
+| `{{BASE_URL}}` | Local base URL for feature verification | stack-fact record (`variable_defaults.BASE_URL`), fallback `http://localhost:3000` |
 | `{{OUTPUT_CONTRACT_SECTIONS}}` | Agent output contract section list parsed by subagent-gate | `Summary,Why,Blocking,Non-blocking,Escalate to human` |
 | `{{STAGING_ENV_NAME}}` | Name of the mutable (CRUD-allowed) environment | interview |
 | `{{AGENTIC_OS_VERSION}}` | Product version stamped into managed blocks + install journal | plugin version |
+
+## The stack-fact record (journal state, not a `{{VAR}}`)
+
+`generators/stack-discovery.md` (Phase 1 step 4) produces a structured JSON
+record — `journal.stack_discovery` — not a scalar template variable. It seeds
+several of the scalars above (`{{STACK_SUMMARY}}`, `{{MIGRATIONS_DIR}}`,
+`{{PERSISTENCE_WRITE_SCOPE}}`, `{{MIGRATION_DIFF_COMMAND}}`,
+`{{GATE_COMMANDS}}`, `{{ENV_CHECK_COMMANDS}}`, `{{APP_START_COMMAND}}`,
+`{{BASE_URL}}`, `{{TEST_FRAMEWORK}}`) but is itself richer: per-capability `applies` /
+paradigm / `evidence` / `confidence` for `persistence`, `server_writes`,
+`ui`, `i18n`. Full schema and derivation rules live in
+`generators/stack-discovery.md` — do not duplicate the schema here, it will
+drift.
 
 ## Template IDs
 

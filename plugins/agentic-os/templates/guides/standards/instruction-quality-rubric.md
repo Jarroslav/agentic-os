@@ -80,3 +80,16 @@ Every row is itself a set of claims: a `write_scope` cell must match the named
 agent's actual `.agentic/agents/<name>.md` frontmatter `write_scope`; a "must PASS"
 cell must match that agent's actual gate status. Grade the whole table as
 (verified cells / total cells), not as one claim.
+
+### Generated agent contracts and guides — the discovery record is never a citable source
+A mandatory rule in a generated `.agentic/agents/*.md` contract or a generated
+`.agentic/guides/**/*.md` guide must cite a real repo file (`path:line`) or a
+scaffolded guide by path. If a rule instead cites `journal.stack_discovery`,
+"the stack-fact record," "the discovery record," or equivalent phrasing as its
+evidence, that claim is **UNVERIFIED regardless of whether the underlying fact
+is true** — the record is documented (`generators/stack-discovery.md` §
+Evidence guarantee) as an unverified hint for the generator to re-confirm, not
+a source a generated file may point a reader at. Flag this explicitly in
+`## Blocking` as a **discovery-record citation** finding, not folded into the
+generic unverified count, so it's visible as the specific class of drift this
+check exists to catch.

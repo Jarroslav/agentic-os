@@ -84,6 +84,7 @@ assert "foreign hook body preserved" "grep -q 'TEAM-PRECOMMIT-RAN' '$MAT/.git/ho
 
 echo "== T3 role matrix (static) =="
 python3 "$ROOT/tests/lib/check-presets.py" "$PLUGIN" && ok "preset matrix + ID resolution" || bad "preset matrix + ID resolution"
+python3 "$ROOT/tests/lib/check-discovery-priors.py" "$PLUGIN" && ok "Tier-1 marker-prior table" || bad "Tier-1 marker-prior table"
 
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.
