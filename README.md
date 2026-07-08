@@ -362,7 +362,8 @@ CI-passing pull request**, and contributor PRs require a code-owner review. See
 ## Docs
 
 - Engineering principles — the ideas behind the enforcement mechanisms, and why a plain agent session doesn't have them: [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md)
-- Upgrade flow & version notes: [`plugins/agentic-os/docs/UPGRADING.md`](plugins/agentic-os/docs/UPGRADING.md)
+- Upgrade flow: [`plugins/agentic-os/docs/UPGRADING.md`](plugins/agentic-os/docs/UPGRADING.md)
+- Changelog: [`plugins/agentic-os/CHANGELOG.md`](plugins/agentic-os/CHANGELOG.md)
 - Preset composition rules: [`plugins/agentic-os/presets/README.md`](plugins/agentic-os/presets/README.md)
 - Roadmap: [`ROADMAP.md`](ROADMAP.md)
 - Security policy: [`SECURITY.md`](SECURITY.md)

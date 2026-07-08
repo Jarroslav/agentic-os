@@ -28,15 +28,18 @@ recorded one and acts by ownership:
 
 After reconciling, it re-runs `/agentic-doctor` and bumps the journal stamp.
 
-The old-template side of a diff is recovered from a marketplace tag
-(`git show v<OLD>:<path>`); when no tag is available it falls back to a clearly
-labeled current → new diff.
+The old-template side of a diff is recovered from a marketplace **tag**
+(`git show v<OLD>:<path>`), which lets the upgrade show you what the *template*
+changed, separate from your local edits. **This recovery is dormant until releases
+are tagged.** The published marketplace carries no version tags yet, so every
+user-modified file today falls back to a clearly labeled `CURRENT → new` diff —
+which mixes your edits with the template's changes, and the upgrade says so
+explicitly. Tagging each release (`v<version>`) is what activates the clean
+template-only diff for the version you upgrade *from*.
 
-## Version notes
+## Version history
 
-### 0.1.0 — initial release
-
-First public version. Six-screen installer, five role presets, the HITL pillar
-(policy files + output-contract parser + hard exit-2 gates), stack generators
-for Next.js/Supabase, Django, Spring, Rails, Go, and a generic fallback, and the
-`/agentic-doctor` verification pass. No upgrade path from a prior version.
+The plugin version lives in
+[`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json); per-version notes
+are in the [CHANGELOG](../CHANGELOG.md). The first — and so far only — public
+release is **0.3.0**; there is no upgrade path from a prior version.
