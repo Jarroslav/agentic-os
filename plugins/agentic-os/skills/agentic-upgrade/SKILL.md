@@ -260,6 +260,32 @@ does, and it truncates the file at the marker row.
   reconcile/reassemble steps
   above.
 
+**Guide index (`PATTERNS.md`, `owner: "managed"`, `template: "governance/patterns"`)**
+— handled specially, **never** through the plain `owner: "managed"` branch, and
+after every `owner: "generated"` decision this pass (the generated-guide set may
+have changed). Unlike the agent registry, its generated rows are **fully derived**
+from the journal, so they are **regenerated, not preserved** — no three-way split,
+no "keep mine", no 8g-class truncation trap. The rebuild is self-healing: it fixes a
+marker or rows left malformed by an older install.
+- The run of table rows directly below the `<!-- generated-guide-rows -->` marker
+  row is orchestrator state (init Phase 5 step 6b); everything above the marker row
+  and everything below that run is template output.
+- Reconcile the template output — head (through the marker row) and tail (from the
+  first non-row line after the run to EOF) — as an ordinary managed diff-and-ask.
+  **Never** diff the generated-guide rows against the template; it has none.
+- **Rebuild** the run: drop whatever rows are below the marker, then emit one row
+  per guide in init Phase 5 step 6b's fixed **Guide path → Label** table whose path
+  is present in the journal as an `owner: "generated"` file, in that table's order.
+  A guide dropped since last upgrade loses its row; a newly generated one gains one
+  — both fall out of the journal automatically, with no diff to answer.
+- **Marker missing** (a repo installed before this marker shipped) ⇒ insert the
+  marker row as the guide table's last base row, then rebuild. No need to ask about
+  hand-appended rows the way the agent registry does: these rows were never the
+  user's to edit, so there is nothing to preserve — just regenerate.
+- Owner stays `"managed"` / `template: "governance/patterns"` **permanently** (same
+  reason as the agent registry: `owner: "user"` would silently disable regeneration
+  forever). **Re-stamp journal + scorecard**, same as init Phase 5 step 7.
+
 **New/removed template IDs**
 - Template IDs newly present in `NEW`'s preset union (re-resolve the union
   from `journal.answers` presets against `PLUGIN/presets/roles/*.json`) but

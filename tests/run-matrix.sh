@@ -54,6 +54,8 @@ sys.exit(1 if missing else 0)
 PY
 # agent-registry table integrity (deterministic half of agentic-doctor Check 8)
 python3 "$ROOT/tests/lib/check-registry.py" "$FRESH" && ok "agent-registry table intact" || bad "agent-registry table intact"
+# PATTERNS.md generated-guide append point is a real table row (same invariant, shared gfm.py)
+python3 "$ROOT/tests/lib/check-patterns.py" "$FRESH" && ok "PATTERNS.md guide-row marker intact" || bad "PATTERNS.md guide-row marker intact"
 # PATTERNS.md indexes no guide it did not install (the qa-only rows are conditional)
 python3 - "$FRESH" <<'PY' && ok "PATTERNS.md guide links all resolve" || bad "PATTERNS.md guide links all resolve"
 import re, sys, pathlib

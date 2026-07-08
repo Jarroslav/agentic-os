@@ -33,14 +33,14 @@ remain doctor's job. Phase 5 is model-driven and cannot run in a bash harness.
 
 Usage: check-registry.py <TARGET_REPO>
 """
-import re
 import sys
 from pathlib import Path
+
+from gfm import cells, is_row, validate_marker_table
 
 REGISTRY = Path(sys.argv[1]) / ".agentic/guides/agent-registry.md"
 MARKER = "<!-- generated-agent-rows -->"
 HEADER_CELL = "Trigger / intent"
-DELIM_CELL = re.compile(r"^:?-+:?$")
 
 
 def fail(msg: str) -> None:
@@ -48,80 +48,19 @@ def fail(msg: str) -> None:
     sys.exit(1)
 
 
-def cells(line: str) -> list[str]:
-    """Cells of a pipe row, ignoring the optional leading/trailing pipe."""
-    s = line.strip()
-    if s.startswith("|"):
-        s = s[1:]
-    if s.endswith("|"):
-        s = s[:-1]
-    return [c.strip() for c in s.split("|")]
-
-
-def is_row(line: str) -> bool:
-    return line.lstrip().startswith("|")
-
-
 if not REGISTRY.exists():
     fail("agent-registry.md not scaffolded")
 
 lines = REGISTRY.read_text(encoding="utf-8").splitlines()
 
-# Every valid GFM table block: header row, a delimiter row whose cell count
-# matches, then the run of consecutive pipe lines. Returns (start, end) inclusive.
-blocks: list[tuple[int, int]] = []
-i = 0
-while i < len(lines):
-    if is_row(lines[i]) and i + 1 < len(lines) and is_row(lines[i + 1]):
-        header, delim = cells(lines[i]), cells(lines[i + 1])
-        if len(header) == len(delim) and all(DELIM_CELL.match(c) for c in delim):
-            j = i + 2
-            while j < len(lines) and is_row(lines[j]):
-                j += 1
-            blocks.append((i, j - 1))
-            i = j
-            continue
-    i += 1
+# 8a-8d: the routing table is a valid GFM block, the marker is a real row inside
+# it, and no pipe line is orphaned. Shared with check-patterns.py via gfm.py.
+err = validate_marker_table(lines, HEADER_CELL, MARKER)
+if err is not None:
+    fail(err)
 
-in_a_block = {n for start, end in blocks for n in range(start, end + 1)}
-
-# 8a: the routing table is a valid GFM table — the block whose header row's first
-# cell is HEADER_CELL. A header with no matching delimiter forms no block at all.
-routing = next((b for b in blocks if cells(lines[b[0]])[0] == HEADER_CELL), None)
-if routing is None:
-    stray = next((n for n, l in enumerate(lines)
-                  if is_row(l) and cells(l)[0] == HEADER_CELL), None)
-    if stray is not None:
-        fail("routing table header at line %d is not followed by a valid "
-             "`| --- |` delimiter row with a matching cell count — GFM renders "
-             "the entire table as paragraph text, so no agent is routable"
-             % (stray + 1))
-    fail("no routing-table header row (first cell %r)" % HEADER_CELL)
-
-# 8b: the marker must exist exactly once, as a real table row (its first cell).
-marker_rows = [n for n in range(len(lines))
-               if is_row(lines[n]) and cells(lines[n])[0] == MARKER]
-non_row_marker = next((n for n, l in enumerate(lines)
-                       if MARKER in l and not is_row(l) and l.strip().startswith(MARKER)),
-                      None)
-if non_row_marker is not None:
-    fail("marker at line %d is not a table row — a bare comment line terminates "
-         "the GFM table, so appended rows render as paragraph text"
-         % (non_row_marker + 1))
-if len(marker_rows) != 1:
-    fail("expected exactly 1 marker row (`%s` as its first cell), found %d"
-         % (MARKER, len(marker_rows)))
-
-# 8c: the marker row sits inside the routing table block.
-if not routing[0] <= marker_rows[0] <= routing[1]:
-    fail("marker row (line %d) is outside the routing table block (lines %d-%d)"
-         % (marker_rows[0] + 1, routing[0] + 1, routing[1] + 1))
-
-# 8d: no pipe-delimited line belongs to no valid table block.
-for n, line in enumerate(lines):
-    if is_row(line) and n not in in_a_block:
-        fail("orphaned table row outside any table block (line %d): %s"
-             % (n + 1, line[:60]))
+marker_line = next(n for n in range(len(lines))
+                   if is_row(lines[n]) and cells(lines[n])[0] == MARKER)
 
 # 8g: the tail below the marker's generated-row run survived. The template
 # renders a closing paragraph and `## Orchestration rules` unconditionally, so an
@@ -129,7 +68,7 @@ for n, line in enumerate(lines):
 # two-way split reconciliation truncated the file at the marker row. 8a-8d cannot
 # see that: the marker row, the table block, and every generated row survive the
 # truncation, and GitHub still renders a perfectly valid table.
-j = marker_rows[0] + 1
+j = marker_line + 1
 while j < len(lines) and is_row(lines[j]):
     j += 1
 tail = lines[j:]

@@ -85,7 +85,8 @@ Evidence: `path/to/real/file` — <one line on what it shows>
   `{{GATE_COMMANDS}}` / `{{MIGRATION_DIFF_COMMAND}}`.
 - No rule contradicts a scaffolded policy file under `.agentic/guides/policy/`.
 - Report the produced guide list to the installer — the installer (not you)
-  registers them in the scaffolded PATTERNS index.
+  registers them in the scaffolded PATTERNS index (Phase 5 step 6b: one row per
+  guide, below the `<!-- generated-guide-rows -->` marker, label fixed by path).
 
 ## Your final message
 

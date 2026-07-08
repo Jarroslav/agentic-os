@@ -608,18 +608,50 @@ only). Otherwise:
    (which spawns agents by reading this exact table) actually able to
    discover generated writer agents automatically instead of only via
    explicit `/slash-command` invocation.
+6b. **Guide-index rows** (you, the orchestrator, not a generator subagent — same
+   race reason as step 6: `PATTERNS.md` is one shared file). Skip if `PATTERNS.md`
+   wasn't scaffolded (Phase 4). Unlike the agent rows in step 6, these are
+   **fully derived** — one row per generated stack guide, its label fixed by the
+   guide's path — so they are *rebuilt*, never hand-edited, and `/agentic-upgrade`
+   regenerates them from the journal the same way (no three-way split needed).
+
+   **Rebuild** the contiguous run of table rows directly below the row whose first
+   cell is the literal `<!-- generated-guide-rows -->` marker (a real, mostly-empty
+   table row in `templates/governance/PATTERNS.md.tmpl` — not a standalone comment;
+   never remove or edit the marker row itself): delete whatever rows are there, then
+   emit one `| <label> | [`<path>`](<path>) |` row, **in this table's order**, for
+   each guide in this fixed set that `gen/stack-guides` produced this run — i.e.
+   whose file is present on disk. `gen/stack-guides` reduces an absent domain to a
+   short stub rather than skipping it (`generators/guide-generator.md`), so a stub
+   is a real file and still earns its row; only a guide never produced at all is
+   omitted:
+
+   | Guide path | Label |
+   |---|---|
+   | `.agentic/guides/data/database-patterns.md` | Database (schema, migrations, access control) |
+   | `.agentic/guides/api/api-patterns.md` | API (endpoints, validation, response envelope) |
+   | `.agentic/guides/development/development-practices.md` | Development practices (layout, auth, data flow) |
+   | `.agentic/guides/development/security-patterns.md` | Security (trust boundaries, secrets, authz) |
+   | `.agentic/guides/architecture/architecture.md` | Architecture (system layout, module boundaries) |
+
+   The label is fixed by path, not paraphrased, precisely so an upgrade can
+   reproduce the exact same row from the journal without re-reading the guide.
 7. Journal every generated file with `owner: "generated"`, `template:
-   "gen/<slot>"`. If step 6 changed `.agentic/guides/agent-registry.md` this
-   pass, that one file needs **two** re-stamps — both against its current
-   on-disk `sha256` **after** step 6's mutation, since Phase 4 journaled and
-   scored it *before* that mutation and neither stamp self-updates:
+   "gen/<slot>"`. If step 6 changed `.agentic/guides/agent-registry.md` or step 6b
+   changed `PATTERNS.md` this pass, **each** changed index file needs **two**
+   re-stamps — both against its current on-disk `sha256` **after** the mutation,
+   since Phase 4 journaled and scored it *before* that mutation and neither stamp
+   self-updates:
    - **Journal**: re-record its `sha256` (`owner: "managed"`, `template`
      unchanged). Skipping this makes `/agentic-upgrade` see `current sha !=
-     recorded sha` on every future run and treat the file as user-modified —
-     see `skills/agentic-upgrade/SKILL.md` § Agent registry for why that
-     path is handled specially rather than left as an ordinary managed-file
-     diff-and-ask (a plain "overwrite with `NEWRENDER`" would strip every
-     generated-agent row, since the template has no knowledge of them).
+     recorded sha` on every future run and treat the file as user-modified.
+     Both index files are handled specially by `/agentic-upgrade` rather than
+     left as an ordinary managed-file diff-and-ask, because a plain "overwrite
+     with `NEWRENDER`" strips their generated rows (the template has none):
+     see `skills/agentic-upgrade/SKILL.md` § Agent registry (preserved via a
+     three-way split — the rows carry hand-authored intent) and § Guide index
+     (regenerated from the journal — the rows are fully derived from the
+     generated-guide set).
    - **Scorecard**: update its `docs/audits/instruction-scorecard.json`
      entry's `content_sha256` to match, keeping `composite_score: 100` and
      `source: "template-inherited"` — the appended rows follow this step's
