@@ -23,7 +23,11 @@ def main() -> None:
     except json.JSONDecodeError:
         sys.exit(0)
 
-    file_path = event.get("tool_input", {}).get("file_path", "")
+    # `or ""` — an explicit `"file_path": null` yields None, not the default, and
+    # a bare `in` against None raises TypeError, exiting 1. Same guard as
+    # instruction_stale_notice.py. This covers the field, not the container: a
+    # non-dict `tool_input` still tracebacks, as it does in every sibling hook.
+    file_path = event.get("tool_input", {}).get("file_path", "") or ""
     if MIGRATIONS_DIR and MIGRATIONS_DIR in file_path:
         print(
             f"[hook] Migration touched. Run: {MIGRATION_DIFF_COMMAND} — "

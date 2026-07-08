@@ -28,6 +28,24 @@ TPL = PLUGIN / "templates"
 
 VERSION = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text())["version"]
 
+# The developer preset's template union. Which IDs are *installed* is read from
+# the preset rather than restated here: a hardcoded copy silently diverges the
+# moment a preset gains or loses an ID, which is exactly how
+# `hooks/migration-notice` stayed orphaned (registered in VARIABLES.md and the
+# SKILL.md Phase 4 map, listed in no preset) while this executor installed it
+# anyway and the matrix stayed green. The (src, dest, id) rows below still
+# restate the id -> filename mapping; only membership is preset-driven.
+PRESET_TEMPLATE_IDS = set(
+    json.loads((PLUGIN / "presets/roles/developer.json").read_text())["templates"]
+)
+
+# SKILL.md Phase 4 step 1, first installer-side conditional: these two are
+# scaffolded whenever `hooks/settings-fragment` is in the union EVEN IF no preset
+# lists them. The fragment unconditionally wires them as PreToolUse hooks, and a
+# wired-but-missing PreToolUse script exits 2 and blocks every tool call. With
+# empty lists they are safe no-ops. The union filter must not skip them.
+ALWAYS_WITH_SETTINGS = {"hooks/human-gated-commands", "hooks/guarded-write-paths"}
+
 # --- --defaults answers for the nextjs-supabase profile, developer preset ------
 NEWLINE_VARS = {"GATE_COMMANDS", "HUMAN_GATED_COMMANDS", "GUARDED_WRITE_PATHS",
                 "ENV_CHECK_COMMANDS", "SECRET_DENY_PATTERNS"}
@@ -129,10 +147,17 @@ HOOKS = [
     ("precompact_checkpoint.py", "precompact_checkpoint.py", "hooks/precompact-checkpoint"),
     ("human_gated_commands.py.tmpl", "human_gated_commands.py", "hooks/human-gated-commands"),
     ("guarded_write_paths.py.tmpl", "guarded_write_paths.py", "hooks/guarded-write-paths"),
-    # migration_notice IS scaffolded (MIGRATIONS_DIR non-empty for nextjs)
     ("migration_notice.py.tmpl", "migration_notice.py", "hooks/migration-notice"),
 ]
+settings_in_union = "hooks/settings-fragment" in PRESET_TEMPLATE_IDS
 for src, dest, tid in HOOKS:
+    forced = tid in ALWAYS_WITH_SETTINGS and settings_in_union
+    if tid not in PRESET_TEMPLATE_IDS and not forced:
+        continue  # not in this preset's union — Phase 4 scaffolds the union only
+    # SKILL.md Phase 4: migration_notice is skipped when MIGRATIONS_DIR is empty.
+    # Non-empty here (nextjs-supabase → supabase/migrations/), so it installs.
+    if tid == "hooks/migration-notice" and not SCALARS["MIGRATIONS_DIR"]:
+        continue
     copy_tpl("hooks/claude/" + src, ".claude/hooks/" + dest, tid)
 
 # --- Phase 4 step 2: settings deep-merge --------------------------------------

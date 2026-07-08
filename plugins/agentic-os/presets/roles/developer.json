@@ -12,6 +12,7 @@
     "hooks/settings-fragment",
     "hooks/guarded-write-paths",
     "hooks/human-gated-commands",
+    "hooks/migration-notice",
     "githooks/pre-commit",
     "scripts/install-git-hooks",
     "governance/claude-section",

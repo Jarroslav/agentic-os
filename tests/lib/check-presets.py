@@ -60,6 +60,27 @@ for name, p in presets.items():
         if f is None or not f.exists():
             print("  MISSING file for %s -> %s (%s)" % (name, tid, f)); fail = 1
 
+# (1b) no ORPHANED registered ID: every ID registered in VARIABLES.md must be
+#      claimed by at least one preset's `templates` or `generated`. Check (1)
+#      only proves ID -> file; without the reverse, a template can be registered
+#      in VARIABLES.md and mapped in the SKILL.md Phase 4 table yet listed in no
+#      preset, so Phase 4 -- which scaffolds the preset union -- never installs
+#      it. `hooks/migration-notice` sat orphaned exactly this way: the settings
+#      fragment registered its PostToolUse entry, the pruning rule then dropped
+#      it on every install, and no migration-managed repo ever got a migration
+#      notice. Read the registry from VARIABLES.md (the same source and regex
+#      validate-presets.sh uses) rather than the HOOK_FILE mirror above: that
+#      mirror holds only the ~21 non-prefix IDs, so an orphan under `policy/`,
+#      `guides/`, `agents/`, or `gen/` would slip through unnoticed.
+REGISTERED = set(re.findall(
+    r"`((?:hooks|githooks|scripts|governance|policy|guides|agents|commands|sdlc|gen)"
+    r"/[a-z0-9][a-z0-9-]*)`",
+    (TPL / "VARIABLES.md").read_text(encoding="utf-8"),
+))
+claimed = {tid for p in presets.values() for tid in p["templates"] + p["generated"]}
+for tid in sorted(REGISTERED - claimed):
+    print("  ORPHANED registered ID (in VARIABLES.md, in no preset): %s" % tid); fail = 1
+
 # (2) union-safety: shared IDs are identical strings (trivially true for strings,
 #     but ensure no preset lists a malformed/dup ID)
 for name, p in presets.items():
