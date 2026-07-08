@@ -1,8 +1,8 @@
 # Contributing
 
-`main` is protected: **no direct pushes**, every change lands through a pull
-request that passes CI and is approved by the owner (@Jarroslav). This holds for
-everyone, including the owner.
+`main` is protected: **no direct pushes — by anyone, including the owner.** Every
+change lands through a pull request whose `gate` CI check passes. Pull requests
+from contributors also require review from a code owner (@Jarroslav).
 
 ## Workflow
 
@@ -35,12 +35,6 @@ owner, so the PR requests their review automatically.
 
 Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`). No AI
 attribution footers.
-
-## Merging your own changes
-
-GitHub does not let you approve your own PR. If you are the sole maintainer, see
-[`docs/GITHUB-SETUP.md`](docs/GITHUB-SETUP.md) for the two supported options
-(a second approver account, or an admin bypass for owner PRs).
 
 ## Reporting a bug or requesting a feature
 

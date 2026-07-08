@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# T0 hook unit tests — renders every WS-A template with default variable values
+# T0 hook unit tests — renders every hook template with default variable values
 # into a scratch target-repo layout, then asserts exit codes on canned events.
 # Run:  bash tests/t0/run.sh
 set -u
@@ -79,7 +79,7 @@ for f in precommit_review_gate.py precompact_checkpoint.py instruction_stale_not
   cp "$TPL/hooks/claude/$f" "$SCRATCH/.claude/hooks/$f"
 done
 # subagent_gate.py.tmpl renders + compiles here; its behavior cases live in
-# tests/t0/run-output-contract.sh (WS-B).
+# tests/t0/run-output-contract.sh.
 for t in instruction_gate session_start_bootstrap write_scope_guard human_gated_commands guarded_write_paths migration_notice subagent_gate; do
   render "$TPL/hooks/claude/$t.py.tmpl" "$SCRATCH/.claude/hooks/$t.py"
 done

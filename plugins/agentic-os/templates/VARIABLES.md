@@ -6,7 +6,7 @@ never rename or repurpose existing ones without agreement across all active sess
 > Output-contract parser merged: `subagent_gate.py.tmpl` (strict fail-closed on
 > SubagentStop, lenient on plain Stop); t0 cases in `tests/t0/run-output-contract.sh`
 > (11 green). The verbatim `.py` interim copy has been removed. (Extension done by the
-> orchestrator on WS-B's behalf.)
+> orchestrator on the HITL gate's behalf.)
 
 ## Rendering convention
 
@@ -100,7 +100,7 @@ allowed flow), `hooks/migration-notice` (→ `migration_notice.py.tmpl`, consume
 `{{MIGRATIONS_DIR}}` + `{{MIGRATION_DIFF_COMMAND}}`; installer skips it when
 `{{MIGRATIONS_DIR}}` is empty).
 
-> **Note (WS-A)**: `settings-fragment.json.tmpl` is valid JSON with no placeholders — the
+> **Note**: `settings-fragment.json.tmpl` is valid JSON with no placeholders — the
 > newline-list variables live in the three companion hook templates above (injecting lists
 > into JSON-escaped inline `python -c` strings was rejected as unrenderable by plain
 > substitution). `{{SECRET_DENY_PATTERNS}}` defaults are baked into the fragment's

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# WS-E acceptance matrix. Executes the deterministic parts of the agentic-init
+# Acceptance matrix. Executes the deterministic parts of the agentic-init
 # skill (via tests/lib/refinstall.py, the reference executor) against fixture
 # repos and asserts T1–T7. Model-driven phases (interview, generation, live
 # AskUserQuestion) are out of scope here — see tests/README.md.

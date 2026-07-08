@@ -354,17 +354,14 @@ model-driven half is never quietly claimed as CI-covered.
 
 ## Contributing
 
-`main` is protected — **all changes go through a reviewed, CI-passing pull
-request; no direct pushes.** See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the
-branch → PR flow and [`docs/GITHUB-SETUP.md`](docs/GITHUB-SETUP.md) for exactly
-how the protection is configured (and how to publish a fork with the same rules
-via `scripts/setup-github.sh`).
+`main` is protected — **no direct pushes; every change lands through a
+CI-passing pull request**, and contributor PRs require a code-owner review. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for the branch → PR flow.
 
 ## Docs
 
 - Engineering principles — the ideas behind the enforcement mechanisms, and why a plain agent session doesn't have them: [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md)
 - Upgrade flow & version notes: [`plugins/agentic-os/docs/UPGRADING.md`](plugins/agentic-os/docs/UPGRADING.md)
-- GitHub protection & publish: [`docs/GITHUB-SETUP.md`](docs/GITHUB-SETUP.md)
 - Preset composition rules: [`plugins/agentic-os/presets/README.md`](plugins/agentic-os/presets/README.md)
 - Roadmap: [`ROADMAP.md`](ROADMAP.md)
 - Security policy: [`SECURITY.md`](SECURITY.md)

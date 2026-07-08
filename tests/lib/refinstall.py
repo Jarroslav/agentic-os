@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Reference executor of agentic-init Phase 4 (deterministic scaffold only).
 
-This is the WS-E test harness's stand-in for a human/agent following
+This is the acceptance harness's stand-in for a human/agent following
 plugins/agentic-os/skills/agentic-init/SKILL.md by hand: it renders + places
 every template in the *developer* preset union with the `--defaults` answers for
 the nextjs-supabase profile, deep-merges the settings fragment, installs the
 git-hook chain, and seeds the instruction scorecard. It deliberately SKIPS
 Phase 5 (generation) and Phase 3 side effects outside the target.
 
-If a step here is impossible to derive from the SKILL.md spec, that is a WS-E
+If a step here is impossible to derive from the SKILL.md spec, that is a harness
 finding — this file is the executable proof that the spec is followable.
 
 Usage: refinstall.py <PLUGIN_ROOT> <TARGET_REPO> [--reinstall]

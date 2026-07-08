@@ -28,8 +28,8 @@ fail = 0
 # superpowers is pinned (anthropics/...) -> must be registered
 if not any("superpowers" in e for e in settings.get("enabledPlugins", [])):
     print("  superpowers not registered"); fail = 1
-# after WS-F pinned OWNER -> Jarroslav, there should be NO pending-source-pin left,
-# and agentic-sdlc must now be registered.
+# the dependency manifest now pins a real owner (no `OWNER/` placeholder), so there
+# should be NO pending-source-pin left, and agentic-sdlc must be registered.
 owner_left = any("OWNER/" in d["source"].get("repo", "") for d in manifest["plugins"])
 if owner_left:
     # if any OWNER remains it must have been skipped (not registered)
