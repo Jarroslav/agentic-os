@@ -570,13 +570,24 @@ only). Otherwise:
      `journal.follow_ups` ("regenerate <name> to ≥95").
 5. **Scorecard update.** The scorecard file already exists (Phase 4 step 8
    seeded every templated asset). Here, **overwrite/add entries for generated
-   files only**, with their real audited results, in the shape
-   `instruction_gate.py` reads:
-   `{"files": {"<rel path>": {"content_sha256": "<sha256>", "composite_score": <audited n>, "gate_threshold": <n, only when relaxed per decision 6>}}}`
-   — one entry per generated canonical contract, its
-   `.claude/agents/<name>.md` pointer, and every generated
-   `.agentic/guides/**/*.md` guide. Never touch the `template-inherited`
-   entries for files this phase did not produce.
+   files only**, in the shape `instruction_gate.py` reads:
+   `{"files": {"<rel path>": {"content_sha256": "<sha256>", "composite_score": <n>, "gate_threshold": <n, only when relaxed per decision 6>, "source": "..."}}}`.
+   Three kinds of generated file, two scoring rules:
+   - **The generated canonical contract** (`{{AGENTS_CANONICAL_DIR}}<name>.md`) and
+     **every generated `.agentic/guides/**/*.md` guide** — their **real audited**
+     `composite_score` (from step 4 for a contract, the guide-generator's evidence
+     audit for a guide), plus `gate_threshold` when relaxed per decision 6.
+     `source: "generated"`.
+   - **The `.claude/agents/<name>.md` pointer** — a thin derived file (frontmatter
+     + "read the canonical contract"); step 4 audits the *contract*, never the
+     pointer, so there is nothing to grade independently. **Inherit the canonical
+     contract's `composite_score` (and `gate_threshold`, if it shipped relaxed)
+     verbatim**; `source: "derived-from-contract"`. This is the generated analogue
+     of Phase 4's `template-inherited` pointer seeding: `instruction_gate.py` checks
+     the pointer's *own* entry on every spawn (`own_pointer` in `check_paths`), so it
+     must carry a score, and a thin pointer's quality is entirely its contract's.
+
+   Never touch the `template-inherited` entries for files this phase did not produce.
 6. **Registry rows** (you, the orchestrator, do this — **never** a generator
    subagent: slots run in parallel per step 3 and `.agentic/guides/agent-registry.md`
    is one shared file, so a parallel per-slot append would race). Skip this
