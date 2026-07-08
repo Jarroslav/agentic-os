@@ -20,7 +20,7 @@ jobs:
           bash tests/t0/run.sh
           bash tests/t0/run-output-contract.sh
 
-      - name: Acceptance matrix (T1–T7)
+      - name: Acceptance matrix (T1–T8)
         run: bash tests/run-matrix.sh
 
       - name: Validate JSON manifests & presets

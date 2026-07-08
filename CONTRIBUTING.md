@@ -13,14 +13,14 @@ git switch -c feat/my-change        # or fix/…, docs/…, chore/…
 # 2. Make the change, then run the gates locally (CI runs the same ones)
 bash tests/t0/run.sh                 # 50 hook unit tests
 bash tests/t0/run-output-contract.sh # 12 output-contract parser checks
-bash tests/run-matrix.sh             # T1–T7 acceptance (re-runs the output-contract suite as T7)
+bash tests/run-matrix.sh             # T1–T8 acceptance (re-runs the output-contract suite as T7)
 
 # 3. Push the branch and open a PR
 git push -u origin feat/my-change
 gh pr create --fill --base main
 ```
 
-CI (`.github/workflows/ci.yml`) re-runs the hook unit tests and the T1–T7
+CI (`.github/workflows/ci.yml`) re-runs the hook unit tests and the T1–T8
 acceptance matrix on every PR. A red run blocks merge. `@Jarroslav` is a code
 owner, so the PR requests their review automatically.
 

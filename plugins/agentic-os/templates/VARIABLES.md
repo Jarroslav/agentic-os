@@ -1,21 +1,92 @@
 # Template variable & ID registry (append-only)
 
-This file is the shared contract between parallel workstreams. **Append new entries;
-never rename or repurpose existing ones without agreement across all active sessions.**
-
-> Output-contract parser merged: `subagent_gate.py.tmpl` (strict fail-closed on
-> SubagentStop, lenient on plain Stop); t0 cases in `tests/t0/run-output-contract.sh`
-> (11 green). The verbatim `.py` interim copy has been removed. (Extension done by the
-> orchestrator on the HITL gate's behalf.)
+This file is the contract every template and every installer step reads.
+**Append new entries; never rename or repurpose existing ones.**
 
 ## Rendering convention
 
-Templates ending in `.tmpl` contain `{{VAR}}` placeholders replaced literally by
-`/agentic-init` at scaffold time (plain string substitution — no logic in templates;
-conditionals live in the installer skill). Files without `.tmpl` are copied verbatim.
-Exception for `.json.tmpl` files: list-valued variables (e.g. `{{ESCALATE_ON}}`,
-`{{GATE_COMMANDS}}`) are rendered as JSON array elements — each item quoted,
-comma-separated — so `[{{ESCALATE_ON}}]` becomes `["security","breaking-change",…]`.
+Templates ending in `.tmpl` contain `{{VAR}}` placeholders replaced by
+`/agentic-init` at scaffold time (no logic in templates; conditionals live in the
+installer skill). Files without `.tmpl` are copied verbatim.
+
+**Escaping is not optional.** In `.py.tmpl` and `.json.tmpl`, substitute a scalar
+`{{VAR}}` with the **JSON-escaped body** of its value:
+
+```python
+json.dumps(value, ensure_ascii=False)[1:-1]
+```
+
+— the value with `"`, `\`, and control characters (including newlines) escaped, and
+**no surrounding quotes**. The template already supplies the quotes; leave them
+alone. JSON's escape syntax is a subset of Python's for these characters, so one
+encoding serves both file types and every position: a whole literal
+(`X = "{{VAR}}"`), an interpolated one (`"… ({{VAR}})"`), a triple-quoted block, or
+a comment.
+
+> **`ensure_ascii=False` is load-bearing.** With the default, an astral character
+> such as U+1F600 is emitted as the surrogate pair `\ud83d\ude00`. A JSON reader
+> recombines it; a **Python** string literal does not — the constant becomes two
+> lone surrogates that compare unequal to the answer and raise `UnicodeEncodeError`
+> when printed. Templates are written as UTF-8, so the character can stay itself.
+> `check-render-escaping.py` fails if this is dropped.
+
+> **Templates must quote with `"`, never `'`.** `json.dumps` does not escape an
+> apostrophe, so `X = '{{VAR}}'` with the value `it's a repo` is a `SyntaxError`
+> while `X = "{{VAR}}"` is fine. `check-render-escaping.py` **tokenises** every
+> `.py.tmpl` and rejects a placeholder in a single-quoted string wherever it sits —
+> including `ROOT / 'a/{{VAR}}'`, which a regex for `'{{VAR}}'` would miss. The same
+> pass rejects a placeholder in *no* string at all (see `{{SCORE_THRESHOLD}}` below).
+> JSON has no single-quoted strings, so `.json.tmpl` is unaffected.
+
+Plain substitution here is a **silent, shipped bug**, not a style preference. Real
+interview answers carry quotes:
+
+| Answer | Plain substitution yields | Symptom |
+|---|---|---|
+| `alembic revision --autogenerate -m "<msg>"` | `X = "alembic … -m "<msg>""` | **`py_compile` exits 0** — Python reads the chained comparison `"…" < msg > ""` — then `NameError` at runtime. `/agentic-doctor` Check 2 reports green. |
+| `test -n "$DATABASE_URL"` (last in a newline list) | `X = """…"$DATABASE_URL""""` | `SyntaxError`. Reorder the list and it compiles — the bug is *order-dependent*. |
+| `sh -c "npm run dev"` | `"app_start_command": "sh -c "npm run dev""` | `sdlc/config.json` no longer parses. |
+
+`tests/lib/check-render-escaping.py` renders every `.py.tmpl`/`.json.tmpl` under
+these exact answers and asserts the output compiles, imports, parses, **and
+round-trips** — every rendered constant still equal to the answer it came from.
+Parsing alone is not enough: an escape that merely *strips* `"` also compiles and
+parses, turning `sh -c "npm run dev"` into a different command and quietly disarming
+the two `PreToolUse` block hooks. `tests/lib/check-hooks-import.py`, run against a
+scaffold rendered from the same answers, asserts the reference installer applies the
+rule end to end.
+
+**Everywhere else, substitute the plain value.** `.md.tmpl` prose and fenced blocks
+take no escaping — a Windows path would render as `C:\\dir` and a newline-list as
+one `\n`-joined line. (No `.sh`/`.yml` template carries a placeholder today; if one
+ever does, it needs its own quoting rule, not this one.)
+
+Placeholders in `#` comments take the same escaping — harmlessly, and on purpose: a
+newline in an unescaped comment would spill code into prose.
+
+**Two positions are not string literals.** One is a genuine exemption; the other is
+a security boundary:
+
+- **List-valued variables in `.json.tmpl`** — the exemption. Rendered as JSON array
+  elements, each item passed through `json.dumps` in full (**with** its quotes),
+  comma-separated, so `[{{ESCALATE_ON}}]` becomes `["security","breaking-change",…]`.
+- **`{{SCORE_THRESHOLD}}`** — the only placeholder in the whole template set that
+  lands in a *code* position (`SCORE_THRESHOLD = {{SCORE_THRESHOLD}}`, in
+  `instruction_gate.py.tmpl`, which Claude Code executes on `SubagentStart`).
+  Escaping is a harmless no-op here and **could not protect it anyway**: any value
+  that is a valid Python statement runs. `SCORE_THRESHOLD = 95; import os` compiles,
+  imports cleanly, and passes every `/agentic-doctor` check. (Non-code garbage is
+  caught by luck, not by a control: `high` raises `NameError` on import, `9 5` is a
+  `SyntaxError`.)
+
+  **Today this is latent, not live**: `/agentic-init` derives it as the constant
+  `95` on no interview screen, so no user input reaches it. If it ever becomes an
+  answer, validate at intake that it is a number — nothing downstream will.
+
+  It is also the *only* sanctioned code position. `check-render-escaping.py`'s
+  tokeniser fails any `.py.tmpl` placeholder that sits outside a string literal and
+  is not listed in `render_rule.CODE_POSITION_VARS`, so a second sink cannot be added
+  by accident.
 
 ## Variables
 

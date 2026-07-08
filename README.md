@@ -314,16 +314,17 @@ exactly what to delete. After that, the install journal
 ```bash
 bash tests/t0/run.sh                 # 50 hook unit tests
 bash tests/t0/run-output-contract.sh # 12 output-contract parser checks
-bash tests/run-matrix.sh             # T1–T7 acceptance (29 checks; re-runs the output-contract suite as T7)
+bash tests/run-matrix.sh             # T1–T8 acceptance (33 checks; re-runs the output-contract suite as T7)
 ```
 
-**What CI proves, deterministically, on every PR:** 79 checks — 50 hook unit
-tests (`tests/t0/run.sh`) plus the 29-check T1–T7 acceptance matrix — and JSON
+**What CI proves, deterministically, on every PR:** 83 checks — 50 hook unit
+tests (`tests/t0/run.sh`) plus the 33-check T1–T8 acceptance matrix — and JSON
 manifest/preset validation. The matrix *executes the installer's deterministic
 phases* against fresh and mature fixture repos; it is a skill-executability
 proof, not a mock. It covers non-destructive mature-repo handling, idempotent
 re-runs, upgrade classification, preset/ID resolution, dependency
-registration, and the output-contract parser. See
+registration, the output-contract parser, and template rendering under
+quote-bearing answers. See
 [`tests/README.md`](tests/README.md).
 
 **What CI structurally cannot prove, and how it's proven instead:** the

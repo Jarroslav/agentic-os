@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Acceptance matrix. Executes the deterministic parts of the agentic-init
 # skill (via tests/lib/refinstall.py, the reference executor) against fixture
-# repos and asserts T1–T7. Model-driven phases (interview, generation, live
+# repos and asserts T1–T8. Model-driven phases (interview, generation, live
 # AskUserQuestion) are out of scope here — see tests/README.md.
 set -uo pipefail
 ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
@@ -21,6 +21,10 @@ python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$FRESH" >/dev/null
 
 # py_compile every scaffolded hook
 if python3 -m py_compile "$FRESH"/.claude/hooks/*.py 2>/dev/null; then ok "hooks py_compile"; else bad "hooks py_compile"; fi
+# ...and every hook must *load*, not merely compile (agentic-doctor Check 2b).
+# Asserted here, on the pristine scaffold: T5's check-upgrade.py appends to
+# $FRESH/.claude/hooks/subagent_gate.py and never reverts it.
+python3 "$ROOT/tests/lib/check-hooks-import.py" "$FRESH" && ok "scaffolded hooks import cleanly" || bad "scaffolded hooks import cleanly"
 # settings wiring
 assert "settings valid JSON" "python3 -c 'import json;json.load(open(\"$FRESH/.claude/settings.json\"))'"
 assert "Stop gate wired"        "grep -q '\"Stop\"' '$FRESH/.claude/settings.json'"
@@ -110,6 +114,64 @@ python3 "$ROOT/tests/lib/check-deps.py" "$PLUGIN" && ok "pinned registered, OWNE
 
 echo "== T7 output-contract parser =="
 if bash "$ROOT/tests/t0/run-output-contract.sh" >/dev/null 2>&1; then ok "t0 output-contract suite"; else bad "t0 output-contract suite"; fi
+
+echo "== T8 rendering is total =="
+# T8a — `esc()` is lossless, no template single-quotes a placeholder, plain
+# substitution still reproduces the silent bug class, and every template renders.
+python3 "$ROOT/tests/lib/check-render-escaping.py" "$PLUGIN" && ok "templates render under adversarial answers" || bad "templates render under adversarial answers"
+# T8b — the *installer* must apply the escaping rule, not merely be able to. The
+# default scalar answers carry no quotes, so they render identically with or
+# without `esc()`: dropping it leaves T1 green. Re-scaffold with answers a real
+# interview produces, and require the hooks to load with their values intact, the
+# JSON to parse, and the .md prose to stay unescaped.
+ADV="$WORK/adversarial"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$ADV" >/dev/null
+REFINSTALL_ADVERSARIAL=1 python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$ADV" >/dev/null
+python3 "$ROOT/tests/lib/check-hooks-import.py" "$ADV" --round-trip && ok "quote-bearing answers scaffold loadable hooks (values round-trip)" || bad "quote-bearing answers scaffold loadable hooks (values round-trip)"
+PYTHONPATH="$ROOT/tests/lib" python3 - "$ADV" <<'PY' && ok "quote-bearing answers scaffold round-trip json + unescaped md" || bad "quote-bearing answers scaffold round-trip json + unescaped md"
+import json, pathlib, sys
+from render_rule import JSON_ROUND_TRIP, md_over_escape_probes
+
+target = pathlib.Path(sys.argv[1])
+problems = []
+
+# `json.loads` succeeding proves the render did not *break* the file. An escape that
+# strips `"` also parses — `sh -c "npm run dev"` silently becomes a different command.
+cfg_path = target / ".agentic/agentic-sdlc/config.json"
+if not cfg_path.exists():
+    problems.append("%s: not scaffolded" % cfg_path.name)
+else:
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+        for dotted, expected in JSON_ROUND_TRIP.items():
+            node = cfg
+            for part in dotted.split("."):
+                node = node[part]
+            if node != expected:
+                problems.append("config.json %s: expected %r, got %r" % (dotted, expected, node))
+    except (json.JSONDecodeError, KeyError, TypeError) as e:
+        problems.append("config.json: %s" % e)
+
+# `.md.tmpl` prose takes the plain value (VARIABLES.md § Rendering). An installer that
+# escaped markdown too would leave the *escaped* form of an answer in the rendered
+# guides — `\n` where a fenced list needs real line breaks, `\"` inside a command.
+# Probing for those exact strings, not for `\"` generally: this repo's own guides
+# discuss escaping, and a blanket scan would false-positive on them.
+probes = md_over_escape_probes()
+for p in sorted(target.rglob("*.md")):
+    if ".git" in p.parts:
+        continue
+    body = p.read_text(encoding="utf-8")
+    for probe in probes:
+        if probe in body:
+            problems.append("%s: over-escaped markdown — found the escaped form %r; "
+                            "escaping is for .py.tmpl/.json.tmpl only"
+                            % (p.relative_to(target), probe[:48]))
+            break
+for b in problems:
+    print("  " + b)
+sys.exit(1 if problems else 0)
+PY
 
 echo
 echo "MATRIX: $PASS passed, $FAIL failed"

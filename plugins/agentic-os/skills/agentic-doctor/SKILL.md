@@ -1,6 +1,6 @@
 ---
 name: agentic-doctor
-description: Standalone verifier for an agentic-os install — checks the file manifest against the install journal, py-compiles every hook, dry-runs the enforcement hooks with canned events (block hooks must exit 2 on a synthetic violation, 0 on clean), runs the HITL smoke test on the output-contract gate, verifies settings registration, git hook installation, dependency plugins, scorecard thresholds, and agent-registry table integrity. Writes .agentic/agentic-os/doctor.json. Use when the user says "/agentic-doctor", "verify the agentic-os install", "check the agent setup", "run doctor", or after /agentic-init and /agentic-upgrade.
+description: Standalone verifier for an agentic-os install — checks the file manifest against the install journal, py-compiles AND imports every hook it owns (a badly-rendered scalar compiles but raises on load), dry-runs the enforcement hooks with canned events (block hooks must exit 2 on a synthetic violation, 0 on clean), runs the HITL smoke test on the output-contract gate, verifies settings registration, git hook installation, dependency plugins, scorecard thresholds, and agent-registry table integrity. Writes .agentic/agentic-os/doctor.json. Use when the user says "/agentic-doctor", "verify the agentic-os install", "check the agent setup", "run doctor", or after /agentic-init and /agentic-upgrade.
 version: 0.1.0
 license: Apache-2.0
 ---
@@ -31,12 +31,65 @@ For every entry in `journal.files`:
   it means local edits an upgrade will prompt about; for `owner: "generated"`
   it means the contract drifted from its audited state — cross-check Check 7).
 
-## Check 2 — Hook compilation
+## Check 2 — Hook compilation and load
 
-For each `.claude/hooks/*.py` present:
-`python3 -m py_compile .claude/hooks/<name>.py` — any non-zero exit ⇒ fail
-(`py_compile`). Also grep each hook for a leftover literal `{{` — an
-unrendered placeholder is a scaffold bug ⇒ fail.
+For each `.claude/hooks/*.py` the journal records with **`owner: "managed"`**, all
+three must hold (key: `py_compile`). A mature repo's `.claude/hooks/` also holds the
+team's own hooks; Claude Code runs those as `python3 hook.py`, so they need no
+`__main__` guard and are none of the doctor's business. Skip them, and say how many
+you skipped in the check's `detail`.
+
+Filter on `owner`, not on the path. A team hook that *collides* with one of ours is
+journalled at our path with `owner: "user"` — the installer skips rather than
+overwrite it (Check 1 expects those entries to differ from their template). Keying on
+the `.claude/hooks/` prefix alone would import someone else's file and fail the
+install over something we never wrote.
+
+2a. `python3 -m py_compile .claude/hooks/<name>.py` — any non-zero exit ⇒ fail.
+
+2b. The hook **imports cleanly**. Two rules, in this order:
+
+  - **Guard first.** If the file has no `if __name__ == '__main__':` line (accept
+    either quote style), **do not import it** — record that as the failure.
+    Importing is only safe because every managed hook guards its entry point; an
+    unguarded one runs `main()` the moment anything loads it, and `main()` may
+    `git fetch`/merge (`session_start_bootstrap`), run `ENV_CHECK_COMMANDS` through
+    a shell, or block a tool call. **Import, never execute.**
+  - Then load it as a module (not as `__main__`), so its top-level statements run
+    and `main()` does not. Any traceback ⇒ fail — including `SystemExit`, which is
+    not an `Exception` subclass, so a bare `except Exception` would let a hook that
+    calls `sys.exit()` at import silently pass.
+
+```
+python3 -c "
+import importlib.util as u, sys
+spec = u.spec_from_file_location('h', sys.argv[1])
+try:
+    spec.loader.exec_module(u.module_from_spec(spec))
+except BaseException as e:
+    sys.exit('hook raised on import: %r' % (e,))
+" .claude/hooks/<name>.py
+```
+
+`except BaseException`, not `except Exception` — and never a bare
+`exec_module(...)` with no handler. A hook that calls `sys.exit()` at module level
+raises `SystemExit`, which is not an `Exception` subclass: an unhandled one makes
+this very process exit **0**, and the check records a pass over a hook that quits
+before it ever reads an event.
+
+**`py_compile` alone is not sufficient and never was.** A badly-rendered scalar
+(see `VARIABLES.md § Rendering convention`) produces `X = "alembic … -m "<msg>""`,
+which Python parses as the chained comparison `"…" < msg > ""` — it *compiles* and
+exits 0. Every in-literal placeholder in the template set sits in a module-level
+statement (an assignment, or the module docstring), so the `NameError` fires on
+import, before any event is read. Without
+2b, Checks 1–8 all pass over a `PostToolUse` hook that tracebacks on **every**
+`Write` or `Edit` tool call (`settings-fragment.json.tmpl` wires
+`migration_notice.py` to both matchers with no path filter, and the import fails
+before `MIGRATIONS_DIR in file_path` is ever evaluated).
+
+2c. Grep each hook for a leftover literal `{{` — an unrendered placeholder is a
+    scaffold bug ⇒ fail.
 
 ## Check 3 — Canned-event dry-runs (exit-2 on violation, 0 on clean)
 
@@ -44,13 +97,22 @@ Same technique as the product's own `tests/t0/` cases (do **not** modify those
 files; they live in the plugin repo, not the target). Skip any hook that is
 not installed. All events are piped as single-line JSON on stdin.
 
+To read a rendered list out of a hook, **import the module and read the attribute**
+— never scrape the file's text. Per `VARIABLES.md § Rendering convention` the
+newlines inside those strings are `\n` escapes, not literal line breaks, so the
+source reads `X = """a\nb"""` on one line. Import it the same way Check 2b does
+(that check discards its module, so load it again) and take the first line the
+hook itself would honour — `next(s for l in m.HUMAN_GATED_COMMANDS.splitlines()
+if (s := l.strip()) and not s.startswith("#"))`. Blanks and `#` comments are
+skipped by the hook's own loop; feeding it one as `<GATED>` yields exit 0 and a
+false failure.
+
 1. **`human_gated_commands.py`** (only if its rendered list is non-empty; take
-   the first listed command `<GATED>` from the file's `HUMAN_GATED_COMMANDS`
-   string):
+   the first listed command `<GATED>`):
    - `{"tool_name":"Bash","tool_input":{"command":"<GATED>"}}` → must exit 2.
    - `{"tool_name":"Bash","tool_input":{"command":"echo ok"}}` → must exit 0.
 2. **`guarded_write_paths.py`** (only if its rendered list is non-empty; take
-   the first guarded path `<GUARDED>`):
+   the first guarded path `<GUARDED>` the same way):
    - `{"tool_name":"Write","tool_input":{"file_path":"<GUARDED>"}}` → exit 2.
    - `{"tool_name":"Write","tool_input":{"file_path":"README.md"}}` → exit 0
      (unless README.md itself is guarded — pick any unguarded path).

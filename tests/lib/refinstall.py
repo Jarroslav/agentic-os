@@ -17,9 +17,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path
+
+# The escaping rule and the adversarial answers live in one place so a mutation to
+# either fails every check that depends on it, not just the copy that was edited.
+from render_rule import ANSWERS as ADVERSARIAL_ANSWERS
+from render_rule import LIST_ANSWERS as ADVERSARIAL_LISTS
+from render_rule import esc
 
 PLUGIN = Path(sys.argv[1]).resolve()
 TARGET = Path(sys.argv[2]).resolve()
@@ -81,15 +88,54 @@ SCALARS = {
     "TICKET_PREFIX": "GH",
 }
 
+# None of the scalar answers above contains a quote, backslash, or newline, so for
+# them `render()` emits the same bytes escaped or not. The newline-list answers are
+# different: `"\n".join(...)` *introduces* a newline before `esc` sees it, so those
+# constants do change — `X = """a\nb"""` on one source line, where they used to span
+# two. Same value, same `.splitlines()`; less readable scaffold, uniform rule, and
+# no dependence on "this only ever lands inside triple quotes", which is the
+# reasoning that produced the bug. `/agentic-doctor` Check 3 reads these constants
+# by importing the hook rather than scraping its text, for exactly this reason.
+#
+# What that leaves untestable is the *scalar* path: drop `esc` and every check above
+# still passes. `REFINSTALL_ADVERSARIAL=1` swaps in the quote-bearing answers a real
+# interview would produce, so T8b's round-trip fails when the rule is dropped, made
+# lossy, or applied twice. Off by default: T1's golden manifest pins the defaults.
+if os.environ.get("REFINSTALL_ADVERSARIAL"):
+    unknown = set(ADVERSARIAL_ANSWERS) - set(SCALARS)
+    if unknown:  # a silent skip here would quietly narrow T8b's coverage
+        sys.exit("refinstall: adversarial answers not in SCALARS: %s" % sorted(unknown))
+    SCALARS.update(ADVERSARIAL_ANSWERS)
+    LISTS.update(ADVERSARIAL_LISTS)
 
-def render(text: str, is_json: bool) -> str:
+
+def render_path(src: Path) -> str:
+    """Render a template, deriving both flags from its name.
+
+    The single place the file-type rule is applied. Passing `escape` by hand at each
+    call site meant `CLAUDE.section.md.tmpl` could be — and was — rendered under a
+    different rule than every other `.md.tmpl`, with nothing to catch it.
+    """
+    is_json = src.name.endswith(".json.tmpl")
+    # Only these two file types embed variables in string literals; `.md.tmpl` prose
+    # must stay unescaped or a path's backslash renders as `\\` and a newline-joined
+    # fenced block collapses to one `\n`-separated line.
+    escape = is_json or src.name.endswith(".py.tmpl")
+    return render(src.read_text(encoding="utf-8"), is_json, escape)
+
+
+def render(text: str, is_json: bool, escape: bool) -> str:
+    q = esc if escape else (lambda v: v)
     for var in NEWLINE_VARS:
-        text = text.replace("{{%s}}" % var, "\n".join(LISTS[var]))
-    esc = LISTS["ESCALATE_ON"]
+        text = text.replace("{{%s}}" % var, q("\n".join(LISTS[var])))
+    # Not a scalar: JSON array elements carry their own quotes; the comma-joined
+    # prose form (`.md.tmpl`) sits outside any literal. Neither takes `esc`.
+    escalate = LISTS["ESCALATE_ON"]
     text = text.replace("{{ESCALATE_ON}}",
-                        ",".join('"%s"' % x for x in esc) if is_json else ",".join(esc))
+                        ",".join(json.dumps(x) for x in escalate) if is_json
+                        else ",".join(escalate))
     for k, v in SCALARS.items():
-        text = text.replace("{{%s}}" % k, v)
+        text = text.replace("{{%s}}" % k, q(v))
     return text
 
 
@@ -126,8 +172,7 @@ def write(dest_rel: str, content: str, template: str, owner: str = "managed"):
 
 def copy_tpl(src_rel: str, dest_rel: str, template: str):
     src = TPL / src_rel
-    is_json = src.name.endswith(".json.tmpl")
-    content = render(src.read_text(), is_json) if src.name.endswith(".tmpl") else src.read_text()
+    content = render_path(src) if src.name.endswith(".tmpl") else src.read_text()
     write(dest_rel, content, template)
 
 
@@ -161,7 +206,7 @@ for src, dest, tid in HOOKS:
     copy_tpl("hooks/claude/" + src, ".claude/hooks/" + dest, tid)
 
 # --- Phase 4 step 2: settings deep-merge --------------------------------------
-frag = json.loads(render((TPL / "hooks/settings-fragment.json.tmpl").read_text(), True))
+frag = json.loads(render_path(TPL / "hooks/settings-fragment.json.tmpl"))
 settings_path = TARGET / ".claude/settings.json"
 settings = json.loads(settings_path.read_text()) if settings_path.exists() else {}
 
@@ -192,7 +237,7 @@ copy_tpl("scripts/install-git-hooks.sh", "scripts/install-git-hooks.sh", "script
 # --- Phase 4 step 4: governance -----------------------------------------------
 BEGIN = "<!-- agentic-os:begin v%s -->" % VERSION
 END = "<!-- agentic-os:end -->"
-claude_block = render((TPL / "governance/CLAUDE.section.md.tmpl").read_text(), False)
+claude_block = render_path(TPL / "governance/CLAUDE.section.md.tmpl")
 claude_path = TARGET / "CLAUDE.md"
 if claude_path.exists():
     body = claude_path.read_text()

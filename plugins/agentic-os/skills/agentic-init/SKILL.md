@@ -43,21 +43,46 @@ idempotent.
   upgrade when unmodified; `user` = pre-existed or user-declined — never
   touched again; `generated` = produced by a generator subagent — upgrades
   offer regeneration, never overwrite.
-- **Rendering** (registry: `PLUGIN/templates/VARIABLES.md`): plain string
-  substitution of `{{VAR}}` — no logic in templates; every conditional lives
-  here. Files without `.tmpl` are copied verbatim. Two list conventions:
-  - In `.json.tmpl` files, list-valued variables render as **quoted JSON array
-    elements**: `[{{ESCALATE_ON}}]` → `["security","breaking-change","migration","spend"]`.
-    (Applies to `{{ESCALATE_ON}}` in `templates/sdlc/config.json.tmpl`;
-    `templates/hooks/settings-fragment.json.tmpl` intentionally has no placeholders.)
-  - Newline-list variables (`{{GATE_COMMANDS}}`, `{{HUMAN_GATED_COMMANDS}}`,
+- **Rendering** (registry: `PLUGIN/templates/VARIABLES.md`): substitution of
+  `{{VAR}}` — no logic in templates; every conditional lives here. Files without
+  `.tmpl` are copied verbatim. **How you substitute depends on the file type:**
+  - **`.py.tmpl` and `.json.tmpl` — escape every scalar.** Substitute
+    `json.dumps(value, ensure_ascii=False)[1:-1]`: the value with `"`, `\`, and
+    control characters (newlines included) escaped, and **no** surrounding quotes.
+    The template already supplies the quotes — do not strip them, and do not
+    hand-escape. Mandatory in every position: whole literal, interpolated literal,
+    triple-quoted block, comment. Templates quote with `"` only; `json.dumps`
+    does not escape `'`.
+
+    `ensure_ascii=False` matters: with the default, an astral character (emoji, an
+    astral CJK ideograph) is emitted as a `\uXXXX` surrogate pair, which a Python
+    string literal does **not** recombine — the constant silently becomes two lone
+    surrogates. Templates are UTF-8; the character stays itself.
+
+    Skipping this ships a broken hook past a green doctor. The answer
+    `alembic revision --autogenerate -m "<msg>"` substituted plainly yields
+    `X = "alembic … -m "<msg>""`, which **`py_compile` accepts** (Python reads the
+    chained comparison `"…" < msg > ""`) and which raises `NameError` on import.
+    `VARIABLES.md § Rendering convention` tables all three known instances.
+
+    Escaping every scalar uniformly is safe: `{{SCORE_THRESHOLD}}` sits in a bare
+    numeric position and `json.dumps("95")[1:-1] == "95"`. The one genuine
+    exemption is **list-valued variables in `.json.tmpl`**, which render as quoted
+    JSON array elements: `[{{ESCALATE_ON}}]` →
+    `["security","breaking-change","migration","spend"]` (each item `json.dumps`'d
+    in full, *with* its quotes). Applies to `{{ESCALATE_ON}}` in
+    `templates/sdlc/config.json.tmpl`;
+    `templates/hooks/settings-fragment.json.tmpl` intentionally has no placeholders.
+  - **Newline-list variables** (`{{GATE_COMMANDS}}`, `{{HUMAN_GATED_COMMANDS}}`,
     `{{GUARDED_WRITE_PATHS}}`, `{{ENV_CHECK_COMMANDS}}`, `{{SECRET_DENY_PATTERNS}}`)
-    only ever appear inside fenced blocks or triple-quoted Python strings —
-    substitute them as literal newline-joined text, one item per line.
-  - Everywhere else (`.md.tmpl` prose, comma-list vars like `{{ESCALATE_ON}}`
-    outside JSON, e.g. in `templates/commands/core/pipeline-orchestrator.md.tmpl`
-    and `templates/policy/escalation-policy.md.tmpl`): substitute the plain
-    comma-joined string.
+    are scalars whose value is the items joined by newlines. Inside a `.py.tmpl`
+    they land in triple-quoted strings and take the escaping rule above — the
+    newlines become `\n` escapes, which the hook's `.splitlines()` decodes back.
+    Inside `.md.tmpl` fenced blocks, substitute the literal newline-joined text.
+  - **`.md.tmpl` prose** and comma-list vars outside JSON (e.g. in
+    `templates/commands/core/pipeline-orchestrator.md.tmpl` and
+    `templates/policy/escalation-policy.md.tmpl`): substitute the plain
+    comma-joined string, unescaped.
 - **Never `git add` or `git commit` in the target repo.** Report what was
   written; committing is the human's call (and their own review gate applies).
 
