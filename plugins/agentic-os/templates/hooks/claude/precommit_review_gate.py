@@ -166,7 +166,10 @@ def gate() -> None:
     except json.JSONDecodeError:
         sys.exit(0)
 
-    cmd = event.get("tool_input", {}).get("command", "") or ""
+    # `or {}` — an explicit `"tool_input": null` yields None, and `None.get(...)`
+    # raises; an uncaught error exits 1 = non-blocking on PreToolUse, letting an
+    # unreviewed commit through. main() also wraps this to fail closed.
+    cmd = (event.get("tool_input") or {}).get("command", "") or ""
 
     # Only care about real `git commit` invocations — not commit-like text inside
     # an echo / heredoc / unrelated command (see commit_args).
@@ -272,7 +275,17 @@ def main() -> None:
         sys.exit(status())
     if arg == "precommit":
         sys.exit(precommit())
-    gate()
+    # PreToolUse gate path. Fail CLOSED: if the gate cannot evaluate the event it
+    # must block the commit (exit 2), never let a crash become a non-blocking exit 1
+    # that admits an unreviewed commit. deny()/allow are SystemExit and pass through.
+    try:
+        gate()
+    except SystemExit:
+        raise
+    except BaseException as e:  # noqa: BLE001 — deliberate catch-all for fail-closed
+        print(f"⛔ Pre-commit review gate: internal error, blocking commit to fail "
+              f"closed: {e!r}", file=sys.stderr)
+        sys.exit(2)
 
 
 if __name__ == "__main__":

@@ -312,12 +312,12 @@ exactly what to delete. After that, the install journal
 ## Testing & development
 
 ```bash
-bash tests/t0/run.sh                 # 53 hook unit tests
+bash tests/t0/run.sh                 # 61 hook unit tests
 bash tests/t0/run-output-contract.sh # 12 output-contract parser checks
 bash tests/run-matrix.sh             # T1–T8 acceptance (38 checks; re-runs the output-contract suite as T7)
 ```
 
-**What CI proves, deterministically, on every PR:** 91 checks — 53 hook unit
+**What CI proves, deterministically, on every PR:** 99 checks — 61 hook unit
 tests (`tests/t0/run.sh`) plus the 38-check T1–T8 acceptance matrix — and JSON
 manifest/preset validation. The matrix *executes the installer's deterministic
 phases* against fresh and mature fixture repos; it is a skill-executability

@@ -113,6 +113,9 @@ ev_file() { printf '{"tool_name":"Write","tool_input":{"file_path":"%s"}}' "$1";
 
 echo "-- precommit_review_gate"
 check "gate: non-commit command allowed" 0 "$(ev_bash 'git status')" run_in python3 "$GATE"
+# fail-open guard: `tool_input: null` used to crash (exit 1 = non-blocking), which
+# would admit an unreviewed commit. No command to gate → clean allow, never exit 1.
+check "gate: null tool_input not exit-1" 0 '{"tool_name":"Bash","tool_input":null}' run_in python3 "$GATE"
 echo change > "$SCRATCH/f.txt"; git -C "$SCRATCH" add f.txt
 check "gate: unreviewed commit blocked" 2 "$(ev_bash 'git commit -m x')" run_in python3 "$GATE"
 check "gate: auto-stage (-am) refused" 2 "$(ev_bash 'git commit -am x')" run_in python3 "$GATE"
@@ -131,12 +134,20 @@ HG="$SCRATCH/.claude/hooks/human_gated_commands.py"
 check "human-gated command blocked" 2 "$(ev_bash 'git push origin main')" run_in python3 "$HG"
 expect_contains "  ...with escalation pointer" "escalation-policy.md"
 check "ordinary command allowed" 0 "$(ev_bash 'git push origin feature/x')" run_in python3 "$HG"
+# fail-open guard: a malformed `tool_input: null` used to crash (AttributeError →
+# exit 1), which PreToolUse treats as non-blocking — the gated command slipped
+# through. Must be a clean allow now, never exit 1.
+check "human-gated null tool_input not exit-1" 0 '{"tool_name":"Bash","tool_input":null}' run_in python3 "$HG"
+# fail-closed: a non-string command can't be evaluated — block, do not exit 1.
+check "human-gated non-string command fails closed" 2 '{"tool_name":"Bash","tool_input":{"command":123}}' run_in python3 "$HG"
 
 echo "-- guarded_write_paths"
 GW="$SCRATCH/.claude/hooks/guarded_write_paths.py"
 check "guarded path write blocked" 2 "$(ev_file 'design/VISION.json')" run_in python3 "$GW"
 expect_contains "  ...names the allowed flow" "/refine-vision"
 check "unguarded path write allowed" 0 "$(ev_file 'app/page.tsx')" run_in python3 "$GW"
+check "guarded null tool_input not exit-1" 0 '{"tool_name":"Write","tool_input":null}' run_in python3 "$GW"
+check "guarded non-string path fails closed" 2 '{"tool_name":"Write","tool_input":{"file_path":123}}' run_in python3 "$GW"
 
 echo "-- write_scope_guard"
 WS="$SCRATCH/.claude/hooks/write_scope_guard.py"
@@ -150,7 +161,13 @@ expect_contains "  ...names the lane" "outside its lane"
 check "locked: sibling-prefix dir blocked (app/ vs app-legacy/)" 2 "$(ev_file "$SCRATCH/app-legacy/x.ts")" run_in python3 "$WS" block
 printf -- '---\nname: scoped\nwrite_scope:\n  - app/\nforbidden_paths:\n  - app/secrets/\n---\nbody\n' > "$SCRATCH/.agentic/agents/scoped.md"
 check "locked: forbidden path blocked even in scope" 2 "$(ev_file "$SCRATCH/app/secrets/k.ts")" run_in python3 "$WS" block
+# fail-closed (block mode, lock active): a non-string file_path can't be resolved —
+# block, never exit 1. warn mode stays advisory (exit 0) on the same input.
+check "locked: non-string path fails closed (block)" 2 '{"tool_name":"Write","tool_input":{"file_path":123}}' run_in python3 "$WS" block
+check "locked: non-string path advisory (warn)" 0 '{"tool_name":"Write","tool_input":{"file_path":123}}' run_in python3 "$WS" warn
 check "warn mode never blocks" 0 "$(ev_file "$SCRATCH/lib/x.ts")" run_in python3 "$WS" warn
+# null tool_input under an active lock: no path to evaluate → open (exit 0), never exit 1.
+check "locked: null tool_input not exit-1 (block)" 0 '{"tool_name":"Write","tool_input":null}' run_in python3 "$WS" block
 rm "$SCRATCH/.agentic/state/active-agent.json"
 
 echo "-- instruction_gate"

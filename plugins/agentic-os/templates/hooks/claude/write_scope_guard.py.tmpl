@@ -92,13 +92,15 @@ def in_scope(file_path: str, patterns: list[str]) -> bool:
 def get_file_path(event: dict) -> str:
     fp = event.get("file_path") or event.get("file") or ""
     if not fp:
-        inp = event.get("tool_input", {})
+        # `or {}` — an explicit `"tool_input": null` yields None, and `None.get(...)`
+        # raises; in block mode an uncaught error exits 1 = non-blocking, so an
+        # out-of-lane write would slip through. main()'s wrapper also fails closed.
+        inp = event.get("tool_input") or {}
         fp = inp.get("file_path") or inp.get("path") or ""
     return fp
 
 
-def main() -> None:
-    mode = sys.argv[1] if len(sys.argv) > 1 else "warn"
+def guard(mode: str) -> None:
     try:
         event = json.loads(sys.stdin.read() or "{}")
     except json.JSONDecodeError:
@@ -146,6 +148,21 @@ def main() -> None:
     else:
         print(msg, file=sys.stderr)
         sys.exit(0)
+
+
+def main() -> None:
+    mode = sys.argv[1] if len(sys.argv) > 1 else "warn"
+    # Fail CLOSED in block mode: a guard that cannot evaluate its input must block
+    # (exit 2), never let a crash become a non-blocking exit 1. warn mode is
+    # advisory, so an error there stays non-blocking (exit 0). Intentional exits
+    # (SystemExit from guard()) pass through unchanged.
+    try:
+        guard(mode)
+    except SystemExit:
+        raise
+    except BaseException as e:  # noqa: BLE001 — deliberate catch-all for fail-closed
+        print(f"[write-scope] internal error: {e!r}", file=sys.stderr)
+        sys.exit(2 if mode == "block" else 0)
 
 
 if __name__ == "__main__":
