@@ -26,9 +26,9 @@ def classify(rel, rec):
     if rel == "CLAUDE.md" or rec["template"] in ("governance/agents",):
         return "managed-block"              # replaced wholesale between markers
     if rec["template"] == "governance/agent-registry":
-        return "registry-split-reconcile"   # split at <!-- generated-agent-rows -->,
-                                             # only the static portion above it diffs
-                                             # against NEWRENDER; generated rows preserved
+        return "registry-split-reconcile"   # three-way split at the marker row:
+                                             # head + tail diff against NEWRENDER,
+                                             # generated rows preserved verbatim
     if cur == rec["sha256"]:
         return "overwrite"                  # unmodified managed -> take new template
     return "prompt"                          # user-modified managed -> ask
@@ -54,6 +54,13 @@ if classify("CLAUDE.md", journal["files"]["CLAUDE.md"]) != "managed-block":
 registry = ".agentic/guides/agent-registry.md"
 if classify(registry, journal["files"][registry]) != "registry-split-reconcile":
     print("  agent-registry.md not registry-split-reconcile"); sys.exit(1)
+
+# The registry's SHAPE (marker row, table block, surviving tail) is asserted by
+# tests/lib/check-registry.py -- doctor Check 8, including 8g -- against this same
+# fixture in T1. Duplicating those assertions here would add zero coverage: T4
+# already proves the reinstall between them is byte-identical. What this file
+# uniquely owns is the routing decision above: agent-registry.md must classify as
+# `registry-split-reconcile`, never as a plain managed overwrite.
 
 # a user-owned guide (mature case) would be skip — synthesize one
 journal["files"].setdefault("x", {"owner": "user", "template": "guides/x", "sha256": "0"})

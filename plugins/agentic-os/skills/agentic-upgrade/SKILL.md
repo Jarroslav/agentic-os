@@ -115,45 +115,92 @@ decision in this same upgrade pass has been finalized (same "process this
 after its dependency" pattern as the `template: "derived"` pointer-file
 branch above) — a slot regenerated in this pass needs its row's text
 refreshed before this section reconciles the file, not after: this file is a
-hybrid — the table row whose first cell is the literal
-`<!-- generated-agent-rows -->` marker and everything above it is ordinary
-template output (the curated preset rows); every table row strictly
-**after** that marker row is orchestrator-appended state from init Phase 5
-step 6 (one row per generated writer/gate agent) — state the
-template render has no knowledge of and would silently discard.
-- Split `CURRENT` **at the line immediately after** the marker row (the
-  marker row itself stays with the static half, so it is never duplicated
-  or dropped on reassembly): `static_current` = everything through and
-  including the marker row; `generated_rows` = every table row after it,
-  verbatim, byte-for-byte (empty when nothing has been generated yet).
-- Compute `NEWRENDER` from the `NEW` template as usual, then split it the
-  same way — `static_newrender` (through and including its own marker row;
-  a bare template render has nothing after that row, since nothing has been
-  generated yet in an upgrade-only pass).
-- Reconcile **only** `static_current` vs. `static_newrender` using the same
-  spirit as the `owner: "managed"` diff-and-ask rule above (untouched preset
-  rows ⇒ overwrite that portion; user-edited preset rows ⇒ show diff, ask) —
-  the marker row itself is part of this diff like any other row, so a
-  genuine upstream template change to it (should one ever happen) still
-  surfaces normally instead of being silently frozen. **One deviation from
+hybrid of **three** parts, not two. The table row whose first cell is the
+literal `<!-- generated-agent-rows -->` marker, and everything above it, is
+ordinary template output (the curated preset rows). The **contiguous run of
+table rows immediately after** that marker row is orchestrator-appended state
+from init Phase 5 step 6 (one row per generated writer/gate agent) — state the
+template render has no knowledge of and would silently discard. And everything
+below that run — the closing paragraph and the `## Orchestration rules` section
+— is template output again. Forgetting that third part is what a two-way split
+does, and it truncates the file at the marker row.
+- Split `CURRENT` into **three** parts, not two — the file does not end at the
+  generated rows, and a two-way split silently discards everything past them:
+  - `head_current` = everything through and including the marker row (the
+    marker row stays with the head, so it is never duplicated or dropped on
+    reassembly);
+  - `generated_rows` = the **contiguous run of table rows immediately after**
+    the marker row, verbatim, byte-for-byte (empty when nothing has been
+    generated yet — a fresh install, or a `qa`/`pm-delivery`-only union);
+  - `tail_current` = **everything from the first line after `generated_rows`
+    ends, through end of file** (i.e. scanning down from the marker row: the
+    first line that is not one of those contiguous table rows; when
+    `generated_rows` is empty, the line immediately after the marker row) —
+    the closing explanatory paragraph and
+    the whole `## Orchestration rules` section. This is ordinary template
+    output, exactly like `head_current`, and it is **not** optional: those
+    rules (one-owner-per-intent, gates-are-read-only, the escalation ladder)
+    are cited from elsewhere in the scaffold.
+- Compute `NEWRENDER` from the `NEW` template as usual and split it the same
+  way. A bare template render has an **empty** `generated_rows` (nothing has
+  been generated in an upgrade-only pass), so its head and tail together are
+  the entire file.
+- Reconcile **`head_current` vs. `head_newrender`, and `tail_current` vs.
+  `tail_newrender`** — both are template output — using the same spirit as the
+  `owner: "managed"` diff-and-ask rule above (untouched ⇒ overwrite that
+  portion; user-edited ⇒ show diff, ask). Never reconcile `generated_rows`
+  against the template: the template has no knowledge of them. The marker row
+  is part of the head diff like any other row, so a genuine upstream template
+  change to it (should one ever happen) still surfaces normally instead of
+  being silently frozen. **One deviation from
   that rule, and it matters**: the "keep mine" outcome must **never** flip
   this file's journal `owner` to `"user"` the way it does for an ordinary
   managed file. This file's `owner` stays `"managed"` /
-  `template: "governance/agent-registry"` **permanently**, regardless of any
-  static-portion diff answer — because `owner: "user"` means "never touched
+  `template: "governance/agent-registry"` **permanently**, regardless of how the
+  head or tail diff was answered — because `owner: "user"` means "never touched
   again" (see the generic `owner: "user"` rule above), and that would
   silently and permanently stop this file from ever reconciling
   `generated_rows` on every future upgrade too, disabling the very feature
-  this whole section exists to provide, with no warning. A declined
-  static-portion update just leaves that portion as-is for this pass — the
+  this whole section exists to provide, with no warning. A declined head or
+  tail update just leaves that portion as-is for this pass — the
   same diff is offered again on the next upgrade; that's an acceptable
   minor repetition, not a workaround for a real problem.
-- Reassemble: reconciled static portion (**already ends with the marker
-  row** — do not insert it again) **immediately followed by** `generated_rows`
-  unchanged, and write that back. Never run the reconciled generated-agent
-  rows through `AskUserQuestion` — they are not the user's content to diff
-  against a template, they are this feature's own state, already governed by
-  init Phase 5 step 6's insert-or-replace-by-path rule.
+- Reassemble **all three parts, in order**: reconciled head (**already ends
+  with the marker row** — do not insert it again), **immediately followed by**
+  `generated_rows` unchanged, **immediately followed by** the reconciled tail.
+  Write that back. Dropping the tail here truncates the file at the marker row
+  and destroys the `## Orchestration rules` section. Check 8's structural rules
+  (8a–8f) cannot see that damage — the marker row, the table block, and the
+  generated rows all survive it, and GitHub still renders a valid table — which
+  is exactly why doctor grew **Check 8g** (the tail survived). Do not rely on
+  8g to catch your mistake here; it is the last line of defence, not the first.
+  Never run the reconciled generated-agent rows through
+  `AskUserQuestion` — they are not the user's content to diff against a
+  template, they are this feature's own state, already governed by init
+  Phase 5 step 6's insert-or-replace-by-path rule.
+- **Sanity-check the result before writing.** The invariant is *structural*, not
+  textual: the bytes you write below `generated_rows` must be **exactly the
+  reconciled tail** — whichever of `tail_current` or `tail_newrender` the
+  diff-and-ask settled on — and that tail must be **non-empty**. Nothing else.
+  A tail that is empty, or that is neither candidate, means the split was
+  computed wrong ⇒ **stop and report; do not write.**
+  - Do **not** gate on headings or line count against either `CURRENT` or
+    `NEWRENDER`. Both directions produce false aborts on legitimate upgrades: a
+    *declined* tail update keeps a tail lacking a heading the new template
+    added; an *accepted* one takes a tail in which upstream renamed or removed a
+    heading `CURRENT` had. Neither is data loss — both are the diff-and-ask
+    working as designed. The only thing worth asserting is that a tail is there
+    and is the one the human chose.
+  - An **empty `tail_current`** is always damage, never a legitimate state: the
+    template unconditionally renders a closing paragraph and an
+    `## Orchestration rules` section below the marker row (it did so even before
+    the marker row existed). So an empty `tail_current` means this file was
+    already truncated by an upgrade run under the old two-way split. Do not pass
+    it through vacuously and do not treat it as "the user's tail": say so, and
+    reconcile it against the non-empty `tail_newrender` so the diff-and-ask can
+    restore the section. **"Keep mine" is not offered here** — an empty tail is
+    not content to preserve, and the non-empty-tail rule above would refuse the
+    write anyway. Take theirs, or stop and report.
 - **Re-stamp both the journal and the scorecard** for this file, same as
   init Phase 5 step 7 — this write changed the file's bytes just as surely
   as an install-time append does, and the failure mode is identical if you
@@ -163,29 +210,55 @@ template render has no knowledge of and would silently discard.
   `dispatcher` (and any other agent citing this guide) with "stale" until a
   human runs `/instruction-auditor` — on the very next spawn after this
   upgrade, not eventually. Scorecard entry stays `composite_score: 100`,
-  `source: "template-inherited"` (same rationale as init: the reconciled
-  static portion is template output, the preserved/replaced rows follow a
-  strict mechanical format, neither needs a fresh audit pass).
+  `source: "template-inherited"` (same rationale as init: the reconciled head
+  and tail are template output, the preserved/replaced rows follow a
+  strict mechanical format, none needs a fresh audit pass).
 - **Same-pass regeneration**: before starting the split above (per the
   ordering rule at the top of this section), for every slot whose canonical
   contract was regenerated in this pass (the `owner: "generated"` branch
   above), re-apply Phase 5 step 6's replace-by-path logic to that slot's row
-  in `CURRENT` — so `static_current`/`generated_rows` are computed from a
+  in `CURRENT` — so head/`generated_rows`/tail are computed from a
   file whose rows already reflect the regenerated contract's actual
   triggers, not stale text from before this upgrade.
+- **Before splitting, require the shape.** If `CURRENT` fails **any** of
+  `/agentic-doctor`'s Check 8 shape rules (8a–8d — read them there; they include
+  a missing or mangled `| --- |` delimiter, a marker that is a bare comment line
+  rather than a table row, a marker in some other table, more than one marker,
+  and a blank line breaking the run of generated rows) ⇒ **do not split.** A
+  non-contiguous run would silently reclassify the trailing generated rows as
+  `tail_current`, where an "overwrite / take theirs" answer destroys them.
+  Report the Check 8 failure and stop. Only the case of **no occurrence of the
+  marker string anywhere in the file** takes the branch below — a marker present
+  as a bare comment line is a shape failure, not a missing marker, and stops
+  here.
 - **Marker missing from `CURRENT` entirely** (a repo installed under a
   plugin version that predates this marker — every install before this fix
   shipped) ⇒ **do not guess where the split is.** Same rule as the CLAUDE.md
   managed-block's "markers missing entirely" case above: ask before doing
   anything. Show the user `CURRENT` in full and ask whether it contains any
-  hand-appended stack-specific rows worth preserving; if yes, have them
-  point out which lines, treat those as `generated_rows` for this pass and
-  everything else as `static_current`, then proceed with the normal
-  reconcile/reassemble steps above (this also retroactively adds the marker,
-  so every later upgrade of this file takes the fast, unattended path). If
-  no rows exist yet, treat the whole file as `static_current` with an empty
-  `generated_rows` and proceed normally — this is the common case for a repo
-  that installed before any capability ever applied.
+  hand-appended stack-specific rows worth preserving.
+  - If **yes**, have them point out which lines. Those lines **must be
+    contiguous table rows, and must be the final rows of the routing table**
+    (nothing but non-table content may follow them inside the table block). If
+    the selection is non-contiguous, is not the tail of the table, or includes a
+    curated preset row ⇒ **stop and report; do not write.** Anything else
+    silently sweeps curated rows into `generated_rows` — where they are never
+    reconciled against the template again, permanently frozen — or drops them
+    into `tail_current`, where an "overwrite / take theirs" answer deletes them.
+    That is the same destruction the shape precondition above refuses to perform
+    on a structurally-detected file; a human pointing at lines does not make it
+    safe. On a valid selection: those rows become `generated_rows`, everything
+    above them (with the marker row inserted as its new last line) becomes
+    `head_current`, and everything below them becomes `tail_current`.
+  - If **no rows exist yet**, insert the marker row as the last row of the
+    routing table: everything through it is `head_current`, `generated_rows` is
+    empty, and the remainder of the file is `tail_current` — the common case for
+    a repo that installed before any capability ever applied.
+
+  Either way the marker is retroactively added, so every later upgrade of this
+  file takes the fast, unattended path; then proceed with the normal
+  reconcile/reassemble steps
+  above.
 
 **New/removed template IDs**
 - Template IDs newly present in `NEW`'s preset union (re-resolve the union

@@ -4,8 +4,9 @@ agentic-doctor Check 8.
 
 `.agentic/guides/agent-registry.md` is the routing matrix pipeline-orchestrator
 reads to discover which agent owns which intent. It is a hybrid file: a static
-curated table rendered at Phase 4, plus rows appended by Phase 5 step 6 below a
-marker row.
+curated table rendered at Phase 4, rows appended by Phase 5 step 6 immediately
+below a marker row, and template output again below those (a closing paragraph
+and the `## Orchestration rules` section).
 
 GFM only recognises a table when a header row is followed *immediately* by a
 delimiter row (`| --- | --- |`) whose cell count matches the header's. Any
@@ -27,7 +28,7 @@ the file (it forms its own valid block) while still catching a bare row appended
 anywhere.
 
 Scope: this runs on the Phase-4 scaffold, which has zero generated agents, so
-Check 8d/8e (one row per generated contract; no stale rows) are vacuous here and
+Check 8e/8f (one row per generated contract; no stale rows) are vacuous here and
 remain doctor's job. Phase 5 is model-driven and cannot run in a bash harness.
 
 Usage: check-registry.py <TARGET_REPO>
@@ -84,7 +85,8 @@ while i < len(lines):
 
 in_a_block = {n for start, end in blocks for n in range(start, end + 1)}
 
-# The routing table: the block whose header row's first cell is HEADER_CELL.
+# 8a: the routing table is a valid GFM table — the block whose header row's first
+# cell is HEADER_CELL. A header with no matching delimiter forms no block at all.
 routing = next((b for b in blocks if cells(lines[b[0]])[0] == HEADER_CELL), None)
 if routing is None:
     stray = next((n for n, l in enumerate(lines)
@@ -96,7 +98,7 @@ if routing is None:
              % (stray + 1))
     fail("no routing-table header row (first cell %r)" % HEADER_CELL)
 
-# 8a: the marker must exist exactly once, as a real table row (its first cell).
+# 8b: the marker must exist exactly once, as a real table row (its first cell).
 marker_rows = [n for n in range(len(lines))
                if is_row(lines[n]) and cells(lines[n])[0] == MARKER]
 non_row_marker = next((n for n, l in enumerate(lines)
@@ -110,15 +112,31 @@ if len(marker_rows) != 1:
     fail("expected exactly 1 marker row (`%s` as its first cell), found %d"
          % (MARKER, len(marker_rows)))
 
-# 8b: the marker row sits inside the routing table block.
+# 8c: the marker row sits inside the routing table block.
 if not routing[0] <= marker_rows[0] <= routing[1]:
     fail("marker row (line %d) is outside the routing table block (lines %d-%d)"
          % (marker_rows[0] + 1, routing[0] + 1, routing[1] + 1))
 
-# 8c: no pipe-delimited line belongs to no valid table block.
+# 8d: no pipe-delimited line belongs to no valid table block.
 for n, line in enumerate(lines):
     if is_row(line) and n not in in_a_block:
         fail("orphaned table row outside any table block (line %d): %s"
              % (n + 1, line[:60]))
+
+# 8g: the tail below the marker's generated-row run survived. The template
+# renders a closing paragraph and `## Orchestration rules` unconditionally, so an
+# empty tail is never legitimate -- it means an /agentic-upgrade run under the old
+# two-way split reconciliation truncated the file at the marker row. 8a-8d cannot
+# see that: the marker row, the table block, and every generated row survive the
+# truncation, and GitHub still renders a perfectly valid table.
+j = marker_rows[0] + 1
+while j < len(lines) and is_row(lines[j]):
+    j += 1
+tail = lines[j:]
+if not tail:
+    fail("file ends at the generated rows — no tail. An /agentic-upgrade under "
+         "the old two-way split truncated it at the marker row")
+if not any(l.startswith("## Orchestration rules") for l in tail):
+    fail("tail below the marker row lost the `## Orchestration rules` section")
 
 sys.exit(0)

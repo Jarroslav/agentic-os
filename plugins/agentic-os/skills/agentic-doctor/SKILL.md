@@ -229,8 +229,10 @@ check always runs, even with zero generated agents.
 
 That file is THE routing matrix: `.claude/commands/pipeline-orchestrator.md`
 reads it at runtime to discover which agent owns which intent. It is a
-**hybrid** — a static curated section rendered at Phase 4, plus rows appended by
-Phase 5 step 6 below a marker row. Nothing else verifies the hybrid survived. A
+**hybrid of three parts** — template output above the marker row (the curated
+rows), rows appended by Phase 5 step 6 immediately below it, and template output
+again below those (the closing paragraph and `## Orchestration rules`). Nothing
+else verifies the hybrid survived. A
 broken table here is invisible: every other check passes, the file exists, its
 hash matches, its text contains the rows — and the orchestrator still cannot
 see a single generated agent.
@@ -275,20 +277,30 @@ The **routing table** is the valid block whose header row's first cell is
 - **8f — no stale rows.** Every row below the marker cites a path that exists on
   disk. A row pointing at a removed slot ⇒ **fail** (the orchestrator would
   dispatch to a missing contract).
+- **8g — the tail survived.** Below the marker row and its run of generated
+  rows, the file must still carry a non-empty tail containing the
+  `## Orchestration rules` section. The template renders it unconditionally, so
+  an empty tail or a missing rules section is never a legitimate state ⇒
+  **fail**. This catches a registry truncated at the marker row by an
+  `/agentic-upgrade` run under the old two-way split reconciliation — damage
+  that 8a–8f cannot see, because the marker row, the table block, and every
+  generated row all survive the truncation intact, and GitHub still renders a
+  perfectly valid table. Remedy: re-run `/agentic-upgrade` and accept the tail
+  diff ("take theirs").
 
-Failures here are `registry`. Remedy for 8a/8b/8c/8d: the static portion drifted
-from `templates/governance/agent-registry.md.tmpl` — re-render it verbatim, then
-re-append the generated rows below the marker row. Note `/agentic-upgrade`'s
-Agent-registry split-reconcile **cannot** do this unattended when the marker is
-missing entirely: it is specified to stop and ask rather than guess where the
-split belongs. Remedy for 8e: re-run Phase 5 step 6.
+Failures here are `registry`. Remedy for 8a/8b/8c/8d: the template portion
+drifted from `templates/governance/agent-registry.md.tmpl` — re-render it
+verbatim, then re-append the generated rows below the marker row. Note
+`/agentic-upgrade`'s Agent-registry split-reconcile **cannot** do this unattended
+when the marker is missing entirely: it is specified to stop and ask rather than
+guess where the split belongs. Remedy for 8e: re-run Phase 5 step 6.
 
 **Do not infer this check from the file's text alone.** Grepping for a
 contract's path finds the row whether or not it sits inside the table — that is
 precisely how a generated contract can audit at 100/100 on an
 "automatic delegation" claim while being unroutable. Parse the block structure;
-never substring-match. The deterministic subset of 8a–8d is implemented in
-`tests/lib/check-registry.py`, which runs against the Phase-4 scaffold in the
+never substring-match. The deterministic subset — 8a–8d plus 8g — is implemented
+in `tests/lib/check-registry.py`, which runs against the Phase-4 scaffold in the
 acceptance matrix; 8e/8f have no generated agents to check there and are yours
 alone.
 

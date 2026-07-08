@@ -72,17 +72,18 @@ idempotent.
      (user-modified), **skip it and warn** — never overwrite; files not yet
      journaled are scaffolded normally. **One exception**:
      `.agentic/guides/agent-registry.md` (`template: "governance/agent-registry"`)
-     is **never** blindly re-rendered here, matched sha256 or not — a plain
-     re-render recomputes only the static template portion above the
-     `<!-- generated-agent-rows -->` marker row, which by construction has no
-     knowledge of the rows Phase 5 step 6 appended below it on the prior
+     is **never** blindly re-rendered here, matched sha256 or not — the
+     template renders the portion above the `<!-- generated-agent-rows -->`
+     marker row and the portion below the generated rows (the closing
+     paragraph and `## Orchestration rules`), but by construction has no
+     knowledge of the rows Phase 5 step 6 appended between them on the prior
      run, so a naive "refresh" would silently discard them on every
      `--reinstall` of an already-`done` install, with no diff, no warning,
      no adversarial action required. Since this file's sha already matches
      the journal (that's the precondition for reaching this branch at all),
      there is nothing to refresh — re-rendering the identical template with
      the identical journaled answers against the identical plugin version
-     produces byte-identical static content to what's already on disk.
+     produces byte-identical template content to what's already on disk.
      **Skip it entirely; leave it untouched — no warning needed here even
      on a genuine sha mismatch** (a user-edited row, or an interrupted prior
      run): unlike every other file in this sweep, silence isn't a lost
