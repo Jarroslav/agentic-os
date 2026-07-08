@@ -124,8 +124,28 @@ def render_path(src: Path) -> str:
     return render(src.read_text(encoding="utf-8"), is_json, escape)
 
 
+def gate_entries() -> str:
+    """Expand GATE_COMMANDS into one gate block each (SKILL.md Phase 4, step 5).
+
+    Markdown, so no escaping — this only ever lands in `quality-gates.md.tmpl`. The
+    command is both the gate name and the `Run` line; Pass/Fail/Skip are conservative
+    defaults the human refines. Empty list ⇒ an instruction to add gates, never a
+    blank registry (the guide forbids relying on an empty one)."""
+    cmds = [c.strip() for c in LISTS["GATE_COMMANDS"] if c.strip()]
+    if not cmds:
+        return ("_No gate commands were detected. Add at least one — a project with "
+                "no gate cannot enforce one._")
+    return "\n\n".join(
+        "### %s\n**Run**: `%s`\n**Pass**: exits 0.\n"
+        "**Fail**: non-zero exit — fix the cause, never the symptom.\n"
+        "**Skip if**: never." % (c, c) for c in cmds)
+
+
 def render(text: str, is_json: bool, escape: bool) -> str:
     q = esc if escape else (lambda v: v)
+    # Derived, not a raw variable: built from GATE_COMMANDS by the installer. Only in
+    # quality-gates.md.tmpl (markdown), so it is never escaped.
+    text = text.replace("{{GATE_ENTRIES}}", gate_entries())
     for var in NEWLINE_VARS:
         text = text.replace("{{%s}}" % var, q("\n".join(LISTS[var])))
     # Not a scalar: JSON array elements carry their own quotes; the comma-joined
@@ -261,11 +281,16 @@ GUIDES = ["git-workflow", "code-quality", "quality-gates", "instruction-quality-
           "working-with-agents", "qa-strategy-stub"]
 for g in GUIDES:
     dest = ".agentic/guides/standards/%s.md" % g
+    # Prefer a `.tmpl` source when one exists (quality-gates renders GATE_ENTRIES);
+    # the rest are copied verbatim. Dest is always the bare `.md`.
+    src = "guides/standards/%s.md" % g
+    if not (TPL / src).exists():
+        src += ".tmpl"
     if (TARGET / dest).exists():  # existing-guide rule: skip + owner user
         JOURNAL["files"][dest] = {"sha256": sha(TARGET / dest), "template": "guides/" + g,
                                   "owner": "user"}
     else:
-        copy_tpl("guides/standards/%s.md" % g, dest, "guides/" + g)
+        copy_tpl(src, dest, "guides/" + g)
 copy_tpl("sdlc/config.json.tmpl", ".agentic/agentic-sdlc/config.json", "sdlc/config")
 copy_tpl("sdlc/project.md.tmpl", ".agentic/guides/project.md", "sdlc/project")
 

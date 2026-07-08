@@ -316,7 +316,7 @@ Render/copy every template ID in the preset union. Destination map (IDs from
 | `governance/patterns` | `governance/PATTERNS.md.tmpl` | `PATTERNS.md` (repo root) |
 | `governance/agent-registry` | `governance/agent-registry.md.tmpl` | `.agentic/guides/agent-registry.md` |
 | `policy/ai-policy`, `policy/escalation-policy`, `policy/safety-policy` | `policy/<name>.md.tmpl` | `.agentic/guides/policy/<name>.md` |
-| `guides/<name>` | `guides/standards/<name>.md` | `.agentic/guides/standards/<name>.md` (verbatim) |
+| `guides/<name>` | `guides/standards/<name>.md`, or `<name>.md.tmpl` when one exists | `.agentic/guides/standards/<name>.md` (rendered if `.tmpl`, else verbatim) |
 | `agents/<name>` | `agents/core/<name>.md.tmpl` or `agents/qa/<name>.md.tmpl` | `.agentic/agents/<name>.md` + two synthesized pointers (below) |
 | `commands/pipeline-orchestrator`, `commands/dispatch` | `commands/core/<name>.md.tmpl` | `.claude/commands/<name>.md` (commands are canonical there — the exception noted in `agent-registry.md.tmpl`) |
 | `sdlc/config` | `sdlc/config.json.tmpl` | `.agentic/agentic-sdlc/config.json` |
@@ -421,6 +421,13 @@ Ordered steps:
    **Existing-guide rule (hard)**: a destination guide file that already
    exists is **skipped** and journaled with `owner: "user"` and the *current*
    file's sha256 — the upgrade skill then knows never to touch it.
+   **`quality-gates.md` is rendered, not copied**: substitute `{{GATE_ENTRIES}}`
+   with one gate block per `GATE_COMMANDS` line —
+   `### <cmd>` / **Run**: `` `<cmd>` `` / **Pass**: exits 0 / **Fail**: non-zero
+   exit, fix the cause / **Skip if**: never — the command serving as both name and
+   `Run`. If `GATE_COMMANDS` is empty, write a one-line instruction to add a gate,
+   never a blank registry (`code-quality.md` treats this file as the canonical gate
+   catalogue and forbids relying on an empty one).
    **Hand-off (a)**: when the `qa` preset is in the union, create an empty
    ledger at `docs/flaky-ledger.md` if absent (it is referenced by
    `.agentic/guides/standards/flaky-protocol.md`) with just:

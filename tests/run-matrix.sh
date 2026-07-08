@@ -54,6 +54,46 @@ sys.exit(1 if missing else 0)
 PY
 # agent-registry table integrity (deterministic half of agentic-doctor Check 8)
 python3 "$ROOT/tests/lib/check-registry.py" "$FRESH" && ok "agent-registry table intact" || bad "agent-registry table intact"
+# quality-gates registry is populated from GATE_COMMANDS, not the shipped stub
+python3 - "$FRESH" <<'PY' && ok "quality-gates registry populated" || bad "quality-gates registry populated"
+import sys, pathlib
+body = pathlib.Path(sys.argv[1], ".agentic/guides/standards/quality-gates.md").read_text()
+problems = []
+if "{{" in body:
+    problems.append("unrendered placeholder remains")
+if "Example: lint" in body or "(project lint command)" in body:
+    problems.append("shipped stub example survived — GATE_ENTRIES not expanded")
+# every detected gate command from the fixture must appear as a Run line
+for cmd in ("npx tsc --noEmit", "npm run lint -- --max-warnings 0", "npm test"):
+    if "**Run**: `%s`" % cmd not in body:
+        problems.append("missing gate for %r" % cmd)
+for p in problems:
+    print("  " + p)
+sys.exit(1 if problems else 0)
+PY
+# empty GATE_COMMANDS must render an "add a gate" note, never a blank registry
+python3 - "$ROOT" <<'PY' && ok "quality-gates empty-list renders a note" || bad "quality-gates empty-list renders a note"
+import sys
+# refinstall runs an install at import time (needs argv), so lift just gate_entries
+# and stub its one dependency. A broken slice raises (ValueError/SyntaxError/KeyError)
+# and fails the check — it cannot pass vacuously.
+src = open(sys.argv[1] + "/tests/lib/refinstall.py").read()
+g = {"LISTS": {"GATE_COMMANDS": []}}
+start = src.index("def gate_entries")
+end = src.index("\n\n\n", start)
+exec(src[start:end], g)
+out = g["gate_entries"]()
+problems = []
+if "###" in out or "**Run**" in out:
+    problems.append("empty list produced a gate block: %r" % out)
+if not out.strip():
+    problems.append("empty list produced a blank registry")
+if "add" not in out.lower():
+    problems.append("empty-list note does not tell the user to add a gate: %r" % out)
+for p in problems:
+    print("  " + p)
+sys.exit(1 if problems else 0)
+PY
 # native commit blocked without review stamp
 ( cd "$FRESH" && echo x > f.txt && git add f.txt
   if git commit -qm try 2>/dev/null; then exit 1; else exit 0; fi ) \

@@ -44,7 +44,10 @@ def resolve(tid: str) -> Path | None:
     if tid.startswith("policy/"):
         return TPL / ("policy/%s.md.tmpl" % tid.split("/", 1)[1])
     if tid.startswith("guides/"):
-        return TPL / ("guides/standards/%s.md" % tid.split("/", 1)[1])
+        # A guide ships verbatim (`.md`) or as a template (`.md.tmpl`, e.g.
+        # quality-gates renders GATE_ENTRIES). Accept whichever exists.
+        base = TPL / ("guides/standards/%s.md" % tid.split("/", 1)[1])
+        return base if base.exists() else base.with_suffix(".md.tmpl")
     if tid.startswith("agents/"):
         name = tid.split("/", 1)[1]
         sub = "core" if name in CORE_AGENTS else "qa"

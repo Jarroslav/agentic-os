@@ -99,6 +99,7 @@ a security boundary:
 | `{{SCORECARD_PATH}}` | Instruction-quality scorecard JSON | `docs/audits/instruction-scorecard.json` |
 | `{{SCORE_THRESHOLD}}` | Default instruction-quality gate threshold (per-agent overrides recorded in scorecard) | `95` |
 | `{{GATE_COMMANDS}}` | Quality-gate commands (lint/typecheck/test), newline list | stack-fact record (`variable_defaults.GATE_COMMANDS`) |
+| `{{GATE_ENTRIES}}` | **Derived** (not collected): the installer expands `{{GATE_COMMANDS}}` into one Markdown gate block each — the body of `quality-gates.md.tmpl § Gates`. Empty list ⇒ an "add a gate" note, never a blank registry. See `agentic-init/SKILL.md` Phase 4 step 5. | expanded from `{{GATE_COMMANDS}}` |
 | `{{HUMAN_GATED_COMMANDS}}` | Shell commands always blocked pending human action, newline list | `git push origin {{DEFAULT_BRANCH}}` + interview |
 | `{{GUARDED_WRITE_PATHS}}` | Paths writable only via a named flow, newline list | empty + interview |
 | `{{SECRET_DENY_PATTERNS}}` | File patterns agents must never read, newline list (only ever rendered inside fenced blocks / deny arrays) | `.env*`, `.auth/**`, `*token*.env` |
