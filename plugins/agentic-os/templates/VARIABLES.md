@@ -100,6 +100,7 @@ a security boundary:
 | `{{SCORE_THRESHOLD}}` | Default instruction-quality gate threshold (per-agent overrides recorded in scorecard) | `95` |
 | `{{GATE_COMMANDS}}` | Quality-gate commands (lint/typecheck/test), newline list | stack-fact record (`variable_defaults.GATE_COMMANDS`) |
 | `{{GATE_ENTRIES}}` | **Derived** (not collected): the installer expands `{{GATE_COMMANDS}}` into one Markdown gate block each — the body of `quality-gates.md.tmpl § Gates`. Empty list ⇒ an "add a gate" note, never a blank registry. See `agentic-init/SKILL.md` Phase 4 step 5. | expanded from `{{GATE_COMMANDS}}` |
+| `{{QA_GUIDE_ROWS}}` | **Derived** (not collected): the `PATTERNS.md` index rows for `test-design-pattern.md` and `flaky-protocol.md`, emitted **only when those guides are installed** (the `qa` preset). Empty otherwise — a preset that does not install them must not index them. Each row ends in a newline; the empty value collapses without breaking the GFM table. | the two rows if `guides/test-design-pattern` + `guides/flaky-protocol` are in the union, else empty |
 | `{{HUMAN_GATED_COMMANDS}}` | Shell commands always blocked pending human action, newline list | `git push origin {{DEFAULT_BRANCH}}` + interview |
 | `{{GUARDED_WRITE_PATHS}}` | Paths writable only via a named flow, newline list | empty + interview |
 | `{{SECRET_DENY_PATTERNS}}` | File patterns agents must never read, newline list (only ever rendered inside fenced blocks / deny arrays) | `.env*`, `.auth/**`, `*token*.env` |

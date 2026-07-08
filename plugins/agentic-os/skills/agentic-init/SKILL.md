@@ -398,6 +398,10 @@ Ordered steps:
      Present ⇒ wrap the rendered content in the same begin/end markers and
      append; content outside markers is untouched.
    - `PATTERNS.md`: absent ⇒ write. Present ⇒ **collision prompt** (step 6).
+     Substitute `{{QA_GUIDE_ROWS}}` with the `test-design-pattern` + `flaky-protocol`
+     index rows **only if those guides are in the install** (the `qa` preset), else
+     the empty string — the index must never link a guide the preset did not install.
+     (Same principle as agent-registry row pruning below.)
    - `agent-registry.md` → `.agentic/guides/agent-registry.md`, then apply
      **hand-off (b), row pruning**: the template documents that "the installer
      removes rows whose preset is not installed" — delete every row of the

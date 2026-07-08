@@ -59,6 +59,10 @@ vals = {
     "HITL_MODE": "gated-autonomous",
     "GATE_COMMANDS": "true",
     "OUTPUT_CONTRACT_SECTIONS": "Summary,Why,Blocking,Non-blocking,Escalate to human",
+    # Derived rows the installer fills conditionally; empty is the developer-preset
+    # value and the safe representative for this render smoke.
+    "QA_GUIDE_ROWS": "",
+    "GATE_ENTRIES": "",
 }
 text = open(src, encoding="utf-8").read()
 for k, v in vals.items():
@@ -86,9 +90,11 @@ done
 cp "$TPL/githooks/pre-commit" "$SCRATCH/.githooks/pre-commit"
 cp "$TPL/scripts/install-git-hooks.sh" "$SCRATCH/scripts/install-git-hooks.sh"
 
-# governance templates render clean (content checked by instruction audit, not here)
+# governance templates render clean (content checked by instruction audit, not here).
+# Via `check` so a leftover placeholder — the exact regression a new {{VAR}} in one
+# of these templates causes — fails the suite instead of being swallowed.
 for g in CLAUDE.section.md AGENTS.md PATTERNS.md; do
-  render "$TPL/governance/$g.tmpl" "$WORK/$g"
+  check "governance $g renders clean" 0 - render "$TPL/governance/$g.tmpl" "$WORK/$g"
 done
 
 echo "-- compile + fragment"

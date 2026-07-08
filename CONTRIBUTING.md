@@ -11,7 +11,7 @@ from contributors also require review from a code owner (@Jarroslav).
 git switch -c feat/my-change        # or fix/…, docs/…, chore/…
 
 # 2. Make the change, then run the gates locally (CI runs the same ones)
-bash tests/t0/run.sh                 # 50 hook unit tests
+bash tests/t0/run.sh                 # 53 hook unit tests
 bash tests/t0/run-output-contract.sh # 12 output-contract parser checks
 bash tests/run-matrix.sh             # T1–T8 acceptance (re-runs the output-contract suite as T7)
 

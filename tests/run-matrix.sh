@@ -54,6 +54,23 @@ sys.exit(1 if missing else 0)
 PY
 # agent-registry table integrity (deterministic half of agentic-doctor Check 8)
 python3 "$ROOT/tests/lib/check-registry.py" "$FRESH" && ok "agent-registry table intact" || bad "agent-registry table intact"
+# PATTERNS.md indexes no guide it did not install (the qa-only rows are conditional)
+python3 - "$FRESH" <<'PY' && ok "PATTERNS.md guide links all resolve" || bad "PATTERNS.md guide links all resolve"
+import re, sys, pathlib
+t = pathlib.Path(sys.argv[1])
+body = (t / "PATTERNS.md").read_text()
+# Drop italic parentheticals — they document forward references (e.g. the
+# `testing/qa-strategy.md` path that only exists "after /sdlc:qa-init"), not current
+# index entries. Then every `.agentic/guides/**/*.md` file link that remains (not
+# directory links like guides/policy/) must resolve — a dangling row anywhere in the
+# index, not just under standards/.
+current = re.sub(r'\*\([^)]*\)\*', '', body)
+missing = sorted({m for m in re.findall(r'\.agentic/guides/[a-z0-9/-]+\.md', current)
+                  if not (t / m).exists()})
+for m in missing:
+    print("  PATTERNS.md links a guide that was not installed: %s" % m)
+sys.exit(1 if missing else 0)
+PY
 # quality-gates registry is populated from GATE_COMMANDS, not the shipped stub
 python3 - "$FRESH" <<'PY' && ok "quality-gates registry populated" || bad "quality-gates registry populated"
 import sys, pathlib

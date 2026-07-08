@@ -141,11 +141,29 @@ def gate_entries() -> str:
         "**Skip if**: never." % (c, c) for c in cmds)
 
 
+# The QA-only guide rows in the PATTERNS index. Emitted iff the guides are actually
+# installed (the qa preset), so the developer scaffold does not index files that
+# aren't there. Trailing newline per row so the following table row stays on its own
+# line; empty string when absent, which collapses cleanly (a blank line would end the
+# GFM table). Keyed off the preset union, the same signal that installs the guides.
+QA_GUIDE_ROWS_TEXT = (
+    "| Test design (deterministic, isolated, framework conventions) | "
+    "[`.agentic/guides/standards/test-design-pattern.md`]"
+    "(.agentic/guides/standards/test-design-pattern.md) |\n"
+    "| Flaky-test protocol (classify → ledger → root-cause → burn-in) | "
+    "[`.agentic/guides/standards/flaky-protocol.md`]"
+    "(.agentic/guides/standards/flaky-protocol.md) |\n"
+)
+QA_GUIDE_ROWS = QA_GUIDE_ROWS_TEXT if {
+    "guides/test-design-pattern", "guides/flaky-protocol"} <= PRESET_TEMPLATE_IDS else ""
+
+
 def render(text: str, is_json: bool, escape: bool) -> str:
     q = esc if escape else (lambda v: v)
-    # Derived, not a raw variable: built from GATE_COMMANDS by the installer. Only in
-    # quality-gates.md.tmpl (markdown), so it is never escaped.
+    # Derived, not raw variables: built by the installer from what it installs. Only
+    # in markdown templates (PATTERNS.md, quality-gates.md), so never escaped.
     text = text.replace("{{GATE_ENTRIES}}", gate_entries())
+    text = text.replace("{{QA_GUIDE_ROWS}}", QA_GUIDE_ROWS)
     for var in NEWLINE_VARS:
         text = text.replace("{{%s}}" % var, q("\n".join(LISTS[var])))
     # Not a scalar: JSON array elements carry their own quotes; the comma-joined
