@@ -44,8 +44,7 @@ top-level index.
 - **No release tags exist yet.** `UPGRADING.md` documents an
   upgrade-diff-recovery path that depends on marketplace tags
   (`git show v<OLD>:<path>`); until a tagging policy is adopted, that
-  recovery path always falls back to a plain current→new diff. See
-  `docs/positioning-review.md` § 4 and § 10.
+  recovery path always falls back to a plain current→new diff.
 
 ## Deferred, by design
 

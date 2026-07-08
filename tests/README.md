@@ -8,8 +8,10 @@ bash tests/t0/run-output-contract.sh # output-contract parser (subagent_gate)
 bash tests/run-matrix.sh             # T1–T7 acceptance matrix
 ```
 
-`run-matrix.sh` runs the two `t0` suites as part of T7, so it is the single
-green/red gate for CI.
+`run-matrix.sh` re-runs the **output-contract** suite as T7, but not the hook
+unit suite — so it is not a single green/red gate on its own. CI runs all three
+commands above (plus JSON manifest/preset validation); run all three locally
+too.
 
 ## What is automated vs manual
 
@@ -38,7 +40,7 @@ updates every run and is therefore excluded from the idempotency snapshot.
 | T4 idempotency | a `--reinstall` leaves every scaffolded file byte-identical (journal excluded) |
 | T5 upgrade | Phase-2 three-way classification: unmodified managed → overwrite, user-edited managed → prompt, `CLAUDE.md` → managed-block wholesale, user-owned → skip |
 | T6 deps | pinned non-optional sources produce `extraKnownMarketplaces`+`enabledPlugins` entries; an `OWNER/` placeholder source is skipped and journaled `pending-source-pin` |
-| T7 parser | the two `t0` suites (hook units + output-contract) |
+| T7 parser | the `t0` output-contract suite (`run-output-contract.sh`), re-run as one matrix check |
 
 ## Known limitations
 

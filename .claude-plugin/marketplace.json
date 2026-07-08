@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "agentic-os",
-  "description": "Portable agentic process OS: role-preset multi-agent architecture, HITL gates, and SDLC pipeline installable into any repo.",
+  "description": "A governed, portable engineering platform for coding agents: the governance layer (agentic-os) plus the SDLC pipeline that runs on it (agentic-sdlc). Evidence-grounded repo discovery, audited agent contracts, HITL escalation, and hard enforcement gates.",
   "owner": {
     "name": "Yaroslav Krivushenko",
     "url": "https://github.com/Jarroslav"

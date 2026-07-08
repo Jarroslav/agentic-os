@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Jarroslav/agentic-os/actions/workflows/ci.yml/badge.svg)](https://github.com/Jarroslav/agentic-os/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-5A2EBB)](https://github.com/Jarroslav/agentic-os)
+[![Install: Claude Code plugin](https://img.shields.io/badge/install-Claude%20Code%20plugin-5A2EBB)](#install)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 **A governed, portable engineering platform for coding agents — evidence-grounded repository discovery, generated and audited agent contracts, and hard enforcement gates, installed into any repo in one interview.**
@@ -148,7 +148,7 @@ Then:
 ```
 
 runs all 7 checks (file manifest vs. install journal, hook compilation,
-canned-event dry-runs of each installed hook, a 3-part HITL smoke test,
+canned-event dry-runs of four enforcement hooks, a 3-part HITL smoke test,
 settings registration, git hook + dependencies, and scorecard
 coverage/thresholds) and writes the result to
 `.agentic/agentic-os/doctor.json`.
@@ -239,19 +239,116 @@ Everything obeys the HITL dial you set: an agent that hits a `## Blocking` item
 stops and surfaces it; an `## Escalate to human` item forces a question before
 anything proceeds.
 
+## Why not just prompt the agent yourself?
+
+You can, and for a one-off change you should. The difference shows up when the
+work is big enough to span several agents, several sessions, or a stack the
+agent has to *learn* rather than be told about:
+
+| | Plain agent session | With `agentic-os` |
+|---|---|---|
+| **Scope enforcement** | A session-wide allow/deny list (`permissions.deny`) plus a coarse per-agent `tools:` allowlist. Neither can say "the migration agent may write migrations, and *only* the migration agent may" — one is path-scoped but not per-agent, the other per-agent but not path-scoped. | A `write_scope`/`forbidden_paths` glob **per agent contract** — path-scoped *and* per-agent — checked by a `PreToolUse` hook that exits non-zero before the write lands. |
+| **Review independence** | You can spawn a fresh-context reviewer, and should. But nothing *gates the commit* on it: a review is advisory, and the agent decides whether to honor it. | The reviewer reads the staged diff cold, and its approval is a sha256 stamp of that exact diff. No stamp, no commit — enforced by a `PreToolUse` hook *and* a native git hook. Re-staging invalidates the stamp. |
+| **Autonomy granularity** | Permission rules are per *tool call* — may this session run `Bash(git push:*)`? They can't express "may this *decision* proceed without me?" | Resolution is per *gate*: deterministic check → fast-path → stand-in subagent → escalate, with `escalate_on` risk flags that force a human. Every resolution logged to `decisions.jsonl`. |
+| **Stack-fact provenance** | Re-derived each session, uncited, with nothing stopping a Postgres idiom leaking into a MongoDB rule. | Every fact carries a `file:line` citation and a 0–100 confidence. A low-confidence fact is still recorded — but flagged `unresolved` and surfaced at the interview, never a *silent* guess. A rule may never cite the discovery record as its source, enforced by a rubric check. |
+| **Instruction freshness** | Custom instructions are static text that silently rots as the code moves. | Contracts are graded artifacts: independently audited, hash-pinned in a scorecard. A stale hash blocks that agent's spawn (`exit 2`). |
+
+The claim isn't that agents can't do this work, or that a plain session has no
+guardrails — it has good ones. It's that those guardrails are **per session and
+per tool**, and the failures above are **per agent and per decision**. Nothing
+in a plain session stops a specific agent from quietly doing a specific thing
+wrong. See [`docs/PRINCIPLES.md`](docs/PRINCIPLES.md) for the reasoning behind
+each row.
+
+## FAQ
+
+**Does it ever commit or push on its own?**
+Not unless you ask it to. `/agentic-init` scaffolds files and shows you a
+settings diff before merging it — it never runs `git add` or `git commit`, so
+the working tree is yours to review. The SDLC pipeline stops at a review-ready
+branch and never opens a PR by itself. Two bundled skills *do* write to git,
+and only when you invoke them by name: `mr-creator` (commits, pushes, opens the
+PR) and `babysit-mr` (pushes review fix-ups with `--force-with-lease`).
+
+**What if my stack isn't one of the six curated profiles?**
+Then discovery inspects the repo from scratch instead of matching a profile,
+and you still get real, evidence-grounded agents — not a degraded stub. This
+is verified against non-curated fixtures spanning both persistence paradigms
+and both UI paradigms; see [`tests/universal/README.md`](tests/universal/README.md).
+
+**What if I have no code stack at all?**
+That's a first-class path by design, not a degradation: a `pm-delivery` or
+`ba-po` install declares `generated: []` and wires ticket/MR adapters plus the
+governance layer instead of code agents. Honest caveat — the preset
+combinatorics are covered deterministically in CI, but this zero-capability
+path hasn't yet been driven through a live end-to-end `/agentic-init` run
+(tracked in [`ROADMAP.md`](ROADMAP.md)).
+
+**Will it fight my existing CI, hooks, or `CLAUDE.md`?**
+No. Mature repos are handled non-destructively: `CLAUDE.md`/`AGENTS.md` get a
+marker-delimited managed block (your content outside it is never touched),
+settings are deep-merged after showing you a diff, name collisions skip by
+default, and a pre-existing git hook is *chained*, not replaced.
+
+**Does this work outside Claude Code?**
+The canonical agent contracts are harness-neutral by design — the
+Claude-specific files are thin pointers over them, and `agentic-sdlc` ships
+Codex install instructions. Claude Code is the best-supported host today, not
+an architectural boundary.
+
+**What does `/agentic-doctor` actually check?**
+Seven things: file manifest vs. install journal, hook compilation, canned-event
+dry-runs of four enforcement hooks, a 3-part HITL smoke test, settings
+registration, git hook + dependencies, and scorecard coverage/thresholds. It
+writes the result to `.agentic/agentic-os/doctor.json`.
+
+**Can I uninstall it?**
+Nothing is committed for you, so before your first commit `git status` shows
+exactly what to delete. After that, the install journal
+(`.agentic/agentic-os/install.json`) lists every file it wrote, with ownership.
+
 ## Testing & development
 
-The two gates that CI also runs:
-
 ```bash
-bash tests/run-matrix.sh             # T1–T7 acceptance (includes the two t0 suites)
+bash tests/t0/run.sh                 # 50 hook unit tests
+bash tests/t0/run-output-contract.sh # 12 output-contract parser checks
+bash tests/run-matrix.sh             # T1–T7 acceptance (28 checks; re-runs the output-contract suite as T7)
 ```
 
-The matrix **executes the installer's deterministic phases** against fresh and
-mature fixture repos (it is the skill-executability proof, not a mock) — see
-[`tests/README.md`](tests/README.md). The live agent-generation loop (stack
-writer agents produced against a real repo, then independently audited against
-the instruction-quality rubric) has been validated end to end at 100% pass.
+**What CI proves, deterministically, on every PR:** 78 checks — 50 hook unit
+tests (`tests/t0/run.sh`) plus the 28-check T1–T7 acceptance matrix — and JSON
+manifest/preset validation. The matrix *executes the installer's deterministic
+phases* against fresh and mature fixture repos; it is a skill-executability
+proof, not a mock. It covers non-destructive mature-repo handling, idempotent
+re-runs, upgrade classification, preset/ID resolution, dependency
+registration, and the output-contract parser. See
+[`tests/README.md`](tests/README.md).
+
+**What CI structurally cannot prove, and how it's proven instead:** the
+generation loop is model-driven — you cannot spawn real subagents from a bash
+script, and mocking them would prove nothing about the actual claim. So it is
+verified by hand, repeatably, against fixtures on stacks the plugin has never
+seen, and **every generation run below is recorded with its score**: discovery →
+capability-driven generation → *independent audit by a separate
+`instruction-auditor` subagent* that re-checks every claim in the generated
+contract against the fixture's real code. Recorded results
+([`tests/universal/README.md`](tests/universal/README.md)):
+
+| Non-curated fixture | Generated contract | Audit score |
+|---|---|---|
+| SvelteKit | `component-generator` | **100/100** first audit (25/25 claims verified) |
+| Express + EJS | `component-generator` | **100/100** first audit (22/22 verified) |
+| FastAPI + Alembic | `schema-architect` | **95/100** first audit (19/20 verified) |
+| Express + Mongoose | `schema-architect` | 90/100 → **95/100** after one regen |
+
+The 95s are the interesting ones. On FastAPI + Alembic the contract carried
+**zero** Postgres/Supabase RLS vocabulary from the exemplar it was shown; on
+Mongoose, zero migration vocabulary — and the rubric's evidence check caught a
+real generation mistake *live*, before it could reach a user's repo. The
+unverified claims are named in the log rather than rounded away.
+
+That split is deliberate: the deterministic half is gated in CI, and the
+model-driven half is never quietly claimed as CI-covered.
 
 ## Contributing
 

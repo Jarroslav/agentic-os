@@ -10,8 +10,12 @@ docs/superpowers/
 
 # Internal build rationale / audit trail never belongs in this public repo —
 # keep it in a separate private repo (or just locally, uncommitted).
+# This includes self-review / positioning critiques: a repo that ships a
+# catalogue of its own weaknesses hands a skeptic the ammunition. Findings
+# belong in the issue tracker; the review itself belongs in private notes.
 docs/DESIGN.md
 docs/PLAN.md
+docs/positioning-review.md
 docs/audits/
 docs/workstreams/
 NOTES*.md

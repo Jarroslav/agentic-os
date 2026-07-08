@@ -13,6 +13,15 @@ Each principle links to where it's implemented, not just described — you can
 open the hook, the SKILL.md, or the template and read the enforcement, not
 take this document's word for it.
 
+> **Reading the paths.** This repository ships the *sources*: hooks under
+> `plugins/agentic-os/templates/hooks/claude/` (most are `.tmpl` files rendered
+> at install; a few ship verbatim as `.py`), agent contracts under
+> `plugins/agentic-os/templates/agents/`. `/agentic-init` installs them into
+> *your* repo at `.claude/hooks/` and `.agentic/agents/` respectively. Every
+> link below points at the source you can read here; where the installed
+> location isn't obvious from that default, it's spelled out as
+> `source → installed`.
+
 ## 1. Write-scope contracts
 
 **What**: every canonical and generated agent carries a `write_scope` glob and
@@ -31,8 +40,12 @@ pressure to finish the task.
 session has one tool surface with no per-task boundary. You can *ask* the
 agent to stay in one directory; nothing enforces it if it decides otherwise.
 
-**Implementation**: `.claude/hooks/write_scope_guard.py` (scaffolded),
-`write_scope`/`forbidden_paths` fields in every agent contract under
+**Implementation**:
+[`templates/hooks/claude/write_scope_guard.py.tmpl`](../plugins/agentic-os/templates/hooks/claude/write_scope_guard.py.tmpl)
+→ installed as `.claude/hooks/write_scope_guard.py`; the
+`write_scope`/`forbidden_paths` fields are declared in every agent contract
+template under
+[`templates/agents/`](../plugins/agentic-os/templates/agents/) → installed to
 `.agentic/agents/`.
 
 ## 2. Blind pre-commit review
@@ -55,9 +68,13 @@ pass that still inherits the first pass's framing. Few coding-agent setups
 spawn a genuinely blind second opinion, and fewer still gate the commit on it
 at the tool level.
 
-**Implementation**: `blind-code-reviewer` agent contract, the
-`PreToolUse(Bash)` review gate hook (`precommit_review_gate.py`) plus its
-git-level twin (`.githooks/pre-commit`) so the gate holds even outside the
+**Implementation**: the
+[`blind-code-reviewer`](../plugins/agentic-os/templates/agents/core/blind-code-reviewer.md.tmpl)
+agent contract; the `PreToolUse(Bash)` review-gate hook
+[`precommit_review_gate.py`](../plugins/agentic-os/templates/hooks/claude/precommit_review_gate.py)
+→ installed as `.claude/hooks/precommit_review_gate.py`, plus its git-level twin
+[`templates/githooks/pre-commit`](../plugins/agentic-os/templates/githooks/pre-commit)
+→ installed as `.githooks/pre-commit`, so the gate holds even outside the
 harness that spawned the review.
 
 ## 3. The decision-router — autonomy as a resolution strategy, not a toggle
@@ -83,7 +100,8 @@ decision wasn't escalated — you can't reconstruct, after the fact, whether a
 merge went through because a human approved it, a deterministic check passed,
 or a subagent guessed.
 
-**Implementation**: `plugins/agentic-sdlc/skills/decision-router/SKILL.md`;
+**Implementation**:
+[`skills/decision-router/SKILL.md`](../plugins/agentic-sdlc/skills/decision-router/SKILL.md);
 the state machine is diagrammed in
 [`plugins/agentic-sdlc/README.md`](../plugins/agentic-sdlc/README.md#decision-router-autonomous-gates).
 
@@ -108,10 +126,13 @@ text. Nothing forces a specific severity taxonomy, and nothing automatically
 halts the parent when a sub-step raises something serious — the calling
 context has to notice on its own.
 
-**Implementation**: `.claude/hooks/subagent_gate.py`; every agent contract
-template ends with the same five-section output contract; the escalation
-ladder is codified in `.agentic/guides/policy/escalation-policy.md`
-(scaffolded per install).
+**Implementation**:
+[`templates/hooks/claude/subagent_gate.py.tmpl`](../plugins/agentic-os/templates/hooks/claude/subagent_gate.py.tmpl)
+→ installed as `.claude/hooks/subagent_gate.py`; every agent contract template
+ends with the same five-section output contract; the ladder itself is codified
+in
+[`templates/policy/escalation-policy.md.tmpl`](../plugins/agentic-os/templates/policy/escalation-policy.md.tmpl)
+→ installed to `.agentic/guides/policy/escalation-policy.md`.
 
 ## 5. Evidence-grounded repository discovery
 
@@ -142,10 +163,15 @@ during testing, not in theory).
 enforced provenance, and no mechanism stopping it from generalizing from a
 similar-looking example it saw in training or in a shared exemplar.
 
-**Implementation**: `plugins/agentic-os/generators/stack-discovery.md`; the
-"evidence guarantee" rule embedded in `agent-generator.md` and
-`guide-generator.md`; the discovery-record-citation check in
-`templates/guides/standards/instruction-quality-rubric.md`.
+**Implementation**:
+[`generators/stack-discovery.md`](../plugins/agentic-os/generators/stack-discovery.md);
+the "evidence guarantee" rule embedded in
+[`agent-generator.md`](../plugins/agentic-os/generators/agent-generator.md)
+and
+[`guide-generator.md`](../plugins/agentic-os/generators/guide-generator.md);
+the discovery-record-citation check in
+[`templates/guides/standards/instruction-quality-rubric.md`](../plugins/agentic-os/templates/guides/standards/instruction-quality-rubric.md)
+→ installed to `.agentic/guides/standards/`.
 
 ## 6. Generated agent contracts as audited build artifacts
 
@@ -170,9 +196,17 @@ one.
 in most tools are static text with no freshness check and no independent
 verification step before they're trusted.
 
-**Implementation**: `generators/agent-generator.md`,
-`generators/guide-generator.md`, `.claude/hooks/instruction_gate.py`; the
-rubric at `templates/guides/standards/instruction-quality-rubric.md`.
+**Implementation**:
+[`generators/agent-generator.md`](../plugins/agentic-os/generators/agent-generator.md),
+[`generators/guide-generator.md`](../plugins/agentic-os/generators/guide-generator.md),
+and
+[`templates/hooks/claude/instruction_gate.py.tmpl`](../plugins/agentic-os/templates/hooks/claude/instruction_gate.py.tmpl)
+→ installed as `.claude/hooks/instruction_gate.py` (the hook reads the
+scorecard and exits 2; it does not grade). The independent grader is the
+[`instruction-auditor`](../plugins/agentic-os/templates/agents/core/instruction-auditor.md.tmpl)
+contract, and the rubric it grades against is
+[`templates/guides/standards/instruction-quality-rubric.md`](../plugins/agentic-os/templates/guides/standards/instruction-quality-rubric.md)
+→ installed to `.agentic/guides/standards/`.
 
 ## 7. The agent registry — one routing matrix, not scattered dispatch logic
 
@@ -193,9 +227,13 @@ construction.
 all — routing is whatever the current prompt's ad hoc judgment produces, and
 it isn't visible or auditable independent of a specific run's output.
 
-**Implementation**: `templates/governance/agent-registry.md.tmpl`; the
-orchestrator-appends-rows logic in `skills/agentic-init/SKILL.md` Phase 5 and
-the split-reconcile logic in `skills/agentic-upgrade/SKILL.md`.
+**Implementation**:
+[`templates/governance/agent-registry.md.tmpl`](../plugins/agentic-os/templates/governance/agent-registry.md.tmpl)
+→ installed to `.agentic/guides/agent-registry.md`; the
+orchestrator-appends-rows logic in
+[`skills/agentic-init/SKILL.md`](../plugins/agentic-os/skills/agentic-init/SKILL.md)
+Phase 5 and the split-reconcile logic in
+[`skills/agentic-upgrade/SKILL.md`](../plugins/agentic-os/skills/agentic-upgrade/SKILL.md).
 
 ---
 
