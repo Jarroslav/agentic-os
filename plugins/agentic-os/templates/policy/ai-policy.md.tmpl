@@ -44,6 +44,14 @@ approval; **never** = do not do it in this mode at all.
 Human-gated **commands** (always blocked pending human action, regardless of mode)
 are listed in `escalation-policy.md` — one list, not two.
 
+### Per-repository overrides
+
+Set at install (interview Screen 3) for this repo, these **tighten** the active
+mode's row above for a specific capability — never loosen it. An agent reads the
+override where one exists and the matrix row otherwise.
+
+{{AUTONOMY_OVERRIDES}}
+
 ## Size ceiling
 
 Lightweight AI-assisted changes stay **≤ {{MAX_LOC}} lines of code and ≤ {{MAX_FILES}} files**

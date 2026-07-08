@@ -110,6 +110,7 @@ a security boundary:
 | `{{ENV_CHECK_COMMANDS}}` | SessionStart environment checks, newline list | stack-fact record (`variable_defaults.ENV_CHECK_COMMANDS`) |
 | `{{HITL_MODE}}` | `strict` \| `gated-autonomous` \| `autonomous` | `gated-autonomous` (QA preset: `strict`) |
 | `{{MAX_LOC}}` / `{{MAX_FILES}}` | AI-change size ceiling (breach ⇒ escalate) | `250` / `10` |
+| `{{AUTONOMY_OVERRIDES}}` | **Derived** (not collected as a scalar): the `ai-policy.md` per-repo override block, one bullet per Screen-3 capability set stricter than its active-mode cell. `--defaults`/no-tightening ⇒ the "no overrides" note. See `agentic-init/SKILL.md` Screen 3 + Phase 4 step 5. | the "no overrides" note |
 | `{{ESCALATE_ON}}` | Risk flags that force human escalation, comma list | `security,breaking-change,migration,spend` |
 | `{{ROLE_PRESETS_ACTIVE}}` | Installed role presets, comma list | from interview |
 | `{{TICKET_ADAPTER}}` | Work-item system + access method (ADO / Linear MCP / Jira / GitHub / GitLab / none) | interview |

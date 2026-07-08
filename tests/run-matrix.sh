@@ -56,6 +56,22 @@ PY
 python3 "$ROOT/tests/lib/check-registry.py" "$FRESH" && ok "agent-registry table intact" || bad "agent-registry table intact"
 # PATTERNS.md generated-guide append point is a real table row (same invariant, shared gfm.py)
 python3 "$ROOT/tests/lib/check-patterns.py" "$FRESH" && ok "PATTERNS.md guide-row marker intact" || bad "PATTERNS.md guide-row marker intact"
+# ai-policy carries the Screen-3 autonomy-override block (answers land somewhere,
+# not discarded); --defaults renders the "no overrides" note.
+python3 - "$FRESH" <<'PY' && ok "ai-policy autonomy-override block rendered" || bad "ai-policy autonomy-override block rendered"
+import sys, pathlib
+body = pathlib.Path(sys.argv[1], ".agentic/guides/policy/ai-policy.md").read_text()
+problems = []
+if "### Per-repository overrides" not in body:
+    problems.append("override section missing")
+if "{{AUTONOMY_OVERRIDES}}" in body or "{{" in body.split("### Per-repository")[-1].split("## Size")[0]:
+    problems.append("override placeholder left unrendered")
+if "No per-repository overrides" not in body:
+    problems.append("--defaults should render the 'no overrides' note")
+for p in problems:
+    print("  " + p)
+sys.exit(1 if problems else 0)
+PY
 # PATTERNS.md indexes no guide it did not install (the qa-only rows are conditional)
 python3 - "$FRESH" <<'PY' && ok "PATTERNS.md guide links all resolve" || bad "PATTERNS.md guide links all resolve"
 import re, sys, pathlib

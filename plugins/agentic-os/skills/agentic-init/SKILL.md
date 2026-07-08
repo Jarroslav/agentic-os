@@ -198,9 +198,13 @@ listed, and `strict` HITL forces the `dispatcher` default.
 `{{HITL_MODE}}`. Pre-fill from the preset union's strictest `default_hitl`.
 
 **Screen 3 — Autonomy matrix**: may agents run tests? commit? push? create
-tickets? (yes/recommend-only per capability — these fill the matrix in
-`policy/ai-policy`), plus `{{MAX_LOC}}`/`{{MAX_FILES}}` (defaults 250/10) and
-`{{ESCALATE_ON}}` (default `security,breaking-change,migration,spend`).
+tickets? (yes/recommend-only per capability). Each answer is compared to that
+capability's cell in the active `{{HITL_MODE}}` column of the `ai-policy` matrix;
+an answer **stricter** than the mode default (e.g. `recommend-only` where the mode
+allows it) becomes a `{{AUTONOMY_OVERRIDES}}` bullet — overrides tighten, never
+loosen. Accepting the default for every capability leaves `{{AUTONOMY_OVERRIDES}}`
+as the "no overrides" note. Plus `{{MAX_LOC}}`/`{{MAX_FILES}}` (defaults 250/10)
+and `{{ESCALATE_ON}}` (default `security,breaking-change,migration,spend`).
 
 **Screen 4 — Gates to enable** (each independently toggleable; all default
 on): precommit review gate, subagent output-contract gate, instruction-quality
@@ -432,6 +436,18 @@ Ordered steps:
    `Run`. If `GATE_COMMANDS` is empty, write a one-line instruction to add a gate,
    never a blank registry (`code-quality.md` treats this file as the canonical gate
    catalogue and forbids relying on an empty one).
+   **`ai-policy.md` `{{AUTONOMY_OVERRIDES}}`**: substitute with one bullet per
+   Screen-3 capability the user set **stricter** than its active-mode cell. Only a
+   `recommend-only` answer can tighten (→ `gated`); a `yes` answer is never stricter
+   than a cell that already permits the action, so it yields no bullet. Bullet shape:
+   `- **<capability>** — gated (tightened from the active mode's `<default level>`).
+   <one line on what that means for an agent.>` — write the mode's **actual name**
+   and the cell's **actual level** (`allowed`/`gated`/`never`) as literal text, not
+   `{{…}}` tokens: this block is itself the value substituted for
+   `{{AUTONOMY_OVERRIDES}}`, so a token you leave inside it may not be resolved
+   again. When nothing was tightened (every `--defaults` install, and any interview
+   that accepted the mode defaults), substitute the single line `_No per-repository
+   overrides — every capability follows the active mode's row above._`
    **Hand-off (a)**: when the `qa` preset is in the union, create an empty
    ledger at `docs/flaky-ledger.md` if absent (it is referenced by
    `.agentic/guides/standards/flaky-protocol.md`) with just:

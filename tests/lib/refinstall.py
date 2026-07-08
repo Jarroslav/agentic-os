@@ -157,13 +157,22 @@ QA_GUIDE_ROWS_TEXT = (
 QA_GUIDE_ROWS = QA_GUIDE_ROWS_TEXT if {
     "guides/test-design-pattern", "guides/flaky-protocol"} <= PRESET_TEMPLATE_IDS else ""
 
+# Screen 3's per-capability autonomy answers. `--defaults` accepts every mode
+# default, so nothing is tightened — the block is the "no overrides" note. A real
+# interview emits one bullet per capability the user set stricter than its mode row.
+AUTONOMY_OVERRIDES = (
+    "_No per-repository overrides — every capability follows the active mode's row "
+    "above._")
+
 
 def render(text: str, is_json: bool, escape: bool) -> str:
     q = esc if escape else (lambda v: v)
-    # Derived, not raw variables: built by the installer from what it installs. Only
-    # in markdown templates (PATTERNS.md, quality-gates.md), so never escaped.
+    # Derived, not raw variables: built by the installer from interview answers or
+    # what it installs. Only in markdown templates, so never escaped.
     text = text.replace("{{GATE_ENTRIES}}", gate_entries())
     text = text.replace("{{QA_GUIDE_ROWS}}", QA_GUIDE_ROWS)
+    # --defaults accepts each capability's mode default, so no Screen-3 tightening.
+    text = text.replace("{{AUTONOMY_OVERRIDES}}", AUTONOMY_OVERRIDES)
     for var in NEWLINE_VARS:
         text = text.replace("{{%s}}" % var, q("\n".join(LISTS[var])))
     # Not a scalar: JSON array elements carry their own quotes; the comma-joined
