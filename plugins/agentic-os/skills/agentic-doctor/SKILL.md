@@ -1,6 +1,6 @@
 ---
 name: agentic-doctor
-description: Standalone verifier for an agentic-os install — checks the file manifest against the install journal, py-compiles every hook, dry-runs the enforcement hooks with canned events (block hooks must exit 2 on a synthetic violation, 0 on clean), runs the HITL smoke test on the output-contract gate, verifies settings registration, git hook installation, dependency plugins, and scorecard thresholds. Writes .agentic/agentic-os/doctor.json. Use when the user says "/agentic-doctor", "verify the agentic-os install", "check the agent setup", "run doctor", or after /agentic-init and /agentic-upgrade.
+description: Standalone verifier for an agentic-os install — checks the file manifest against the install journal, py-compiles every hook, dry-runs the enforcement hooks with canned events (block hooks must exit 2 on a synthetic violation, 0 on clean), runs the HITL smoke test on the output-contract gate, verifies settings registration, git hook installation, dependency plugins, scorecard thresholds, and agent-registry table integrity. Writes .agentic/agentic-os/doctor.json. Use when the user says "/agentic-doctor", "verify the agentic-os install", "check the agent setup", "run doctor", or after /agentic-init and /agentic-upgrade.
 version: 0.1.0
 license: Apache-2.0
 ---
@@ -219,6 +219,79 @@ contract in the journal:
   gate will block that agent's spawn until re-graded; escalate to fail if the
   file is `owner: "generated"`, which 7a already does).
 
+## Check 8 — Agent-registry integrity
+
+Skip only when `.agentic/guides/agent-registry.md` is absent from
+`journal.files` (the `governance/agent-registry` template wasn't in the preset
+union). When it is journaled but missing from disk, that is **Check 1's**
+failure, not this one — report `registry` as N/A and move on. Otherwise this
+check always runs, even with zero generated agents.
+
+That file is THE routing matrix: `.claude/commands/pipeline-orchestrator.md`
+reads it at runtime to discover which agent owns which intent. It is a
+**hybrid** — a static curated section rendered at Phase 4, plus rows appended by
+Phase 5 step 6 below a marker row. Nothing else verifies the hybrid survived. A
+broken table here is invisible: every other check passes, the file exists, its
+hash matches, its text contains the rows — and the orchestrator still cannot
+see a single generated agent.
+
+Define a **valid table block**: a header row, followed *immediately* by a
+delimiter row (each cell matching `:?-+:?`) whose **cell count equals the
+header's**, followed by the run of consecutive lines that each begin with `|`.
+GFM recognises a table only in that exact shape. Two consequences, both verified
+against GitHub's renderer:
+
+- Drop or mangle the delimiter row and the **entire** table becomes paragraph
+  text (`<table>` count: 0) — not just the appended rows. No agent is routable.
+- A blank line, a prose paragraph, or a bare `<!-- comment -->` line **ends** the
+  block; any pipe-delimited line after it comes back as `<p>| … |</p>`.
+
+The **routing table** is the valid block whose header row's first cell is
+`Trigger / intent`.
+
+- **8a — the routing table is a valid GFM table.** A header row with that first
+  cell exists, and it is immediately followed by a matching delimiter row. A
+  header present but not followed by a valid delimiter ⇒ **fail** (the whole
+  matrix renders as prose). No such header at all ⇒ **fail**.
+- **8b — marker row present, as a row.** Exactly one line has
+  `<!-- generated-agent-rows -->` as its **first cell** and begins with `|`.
+  Zero ⇒ **fail**. A `<!-- generated-agent-rows -->` appearing as a bare comment
+  line instead of a table row ⇒ **fail**: it ends the block, so Phase 5's
+  appended rows land outside it. More than one ⇒ **fail**.
+- **8c — marker row inside the routing block.** Otherwise ⇒ **fail**.
+- **8d — no orphaned rows.** Every pipe-delimited line in the file belongs to
+  *some* valid table block. A pipe line in no block is an orphaned row: it looks
+  like a row in the source and renders as a paragraph ⇒ **fail**, quoting it.
+  (A second, unrelated table elsewhere in the file forms its own valid block and
+  is fine.) This is exactly what a paraphrased — rather than verbatim-rendered —
+  Phase 4 template produces, and it is silent everywhere else.
+- **8e — every generated contract has a row.** For each `owner: "generated"`
+  canonical contract in `journal.files` under `.agentic/agents/` (a generated
+  *guide* under `.agentic/guides/` is not dispatchable and gets no row): exactly
+  one row **inside the routing block, below the marker row**, whose Owning-asset
+  cell cites that contract's path. Zero ⇒ **fail** (the agent exists but is
+  undiscoverable). Two or more ⇒ **fail** (breaks one-owner-per-intent, which
+  Phase 5 step 6's replace-by-path rule exists to preserve).
+- **8f — no stale rows.** Every row below the marker cites a path that exists on
+  disk. A row pointing at a removed slot ⇒ **fail** (the orchestrator would
+  dispatch to a missing contract).
+
+Failures here are `registry`. Remedy for 8a/8b/8c/8d: the static portion drifted
+from `templates/governance/agent-registry.md.tmpl` — re-render it verbatim, then
+re-append the generated rows below the marker row. Note `/agentic-upgrade`'s
+Agent-registry split-reconcile **cannot** do this unattended when the marker is
+missing entirely: it is specified to stop and ask rather than guess where the
+split belongs. Remedy for 8e: re-run Phase 5 step 6.
+
+**Do not infer this check from the file's text alone.** Grepping for a
+contract's path finds the row whether or not it sits inside the table — that is
+precisely how a generated contract can audit at 100/100 on an
+"automatic delegation" claim while being unroutable. Parse the block structure;
+never substring-match. The deterministic subset of 8a–8d is implemented in
+`tests/lib/check-registry.py`, which runs against the Phase-4 scaffold in the
+acceptance matrix; 8e/8f have no generated agents to check there and are yours
+alone.
+
 ## Write the verdict
 
 Write `.agentic/agentic-os/doctor.json`:
@@ -237,7 +310,8 @@ Write `.agentic/agentic-os/doctor.json`:
     "settings": {"passed": true, "detail": "..."},
     "git_hook": {"passed": true, "detail": "..."},
     "dependencies": {"passed": true, "detail": "..."},
-    "scorecard": {"passed": true, "detail": "..."}
+    "scorecard": {"passed": true, "detail": "..."},
+    "registry": {"passed": true, "detail": "..."}
   },
   "pending_restart": ["<plugin names>"],
   "failures": ["<one message per failed check item>"]

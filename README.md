@@ -147,10 +147,10 @@ Then:
 /agentic-doctor
 ```
 
-runs all 7 checks (file manifest vs. install journal, hook compilation,
+runs all 8 checks (file manifest vs. install journal, hook compilation,
 canned-event dry-runs of four enforcement hooks, a 3-part HITL smoke test,
-settings registration, git hook + dependencies, and scorecard
-coverage/thresholds) and writes the result to
+settings registration, git hook + dependencies, scorecard coverage/thresholds,
+and agent-registry table integrity) and writes the result to
 `.agentic/agentic-os/doctor.json`.
 
 ```bash
@@ -297,10 +297,12 @@ Codex install instructions. Claude Code is the best-supported host today, not
 an architectural boundary.
 
 **What does `/agentic-doctor` actually check?**
-Seven things: file manifest vs. install journal, hook compilation, canned-event
+Eight things: file manifest vs. install journal, hook compilation, canned-event
 dry-runs of four enforcement hooks, a 3-part HITL smoke test, settings
-registration, git hook + dependencies, and scorecard coverage/thresholds. It
-writes the result to `.agentic/agentic-os/doctor.json`.
+registration, git hook + dependencies, scorecard coverage/thresholds, and
+agent-registry table integrity (that the routing matrix the orchestrator reads
+is a real, contiguous table with a row per generated agent). It writes the
+result to `.agentic/agentic-os/doctor.json`.
 
 **Can I uninstall it?**
 Nothing is committed for you, so before your first commit `git status` shows
@@ -312,11 +314,11 @@ exactly what to delete. After that, the install journal
 ```bash
 bash tests/t0/run.sh                 # 50 hook unit tests
 bash tests/t0/run-output-contract.sh # 12 output-contract parser checks
-bash tests/run-matrix.sh             # T1–T7 acceptance (28 checks; re-runs the output-contract suite as T7)
+bash tests/run-matrix.sh             # T1–T7 acceptance (29 checks; re-runs the output-contract suite as T7)
 ```
 
-**What CI proves, deterministically, on every PR:** 78 checks — 50 hook unit
-tests (`tests/t0/run.sh`) plus the 28-check T1–T7 acceptance matrix — and JSON
+**What CI proves, deterministically, on every PR:** 79 checks — 50 hook unit
+tests (`tests/t0/run.sh`) plus the 29-check T1–T7 acceptance matrix — and JSON
 manifest/preset validation. The matrix *executes the installer's deterministic
 phases* against fresh and mature fixture repos; it is a skill-executability
 proof, not a mock. It covers non-destructive mature-repo handling, idempotent

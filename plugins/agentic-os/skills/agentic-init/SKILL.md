@@ -561,9 +561,11 @@ only). Otherwise:
        `escalate_on` list) over a conditional one; don't try to summarize
        the whole list. **Escape any literal `|` in the sourced text as
        `\|`** (or reword around it) — both `<intent>` and this field land
-       inside a GFM table cell, and an unescaped pipe shifts the column
-       count, breaking the row (and every row after it, since the parser
-       keeps reading until a line stops looking like a table row).
+       inside a GFM table cell, and an unescaped pipe opens an extra cell.
+       The row still renders (GFM does not break the table, and later rows
+       survive), but every cell past the table's column count is **silently
+       discarded** — so the note is truncated with no error anywhere, which
+       is worse than a visible break.
    Read each generated contract's actual triggers/escalation section for the
    note — don't invent one. This is what makes `pipeline-orchestrator.md`
    (which spawns agents by reading this exact table) actually able to

@@ -48,6 +48,8 @@ need+=["CLAUDE.md","AGENTS.md","PATTERNS.md"]
 missing=[n for n in need if n not in sc]
 sys.exit(1 if missing else 0)
 PY
+# agent-registry table integrity (deterministic half of agentic-doctor Check 8)
+python3 "$ROOT/tests/lib/check-registry.py" "$FRESH" && ok "agent-registry table intact" || bad "agent-registry table intact"
 # native commit blocked without review stamp
 ( cd "$FRESH" && echo x > f.txt && git add f.txt
   if git commit -qm try 2>/dev/null; then exit 1; else exit 0; fi ) \
