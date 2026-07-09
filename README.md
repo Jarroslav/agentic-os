@@ -26,8 +26,32 @@ orchestration. Works in Claude Code, Cursor, and Codex.
 3. Run `/agentic-init --defaults` (or `/agentic-init` for the full interview).
 4. Run `/agentic-doctor` — expect `passed: true` in `.agentic/agentic-os/doctor.json`.
 5. `git status` — review scaffolded files; nothing is committed for you.
+6. If you use the SDLC pipeline, run **sdlc-doctor** — expect `passed: true` in
+   `.agentic/agentic-sdlc/doctor.json`.
 
 **Safe first try:** use the [throwaway repo walkthrough](#try-it-in-two-minutes-throwaway-repo) before touching a real project.
+
+### Full install checklist
+
+Complete this **before** `/agentic-init` in the repo you want to equip:
+
+| # | Requirement | How to check |
+|---|-------------|--------------|
+| 1 | **Claude Code** or **Cursor** | Editor running with plugin support |
+| 2 | **`python3`** on PATH | `python3 --version` — enforcement hooks are Python |
+| 3 | **`git`** | Target directory is a git repo (`git status`) |
+| 4 | **`node`** on PATH | `node --version` — checked by **sdlc-doctor** when using **agentic-sdlc** |
+| 5 | **`superpowers`** plugin ≥ **6.1.0** | [Install superpowers](#install-superpowers) |
+| 6 | **`agentic-os`** custom marketplace added | [Install](#install) for your editor |
+| 7 | **`agentic-os`** + **`agentic-sdlc`** plugins installed | Both cards/skills visible after reload |
+| 8 | **`gh`** (optional) | Only for GitHub ticket/MR adapters |
+
+**After equip — which doctor?**
+
+| Check | When | Output |
+|-------|------|--------|
+| `/agentic-doctor` | After `/agentic-init` or `/agentic-upgrade` | `.agentic/agentic-os/doctor.json` — manifest, hooks, dependencies, scorecard |
+| **sdlc-doctor** skill | Before `/sdlc-start` or other SDLC skills | `.agentic/agentic-sdlc/doctor.json` — superpowers, `node`, `git` |
 
 > **Cursor users:** this plugin is **not** in Browse Marketplace → All (curated
 > public plugins only). You add a **custom marketplace** and install from the
@@ -96,15 +120,52 @@ dependencies in Phase 3 if any are absent.
 - **`python3`** on your PATH — enforcement hooks are Python scripts.
 - **`git`** — the target repo must be a git repository (`/agentic-init` can
   `git init` if it is not).
+- **`node`** on your PATH — required when using **agentic-sdlc**; **sdlc-doctor**
+  runs `node --version` and `git --version` (`plugins/agentic-sdlc/skills/sdlc-doctor/SKILL.md`).
 - **`superpowers`** ≥ **6.1.0** and **`agentic-sdlc`** ≥ **0.4.4** — required
   by `/agentic-init` (`plugins/agentic-os/manifest/dependencies.json`).
 - Optional: **`gh`** (GitHub CLI) for GitHub ticket/MR adapters.
 
 ## Install
 
+### Install superpowers
+
+`/agentic-init` and **agentic-sdlc** require the **superpowers** plugin ≥
+**6.1.0** (`plugins/agentic-os/manifest/dependencies.json`). Install it
+**before** equipping a target repo.
+
+**Claude Code:**
+
+```
+/plugin install superpowers@claude-plugins-official
+```
+
+If that marketplace is missing, add it first:
+
+```
+/plugin marketplace add anthropics/claude-plugins-official
+/plugin install superpowers@claude-plugins-official
+```
+
+Fallback marketplace (same plugin family):
+
+```
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
+**Cursor:**
+
+1. **Customize → Plugins → Browse Marketplace → All** → install **Superpowers**
+   (curated public plugin), **or**
+2. Install superpowers in Claude Code and enable **“Automatically import agent
+   configs from other tools”**, then reload Cursor.
+
+Confirm version ≥ 6.1.0 on the plugin card or via **sdlc-doctor** after equip.
+
 ### Claude Code
 
-From this marketplace:
+Install **superpowers** ([above](#install-superpowers)), then add this marketplace:
 
 ```
 /plugin marketplace add Jarroslav/agentic-os
@@ -150,8 +211,8 @@ You will not find it by searching Browse Marketplace → **All**.
 4. Install **both** plugins from the `agentic-os` marketplace:
    - **agentic-os** — `/agentic-init`, `/agentic-doctor`, `/agentic-upgrade`
    - **agentic-sdlc** — SDLC skills + subagents (display name **SDLC Factory**)
-5. Ensure **superpowers** ≥ 6.1.0 is installed (see
-   [INSTALL.md §1](plugins/agentic-sdlc/INSTALL.md#1-make-superpowers-available-required)).
+5. Install **superpowers** ≥ 6.1.0 ([Install superpowers](#install-superpowers) —
+   curated **Superpowers** from Browse Marketplace → **All** works in Cursor).
 6. **Reload the window** (Command Palette → “Developer: Reload Window”).
 
 You should see each plugin as its own card (often tagged **Imported**), with
@@ -187,9 +248,13 @@ before merging, and leaves the working tree for you to review.
 Then:
 
 ```
-/agentic-doctor          # verify install → .agentic/agentic-os/doctor.json
+/agentic-doctor          # verify governance install → .agentic/agentic-os/doctor.json
 /agentic-upgrade         # reconcile after a plugin version bump
 ```
+
+If you use SDLC skills (`/sdlc-start`, `/sdlc-autonomous`, …), also run
+**sdlc-doctor** — it writes `.agentic/agentic-sdlc/doctor.json` and checks
+superpowers, `node`, and `git`.
 
 #### Cursor troubleshooting
 
@@ -199,7 +264,8 @@ Then:
 | Marketplace added but no plugin card | You added the repo but did not **Install** each plugin. Install both, then reload. |
 | Skills page shows hundreds of items, not `agentic-init` | Search for `agentic-init`, or open the plugin card under Customize → Plugins. |
 | `/agentic-init` not recognized | Plugins not loaded — reload window; confirm both plugins show as installed. |
-| Init or sdlc doctor fails on superpowers | Install superpowers ≥ **6.1.0**, then reload. |
+| Init or sdlc doctor fails on superpowers | Install superpowers ≥ **6.1.0** ([Install superpowers](#install-superpowers)), then reload. |
+| sdlc-doctor fails on node | Install **Node.js** (`node --version` on PATH). |
 
 Cursor reads `.cursor-plugin/marketplace.json` from the repo root. Use a Git
 clone URL ending in `.git`, not the GitHub browser URL.

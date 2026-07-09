@@ -7,10 +7,23 @@ via `plugins/agentic-os/manifest/dependencies.json`).
 
 Install `superpowers` before installing `agentic-sdlc`:
 
+**Claude Code** (primary; matches `dependencies.json`):
+
 ```text
-/plugin marketplace add obra/superpowers
-/plugin install superpowers
+/plugin marketplace add anthropics/claude-plugins-official
+/plugin install superpowers@claude-plugins-official
 ```
+
+Fallback marketplace:
+
+```text
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
+**Cursor:** Customize → Plugins → Browse Marketplace → **All** → install
+**Superpowers** (curated). Or install via Claude Code and enable Cursor's
+“import agent configs from other tools”, then reload.
 
 The plugin halts at startup if `superpowers` is not present.
 
@@ -23,8 +36,8 @@ Use the commands for the agent you are installing into.
 From any Claude Code session:
 
 ```text
-/plugin marketplace add obra/superpowers
-/plugin install superpowers
+/plugin marketplace add anthropics/claude-plugins-official
+/plugin install superpowers@claude-plugins-official
 /plugin marketplace add https://github.com/Jarroslav/agentic-os.git
 /plugin marketplace list
 /plugin install agentic-sdlc@agentic-os
@@ -52,8 +65,8 @@ Then open Claude Code and run:
 From any Codex CLI session:
 
 ```text
-/plugin marketplace add obra/superpowers
-/plugin install superpowers
+/plugin marketplace add anthropics/claude-plugins-official
+/plugin install superpowers@claude-plugins-official
 /plugin marketplace add https://github.com/Jarroslav/agentic-os.git
 /plugin marketplace list
 /plugin install agentic-sdlc
