@@ -1,0 +1,24 @@
+{
+  "name": "agentic-sdlc",
+  "displayName": "SDLC Factory",
+  "version": "0.4.4",
+  "description": "Consolidated SDLC Factory for coding agents: knowledge foundation, story drafting, requirements -> spec -> plan -> QA, MR/PR creation and watch, knowledge harvester, and HTML report generation.",
+  "author": {
+    "name": "agentic-os"
+  },
+  "homepage": "https://github.com/Jarroslav/agentic-os",
+  "repository": "https://github.com/Jarroslav/agentic-os",
+  "license": "Apache-2.0",
+  "keywords": [
+    "sdlc",
+    "tdd",
+    "orchestration",
+    "knowledge-foundation",
+    "story",
+    "mr",
+    "report",
+    "factory"
+  ],
+  "skills": "./skills/",
+  "agents": "./agents/"
+}

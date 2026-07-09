@@ -29,7 +29,10 @@ jobs:
           import json, glob
           files = [
               ".claude-plugin/marketplace.json",
+              ".cursor-plugin/marketplace.json",
               "plugins/agentic-os/.claude-plugin/plugin.json",
+              "plugins/agentic-os/.cursor-plugin/plugin.json",
+              "plugins/agentic-sdlc/.cursor-plugin/plugin.json",
               "plugins/agentic-os/manifest/dependencies.json",
           ] + glob.glob("plugins/agentic-os/presets/roles/*.json")
           for f in files:

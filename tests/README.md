@@ -6,6 +6,7 @@ Run everything:
 bash tests/t0/run.sh                 # hook units (rendered templates, exit-code contracts)
 bash tests/t0/run-output-contract.sh # output-contract parser (subagent_gate)
 bash tests/run-matrix.sh             # T1–T8 acceptance matrix
+bash tests/cursor/run-cursor-e2e.sh  # Cursor packaging + fresh-install smoke (see tests/cursor/README.md)
 ```
 
 `run-matrix.sh` re-runs the **output-contract** suite as T7, but not the hook

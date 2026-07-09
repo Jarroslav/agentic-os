@@ -76,6 +76,37 @@ plugin_hooks = true
 Restart Codex after changing the feature flag, then open `/plugin` or `/hooks`
 to review and trust the newly visible hooks.
 
+### Cursor
+
+In Cursor, open **Settings → Plugins → Add marketplace** and add:
+
+```text
+https://github.com/Jarroslav/agentic-os.git
+```
+
+Then install both plugins from the `agentic-os` marketplace: **agentic-os** and
+**agentic-sdlc**.
+
+Use the Git clone URL ending in `.git`, not the browser URL. Cursor reads
+`.cursor-plugin/marketplace.json` from the repo root.
+
+For local development from a clone of this repository, add the local marketplace
+path instead:
+
+```text
+/absolute/path/to/agentic-os
+```
+
+Restart the session after installing plugins, then in the repo you want to equip:
+
+```text
+/agentic-init
+```
+
+The `agentic-init` skill resolves its plugin root from the skill file location
+when `${CLAUDE_PLUGIN_ROOT}` is unset, so the installer runs under Cursor
+without changes.
+
 ## 3. Verify
 
 ```text

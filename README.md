@@ -3,6 +3,7 @@
 [![CI](https://github.com/Jarroslav/agentic-os/actions/workflows/ci.yml/badge.svg)](https://github.com/Jarroslav/agentic-os/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Install: Claude Code plugin](https://img.shields.io/badge/install-Claude%20Code%20plugin-5A2EBB)](#install)
+[![Install: Cursor plugin](https://img.shields.io/badge/install-Cursor%20plugin-000000)](#install)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 **A governed, portable engineering platform for coding agents — evidence-grounded repository discovery, generated and audited agent contracts, and hard enforcement gates, installed into any repo in one interview.**
@@ -38,12 +39,12 @@ uses the same discovery mechanism but is earlier in its own verification
 cycle. It is also role-agnostic
 (developer, QA, BA/PO, architect, delivery).
 
-Today it's delivered as a Claude Code (and Codex-compatible) plugin — that's
-the install mechanism, not the architectural boundary: the scaffolded
+Today it's delivered as a Claude Code, Cursor, and Codex-compatible plugin —
+that's the install mechanism, not the architectural boundary: the scaffolded
 contracts are harness-neutral by design (thin per-host pointer files over a
 canonical, host-independent body).
 
-This repo is a Claude Code **marketplace** hosting two plugins:
+This repo is a **marketplace** (Claude Code and Cursor) hosting two plugins:
 
 - **`agentic-os`** — the product: the `/agentic-init`, `/agentic-doctor`, and
   `/agentic-upgrade` skills plus the template library, generators, and role
@@ -55,13 +56,16 @@ This repo is a Claude Code **marketplace** hosting two plugins:
 
 ## Prerequisites
 
-- **Claude Code** (the CLI or IDE extension) — this is a Claude Code plugin.
+- **Claude Code** (the CLI or IDE extension) or **Cursor** — install via the
+  marketplace for your host.
 - **`python3`** on your PATH — every enforcement hook is a Python script.
 - **git** — the target repo must be a git repository (`/agentic-init` offers to
   `git init` if it isn't).
 - Optional: **`gh`** (GitHub CLI) if you want the GitHub ticket/MR adapters.
 
 ## Install
+
+### Claude Code
 
 From this marketplace:
 
@@ -82,7 +86,31 @@ git clone https://github.com/Jarroslav/agentic-os
 ```
 
 **Restart the session** so the plugins load (Claude Code activates plugins at
-session start). Then, in the repo you want to equip:
+session start).
+
+### Cursor
+
+In Cursor, open **Settings → Plugins → Add marketplace** and add:
+
+```
+https://github.com/Jarroslav/agentic-os.git
+```
+
+Then install both plugins from the `agentic-os` marketplace: **agentic-os** and
+**agentic-sdlc**.
+
+Or from a local clone (no publish needed):
+
+```
+git clone https://github.com/Jarroslav/agentic-os
+# in Cursor Settings → Plugins → Add marketplace:
+/absolute/path/to/agentic-os
+```
+
+Use the Git clone URL ending in `.git`, not the browser URL. Cursor reads
+`.cursor-plugin/marketplace.json` from the repo root.
+
+**Restart the session** so the plugins load. Then, in the repo you want to equip:
 
 ```
 /agentic-init            # full interview
@@ -292,9 +320,10 @@ default, and a pre-existing git hook is *chained*, not replaced.
 
 **Does this work outside Claude Code?**
 The canonical agent contracts are harness-neutral by design — the
-Claude-specific files are thin pointers over them, and `agentic-sdlc` ships
-Codex install instructions. Claude Code is the best-supported host today, not
-an architectural boundary.
+host-specific files are thin pointers over them. Install via Claude Code,
+Cursor, or Codex (see [INSTALL.md](plugins/agentic-sdlc/INSTALL.md)). Claude
+Code is the best-supported enforcement host today; Cursor packaging reuses the
+same skills and scaffolds the same `.agentic/` layer.
 
 **What does `/agentic-doctor` actually check?**
 Eight things: file manifest vs. install journal, hook compilation, canned-event
