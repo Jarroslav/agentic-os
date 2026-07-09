@@ -6,7 +6,32 @@
 [![Install: Cursor plugin](https://img.shields.io/badge/install-Cursor%20plugin-000000)](#install)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**A governed, portable engineering platform for coding agents — evidence-grounded repository discovery, generated and audited agent contracts, and hard enforcement gates, installed into any repo in one interview.**
+**Turn your repo into a governed multi-agent setup in one interview** — scoped
+agent contracts, enforcement hooks (not just prompts), and optional SDLC
+orchestration. Works in Claude Code, Cursor, and Codex.
+
+## Start here
+
+**New to this repo?** You do not need to read everything below. Pick a path:
+
+| Your goal | Install from marketplace | First command in *your* project |
+|-----------|--------------------------|----------------------------------|
+| **Governed agents in my repo** — scoped writes, blind pre-commit review, role presets, stack agents | **agentic-os** + **agentic-sdlc** + [**superpowers**](https://github.com/anthropics/claude-plugins-official) (≥ **6.1.0** — enforced by `/agentic-init`; see `plugins/agentic-os/manifest/dependencies.json`) | `/agentic-init --defaults` → `/agentic-doctor` |
+| **SDLC pipeline on top** — spec → plan → TDD → QA (`/sdlc-start`, `/sdlc-autonomous`, …) | Same three plugins (pipeline skills ship in **agentic-sdlc**) | After init: `/sdlc-start <task>` or run **sdlc-doctor** |
+
+**Five-minute flow (any editor):**
+
+1. [Install the plugin(s)](#install) for your editor (Claude Code or Cursor).
+2. Open the **git repo you want to improve** (not this marketplace repo).
+3. Run `/agentic-init --defaults` (or `/agentic-init` for the full interview).
+4. Run `/agentic-doctor` — expect `passed: true` in `.agentic/agentic-os/doctor.json`.
+5. `git status` — review scaffolded files; nothing is committed for you.
+
+**Safe first try:** use the [throwaway repo walkthrough](#try-it-in-two-minutes-throwaway-repo) before touching a real project.
+
+> **Cursor users:** this plugin is **not** in Browse Marketplace → All (curated
+> public plugins only). You add a **custom marketplace** and install from the
+> **User** tab — see [Cursor install](#cursor).
 
 ## Why this exists
 
@@ -54,14 +79,26 @@ This repo is a **marketplace** (Claude Code and Cursor) hosting two plugins:
   fast-path → stand-in subagent → escalate in autonomous mode) with a full
   `decisions.jsonl` audit trail.
 
+**Which plugin?** Install **both** marketplace plugins plus **superpowers**.
+`agentic-os` is the installer/governance layer; `agentic-sdlc` is the SDLC
+orchestrator. `/agentic-init` wires them together and registers missing
+dependencies in Phase 3 if any are absent.
+
+> `/agentic-init` Phase 3 treats **agentic-sdlc** and **superpowers** as
+> **non-optional** (`plugins/agentic-os/manifest/dependencies.json`). Install
+> all three up front to avoid a pending-restart loop.
+
 ## Prerequisites
 
-- **Claude Code** (the CLI or IDE extension) or **Cursor** — install via the
-  marketplace for your host.
-- **`python3`** on your PATH — every enforcement hook is a Python script.
-- **git** — the target repo must be a git repository (`/agentic-init` offers to
-  `git init` if it isn't).
-- Optional: **`gh`** (GitHub CLI) if you want the GitHub ticket/MR adapters.
+- **Claude Code** or **Cursor** — see [Install](#install). This is a custom
+  plugin marketplace; you add it once per editor, then equip projects with
+  `/agentic-init`.
+- **`python3`** on your PATH — enforcement hooks are Python scripts.
+- **`git`** — the target repo must be a git repository (`/agentic-init` can
+  `git init` if it is not).
+- **`superpowers`** ≥ **6.1.0** and **`agentic-sdlc`** ≥ **0.4.4** — required
+  by `/agentic-init` (`plugins/agentic-os/manifest/dependencies.json`).
+- Optional: **`gh`** (GitHub CLI) for GitHub ticket/MR adapters.
 
 ## Install
 
@@ -90,43 +127,82 @@ session start).
 
 ### Cursor
 
-In Cursor, open **Settings → Plugins → Add marketplace** and add:
+`agentic-os` is a **custom marketplace**, not a curated Cursor Store listing.
+You will not find it by searching Browse Marketplace → **All**.
+
+#### Install (recommended)
+
+1. Open **Customize → Plugins** (or **Settings → Plugins**; use **Customize**
+   if you see the “Plugins are moving to Customize” banner).
+2. **Add marketplace** and paste the Git clone URL (must end in `.git`):
+
+   ```
+   https://github.com/Jarroslav/agentic-os.git
+   ```
+
+   Or, from a local clone:
+
+   ```
+   /absolute/path/to/agentic-os
+   ```
+
+3. Open the **User** tab (not **All**).
+4. Install **both** plugins from the `agentic-os` marketplace:
+   - **agentic-os** — `/agentic-init`, `/agentic-doctor`, `/agentic-upgrade`
+   - **agentic-sdlc** — SDLC skills + subagents (display name **SDLC Factory**)
+5. Ensure **superpowers** ≥ 6.1.0 is installed (see
+   [INSTALL.md §1](plugins/agentic-sdlc/INSTALL.md#1-make-superpowers-available-required)).
+6. **Reload the window** (Command Palette → “Developer: Reload Window”).
+
+You should see each plugin as its own card (often tagged **Imported**), with
+bundled skills listed — similar to other third-party plugins. The page
+**Rules, Skills, Subagents** is a flat list of *everything* on your machine;
+that is not the plugin install view.
+
+#### Alternative: import via Claude Code
+
+If you already use Claude Code with **“Automatically import agent configs from
+other tools”** enabled in Cursor:
 
 ```
-https://github.com/Jarroslav/agentic-os.git
+/plugin marketplace add Jarroslav/agentic-os
+/plugin install agentic-os@agentic-os
+/plugin install agentic-sdlc@agentic-os
 ```
 
-Then install both plugins from the `agentic-os` marketplace: **agentic-os** and
-**agentic-sdlc**.
+Reload Cursor. Plugins registered in Claude appear as **Imported** in Cursor.
 
-Or from a local clone (no publish needed):
+#### Equip your project
 
-```
-git clone https://github.com/Jarroslav/agentic-os
-# in Cursor Settings → Plugins → Add marketplace:
-/absolute/path/to/agentic-os
-```
-
-Use the Git clone URL ending in `.git`, not the browser URL. Cursor reads
-`.cursor-plugin/marketplace.json` from the repo root.
-
-**Restart the session** so the plugins load. Then, in the repo you want to equip:
+Open the **target repo** (your app, not the `agentic-os` clone), then:
 
 ```
-/agentic-init            # full interview
-/agentic-init --defaults # accept every detected default, no questions
+/agentic-init            # full interview (six screens, pre-filled from stack discovery)
+/agentic-init --defaults # accept detected defaults, no prompts
 ```
 
-The interview has six screens, each pre-filled from stack discovery (a cheap
-marker check confirmed against the repo for one of six curated stacks, or a
-full inspection otherwise). It **never commits** — it scaffolds files, shows
-you a settings diff before merging, and leaves the working tree for you to
-review and commit. Then:
+The interview **never commits** — it scaffolds files, shows a settings diff
+before merging, and leaves the working tree for you to review.
+
+Then:
 
 ```
-/agentic-doctor          # verify the install (writes .agentic/agentic-os/doctor.json)
-/agentic-upgrade         # reconcile scaffolded files after a plugin update
+/agentic-doctor          # verify install → .agentic/agentic-os/doctor.json
+/agentic-upgrade         # reconcile after a plugin version bump
 ```
+
+#### Cursor troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Cannot find `agentic-os` in Browse Marketplace | Expected. Add custom marketplace (above) and use the **User** tab. |
+| Marketplace added but no plugin card | You added the repo but did not **Install** each plugin. Install both, then reload. |
+| Skills page shows hundreds of items, not `agentic-init` | Search for `agentic-init`, or open the plugin card under Customize → Plugins. |
+| `/agentic-init` not recognized | Plugins not loaded — reload window; confirm both plugins show as installed. |
+| Init or sdlc doctor fails on superpowers | Install superpowers ≥ **6.1.0**, then reload. |
+
+Cursor reads `.cursor-plugin/marketplace.json` from the repo root. Use a Git
+clone URL ending in `.git`, not the GitHub browser URL.
 
 ## Try it in two minutes (throwaway repo)
 
@@ -138,8 +214,8 @@ mkdir /tmp/try-agentic && cd /tmp/try-agentic && git init
 printf '{"name":"try","dependencies":{"next":"15.0.0"}}' > package.json
 ```
 
-Open Claude Code in that directory (after the marketplace/plugin install
-steps above and a session restart), then run:
+Open **Claude Code** or **Cursor** in that directory (after the
+[marketplace/plugin install](#install) steps and a session reload), then run:
 
 ```
 /agentic-init --defaults
@@ -180,6 +256,10 @@ canned-event dry-runs of four enforcement hooks, a 3-part HITL smoke test,
 settings registration, git hook + dependencies, scorecard coverage/thresholds,
 and agent-registry table integrity) and writes the result to
 `.agentic/agentic-os/doctor.json`.
+
+**Cursor note:** same commands work in Cursor chat once **agentic-os** is
+installed from the custom marketplace. If `/agentic-init` is missing, reload
+the window and confirm the plugin card appears under Customize → Plugins.
 
 ```bash
 git status         # inspect exactly what was scaffolded; nothing was committed

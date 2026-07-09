@@ -2,7 +2,8 @@
 
 ## 1. Make superpowers available (required)
 
-`agentic-sdlc` requires `superpowers` >= 5.0.7.
+`agentic-sdlc` requires `superpowers` >= 6.1.0 (also enforced by `/agentic-init`
+via `plugins/agentic-os/manifest/dependencies.json`).
 
 Install `superpowers` before installing `agentic-sdlc`:
 
@@ -78,34 +79,46 @@ to review and trust the newly visible hooks.
 
 ### Cursor
 
-In Cursor, open **Settings → Plugins → Add marketplace** and add:
+`agentic-os` is not listed in Cursor's public Browse Marketplace. Register it
+as a **custom marketplace**, then install plugins from the **User** tab.
 
-```text
-https://github.com/Jarroslav/agentic-os.git
-```
+1. **Customize → Plugins** (or Settings → Plugins) → **Add marketplace**:
 
-Then install both plugins from the `agentic-os` marketplace: **agentic-os** and
-**agentic-sdlc**.
+   ```text
+   https://github.com/Jarroslav/agentic-os.git
+   ```
 
-Use the Git clone URL ending in `.git`, not the browser URL. Cursor reads
-`.cursor-plugin/marketplace.json` from the repo root.
+2. **User** tab → install **agentic-sdlc** (and **agentic-os** if you have not
+   already — the SDLC plugin expects the governance scaffold from
+   `/agentic-init`).
+3. Ensure **superpowers** ≥ 6.1.0 is installed (§1 above).
+4. **Reload** the Cursor window.
 
-For local development from a clone of this repository, add the local marketplace
-path instead:
+For local development from a clone of this repository:
 
 ```text
 /absolute/path/to/agentic-os
 ```
 
-Restart the session after installing plugins, then in the repo you want to equip:
+**Verify the plugin loaded:** Customize → Plugins should show an **agentic-sdlc**
+(or **SDLC Factory**) card with bundled skills — not only a long flat list under
+Rules / Skills / Subagents.
+
+Restart the session, then in the repo you want to equip:
 
 ```text
-/agentic-init
+/agentic-init --defaults   # or /agentic-init
 ```
+
+Use the **sdlc-doctor** skill to confirm `superpowers`, `node`, and `git`.
 
 The `agentic-init` skill resolves its plugin root from the skill file location
 when `${CLAUDE_PLUGIN_ROOT}` is unset, so the installer runs under Cursor
 without changes.
+
+**Alternative:** install via Claude Code (`/plugin marketplace add` +
+`/plugin install agentic-sdlc@agentic-os`) with Cursor's “import agent configs
+from other tools” enabled — plugins then appear as **Imported** in Cursor.
 
 ## 3. Verify
 
