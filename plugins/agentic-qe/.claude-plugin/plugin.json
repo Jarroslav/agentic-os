@@ -1,0 +1,19 @@
+{
+  "name": "agentic-qe",
+  "version": "0.1.0",
+  "description": "Tool-agnostic AI blueprints for Quality Engineering, organized by STLC stage and written in the agentic-os design language: blast-radius role tags, human review gates, and model tiers. The qe-blueprints skill scaffolds a ready-to-fill agent framework from a chosen blueprint; the eval-harness skill generates a two-layer evaluation framework for skills and agents.",
+  "author": {
+    "name": "Yaroslav Krivushenko",
+    "url": "https://github.com/Jarroslav"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "qa",
+    "quality-engineering",
+    "blueprints",
+    "stlc",
+    "test-design",
+    "evals",
+    "testing"
+  ]
+}

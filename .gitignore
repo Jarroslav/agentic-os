@@ -1,0 +1,25 @@
+.DS_Store
+*.pyc
+__pycache__/
+.agentic/
+docs/superpowers/
+
+# Local dev-session tooling artifacts (e.g. a pre-commit review-gate stamp) —
+# never part of the shipped product.
+.claude/
+.serena/
+
+# Local maintainer artifact for the originality check (tests/lib/check-provenance.py)
+# — built locally, never committed.
+tests/lib/provenance-fingerprints.json
+
+# Build rationale, audit trails, and repo-administration notes live in a
+# separate private repo, never here.
+docs/DESIGN.md
+docs/PLAN.md
+docs/GITHUB-SETUP.md
+docs/positioning-review.md
+docs/audits/
+docs/workstreams/
+NOTES*.md
+*.internal.md

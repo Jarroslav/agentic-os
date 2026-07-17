@@ -1,0 +1,36 @@
+{
+  "name": "ba-po",
+  "description": "Business analyst / product owner: story and requirements intake via agentic-sdlc, dispatcher routing, ticket adapter \u2014 no code-writing agents.",
+  "templates": [
+    "hooks/subagent-gate",
+    "hooks/session-bootstrap",
+    "hooks/precompact-checkpoint",
+    "hooks/settings-fragment",
+    "hooks/session-learnings-notice",
+    "hooks/context-monitor",
+    "hooks/prompt-scan-guard",
+    "hooks/guarded-write-paths",
+    "hooks/human-gated-commands",
+    "governance/claude-section",
+    "governance/agents",
+    "governance/agent-registry",
+    "policy/ai-policy",
+    "policy/escalation-policy",
+    "policy/safety-policy",
+    "guides/git-workflow",
+    "guides/working-with-agents",
+    "agents/dispatcher",
+    "commands/dispatch",
+    "sdlc/config",
+    "sdlc/project"
+  ],
+  "generated": [],
+  "default_hitl": "gated-autonomous",
+  "default_orchestration": "dispatcher",
+  "sdlc_skills": [
+    "product-owner",
+    "requirements-intake",
+    "complexity-scoring",
+    "role-memory"
+  ]
+}

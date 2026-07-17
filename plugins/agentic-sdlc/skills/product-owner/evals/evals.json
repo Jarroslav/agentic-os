@@ -1,0 +1,113 @@
+{
+  "skill_name": "product-owner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We'd like a story covering a CSV export button on the analytics dashboard so admins can pull raw numbers themselves. Can you spec it out?",
+      "expected_output": "Opens `.agentic/guides/project.md` first to load project settings, scans the dashboard and export code paths for context, poses a couple of tightly scoped product questions (which columns, permission level, delimiter), then writes the drafted story under `docs/stories`. Stops there and waits for the user's approval instead of reaching for any tracker.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "reads-project-config-first",
+          "description": "Reads `.agentic/guides/project.md` for project settings before it begins writing the story."
+        },
+        {
+          "name": "writes-story-file-to-disk",
+          "description": "Lands the story artifact in the `docs/stories` folder rather than replying with inline prose only."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "There's an item in our issue tracker about throttling the public API. Turn it into a story and publish it back to the tracker once it's in good shape.",
+      "expected_output": "Figures out how to reach the tracker strictly from the adapter instructions in `.agentic/guides/project.md`, never assuming or baking in a particular backend. Drafts the story locally and holds every external ticket create or update until the user signs off — sign-off precedes any outbound tracker call.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "tracker-details-from-guides",
+          "description": "Draws every ticket-adapter detail from `.agentic/guides/project.md` and does not wire in a fixed tracker vendor."
+        },
+        {
+          "name": "holds-outbound-until-signoff",
+          "description": "Defers all external ticket creation or edits until the drafted story has been approved."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Our in-app search is underwhelming. Make it better.",
+      "expected_output": "Treats the ask as too broad to act on, so it replies with two or three short clarifying questions to pin down scope — which surface, what 'better' means, relative priority — before committing to anything. Refrains from producing a full story until the direction is narrowed.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "scopes-vague-ask",
+          "description": "Meets an underspecified request with roughly two to three focused scoping questions instead of guessing intent."
+        },
+        {
+          "name": "withholds-story-while-unscoped",
+          "description": "Withholds a complete story while the request is still vague and unbounded."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The draft reads well — approve it and get it ready for the team to pick up. Heads up, we haven't set up any ticket adapter here.",
+      "expected_output": "With no adapter declared in `.agentic/guides/project.md`, it first materializes the canonical local work item under `docs/superpowers/work-items` before considering any external sync. Wires it back through the story's `Work Item` field, leaves `Ticket` as `Not configured`, and treats the local record as a self-contained handoff. The missing adapter never blocks approval; it appends `work_item` events and local history rows for the approval and the linked story artifact.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "materializes-local-record-first",
+          "description": "Writes the canonical local work item under `docs/superpowers/work-items` ahead of any external ticket attempt."
+        },
+        {
+          "name": "absent-adapter-does-not-stall",
+          "description": "Finishes approval and handoff with `Ticket` set to `Not configured`, letting the absent adapter pass without stalling."
+        },
+        {
+          "name": "logs-approval-history",
+          "description": "Appends `work_item` events plus local history rows capturing the approval and the linked story artifact."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Approved. Go ahead and open the ticket in our tracker for this one — the adapter's set up and returns a good receipt.",
+      "expected_output": "After the local work item exists, it fires the provider-neutral `prepare_story` intent to sync. The returned `prepare_story receipt` (external_id `WEBAPP-206`, external_url `https://tracker.example.com/browse/WEBAPP-206`) gets normalized, then the story's `Ticket` and the local work-item's `External Ticket` metadata are updated with those `external_id` / `external_url` values. Closes by appending a local history row and recording a `work_item.adapter_receipt` event.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "emits-sync-intent-post-local",
+          "description": "Fires the `prepare_story` lifecycle intent to sync, and only after the local work item already exists."
+        },
+        {
+          "name": "applies-receipt-ids",
+          "description": "Applies the normalized receipt's `external_id` and `external_url` to the story's `Ticket` and the work item's `External Ticket` metadata."
+        },
+        {
+          "name": "records-sync-event",
+          "description": "Logs a local history row plus a `work_item.adapter_receipt` event reflecting the successful sync."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Approved — push it up to the tracker.",
+      "expected_output": "Emits `prepare_story`, but the adapter call comes back with an error. The local work item under `docs/superpowers/work-items` stays the source of truth and the handoff proceeds regardless. It stamps an 'external sync failed' history row, records the normalized failed receipt as a `work_item.adapter_receipt` event, and reports the failure as a non-blocking warning rather than aborting.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "sync-error-nonblocking",
+          "description": "Keeps the local work item authoritative and completes the handoff even though the adapter sync failed, surfacing only a warning."
+        },
+        {
+          "name": "notes-failed-sync",
+          "description": "Adds an 'external sync failed' entry to the local work-item history."
+        },
+        {
+          "name": "persists-failed-receipt",
+          "description": "Persists the normalized failed receipt as a `work_item.adapter_receipt` event."
+        }
+      ]
+    }
+  ]
+}

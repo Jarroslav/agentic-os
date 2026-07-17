@@ -1,0 +1,451 @@
+#!/usr/bin/env bash
+# sdlc-stage-guard
+#
+# PostToolUse(Skill) hook for the agentic-sdlc plugin. Fires after every
+# completed Skill tool call, looks at the run-state artifacts other skills in
+# this plugin leave on disk (docs/superpowers/tasks/*/.state.json,
+# docs/superpowers/runs/*/meta.json, per-stage markdown files, decisions.jsonl
+# gate ledgers), and — if an sdlc-task, sdlc-light, or sdlc-pipeline run looks
+# active — prints one advisory line naming the current stage and what is
+# still outstanding.
+#
+# This hook is read-only and purely informational: it never mutates any run
+# artifact, never blocks or fails the underlying tool call, and always exits
+# 0. Silence (no output) is a normal, non-error outcome whenever no active
+# run is detected or every stage gate it checks is already satisfied.
+#
+# Stdin contract:  a single PostToolUse JSON event with at least "tool_name",
+#                  "tool_response", and a nested "skill" string.
+# Stdout contract: at most one line of
+#                  {"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[sdlc-stage-guard] <msg>"}}
+#
+# Only grep/sed/find/cat/wc/tr/dirname/basename plus bash builtins are used —
+# no JSON library is assumed to be on PATH.
+
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Small JSON-ish helpers. Every one of these degrades to an empty string (or
+# a false/1 return) on any failure instead of propagating a non-zero exit —
+# that is deliberate: a stale or missing nudge is fine, a crash is not.
+# ---------------------------------------------------------------------------
+
+json_escape() {
+  local s=$1
+  s=${s//\\/\\\\}
+  s=${s//\"/\\\"}
+  s=${s//$'\n'/\\n}
+  s=${s//$'\r'/\\r}
+  s=${s//$'\t'/\\t}
+  printf '%s' "$s"
+}
+
+emit_nudge() {
+  local message=$1
+  local escaped
+  escaped=$(json_escape "$message")
+  printf '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"[sdlc-stage-guard] %s"}}\n' "$escaped"
+  exit 0
+}
+
+# has_key JSON KEY -> true if "KEY" appears as a quoted key anywhere in JSON.
+has_key() {
+  local json=$1 key=$2
+  printf '%s' "$json" | grep -qF "\"$key\"" 2>/dev/null
+}
+
+# extract_str JSON KEY -> value of the first "KEY":"value" pair, or "".
+extract_str() {
+  local json=$1 key=$2
+  printf '%s' "$json" | sed -n 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' 2>/dev/null | head -n1 || true
+}
+
+# extract_num JSON KEY -> value of the first "KEY":<number> pair, or "".
+extract_num() {
+  local json=$1 key=$2
+  printf '%s' "$json" | sed -n 's/.*"'"$key"'"[[:space:]]*:[[:space:]]*\(-\{0,1\}[0-9][0-9]*\).*/\1/p' 2>/dev/null | head -n1 || true
+}
+
+# read_json_file PATH -> file contents, or literal "{}" if missing/unreadable/empty.
+read_json_file() {
+  local file=$1
+  local body
+  body=$(cat "$file" 2>/dev/null || true)
+  if [[ -z "$body" ]]; then
+    body="{}"
+  fi
+  printf '%s' "$body"
+}
+
+# newest_match_first GLOB_DIR GLOB_NAME -> matching paths, lexically reversed
+# (a cheap "most recent first" ordering for slug/run directories), or nothing
+# if the parent directory does not exist.
+newest_match_first() {
+  local base=$1 name=$2
+  find "$base" -mindepth 2 -maxdepth 2 -name "$name" 2>/dev/null | sort -r || true
+}
+
+# ---------------------------------------------------------------------------
+# decisions.jsonl helpers
+# ---------------------------------------------------------------------------
+
+# count_char STRING CHAR -> occurrences of CHAR in STRING, pure bash (no
+# external process, so it can never trip pipefail on a zero-match input).
+count_char() {
+  local s=$1 ch=$2 count=0 rest=$1
+  rest=$s
+  while [[ "$rest" == *"$ch"* ]]; do
+    rest=${rest#*"$ch"}
+    count=$((count + 1))
+  done
+  printf '%s' "$count"
+}
+
+# strip_prior_snapshot LINE -> LINE with the "prior_context",
+# "prior_orchestrator_verdict", and "prior_subagent_verdict" nested objects
+# removed, so a historical decision embedded in one of them is never mistaken
+# for the gate's current decision. Pure bash brace/bracket depth counting.
+strip_prior_snapshot() {
+  local line=$1
+  local key
+  for key in '"prior_context"' '"prior_orchestrator_verdict"' '"prior_subagent_verdict"'; do
+    line=$(strip_one_key "$line" "$key")
+  done
+  printf '%s' "$line"
+}
+
+strip_one_key() {
+  local s=$1 key=$2
+  local head tail
+  head=${s%%"$key"*}
+  if [[ "$head" == "$s" ]]; then
+    printf '%s' "$s"
+    return
+  fi
+  tail=${s#*"$key"}
+  tail=${tail#*:}
+  # skip leading whitespace
+  while [[ "${tail:0:1}" == " " ]]; do
+    tail=${tail:1}
+  done
+  local opener=${tail:0:1}
+  if [[ "$opener" != "{" && "$opener" != "[" ]]; then
+    # scalar value (null / number / bool / bare string) — drop up to the
+    # next top-level comma or closing delimiter.
+    local i=0 len=${#tail} c
+    while (( i < len )); do
+      c=${tail:i:1}
+      if [[ "$c" == "," || "$c" == "}" || "$c" == "]" ]]; then
+        break
+      fi
+      i=$((i + 1))
+    done
+    printf '%s%s' "$head" "${tail:i}"
+    return
+  fi
+  local closer="}"
+  [[ "$opener" == "[" ]] && closer="]"
+  local body=${tail:1}
+  local depth=1 i=0 len=${#body} c closepos=-1
+  while (( i < len )); do
+    c=${body:i:1}
+    if [[ "$c" == "$opener" ]]; then
+      depth=$((depth + 1))
+    elif [[ "$c" == "$closer" ]]; then
+      depth=$((depth - 1))
+      if (( depth == 0 )); then
+        closepos=$i
+        break
+      fi
+    fi
+    i=$((i + 1))
+  done
+  if (( closepos < 0 )); then
+    printf '%s' "$s"
+    return
+  fi
+  printf '%s%s' "$head" "${body:$((closepos + 1))}"
+}
+
+# decision_on_line LINE -> the decision string ("approve" / "request-changes"
+# / ...) recorded by that decisions.jsonl line, or "".
+decision_on_line() {
+  local line=$1
+  local braces
+  braces=$(count_char "$line" '{')
+  if (( braces <= 1 )); then
+    local d
+    d=$(extract_str "$line" "decision")
+    [[ -z "$d" ]] && d=$(extract_str "$line" "verdict")
+    printf '%s' "$d"
+  else
+    local stripped
+    stripped=$(strip_prior_snapshot "$line")
+    extract_str "$stripped" "decision"
+  fi
+}
+
+# gate_approved GATE_ID FILE -> true iff FILE exists, at least one line
+# mentions GATE_ID, and at least one such line also contains "approve".
+# Coarse substring match by design (mirrors decision-router's own ledger
+# writer, which never emits "approve" as a substring of a non-approval verdict).
+gate_approved() {
+  local gate_id=$1 file=$2
+  [[ -f "$file" ]] || return 1
+  grep -F -- "\"$gate_id\"" "$file" 2>/dev/null | grep -F -q -- "approve"
+}
+
+# review_resolved FILE -> true iff the latest code-review.final decision is
+# "approve", or it is "request-changes" and a later code-review.check line
+# records "approve". A new code-review.final line resets the tracked check
+# decision, since it belongs to a new review round.
+review_resolved() {
+  local file=$1
+  [[ -f "$file" ]] || return 1
+  local final_decision="" check_decision="" line
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" ]] && continue
+    if printf '%s' "$line" | grep -qF '"code-review.final"' 2>/dev/null; then
+      final_decision=$(decision_on_line "$line")
+      check_decision=""
+    elif printf '%s' "$line" | grep -qF '"code-review.check"' 2>/dev/null; then
+      check_decision=$(decision_on_line "$line")
+    fi
+  done < "$file"
+  if [[ "$final_decision" == "approve" ]]; then
+    return 0
+  fi
+  if [[ "$final_decision" == "request-changes" && "$check_decision" == "approve" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+# ---------------------------------------------------------------------------
+# Stage sequences
+# ---------------------------------------------------------------------------
+
+# Branch A: sdlc-task flow, 11 stages, first unmet condition wins.
+run_task_flow() {
+  local dir=$1 slug=$2 decisions=$3
+
+  [[ -f "$dir/technical-analysis.md" ]] || \
+    emit_nudge "Stage 1 (codebase-scout) not done for '$slug' — technical-analysis.md is missing."
+
+  [[ -f "$dir/complexity-assessment.md" ]] || \
+    emit_nudge "Stage 2 (sizing-analyst) not done for '$slug' — complexity-assessment.md is missing."
+
+  [[ -f "$dir/spec.md" ]] || \
+    emit_nudge "Stage 3 for '$slug' — spec.md has not been written yet."
+  gate_approved "spec.approved" "$decisions" || \
+    emit_nudge "Stage 3 for '$slug' — spec.md exists but the spec.approved gate has not recorded approval."
+
+  [[ -f "$dir/plan.md" ]] || \
+    emit_nudge "Stage 4 for '$slug' — plan.md has not been written yet."
+  gate_approved "plan.approved" "$decisions" || \
+    emit_nudge "Stage 4 for '$slug' — plan.md exists but the plan.approved gate has not recorded approval."
+
+  [[ -f "$dir/qa-checklist.md" ]] || \
+    emit_nudge "Stage 5 for '$slug' — qa-checklist.md has not been produced yet."
+
+  if [[ ! -f "$dir/qa-test-review.md" ]]; then
+    if [[ "$IMPL_JUST_COMPLETED" == true || "$QA_REVIEW_STARTING" == true ]]; then
+      emit_nudge "Stage 6 for '$slug' — implementation looks done; qa-test-review.md is still pending."
+    fi
+    emit_nudge "Stage 6 for '$slug' — implementation is still in progress; qa-test-review.md not produced yet."
+  fi
+
+  review_resolved "$decisions" || \
+    emit_nudge "Stage 7 for '$slug' — code review is not resolved yet (code-review.final / code-review.check)."
+
+  [[ -f "$dir/qa-report.md" ]] || \
+    emit_nudge "Stage 8 for '$slug' — qa-report.md has not been generated yet."
+
+  local phase
+  phase=$(extract_str "$(read_json_file "$dir/.state.json")" "phase")
+  if [[ "$phase" != "maintenance" ]]; then
+    emit_nudge "Stage 9 for '$slug' — implementation and QA are closed out; handoff through Stage 11 maintenance has not landed."
+  fi
+}
+
+# Branch B: sdlc-light flow, 10 stages; no spec.md step; the qa-checklist and
+# qa-test-review steps only apply when a QA foundation file is present.
+run_light_flow() {
+  local dir=$1 slug=$2 decisions=$3
+  local qa_foundation=false
+  [[ -f ".agentic/guides/testing/qa-strategy.md" ]] && qa_foundation=true
+
+  [[ -f "$dir/technical-analysis.md" ]] || \
+    emit_nudge "sdlc-light Stage 1 for '$slug' — technical-analysis.md is missing."
+
+  [[ -f "$dir/plan.md" ]] || \
+    emit_nudge "sdlc-light Stage 2 for '$slug' — clarification/plan.md has not been written yet."
+  gate_approved "plan.approved" "$decisions" || \
+    emit_nudge "sdlc-light Stage 2 for '$slug' — plan.md exists but the plan.approved gate is still pending."
+
+  if [[ "$qa_foundation" == true ]]; then
+    [[ -f "$dir/qa-checklist.md" ]] || \
+      emit_nudge "sdlc-light Stage 3 for '$slug' — qa-checklist.md has not been produced yet."
+  fi
+
+  local impl_settled=false
+  if [[ "$qa_foundation" == true && -f "$dir/qa-test-review.md" ]]; then
+    impl_settled=true
+  elif [[ "$IMPL_JUST_COMPLETED" == true || "$QA_REVIEW_STARTING" == true || "$REVIEW_GATE_STARTING" == true ]]; then
+    impl_settled=true
+  elif review_resolved "$decisions"; then
+    impl_settled=true
+  fi
+  [[ "$impl_settled" == true ]] || \
+    emit_nudge "sdlc-light Stage 4 for '$slug' — implementation is still in progress."
+
+  if [[ "$qa_foundation" == true ]]; then
+    [[ -f "$dir/qa-test-review.md" ]] || \
+      emit_nudge "sdlc-light Stage 5 for '$slug' — qa-test-review.md is still pending."
+  fi
+
+  review_resolved "$decisions" || \
+    emit_nudge "sdlc-light Stage 6 for '$slug' — code review is not resolved yet."
+
+  [[ -f "$dir/qa-report.md" ]] || \
+    emit_nudge "sdlc-light Stage 7 for '$slug' — qa-report.md has not been generated yet."
+
+  local phase
+  phase=$(extract_str "$(read_json_file "$dir/.state.json")" "phase")
+  if [[ "$phase" != "maintenance" ]]; then
+    if [[ "$qa_foundation" == true ]]; then
+      emit_nudge "sdlc-light Stage 9 for '$slug' — handoff to maintenance has not landed."
+    else
+      emit_nudge "sdlc-light Stage 8 for '$slug' — handoff to maintenance has not landed."
+    fi
+  fi
+}
+
+# Branch C: sdlc-pipeline (heavy run), phases 0-11. Phases 4 and 5 also weigh
+# an artifact + approval gate; every other phase is a fixed advisory line.
+run_pipeline_phase() {
+  local dir=$1 phase=$2
+  local decisions="$dir/decisions.jsonl"
+
+  case "$phase" in
+    0)
+      emit_nudge "Stage 0 (requirements-intake) for run '$dir' — normalizing input into requirements.md before advancing to Stage 1."
+      ;;
+    1)
+      emit_nudge "Stage 1 (codebase-scout) for run '$dir' — mapping the affected surface before advancing to Stage 2."
+      ;;
+    2)
+      emit_nudge "Stage 2 (sizing-analyst) for run '$dir' — scoring complexity to route the task before advancing to Stage 3."
+      ;;
+    3)
+      emit_nudge "Stage 3 (brainstorming) for run '$dir' — exploring the solution space before advancing to Stage 4."
+      ;;
+    4)
+      if [[ -f "$dir/design.md" ]] && ! gate_approved "spec.approved" "$decisions"; then
+        emit_nudge "Stage 4 for run '$dir' — design.md is drafted; the spec.approved gate is still pending."
+      fi
+      emit_nudge "Stage 4 for run '$dir' — spec/design authoring is still in progress."
+      ;;
+    5)
+      if [[ -f "$dir/plan.md" ]] && ! gate_approved "plan.approved" "$decisions"; then
+        emit_nudge "Stage 5 for run '$dir' — plan.md is drafted; the plan.approved gate is still pending."
+      fi
+      emit_nudge "Stage 5 for run '$dir' — planning is still in progress."
+      ;;
+    6)
+      emit_nudge "Stage 6 (qa-planner --checklist) for run '$dir' — drafting qa-checklist.md before advancing to Stage 7."
+      ;;
+    7)
+      emit_nudge "Stage 7 (test-driven-development) for run '$dir' — implementation under way before advancing to Stage 8."
+      ;;
+    8)
+      emit_nudge "Stage 8 (qa-planner --review-tests) for run '$dir' — reviewing written tests before advancing to Stage 9."
+      ;;
+    9)
+      emit_nudge "Stage 9 (code-review-orchestrator) for run '$dir' — full-diff code review gate before advancing to Stage 10."
+      ;;
+    10)
+      emit_nudge "Stage 10 (qa-gates / feature-verification) for run '$dir' — gate checks and functional verification before advancing to Stage 11."
+      ;;
+    11)
+      emit_nudge "Stage 11 (qa-planner --update, guide-sync) for run '$dir' — closing out qa-health.md and repo guides."
+      ;;
+    *)
+      : # unrecognized or missing phase — no nudge
+      ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+STDIN_DATA=$(cat || true)
+FLAT_STDIN=$(printf '%s' "$STDIN_DATA" | tr '\n' ' ')
+
+has_key "$FLAT_STDIN" "tool_name" || exit 0
+has_key "$FLAT_STDIN" "tool_response" || exit 0
+
+SKILL_NAME=$(extract_str "$FLAT_STDIN" "skill")
+
+IMPL_JUST_COMPLETED=false
+QA_REVIEW_STARTING=false
+REVIEW_GATE_STARTING=false
+case "$SKILL_NAME" in
+  *test-driven-development*) IMPL_JUST_COMPLETED=true ;;
+esac
+case "$SKILL_NAME" in
+  *qa-planner*) QA_REVIEW_STARTING=true ;;
+esac
+case "$SKILL_NAME" in
+  *decision-router*|*code-review-orchestrator*) REVIEW_GATE_STARTING=true ;;
+esac
+
+TASK_STATE_FILE=""
+while IFS= read -r candidate; do
+  [[ -z "$candidate" ]] && continue
+  phase=$(extract_str "$(read_json_file "$candidate")" "phase")
+  if [[ "$phase" == "main" ]]; then
+    TASK_STATE_FILE=$candidate
+    break
+  fi
+done <<< "$(newest_match_first "docs/superpowers/tasks" ".state.json")"
+
+if [[ -n "$TASK_STATE_FILE" ]]; then
+  TASK_DIR=$(dirname "$TASK_STATE_FILE")
+  TASK_JSON=$(read_json_file "$TASK_STATE_FILE")
+
+  SLUG=$(extract_str "$TASK_JSON" "slug")
+  [[ -z "$SLUG" ]] && SLUG=$(basename "$TASK_DIR")
+
+  FLOW=$(extract_str "$TASK_JSON" "flow")
+  [[ -z "$FLOW" ]] && FLOW="sdlc-task"
+
+  DECISIONS_FILE="$TASK_DIR/decisions.jsonl"
+
+  if [[ "$FLOW" == "sdlc-light" ]]; then
+    run_light_flow "$TASK_DIR" "$SLUG" "$DECISIONS_FILE"
+  else
+    run_task_flow "$TASK_DIR" "$SLUG" "$DECISIONS_FILE"
+  fi
+  exit 0
+fi
+
+RUN_META_FILE=""
+while IFS= read -r candidate; do
+  [[ -z "$candidate" ]] && continue
+  status=$(extract_str "$(read_json_file "$candidate")" "status")
+  if [[ "$status" == "running" ]]; then
+    RUN_META_FILE=$candidate
+    break
+  fi
+done <<< "$(newest_match_first "docs/superpowers/runs" "meta.json")"
+
+if [[ -n "$RUN_META_FILE" ]]; then
+  RUN_DIR=$(dirname "$RUN_META_FILE")
+  RUN_JSON=$(read_json_file "$RUN_META_FILE")
+  CURRENT_PHASE=$(extract_num "$RUN_JSON" "current_phase")
+  run_pipeline_phase "$RUN_DIR" "$CURRENT_PHASE"
+fi
+
+exit 0

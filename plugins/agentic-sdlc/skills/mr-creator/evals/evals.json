@@ -1,0 +1,97 @@
+{
+  "skill_name": "mr-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm on the feature branch for ticket ABC-482 and the work is done. Commit it, push, open the merge request, then keep an eye on it until it merges.",
+      "expected_output": "Read `.agentic/guides/standards/git-workflow.md` first to load commit and branch conventions. Inspect repository state: confirm the current branch, verify the working tree, and check whether an MR already exists. Commit with a message that carries the ABC-482 reference in the project-mandated format, push the branch, and create the MR through the adapter until a URL is returned. Once the MR URL exists, suggest handing off to the `mr-watch` monitoring skill so the open MR is watched through to merge.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "reads-workflow-standard",
+          "description": "Loads `.agentic/guides/standards/git-workflow.md` before committing or opening the MR."
+        },
+        {
+          "name": "inspects-repo-status",
+          "description": "Checks branch, working-tree cleanliness, and any pre-existing MR before acting."
+        },
+        {
+          "name": "suggests-monitor-followup",
+          "description": "After the MR URL is known, proposes the `mr-watch` follow-on skill for monitoring."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Commit what I have and raise a merge request. My branch is just called quick-fix.",
+      "expected_output": "The branch name carries no ticket reference and none was supplied, so do not commit. A ticket reference is mandatory before any commit; ask the user for the ticket number rather than committing silently. Note that once the ticket is provided, both the commit message and the MR title are assembled per the project convention read from `.agentic/guides/standards/git-workflow.md`.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "ticket-ref-mandatory",
+          "description": "Refuses to commit without a ticket reference and requests the ticket number."
+        },
+        {
+          "name": "formats-per-convention",
+          "description": "States that commit message and MR title follow the project-defined convention, not an ad-hoc format."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create an MR for my current branch, ticket XYZ-77.",
+      "expected_output": "On inspecting repository state the working tree is dirty with uncommitted changes. Surface those changes to the user and do not push or create the MR until the commit requirements are resolved. Report exactly what remains uncommitted and treat resolution of the dirty tree as a precondition for the push and MR steps.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "flags-uncommitted-tree",
+          "description": "Detects and reports the uncommitted changes in the working tree."
+        },
+        {
+          "name": "holds-push-until-clean",
+          "description": "Blocks push and MR creation until the dirty-state commit requirements are resolved."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Commit and open the MR for ticket DEF-1290, and sync my local work item once the review is opened.",
+      "expected_output": "Commit with the DEF-1290 reference, push, and create the MR through the adapter. Once the MR URL is known, emit the `prepare_for_review` lifecycle intent to the work-item adapter. The adapter returns a success receipt: normalize it, append the MR URL to the work item, update its external metadata, review state, and history, and record a `work_item.adapter_receipt` event for the successful review sync.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "emits-review-handoff-intent",
+          "description": "Emits the `prepare_for_review` adapter intent after the MR URL is available."
+        },
+        {
+          "name": "receipt-syncs-work-item",
+          "description": "On a success receipt, updates the work item's external metadata, review state, and history."
+        },
+        {
+          "name": "records-receipt-marker",
+          "description": "Records a `work_item.adapter_receipt` event for the successful review sync."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Push and open the MR for ticket GHI-3, and update the work item afterward — but the adapter has been flaky lately.",
+      "expected_output": "Create the MR through the adapter so the MR URL exists, then emit `prepare_for_review` to the lifecycle adapter. The adapter fails after the URL was created. Keep the handoff successful: still append the MR URL to the work item, record a failed normalized `work_item.adapter_receipt`, mark the external sync as failed in the work-item history, and surface a warning to the user without blocking the completed MR handoff.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "adapter-fault-non-blocking",
+          "description": "Treats a post-URL adapter failure as non-blocking and keeps the MR handoff successful."
+        },
+        {
+          "name": "logs-sync-failure-history",
+          "description": "Marks the external sync as failed in the work-item history and warns the user."
+        },
+        {
+          "name": "captures-failed-receipt",
+          "description": "Records a failed normalized `work_item.adapter_receipt` for the review sync attempt."
+        }
+      ]
+    }
+  ]
+}

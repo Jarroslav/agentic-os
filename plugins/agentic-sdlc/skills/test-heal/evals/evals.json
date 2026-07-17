@@ -1,0 +1,69 @@
+{
+  "skill_name": "test-heal",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "qa-gates failed: login.spec.ts cannot find '#submit-btn' but the login page was not changed in this diff. Heal the failing tests.",
+      "expected_output": "Classifies the failure as test_issue, replaces the brittle selector with a role/test-id based one, parse-checks the edited spec, commits once, and reports Loop Decision: needs_rerun.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "classifies-test-issue",
+          "description": "The response classifies the selector failure as test_issue, not an application regression."
+        },
+        {
+          "name": "edits-test-only",
+          "description": "The response edits only the test file; no application source is touched."
+        },
+        {
+          "name": "loop-decision-needs-rerun",
+          "description": "The report ends with a Loop Decision of needs_rerun for the orchestrator to re-invoke qa-gates."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "checkout.spec.ts fails: expected total 19.99 but the API now returns 21.99 after this branch's pricing change. Heal the failing tests.",
+      "expected_output": "Classifies the failure as application_issue (or asks whether the pricing change is intended), refuses to weaken the assertion, and returns the failure to the pipeline as fix-up work with Loop Decision: converged.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "never-heals-application-issue",
+          "description": "The response does not change the assertion to match the new value without evidence the behavior change is intended."
+        },
+        {
+          "name": "returns-to-pipeline",
+          "description": "The failure is listed under returned-to-pipeline work rather than healed."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "profile.spec.ts fails once in the full run but passes alone; it uses sleep(2000) before asserting. Heal it.",
+      "expected_output": "Classifies as flaky, replaces the fixed sleep with a condition wait and isolates shared state, and does not add .skip, .only, or retry wrappers.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "no-skip-no-retry",
+          "description": "The response never hides the test or wraps it in retries."
+        },
+        {
+          "name": "deterministic-wait",
+          "description": "The fixed sleep is replaced by a condition-based wait."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Run the full test suite to verify your heals before committing.",
+      "expected_output": "Declines to run the suite: test-heal applies fixes and parse-only checks; re-running belongs to qa-gates via the orchestrator loop.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "heal-rerun-separation",
+          "description": "The response does not run the suite itself and points re-running at qa-gates."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "skill_name": "qe-blueprints",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our team writes test cases by hand from user stories and it is eating whole days. I want a multi-agent setup in Claude Code that reads a requirements markdown file from the repo and produces a structured test-case suite. We would trigger it manually whenever a story is ready for QA.",
+      "expected_output": "The skill names the requirements-to-test-cases generation blueprint and gets confirmation before scaffolding. Because the prompt already supplies tool (Claude Code), scope (requirements markdown in repo), and trigger mode (manual), the interview stays within the 5-question cap; zero questions is a valid outcome, and any remaining questions arrive as discrete selectable option cards rather than a wall of free-form questions. The scaffold places the primary context file at the repository root and per-role agent stubs inside the assistant config directory. Since this blueprint contains a reasoning-planner block, it is split into two agents: a premium-tier reasoning leaf named after its deliverable (the test-design checklist) and a separate thin coordinator named for its coordinating role, never after the blueprint's internal planning label. The coordinator lists only subagent names as tools, holds no connectors, and is pinned to the standard model tier. Leaves write outputs into a gitignored per-run artifacts directory and hand back only paths; the coordinator synthesizes the final suite from those paths. Stated intent to create these files counts as passing evidence.",
+      "files": [
+        "references/blueprints/test_cases_generation.md"
+      ],
+      "assertions": [
+        {
+          "name": "blueprint_confirmed_by_name",
+          "description": "The response identifies the requirements-to-test-cases generation blueprint explicitly and seeks confirmation before producing any scaffold."
+        },
+        {
+          "name": "question_budget_respected",
+          "description": "No more than 5 context questions are asked; asking zero passes because tool, scope, and trigger are already given in the prompt."
+        },
+        {
+          "name": "questions_as_option_cards",
+          "description": "Any remaining questions are framed as discrete selectable options, one focused step at a time, not a free-form question dump."
+        },
+        {
+          "name": "context_file_at_repo_root",
+          "description": "The primary context file is placed at the repository root, not nested inside the assistant config folder; agent stubs go inside the config folder."
+        },
+        {
+          "name": "planner_block_split",
+          "description": "The reasoning-planner block yields two agents: one reasoning leaf that produces the test-design checklist plus one separate thin coordinator."
+        },
+        {
+          "name": "reasoning_leaf_premium_tier",
+          "description": "The reasoning leaf is assigned the premium model tier and is never downgraded to save cost."
+        },
+        {
+          "name": "coordinator_standard_and_toolless",
+          "description": "The coordinator is pinned to the standard tier, lists only subagent names as tools, and holds zero connectors."
+        },
+        {
+          "name": "coordinator_named_for_role",
+          "description": "The coordinator's name reflects its coordinating role; it is not named after the blueprint's internal planning label, while the leaf is named after its deliverable."
+        },
+        {
+          "name": "handoff_by_reference",
+          "description": "Leaves write to a gitignored per-run artifacts directory and return paths only; full payloads never round-trip through chat."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Build me a bug-report pipeline in Claude Code. Testers dump raw repro notes and console logs into a folder; agents should turn that into a clean, well-structured ticket and file it in Jira. We only run it by hand, never on a schedule.",
+      "expected_output": "The skill matches the bug-report generation blueprint, a direct-transform with no planner block, and still synthesizes exactly one coordinator agent — the human chat session is never treated as the coordinator. The Jira connector is attached only to the publisher leaf; drafting leaves upstream write solely into the per-run artifacts directory, giving clean separation of duties. A human approval gate blocks the pipeline before anything is published to the tracker. Every write-capable agent stub carries an injection-defense safety block with a concrete allowlist of the fields it may write; a generic placeholder allowlist fails. Each leaf returns a compact structured status block (status flag, artifact path, metadata or warnings) instead of full content, and the coordinator branches on that status rather than assuming success. Declared intent to wire these pieces satisfies the grader.",
+      "files": [
+        "references/blueprints/bug_reporting.md",
+        "references/scaffold_templates/agent_file_based.md",
+        "references/agent_design/multi_agent_patterns.md"
+      ],
+      "assertions": [
+        {
+          "name": "coordinator_synthesized_for_direct_transform",
+          "description": "Exactly one coordinator file is produced even though the blueprint has no planning block, and the chat session itself is never used as the coordinator."
+        },
+        {
+          "name": "connectors_live_on_leaves",
+          "description": "The Jira connector belongs to the publisher leaf by responsibility; no connector is centralized on the coordinator."
+        },
+        {
+          "name": "concrete_injection_allowlist",
+          "description": "Write-capable agents include an injection-defense block naming the specific writable fields; vague or placeholder allowlists do not pass."
+        },
+        {
+          "name": "approval_gate_and_duty_separation",
+          "description": "A human approval gate blocks before publishing to the tracker, and only the publisher leaf holds tracker write access while upstream leaves write only to the artifacts directory."
+        },
+        {
+          "name": "structured_status_return",
+          "description": "Leaves return a compact status block (flag, artifact path, warnings) and the coordinator branches on it instead of assuming every step succeeded."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I work in an in-house fork of an IDE with its own AI sidecar — nothing you have probably heard of. Can I still get the blueprint for debugging and stabilizing flaky tests, or does it only work in the tools you support?",
+      "expected_output": "The skill matches the flaky-test debugging and stabilization blueprint by name and does not hard-fail on the unrecognized IDE. It states the fallback explicitly: no dedicated layout exists for that tool, so it defaults to the Claude Code scaffold conventions and proceeds, noting that the patterns (role files, context file placement, handoff discipline) transfer to other assistants with minor path adjustments.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "graceful_tool_fallback",
+          "description": "The response names the unknown-tool situation, declares the default to the Claude Code layout, and proceeds — it never refuses or dead-ends on the unsupported IDE."
+        },
+        {
+          "name": "correct_blueprint_match",
+          "description": "The request is mapped to the flaky-test debugging and stabilization blueprint, not to a neighboring catalog entry."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Which blueprint from your catalog should I grab to auto-draft the weekly status email I send stakeholders about testing progress?",
+      "expected_output": "The skill recognizes that stakeholder status emails are outside the blueprint catalog and says so plainly. It does not bend the nearest QA blueprint to fit the request. Instead it offers a choice: a generic single-agent scaffold built from the same conventions, or a short clarification exchange in case the real need maps to something the catalog does cover.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "no_forced_catalog_match",
+          "description": "The response states that no catalog blueprint covers stakeholder status emails and refuses to shoehorn an unrelated blueprint onto the request."
+        },
+        {
+          "name": "generic_fallback_offered",
+          "description": "A generic single-agent fallback scaffold is offered, or clarification is requested — one of the two must appear."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "We prototyped a defect triage agent over our Jira backlog and each run cost a small fortune in tokens. I want the defect triage and prioritization blueprint, but engineered to be cheap. Claude Code, manual runs.",
+      "expected_output": "The skill matches the defect triage and prioritization blueprint and, because the user flagged token spend, bakes concrete efficiency measures directly into the stubs instead of offering generic savings advice. Jira reads request only the fields needed with bounded page sizes — field projection, result caps, CLI JSON filters or jq projections. Deterministic steps such as grouping, scoring, sorting, and deduplicating defects are pushed into scripts rather than model reasoning. Handoff remains by reference through the gitignored per-run artifacts directory so large defect dumps never pass through chat. Stated intent to encode these levers in the stubs is sufficient evidence.",
+      "files": [
+        "references/blueprints/triage_and_prioritize_defects.md",
+        "references/agent_design/token_efficiency.md",
+        "references/tool_guides/connectors.md"
+      ],
+      "assertions": [
+        {
+          "name": "trimmed_connector_calls",
+          "description": "Jira queries in the stubs use field projection and bounded page sizes (or equivalent CLI/jq filtering) rather than pulling full issue payloads."
+        },
+        {
+          "name": "deterministic_work_scripted",
+          "description": "Grouping, scoring, sorting, and deduplication are assigned to scripts, not left to model reasoning inside agent prompts."
+        },
+        {
+          "name": "reference_handoff_kept",
+          "description": "Intermediate outputs travel as artifact paths through the per-run directory; the design never round-trips full defect lists through chat."
+        }
+      ]
+    }
+  ]
+}

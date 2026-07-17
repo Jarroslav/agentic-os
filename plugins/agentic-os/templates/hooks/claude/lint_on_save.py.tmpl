@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Claude Code PostToolUse(Write|Edit) hook — lint-on-save, fix-then-check.
+
+stdin:  {"tool_input": {"file_path": ...}}
+stdout: nothing on success; the remaining lint errors on failure
+exit:   0 clean/fixed/not-applicable/tool-missing — 2 unfixable errors remain
+        (exit 2 feeds the errors back into the SAME turn so the correction
+        happens now, instead of surfacing later as a failed quality gate,
+        which costs a whole extra attempt).
+
+Commands come from the install interview (stack-profile defaults):
+  fix   : {{LINT_FIX_COMMAND}}
+  check : {{LINT_CHECK_COMMAND}}
+The edited file's path is appended to each command. Fails open — a missing
+tool, a non-matching file type, or any internal error never blocks the write.
+Set AGENTIC_LINT_ON_SAVE_DISABLED=1 to turn it off.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import shlex
+import subprocess
+import sys
+
+LINT_FIX_COMMAND = "{{LINT_FIX_COMMAND}}"
+LINT_CHECK_COMMAND = "{{LINT_CHECK_COMMAND}}"
+# Only source files the configured linter understands; everything else is a
+# silent pass. Extend via AGENTIC_LINT_EXTENSIONS (comma-separated).
+DEFAULT_EXTENSIONS = ".js,.jsx,.ts,.tsx,.mjs,.cjs,.py,.go,.rs,.java,.rb,.cs,.php,.vue,.svelte"
+TIMEOUT_SECONDS = 60
+
+
+# Output signatures meaning the LINTER ITSELF is absent, unconfigured, or
+# broken — not that the file has lint problems. A wrapper like npx/uvx makes
+# FileNotFoundError insufficient: the wrapper exists and exits non-zero while
+# the real tool is missing, which would turn every file write into a false
+# "fix your lint errors" block. All of these fail open.
+TOOL_FAILURE_SIGNS = (
+    "command not found",
+    "could not determine executable",
+    "couldn't find a config",
+    "could not find config",
+    "no eslint configuration",
+    "oops! something went wrong",
+    "npm err!",
+    "cannot find module",
+    "no such file or directory",
+    "enoent",
+    "not recognized as an internal or external command",
+    "traceback (most recent call last)",
+)
+
+
+def run(command: str, file_path: str) -> tuple[int, str] | None:
+    """Run `command <file>`; None means the tool is unavailable (fail open)."""
+    try:
+        argv = shlex.split(command) + [file_path]
+    except ValueError:
+        return None
+    try:
+        proc = subprocess.run(
+            argv, capture_output=True, text=True, timeout=TIMEOUT_SECONDS,
+        )
+    except FileNotFoundError:
+        return None
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    output = (proc.stdout or "") + (proc.stderr or "")
+    if proc.returncode >= 126:  # shell convention: not executable / not found
+        return None
+    if proc.returncode != 0:
+        low = output.lower()
+        if any(sign in low for sign in TOOL_FAILURE_SIGNS):
+            return None
+    return proc.returncode, output
+
+
+def main() -> None:
+    if os.environ.get("AGENTIC_LINT_ON_SAVE_DISABLED"):
+        sys.exit(0)
+    if not LINT_CHECK_COMMAND.strip():
+        sys.exit(0)  # installer left lint unconfigured
+    try:
+        event = json.loads(sys.stdin.read() or "{}")
+    except (json.JSONDecodeError, ValueError):
+        sys.exit(0)
+    tool_input = event.get("tool_input") if isinstance(event, dict) else None
+    file_path = (tool_input or {}).get("file_path") if isinstance(tool_input, dict) else None
+    if not isinstance(file_path, str) or not file_path:
+        sys.exit(0)
+
+    exts = os.environ.get("AGENTIC_LINT_EXTENSIONS", DEFAULT_EXTENSIONS)
+    if not any(file_path.endswith(e.strip()) for e in exts.split(",") if e.strip()):
+        sys.exit(0)
+    if not os.path.isfile(file_path):
+        sys.exit(0)
+
+    if LINT_FIX_COMMAND.strip():
+        run(LINT_FIX_COMMAND, file_path)  # best effort; the check below is the verdict
+
+    result = run(LINT_CHECK_COMMAND, file_path)
+    if result is None:
+        sys.exit(0)  # tool missing → fail open
+    code, output = result
+    if code == 0:
+        sys.exit(0)
+
+    tail = "\n".join(output.strip().splitlines()[-40:])
+    sys.stderr.write(
+        "[lint-on-save] %s still has lint errors after auto-fix — correct them "
+        "in this same turn:\n%s\n" % (file_path, tail)
+    )
+    sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,113 @@
+{
+  "skill_name": "repo-guides",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I pulled down our billing-service repo — Python, FastAPI, managed with Poetry, tests on pytest. Nobody has set it up for agent-assisted work yet. Can you plant the knowledge foundation?",
+      "expected_output": "The skill first walks the tree read-only to infer the stack from manifests, test config, and CI, then drafts a planting plan that names each guide it intends to create under .agentic/guides. It stops there and waits for an explicit go-ahead; nothing lands on disk during discovery or planning. Once approved, it writes project.md, git-workflow.md, and quality-gates.md, wires the AI entrypoint, appends .agentic/runs/ to .gitignore, and validates the result.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "discovery-mutates-nothing",
+          "description": "The stack is inferred through a read-only pass; no file is created or altered while detecting."
+        },
+        {
+          "name": "plan-precedes-any-write",
+          "description": "A named plan of the intended .agentic/guides files is surfaced before a single guide is written."
+        },
+        {
+          "name": "explicit-go-ahead-gates-writes",
+          "description": "Writing is blocked until the user affirmatively approves the proposed plan."
+        },
+        {
+          "name": "runs-dir-added-to-gitignore",
+          "description": "As part of wiring, .agentic/runs/ is appended to .gitignore."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our repo already carries an AGENTS.md, a CLAUDE.md, a .claude directory, and a half-finished .agentic/guides tree from last quarter. Refresh the foundation, but audit what's there first and don't clobber the curated bits.",
+      "expected_output": "Because several AI-guidance surfaces coexist, the skill calls repo-audit-guides to inventory them before touching anything. It treats the existing .agentic/guides tree as the single source of truth and updates it in place rather than spawning a second parallel guide tree, then shows a per-target diff and holds each write behind approval.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "audit-runs-before-any-write",
+          "description": "repo-audit-guides is invoked to survey the existing surfaces before any file is modified."
+        },
+        {
+          "name": "existing-guides-treated-as-canonical",
+          "description": "The current .agentic/guides tree is updated in place; no duplicate parallel guide tree is produced."
+        },
+        {
+          "name": "each-target-diff-is-gated",
+          "description": "Every target file's diff is presented and approved individually before it is written."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We keep instructions in both AGENTS.md and CLAUDE.md and they've drifted. Make AGENTS.md the authoritative one and turn CLAUDE.md into a thin pointer to it — but keep the onboarding paragraph a teammate hand-wrote near the top.",
+      "expected_output": "The skill resolves entrypoint authority with the user (AGENTS.md primary) before writing anything. It rewrites CLAUDE.md down to a minimal shim whose only import is the @AGENTS.md marker, with no copied guide tables, command lists, or classifiers. Human-authored content outside managed regions is preserved, the sole exception being the approved shim replacement, and the AGENTS.md and CLAUDE.md diffs are gated as independent approvals.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "authority-settled-before-write",
+          "description": "Which entrypoint is primary is decided before any file is written."
+        },
+        {
+          "name": "claude-reduced-to-shim",
+          "description": "CLAUDE.md becomes a minimal shim importing @AGENTS.md, free of duplicated tables, commands, or classifiers."
+        },
+        {
+          "name": "handwritten-paragraph-survives",
+          "description": "The teammate's onboarding prose outside managed regions is retained, apart from the approved shim swap."
+        },
+        {
+          "name": "entrypoint-diffs-gated-separately",
+          "description": "The AGENTS.md and CLAUDE.md changes are approved as independent per-target diffs."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "This is a one-package CLI utility — maybe a dozen source files. Plant the guides, but keep them lean. Every time I do this they balloon to 200 lines of filler.",
+      "expected_output": "The skill produces short guides that match the actual evidence, treating any stated line count as a ceiling rather than a target. It never pads output: filler markers such as Review reminder, Foundation reminder, and Operating reminder, along with repeated near-identical lines and placeholder rows, are absent, and validation fails outright if any of them appear.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "line-counts-are-ceilings-only",
+          "description": "Guides run only as long as the evidence supports; no lower bound on length is imposed."
+        },
+        {
+          "name": "reminder-tokens-fail-validation",
+          "description": "Any occurrence of Review reminder, Foundation reminder, or Operating reminder causes validation to fail."
+        },
+        {
+          "name": "no-repeated-or-placeholder-filler",
+          "description": "Repeated near-identical lines and placeholder rows are not emitted."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Work items live in Jira, code review happens through GitLab merge requests, and our checks run off a Makefile. Capture that in the project guide so the downstream roles can read the adapters straight out of it.",
+      "expected_output": "The skill writes project.md whose Project Context contains only the sections Project Identity, Work Item Tracker, Ticket Adapter, Source Control And Review, and MR Adapter. The Ticket Adapter and MR Adapter blocks are machine-extractable so downstream consumers product-owner, requirements-intake, mr-creator, and mr-watch can read them, and the exact Makefile gate commands are recorded verbatim in quality-gates.md.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "project-context-uses-exact-schema",
+          "description": "project.md Project Context holds only the five sections Project Identity, Work Item Tracker, Ticket Adapter, Source Control And Review, and MR Adapter."
+        },
+        {
+          "name": "adapters-extractable-by-consumers",
+          "description": "The Ticket Adapter and MR Adapter blocks are readable by product-owner, requirements-intake, mr-creator, and mr-watch."
+        },
+        {
+          "name": "gate-commands-recorded-verbatim",
+          "description": "The Makefile gate commands are stored exactly in quality-gates.md, not paraphrased or invented."
+        }
+      ]
+    }
+  ]
+}

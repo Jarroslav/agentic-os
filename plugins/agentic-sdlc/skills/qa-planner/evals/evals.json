@@ -1,0 +1,49 @@
+{
+  "skill_name": "qa-planner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run qa-planner --checklist for the current run directory; requirements.md is present.",
+      "expected_output": "Reads qa-strategy.md, qa-health.md, and the run's requirements.md, then generates qa-checklist.md in the run directory scoped to the feature: affected modules, risk flags, and known coverage gaps.",
+      "files": [".agentic/guides/testing/qa-strategy.md", ".agentic/guides/testing/qa-health.md"],
+      "assertions": [
+        {
+          "name": "reads-foundation",
+          "description": "The checklist is grounded in the qa-strategy/qa-health guides plus the feature's requirements, not generic advice."
+        },
+        {
+          "name": "checklist-written",
+          "description": "qa-checklist.md is written to the run directory."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run qa-planner --review-tests; the run directory has qa-checklist.md and the implementation added new tests.",
+      "expected_output": "Reviews the new and changed tests against the checklist, flags missing scenarios and weak assertions, and writes qa-test-review.md to the run directory.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "checklist-driven-review",
+          "description": "The review maps tests to checklist items and calls out uncovered scenarios or weak assertions."
+        },
+        {
+          "name": "review-written",
+          "description": "qa-test-review.md is written to the run directory."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Run qa-planner --update after the QA gates passed for this feature.",
+      "expected_output": "Updates .agentic/guides/testing/qa-health.md with the post-feature coverage snapshot, resolved risks, and any new test debt, keeping the health file current for the next run.",
+      "files": [".agentic/guides/testing/qa-health.md"],
+      "assertions": [
+        {
+          "name": "health-updated",
+          "description": "qa-health.md reflects the just-completed feature run rather than being left stale."
+        }
+      ]
+    }
+  ]
+}

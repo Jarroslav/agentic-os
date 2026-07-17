@@ -1,0 +1,65 @@
+{
+  "skill_name": "agentic-upgrade",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/agentic-upgrade",
+      "expected_output": "Reads the journal, compares plugin version to the journaled version, then reconciles per file using the recorded sha256 as the third merge point: managed files whose current hash equals the recorded hash are overwritten with the new render and re-journaled; every re-render uses the journaled answers without re-interviewing; finishes with a doctor re-run and a journal stamp bump.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "three-way",
+          "description": "Reconciliation compares RECORDED (journal sha256), CURRENT (disk), and NEWRENDER (new template with journaled answers)."
+        },
+        {
+          "name": "unmodified-overwritten",
+          "description": "A managed file with CURRENT == RECORDED is overwritten without prompting."
+        },
+        {
+          "name": "no-reinterview",
+          "description": "The upgrade renders from journal.answers and never asks the interview screens again."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Upgrade agentic-os. I have local edits in one of the managed hook files.",
+      "expected_output": "Detects CURRENT != RECORDED for that hook, shows a diff (template-old to template-new when the old render is recoverable from a release tag, otherwise a clearly labeled CURRENT to new diff), and asks before touching the file — keeping it marks it owner: user.",
+      "files": [".agentic/agentic-os/install.json", ".claude/hooks/"],
+      "assertions": [
+        {
+          "name": "never-silent",
+          "description": "The user-modified file is never overwritten without an explicit user choice."
+        },
+        {
+          "name": "labeled-diff",
+          "description": "The diff shown is labeled as template-old→new or CURRENT→new so the user knows whether their edits are mixed into it."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Upgrade the scaffold. CLAUDE.md has a managed agentic-os block plus my own content above and below it.",
+      "expected_output": "Replaces only the content between the managed block markers wholesale with the new render, leaves everything outside the markers byte-identical, and updates the journal entry for the block.",
+      "files": ["CLAUDE.md", ".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "block-scoped",
+          "description": "Only the text between the managed markers changes; user content outside them is untouched."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "/agentic-upgrade — the installed plugin version is older than the journaled version.",
+      "expected_output": "Stops and escalates: a downgrade is a human decision, not something the upgrade reconciles automatically.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "downgrade-escalates",
+          "description": "The response stops on NEW < OLD and asks the human instead of reconciling."
+        }
+      ]
+    }
+  ]
+}

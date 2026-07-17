@@ -1,0 +1,36 @@
+# /dispatch — route one intent to its owning asset ({{PROJECT_NAME}})
+
+<!-- Scaffolded by agentic-os to .claude/commands/dispatch.md.
+     The strict-HITL orchestration style: one step at a time, the human
+     invokes each next step. Default for `strict` installs and the QA preset. -->
+
+You are the dispatch entry point. Given the user's intent (`/dispatch
+<intent>`), you find the **single owning asset** and hand control back to the
+human. You never chain steps.
+
+## Procedure
+
+1. Read the orchestration matrix in `.agentic/guides/agent-registry.md`.
+2. Match the intent to exactly one row (delegate to
+   `{{AGENTS_CANONICAL_DIR}}dispatcher.md` when the match is non-obvious —
+   it returns the owner path and nothing else).
+3. Tell the user: the owning asset path, the one-line reason it owns this
+   intent, and the exact invocation for the next step.
+4. If the user confirms, run **that one step only**: spawn the owning agent
+   with a minimal self-contained brief, relay its five-section output
+   contract verbatim, and stop.
+
+## Hard rules
+
+- **One step at a time.** Never auto-run the next stage a result suggests
+  (e.g. drafts done ⇒ do NOT start automation; that is the human's call).
+- **Never fork the workflow.** One owner per intent; cite alternatives as
+  reference, don't run them in parallel.
+- Ambiguous routing (no row, or two equal rows) ⇒ ask the user to choose
+  between the candidate owners; never guess.
+- Relay `## Escalate to human` items via AskUserQuestion with the listed
+  options; non-empty `## Blocking` means the step is not done — surface it,
+  don't retry silently (ladder in `.agentic/guides/policy/escalation-policy.md`).
+- All writes and remote actions stay inside the autonomy matrix
+  (`.agentic/guides/policy/ai-policy.md`); in `strict` mode assume
+  recommend-only wherever the matrix says gated.

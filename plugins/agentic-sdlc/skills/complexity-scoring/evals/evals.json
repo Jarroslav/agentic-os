@@ -1,0 +1,53 @@
+{
+  "skill_name": "complexity-scoring",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Rename the label on the checkout page's submit button from \"Submit\" to \"Place Order\". It's one string in one component, no other files touched.",
+      "expected_output": "Skill returns a single normalized object: an overall numeric score, a six-part breakdown supporting that score, a short rationale, and a routing decision of writing-plans. Because the change is single-surface and single-file, the skill resolves the score from fast heuristics alone and does not dispatch the sizing-analyst agent — the low band is obvious without deeper analysis.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "canonicalized-result",
+          "description": "Response is one normalized object containing a numeric score, a six-part breakdown, a rationale, and a routing field, not free-form prose."
+        },
+        {
+          "name": "minimal-rating-dispatch",
+          "description": "Score lands in the low band and routing is writing-plans, resolved by fast heuristics without dispatching the sizing-analyst agent."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Add sign-in via a new external OIDC identity provider: new backend auth adapter, updated login UI, new config/secrets values, and deployment manifest changes across staging and production.",
+      "expected_output": "Skill returns a normalized object whose score is clearly higher than a single-surface change, with the six-part breakdown visibly weighting integration and cross-system risk because the work spans backend, UI, config, and deployment plus a new external identity-provider dependency. Rationale calls out that cross-system, external-integration risk explicitly. Routing decision is brainstorming rather than writing-plans. Because the size signal is not resolvable from surface heuristics alone, the skill dispatches the sizing-analyst agent to settle the score before routing.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "hazard-captured",
+          "description": "Score and breakdown visibly reflect elevated integration/cross-system risk from the backend+UI+config+deployment span and the external identity-provider dependency, not just surface count."
+        },
+        {
+          "name": "ideation-path",
+          "description": "Routing decision is brainstorming rather than writing-plans, matching the cross-system integration scope of the request."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Rewrite the authentication service, the authorization/permissions layer, the billing subsystem, and the deployment pipeline from scratch, replacing all four end-to-end with a new design.",
+      "expected_output": "Skill does not assign an ordinary low or medium score or route the request as a single unit of work to writing-plans or brainstorming. Even where a naive line-diff estimate might read as moderate, the presence of four major subsystem rewrites — auth, authz, billing, and deployment — is treated as a red-flag condition that overrides the diff-size signal. Response flags the request as requiring decomposition into separately scoped efforts before any single score or route can apply, and explicitly states the request is too broad to size or route as one item.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "decomposition-mandated",
+          "description": "Response flags the request as needing decomposition into smaller scoped units rather than assigning one score and route to the whole multi-subsystem rewrite."
+        },
+        {
+          "name": "is-never-understate",
+          "description": "Response does not understate the request as ordinary small or medium work on the strength of a small raw diff-size estimate; it explicitly calls out the multi-subsystem red flag overriding that estimate."
+        }
+      ]
+    }
+  ]
+}

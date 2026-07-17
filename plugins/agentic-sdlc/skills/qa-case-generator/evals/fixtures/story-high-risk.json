@@ -1,0 +1,56 @@
+{
+  "ticket_id": "PROJ-299",
+  "ticket_url": "https://jira.example.com/browse/PROJ-299",
+  "title": "Refund flow for card payments",
+  "description": "Add an operator-initiated refund path for completed card charges. Refunds hit the payment gateway, must be idempotent, and are subject to fraud and PCI review. Partial refunds are allowed down to zero remaining. Every refund attempt is written to the audit log with actor, amount, and gateway reference.",
+  "acceptance_criteria": [
+    "AC1: An operator with the refunds permission can issue a full or partial refund against a settled charge from the order detail screen.",
+    "AC2: The refund amount cannot exceed the remaining refundable balance of the original charge.",
+    "AC3: Submitting the same refund request twice with the same idempotency key results in exactly one gateway refund.",
+    "AC4: A successful refund updates the charge status and records actor, amount, timestamp, and gateway reference to the audit log.",
+    "AC5: A gateway decline surfaces a clear error to the operator and leaves the charge balance unchanged.",
+    "AC6: Refund actions are hidden entirely from operators lacking the refunds permission.",
+    "AC7: Cardholder PAN is never displayed or logged during the refund flow."
+  ],
+  "priority": "Critical",
+  "issue_type": "Story",
+  "labels": ["payment", "security", "pci-compliance"],
+  "comments": [
+    {
+      "author": "sec.review@example.com",
+      "created_at": "2026-05-28T08:30:00Z",
+      "body": "Treat this as in-scope for PCI. Please add negative cases around masked card data and audit-log completeness."
+    },
+    {
+      "author": "finance.ops@example.com",
+      "created_at": "2026-05-28T15:47:00Z",
+      "body": "Confirm partial refunds can chain down to a zero balance without over-refunding."
+    }
+  ],
+  "subtasks": [
+    {
+      "id": "PROJ-300",
+      "title": "Wire idempotency keys through the gateway client",
+      "status": "In Progress"
+    },
+    {
+      "id": "PROJ-301",
+      "title": "Add refund events to the audit log schema",
+      "status": "To Do"
+    }
+  ],
+  "linked_items": [
+    {
+      "id": "PROJ-284",
+      "relation": "blocks",
+      "title": "PCI audit sign-off for Q3 release"
+    }
+  ],
+  "attachments": [
+    {
+      "filename": "refund-sequence.png",
+      "url": "https://jira.example.com/secure/attachment/51120/refund-sequence.png",
+      "mime_type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "skill_name": "decision-router",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We're running in hitl mode. The spec.approved gate just fired for a one-line typo fix to the login copy. The payload carries ArtifactRefs pointing at the spec diff, context.fast_path.approve=true with context.fast_path.reason='trivial single-line change', and risk_flags: []. Resolve the gate.",
+      "expected_output": "decision-router refuses to treat the payload's context.fast_path as a resolution: mode is hitl, so fast_path.approve and fast_path.reason are ignored entirely, no matter how trivial or low-risk they claim the change is. The router surfaces the gate options (approve, request-changes, abort) to the user via AskUserQuestion (or an equivalent user prompt) and waits for a real answer. Only after the user responds does the router emit the canonical verdict shape (decision, rationale, follow_ups, confidence, source) with source: hitl. Both decisions.jsonl and events.jsonl receive an entry for the resolution containing the prior gate context — the spec ArtifactRefs and the discarded fast_path hint — alongside the final decision.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "trivial-gate-forces-user-prompt",
+          "description": "Even though context.fast_path marks the change as trivial and low-risk, decision-router still invokes AskUserQuestion (or an equivalent user prompt) because mode is hitl."
+        },
+        {
+          "name": "fast-path-hint-discarded-in-hitl",
+          "description": "context.fast_path.approve=true and context.fast_path.reason are never read as a resolution path while mode is hitl; they play no role in the outcome."
+        },
+        {
+          "name": "hitl-source-recorded",
+          "description": "The returned verdict's source field is hitl, not fast-path, deterministic, or subagent."
+        },
+        {
+          "name": "spec-gate-audit-includes-discarded-hint",
+          "description": "decisions.jsonl and events.jsonl both log the spec.approved resolution with the prior gate context, including the fast_path hint that was overridden, not just the final decision."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Mode is autonomous. The spec.approved gate fired for a documentation-only clarification. The payload carries ArtifactRefs pointing at the updated docs section, context.fast_path.approve=true, context.fast_path.reason='low risk doc-only clarification', and risk_flags: []. Resolve the gate without waking up a reviewer subagent if it's safe to.",
+      "expected_output": "decision-router evaluates risk_flags as empty and the change as low-risk, so in autonomous mode it accepts context.fast_path as the resolution and short-circuits subagent dispatch entirely. It emits the canonical verdict (decision, rationale, follow_ups, confidence, source) with source: fast-path and a high confidence score, citing context.fast_path.reason in the rationale. Both decisions.jsonl and events.jsonl receive an entry for the resolution containing the prior gate context — the spec ArtifactRefs and the fast_path payload — alongside the final decision.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "fast-path-resolves-low-risk-spec-gate",
+          "description": "With risk_flags empty and mode autonomous, decision-router accepts context.fast_path as the gate resolution."
+        },
+        {
+          "name": "no-subagent-dispatch-on-valid-fast-path",
+          "description": "No subagent is dispatched when the fast-path conditions (autonomous mode, low risk) are met."
+        },
+        {
+          "name": "fast-path-source-and-high-confidence",
+          "description": "The verdict's source field is fast-path and confidence is reported as high, not merely present."
+        },
+        {
+          "name": "fast-path-resolution-audited-with-context",
+          "description": "decisions.jsonl and events.jsonl both record the fast-path resolution together with the prior gate context, including the fast_path payload."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Mode is autonomous. The plan.approved gate fired for a plan that touches three services and adds a new queue consumer. Payload: ArtifactRefs pointing at the plan document, risk_flags: ['scope-expansion', 'cross-service'], no context.fast_path present. Resolve the gate.",
+      "expected_output": "With no context.fast_path hint and non-empty risk_flags, decision-router rules out both the fast-path and deterministic resolution paths and falls back to the lead-proxy stand-in subagent to render judgment on the plan. lead-proxy returns one of approve, request-changes, or abort with supporting rationale; decision-router wraps this into the canonical verdict shape (decision, rationale, follow_ups, confidence, source) with source: subagent. decisions.jsonl and events.jsonl each log the resolution together with the prior gate context — the plan's ArtifactRefs and the risk_flags that ruled out the cheaper paths.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "plan-gate-escalates-to-lead-proxy",
+          "description": "In autonomous mode, with no fast_path hint and non-empty risk_flags, decision-router dispatches the lead-proxy stand-in subagent for the plan.approved gate."
+        },
+        {
+          "name": "risk-flags-block-fast-path-and-deterministic",
+          "description": "Non-empty risk_flags (scope-expansion, cross-service) rule out both the fast-path and deterministic resolution paths before subagent fallback is considered."
+        },
+        {
+          "name": "subagent-source-on-plan-gate",
+          "description": "The verdict's source field is subagent, reflecting that lead-proxy resolved the gate rather than a fast-path or deterministic check."
+        },
+        {
+          "name": "plan-gate-audit-includes-artifact-refs",
+          "description": "decisions.jsonl and events.jsonl both log the plan.approved resolution with the prior gate context, including the plan's ArtifactRefs and risk_flags."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Mode is autonomous. The requirements.ambiguous gate fired because intake flagged conflicting acceptance criteria in the incoming ticket. Payload: risk_flags: ['ambiguous-scope'], no context.fast_path present. Resolve the gate.",
+      "expected_output": "decision-router treats requirements.ambiguous as inherently unsuitable for a fast-path or deterministic resolution — the ambiguity itself is the risk signal — and dispatches the story-proxy stand-in subagent to adjudicate the conflicting acceptance criteria. story-proxy returns one of approve, request-changes, or abort with rationale grounded in the ticket; decision-router returns the canonical verdict (decision, rationale, follow_ups, confidence, source) with source: subagent. Both decisions.jsonl and events.jsonl log the resolution with the prior gate context, including the ambiguous-scope risk_flag and the absence of a fast_path hint.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "ambiguous-requirements-escalate-to-story-proxy",
+          "description": "In autonomous mode, decision-router dispatches the story-proxy stand-in subagent to resolve the requirements.ambiguous gate."
+        },
+        {
+          "name": "ambiguity-rules-out-fast-path",
+          "description": "The absence of context.fast_path combined with the ambiguous-scope risk_flag prevents any fast-path or deterministic shortcut for this gate."
+        },
+        {
+          "name": "subagent-source-on-requirements-gate",
+          "description": "The verdict's source field is subagent, not hitl, fast-path, or deterministic, for the requirements.ambiguous resolution."
+        },
+        {
+          "name": "requirements-gate-audit-includes-risk-flags",
+          "description": "decisions.jsonl and events.jsonl both record the requirements.ambiguous resolution with the prior gate context, including the ambiguous-scope risk_flag."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The code-review.final gate fired after code-review-orchestrator finished its pass on the PR diff. Payload: a reference to the PR diff, and a structured verdict already produced by code-review-orchestrator — decision: request-changes, with two blocking findings. Mode is autonomous. Resolve the gate.",
+      "expected_output": "Because code-review-orchestrator has already produced a structured verdict for this diff, decision-router resolves code-review.final inline: it maps the orchestrator's decision and blocking findings directly into the canonical verdict shape (decision, rationale, follow_ups, confidence, source) with source: deterministic, rather than invoking AskUserQuestion or dispatching a new stand-in subagent of its own. follow_ups list the two blocking findings carried over from code-review-orchestrator. decisions.jsonl and events.jsonl both record the resolution together with the prior gate context, including the diff reference and the orchestrator's original verdict payload.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "code-review-final-resolves-inline",
+          "description": "decision-router resolves the code-review.final gate inline from code-review-orchestrator's existing structured verdict, without a new user prompt."
+        },
+        {
+          "name": "no-redundant-subagent-for-orchestrator-verdict",
+          "description": "No new stand-in subagent is dispatched by decision-router for code-review.final when code-review-orchestrator has already produced a structured verdict."
+        },
+        {
+          "name": "orchestrator-findings-mapped-to-follow-ups",
+          "description": "The two blocking findings from code-review-orchestrator's verdict appear in the canonical verdict's follow_ups field, and source is deterministic."
+        },
+        {
+          "name": "code-review-gate-audit-includes-orchestrator-verdict",
+          "description": "decisions.jsonl and events.jsonl both log the code-review.final resolution with the prior gate context, including the orchestrator's original verdict payload."
+        }
+      ]
+    }
+  ]
+}

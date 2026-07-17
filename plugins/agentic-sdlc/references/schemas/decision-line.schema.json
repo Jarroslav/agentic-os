@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "decisions.jsonl line (decision-router audit log)",
+  "type": "object",
+  "required": [
+    "ts",
+    "gate_id",
+    "mode",
+    "verdict",
+    "escalated"
+  ],
+  "properties": {
+    "ts": {
+      "type": "string"
+    },
+    "gate_id": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "hitl",
+        "autonomous",
+        "task"
+      ]
+    },
+    "verdict": {
+      "type": "object",
+      "required": [
+        "decision",
+        "rationale",
+        "source"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "follow_ups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "risk_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "enum": [
+            "hitl",
+            "deterministic",
+            "fast-path",
+            "subagent"
+          ]
+        }
+      }
+    },
+    "escalated": {
+      "type": "boolean"
+    },
+    "prior_context": {
+      "type": "object"
+    }
+  }
+}

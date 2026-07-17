@@ -1,0 +1,117 @@
+{
+  "skill_name": "eval-harness",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Stand up skill evals in this Python repo. We test with pytest, our agent skills sit directly under .claude/, and every model call has to go through our internal openai-compatible endpoint. Get the harness in place and prove it runs.",
+      "expected_output": "The run copies the bundled Python harness modules (runner, pytest test module, judge runner) into an eval/ directory rather than hand-rolling a substitute. Before writing any spec it lists the directories under .claude/ that actually contain a SKILL.md and scaffolds one evals.json per discovered skill at <skill>/eval/evals.json — no invented placeholder skills. Provider selection is wired through EVAL_PROVIDER=openai-compatible. A committed example env file carries only placeholder values for OPENAI_API_KEY; the real env file lands in .gitignore. The deterministic layer is verified by executing pytest (or a stated plan to run it, with the command given).",
+      "files": [
+        "references/providers.md",
+        "references/python.md",
+        "references/spec-format.md"
+      ],
+      "assertions": [
+        {
+          "name": "uses_named_python_assets",
+          "description": "The three shipped Python modules are copied into eval/ as-is; a from-scratch or generic reimplementation of the harness fails this check."
+        },
+        {
+          "name": "discovers_skills_first",
+          "description": "Real SKILL.md directories under .claude/ are enumerated before any spec is written; specs for skills that do not exist are a failure."
+        },
+        {
+          "name": "specs_are_colocated",
+          "description": "Each generated spec lives at <skill>/eval/evals.json next to its skill; a single central or top-level spec file fails."
+        },
+        {
+          "name": "secret_hygiene",
+          "description": "Committed example env holds placeholders only, the real env file is git-ignored, and no credential value is fabricated anywhere."
+        },
+        {
+          "name": "pytest_verification",
+          "description": "The deterministic layer is exercised via pytest, or an explicit run plan with the exact command is stated; silence about verification fails."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Add the eval harness to our TypeScript project. Skills live under .claude/skills/, we run vitest, and all LLM traffic is routed through our gateway — use the anthropic-portkey provider. Wire it into package.json too.",
+      "expected_output": "The run scaffolds the full TypeScript asset set — runner, both test suites, the .mts judge runner, tsconfig, and the example spec — and adds npm scripts: test (vitest run) and eval:llm. Provider config sets EVAL_PROVIDER=anthropic-portkey with PORTKEY_API_KEY plus the gateway base URL, and the response explicitly warns that the gateway only accepts fully-qualified @<provider-slug>/<model> ids — bare model names come back as 400s. Because the skills root (.claude/skills/) is not the harness default, SKILLS_ROOT is explicitly repointed. Per-skill specs are co-located, and .gitignore gains the real env file plus generated report directories (e.g. .cache/eval-reports/, evals-workspace/).",
+      "files": [
+        "references/providers.md",
+        "references/typescript.md",
+        "references/spec-format.md"
+      ],
+      "assertions": [
+        {
+          "name": "full_ts_asset_set",
+          "description": "All five named TypeScript harness files are put in place; missing files or generic substitutes fail."
+        },
+        {
+          "name": "npm_scripts_wired",
+          "description": "package.json ends up with a test script running vitest and an eval:llm script for the judged layer."
+        },
+        {
+          "name": "gateway_model_id_caveat",
+          "description": "The gateway is configured AND the fully-qualified @<provider-slug>/<model> id requirement is called out; naming the gateway without the caveat fails."
+        },
+        {
+          "name": "skills_root_override",
+          "description": "SKILLS_ROOT is explicitly set because the skills directory differs from the harness default discovery root."
+        },
+        {
+          "name": "ignore_rules",
+          "description": "Real env file and generated report directories are git-ignored; committing either is a failure."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The eval harness is already installed in this repo. I just wrote a new skill at .claude/skills/changelog-writer/ — give it an eval spec.",
+      "expected_output": "The run reads .claude/skills/changelog-writer/SKILL.md before asserting anything about it, then writes a single spec at .claude/skills/changelog-writer/eval/evals.json. The spec carries the two-layer shape: a contracts section whose required files and marker strings are taken from what the skill doc actually contains, and behavioral cases only where the doc supports them — a contracts-only spec that grows judged cases later is fine. No central test file is created or edited, and no marker string is invented that the doc does not contain.",
+      "files": [
+        "references/spec-format.md"
+      ],
+      "assertions": [
+        {
+          "name": "colocated_single_spec",
+          "description": "Exactly one new spec appears, placed at the skill's own eval/evals.json; touching or creating any central spec fails."
+        },
+        {
+          "name": "grounded_contracts",
+          "description": "Every asserted marker string and required file is grounded in the real SKILL.md content, read before writing; invented markers fail."
+        },
+        {
+          "name": "valid_two_layer_shape",
+          "description": "The spec parses as JSON with the canonical structure, and a contracts-only spec is accepted as a valid starting point."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Our TypeScript eval harness works locally but nothing enforces it. Set up automation: stop broken specs at commit time and check every pull request.",
+      "expected_output": "The run installs the shipped in-repo pre-commit hook by running git config core.hooksPath against the repository's hooks directory — no copy into .git/hooks. A GitHub Actions workflow triggered on pull_request runs only the deterministic, credential-free layer (the vitest-based test script). The LLM-judge layer stays out of every blocking gate; if it appears in CI at all it is a separate, non-required job on manual dispatch or a schedule, reading its API key from the CI secret store. Where a step cannot execute in this turn, a concrete declared plan counts, but skipping the step entirely does not.",
+      "files": [
+        "references/ci.md"
+      ],
+      "assertions": [
+        {
+          "name": "hookspath_install",
+          "description": "The pre-commit hook is activated via git config core.hooksPath pointing at the in-repo hooks directory."
+        },
+        {
+          "name": "pr_gate_deterministic_only",
+          "description": "The pull-request workflow executes only the deterministic layer and needs no model credentials."
+        },
+        {
+          "name": "judge_never_blocks",
+          "description": "No blocking gate (hook or required check) runs judged evals; any CI judge job is separate, non-required, and manual or scheduled."
+        },
+        {
+          "name": "ci_secrets_only",
+          "description": "Judge credentials, if referenced, come from the CI secret store; hardcoded or fabricated keys fail."
+        }
+      ]
+    }
+  ]
+}

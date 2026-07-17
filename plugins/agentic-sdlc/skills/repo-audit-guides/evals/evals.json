@@ -1,0 +1,129 @@
+{
+  "skill_name": "repo-audit-guides",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We inherited a mature monorepo — the docs/ tree is well kept, CLAUDE.md gets edited regularly, and there are command and subagent definitions living under .claude/. Before anyone starts laying down factory guidance, walk the repo and tell me what condition it's in. Read only, change nothing.",
+      "expected_output": "A strictly non-mutating survey. The auditor walks the docs, the assistant entrypoints, and the .claude command and subagent definitions without creating or editing a single file, then returns the fixed report shape: documentation map, documentation analysis, assistant setup analysis, agentic infrastructure analysis, conflict and overlap analysis, and foundation readiness / next steps. Where evidence backs the existing material, it is marked to keep, and the standing source of truth is inferred by reading the docs rather than guessed from folder names. The verdict is reached without any dependence on an .agentic tree, and findings sit inside the concrete analysis sections rather than a detached score block.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "strictly-read-only",
+          "description": "Confirms the sweep is inventory-only — nothing is written, generated, or edited while the tree is surveyed."
+        },
+        {
+          "name": "no-prior-run-state-needed",
+          "description": "Never leans on a pre-existing .agentic tree as an input; a repo without one is surveyed normally."
+        },
+        {
+          "name": "keeps-strong-setup-intact",
+          "description": "Where the evidence is strong, the existing docs and assistant wiring are flagged to keep rather than to overwrite."
+        },
+        {
+          "name": "resolves-source-of-truth",
+          "description": "Reads the docs to decide which artifact is the standing source of truth instead of assuming it from a folder name."
+        },
+        {
+          "name": "emits-structured-report",
+          "description": "Emits every fixed section: documentation map, documentation analysis, assistant setup analysis, agentic infrastructure analysis, conflict and overlap analysis, and foundation readiness / next steps."
+        },
+        {
+          "name": "grounds-grades-in-evidence",
+          "description": "Keeps observations inside the concrete analysis sections and never appends a detached letter-grade or numeric-score block."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Two of our assistant files disagree. AGENTS.md tells contributors to run the suite one way, CLAUDE.md names a different command, and nothing states which file wins. Is this repo actually safe to plant guides into yet?",
+      "expected_output": "The auditor catches the contradiction between AGENTS.md and CLAUDE.md over the test command and notes that authoritative ownership is undefined, surfacing both in the conflict and overlap analysis. It explains how an unresolved clash would corrupt any generated foundation — not merely that a clash is present — and lets that finding drag down the verdict in foundation readiness / next steps. Because the conflict touches safety and authority, the required decision lands on ask user or halt, and no guides are generated.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "spots-entrypoint-disagreement",
+          "description": "Catches that AGENTS.md and CLAUDE.md prescribe different test commands and that authoritative ownership is left unstated."
+        },
+        {
+          "name": "explains-conflict-fallout",
+          "description": "Spells out why the disagreement would poison a generated foundation, not just that a disagreement exists."
+        },
+        {
+          "name": "conflict-lowers-readiness",
+          "description": "The unresolved clash lowers the verdict recorded in foundation readiness / next steps."
+        },
+        {
+          "name": "pauses-before-planting",
+          "description": "Faced with a safety and authority conflict, it recommends ask user or halt and declines to write any guides."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Fresh client hand-off. The README is a single paragraph, there's no CLAUDE.md anywhere, and I can't find any note about how tests get run. Survey what's here and be straight with me about the gaps — do not fill in blanks you can't back up.",
+      "expected_output": "Thin and missing documentation is logged as an explicit gap in documentation analysis rather than quietly patched over. The auditor refuses to fabricate project-specific facts — test commands, conventions, ownership — that the repo never states. Each shaky or absent surface is routed to a concrete decision verb from skip, incorporate, merge, replace, ask user, or halt, and the report names the specific artifact or evidence that, once added, would raise the readiness verdict in foundation readiness / next steps.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "copes-with-thin-docs",
+          "description": "Thin or absent documentation is reported as a gap in documentation analysis rather than silently backfilled."
+        },
+        {
+          "name": "avoids-fabricating-context",
+          "description": "Refuses to author project-specific facts the repo does not actually contain."
+        },
+        {
+          "name": "thin-evidence-shifts-plan",
+          "description": "Every shaky surface is mapped to one of skip, incorporate, merge, replace, ask user, or halt."
+        },
+        {
+          "name": "suggests-improvement-path",
+          "description": "Names the concrete artifact or evidence that, if supplied, would lift the foundation readiness verdict."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Take a look at how our agent tooling is wired up — the skill folders, the subagent prompt files, and both of the settings files — and tell me whether it's all built to a decent standard.",
+      "expected_output": "The auditor examines each skill for frontmatter triggers, concise instructions, and progressive disclosure, and checks the subagent prompts for bounded ownership, verification expectations, and eval or pressure-scenario coverage — all captured in assistant setup analysis and agentic infrastructure analysis. It inventories both settings.json and settings.local.json, not just the shared one. Despite the 'up to standard' framing, it resists producing an abstract letter or score; the judgement stays embedded in the concrete analysis sections.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "reviews-skill-quality",
+          "description": "Judges each skill on frontmatter triggers, concise instructions, and progressive disclosure."
+        },
+        {
+          "name": "checks-subagent-scoping",
+          "description": "Checks subagent prompts for bounded ownership, verification expectations, and eval or pressure-scenario coverage."
+        },
+        {
+          "name": "catalogs-local-config",
+          "description": "Lists both settings.json and settings.local.json rather than only the shared file."
+        },
+        {
+          "name": "grounds-grades-in-evidence",
+          "description": "Even under a 'is it up to standard' prompt, keeps findings in the analysis sections with no separate score block."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "This round I do want the .agentic/ tree opened as part of the pass — pull up the generated guides in there and check them against what the repo actually says, and call out anything stale. Everywhere else, keep the same light-touch handling you'd give a brand-new client repo.",
+      "expected_output": "Because the request explicitly names it, the auditor opens and catalogs the .agentic tree, listing its guides and run metadata. Rather than treating those generated guides as authoritative, it weighs them against the repo docs, manifests, CI config, and assistant entrypoints, flagging any entry that is stale or in conflict with the live repo. Outside that explicit inclusion it holds the standing default posture: a new or client repo is audited without ever requiring .agentic as an input.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "lists-agentic-tree-when-asked",
+          "description": "Opens and catalogs the .agentic tree only because the request named it explicitly."
+        },
+        {
+          "name": "cross-checks-config-vs-repo",
+          "description": "Weighs the generated guides against repo docs, manifests, CI config, and entrypoints instead of trusting them, flagging stale or conflicting entries."
+        },
+        {
+          "name": "defaults-to-fresh-client-stance",
+          "description": "Keeps the standing default that a new or client repo is audited without depending on .agentic as a required input."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,369 @@
+#!/usr/bin/env bash
+#
+# ticket-sync — Stop / SubagentStop hook for the Agentic SDLC pipeline.
+#
+# Purpose: keep an external work item (e.g. a tracker ticket) aligned with the
+# progress recorded in the pipeline's append-only event ledgers. On every
+# turn-end the hook:
+#   1. loads the project's integration adapter from
+#      .agentic/guides/integration/ticket-flow.md,
+#   2. locates the newest pipeline run under docs/superpowers/runs/,
+#   3. reads the run's work item and its recorded events,
+#   4. decides whether a state transition should fire (furthest-forward wins),
+#   5. invokes the adapter command with a rendered action message,
+#   6. appends a normalized `work_item.adapter_receipt` event to the ledgers.
+#
+# Design constraints:
+#   - Pure bash + coreutils (grep/sed/awk/find/stat/date). No python / jq.
+#   - bash 3.2 compatible; runs on macOS, Linux and Git-Bash on Windows.
+#   - Wired as an async hook: it MUST never block turn-end, so every failure
+#     path is swallowed and the script always `exit 0`.
+#   - Adapter-driven: no ticket backend is hardcoded. The adapter invocation and
+#     its known states are declared by the project in ticket-flow.md.
+#
+# Dedup: the `state` of the latest *succeeded* receipt for a work item is the
+# marker. A transition whose target equals that state is skipped. Pending
+# receipts never block a retry.
+
+# ---------------------------------------------------------------------------
+# Constants / paths (all relative to the repo root == CWD).
+# ---------------------------------------------------------------------------
+FLOW_FILE=".agentic/guides/integration/ticket-flow.md"
+RUNS_ROOT="docs/superpowers/runs"
+CANON_WI_LEDGER="docs/superpowers/work-items/work-item-events.jsonl"
+
+# Drain and discard the session JSON handed to us on stdin.
+cat >/dev/null 2>&1
+
+# Never let a stray error abort the async hook.
+bail() { exit 0; }
+
+# ---------------------------------------------------------------------------
+# 1. Adapter config must exist.
+# ---------------------------------------------------------------------------
+[ -f "$FLOW_FILE" ] || bail
+
+# ---------------------------------------------------------------------------
+# Portable helpers.
+# ---------------------------------------------------------------------------
+
+# mtime of a file in epoch seconds, across BSD (-f %m) and GNU (-c %Y) stat.
+file_mtime() {
+  stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0
+}
+
+# Pull the single-line value that follows a "**Label**:" prefix. First hit wins.
+flow_value() {
+  # $1 = literal label text (without the surrounding ** or colon)
+  grep -m1 "^\*\*$1\*\*:" "$FLOW_FILE" 2>/dev/null \
+    | sed "s/^\*\*$1\*\*:[[:space:]]*//"
+}
+
+# Read a JSON string field ("key":"value") from a single line of text.
+# Returns the raw (still-escaped) value on stdout. $1=line, $2=key.
+json_str_field() {
+  printf '%s' "$1" | sed -n "s/.*\"$2\":\"\\([^\"]*\\)\".*/\\1/p" | head -n1
+}
+
+# Escape a string for embedding inside a JSON double-quoted value.
+# Handles backslash, double-quote, tab, and embedded newlines. CR is stripped
+# by callers before this runs (see the response cap below).
+json_escape() {
+  printf '%s' "$1" \
+    | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' \
+    | awk 'BEGIN{ORS=""} {gsub(/\t/,"\\t"); if(NR>1) printf "\\n"; printf "%s",$0}'
+}
+
+# ---------------------------------------------------------------------------
+# 2. Parse the adapter contract.
+# ---------------------------------------------------------------------------
+adapter_cmd=$(flow_value "Adapter invocation")
+known_states_raw=$(flow_value "Known states")
+action_template=$(flow_value "Action message template")
+
+# The action template is quoted in the config; drop one layer of surrounding
+# single or double quotes if present.
+action_template=$(printf '%s' "$action_template" \
+  | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/")
+
+[ -n "$adapter_cmd" ] || bail
+[ -n "$known_states_raw" ] || bail
+[ -n "$action_template" ] || bail
+
+# Split "A, B, C" into a newline list of trimmed state names.
+known_states=$(printf '%s' "$known_states_raw" \
+  | tr ',' '\n' \
+  | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+  | grep -v '^$')
+[ -n "$known_states" ] || bail
+
+# ---------------------------------------------------------------------------
+# Parse the transitions table into "trigger<TAB>target" rows, in file order.
+#   | When                      | Set state |
+#   |---------------------------|-----------|
+#   | `phase.completed phase=2` | DEV       |
+# Column 2 is the trigger (backticks stripped), column 3 the target state.
+# ---------------------------------------------------------------------------
+transitions=$(awk '
+  # Detect the header row; begin capture once the separator has passed.
+  /^\|[[:space:]]*When/ { in_table=1; next }
+  in_table && /^\|[[:space:]]*[-:]/ { sep_seen=1; next }
+  in_table && sep_seen {
+    if ($0 !~ /^\|/) { in_table=0; next }
+    n=split($0, cells, "|")
+    # cells[1] is the empty field before the leading pipe.
+    trig=cells[2]; tgt=cells[3]
+    gsub(/`/, "", trig)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", trig)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", tgt)
+    if (trig=="" || tgt=="") next
+    printf "%s\t%s\n", trig, tgt
+  }
+' "$FLOW_FILE")
+
+[ -n "$transitions" ] || bail
+
+# ---------------------------------------------------------------------------
+# 3. Find the newest run (meta.json), maxdepth 2 under RUNS_ROOT.
+# ---------------------------------------------------------------------------
+[ -d "$RUNS_ROOT" ] || bail
+
+newest_meta=""
+newest_mtime=0
+while IFS= read -r meta; do
+  [ -n "$meta" ] || continue
+  m=$(file_mtime "$meta")
+  if [ "$m" -gt "$newest_mtime" ] 2>/dev/null; then
+    newest_mtime=$m
+    newest_meta=$meta
+  fi
+done <<EOF
+$(find "$RUNS_ROOT" -maxdepth 2 -name meta.json 2>/dev/null)
+EOF
+
+[ -n "$newest_meta" ] || bail
+
+RUN_DIR=$(dirname "$newest_meta")
+META_CONTENT=$(cat "$newest_meta" 2>/dev/null)
+
+run_id=$(json_str_field "$META_CONTENT" "run_id")
+[ -n "$run_id" ] || run_id="unknown"
+
+WORK_ITEM_PATH=$(json_str_field "$META_CONTENT" "canonical_path")
+[ -n "$WORK_ITEM_PATH" ] || bail
+[ -f "$WORK_ITEM_PATH" ] || bail
+
+RUN_EVENTS_LEDGER="$RUN_DIR/events.jsonl"
+RUN_WI_LEDGER="$RUN_DIR/work-item-events.jsonl"
+
+# ---------------------------------------------------------------------------
+# 4. Extract the external ticket reference from the work item markdown.
+# ---------------------------------------------------------------------------
+ticket_raw=$(grep -m1 "^\*\*External Ticket\*\*:" "$WORK_ITEM_PATH" 2>/dev/null \
+  | sed 's/^\*\*External Ticket\*\*:[[:space:]]*//' \
+  | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+[ -n "$ticket_raw" ] || bail
+[ "$ticket_raw" = "Not configured" ] && bail
+case "$ticket_raw" in
+  ticket-unresolved:*) bail ;;
+esac
+
+# ---------------------------------------------------------------------------
+# 5. Normalize into a work_item_id. URLs collapse to their trailing segment.
+# ---------------------------------------------------------------------------
+case "$ticket_raw" in
+  *://*|*/*)
+    work_item_id=$(printf '%s' "$ticket_raw" | sed 's#.*/##')
+    ;;
+  *)
+    work_item_id=$ticket_raw
+    ;;
+esac
+
+# Only bare identifier characters are allowed (e.g. PROJ-1234).
+case "$work_item_id" in
+  ''|*[!A-Za-z0-9_-]*) bail ;;
+esac
+
+# ---------------------------------------------------------------------------
+# 6. Determine current_state: last succeeded receipt for this id in the
+#    canonical ledger (scan the tail only). Pending receipts do NOT count.
+# ---------------------------------------------------------------------------
+current_state=""
+if [ -f "$CANON_WI_LEDGER" ]; then
+  while IFS= read -r line; do
+    case "$line" in
+      *'"event":"work_item.adapter_receipt"'*) ;;
+      *) continue ;;
+    esac
+    case "$line" in
+      *"\"work_item_id\":\"$work_item_id\""*) ;;
+      *) continue ;;
+    esac
+    case "$line" in
+      *'"status":"succeeded"'*) ;;
+      *) continue ;;
+    esac
+    st=$(json_str_field "$line" "state")
+    [ -n "$st" ] && current_state=$st
+  done <<EOF
+$(tail -n 500 "$CANON_WI_LEDGER" 2>/dev/null)
+EOF
+fi
+
+# ---------------------------------------------------------------------------
+# Trigger evaluation helpers.
+# ---------------------------------------------------------------------------
+
+# phase.completed with "phase":N present in the run event ledger?
+match_phase_completed() {
+  # $1 = phase number
+  [ -f "$RUN_EVENTS_LEDGER" ] || return 1
+  grep '"event":"phase.completed"' "$RUN_EVENTS_LEDGER" 2>/dev/null \
+    | grep -q "\"phase\":$1\\b"
+}
+
+# work_item.linked_artifact of kind=mr for this id (run-local or canonical WI)?
+match_linked_mr() {
+  for led in "$RUN_WI_LEDGER" "$CANON_WI_LEDGER"; do
+    [ -f "$led" ] || continue
+    grep '"event":"work_item.linked_artifact"' "$led" 2>/dev/null \
+      | grep "\"work_item_id\":\"$work_item_id\"" \
+      | grep -q '"kind":"mr"' && return 0
+  done
+  return 1
+}
+
+# feature.verified anywhere in the run event ledger?
+match_feature_verified() {
+  [ -f "$RUN_EVENTS_LEDGER" ] || return 1
+  grep -q '"event":"feature.verified"' "$RUN_EVENTS_LEDGER" 2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# 7. Walk transition rows in order; last matching (non-noop) row wins so the
+#    furthest-forward transition is chosen.
+# ---------------------------------------------------------------------------
+target_state=""
+while IFS="	" read -r trigger tgt; do
+  [ -n "$trigger" ] || continue
+  [ -n "$tgt" ] || continue
+  # Skip a transition that would land on the state we are already in.
+  [ "$tgt" = "$current_state" ] && continue
+
+  hit=1
+  case "$trigger" in
+    phase.completed*)
+      pnum=$(printf '%s' "$trigger" | sed -n 's/.*phase=\([0-9][0-9]*\).*/\1/p')
+      if [ -n "$pnum" ] && match_phase_completed "$pnum"; then hit=0; fi
+      ;;
+    work_item.linked_artifact*)
+      case "$trigger" in
+        *kind=mr*) if match_linked_mr; then hit=0; fi ;;
+      esac
+      ;;
+    feature.verified*)
+      if match_feature_verified; then hit=0; fi
+      ;;
+  esac
+
+  [ "$hit" -eq 0 ] && target_state=$tgt
+done <<EOF
+$transitions
+EOF
+
+# ---------------------------------------------------------------------------
+# 8. Nothing fired.
+# ---------------------------------------------------------------------------
+[ -n "$target_state" ] || bail
+
+# ---------------------------------------------------------------------------
+# 9. Render the action message from the template.
+# ---------------------------------------------------------------------------
+action_msg=$action_template
+action_msg=$(printf '%s' "$action_msg" \
+  | awk -v v="$work_item_id" '{gsub(/\{ticket_id\}/, v); print}')
+action_msg=$(printf '%s' "$action_msg" \
+  | awk -v s="$target_state" '{gsub(/\{state\}/, s); print}')
+
+# ---------------------------------------------------------------------------
+# 10. Escape the message for a double-quoted shell context, then substitute
+#     it into the adapter command's {message} placeholder.
+# ---------------------------------------------------------------------------
+esc_msg=$(printf '%s' "$action_msg" \
+  | sed -e 's/\\/\\\\/g' \
+        -e 's/"/\\"/g' \
+        -e 's/\$/\\$/g' \
+        -e 's/`/\\`/g')
+
+final_cmd=$(printf '%s' "$adapter_cmd" \
+  | awk -v m="$esc_msg" '{gsub(/\{message\}/, m); print}')
+
+# ---------------------------------------------------------------------------
+# 11. Run the adapter under a 120s timeout; swallow all failures.
+# ---------------------------------------------------------------------------
+run_with_timeout() {
+  if command -v timeout >/dev/null 2>&1; then
+    timeout 120 bash -c "$1" 2>&1
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout 120 bash -c "$1" 2>&1
+  else
+    bash -c "$1" 2>&1
+  fi
+}
+
+response=$(run_with_timeout "$final_cmd")
+
+# ---------------------------------------------------------------------------
+# 12. Decide the receipt status by scanning the response for a known state.
+#     Case-sensitive substring; last matching state wins.
+# ---------------------------------------------------------------------------
+status="pending"
+receipt_state=$target_state
+while IFS= read -r cand; do
+  [ -n "$cand" ] || continue
+  case "$response" in
+    *"$cand"*)
+      status="succeeded"
+      receipt_state=$cand
+      ;;
+  esac
+done <<EOF
+$known_states
+EOF
+
+# ---------------------------------------------------------------------------
+# 13. Build and persist the receipt event.
+# ---------------------------------------------------------------------------
+
+# Cap the response excerpt at 500 chars and strip CR before JSON escaping.
+cap_response=$(printf '%s' "$response" | tr -d '\r' | cut -c1-500)
+
+ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+esc_state=$(json_escape "$receipt_state")
+esc_target=$(json_escape "$target_state")
+esc_id=$(json_escape "$work_item_id")
+esc_run=$(json_escape "$run_id")
+esc_excerpt=$(json_escape "$cap_response")
+
+summary="ticket-sync: $work_item_id → $receipt_state ($status)"
+esc_summary=$(json_escape "$summary")
+
+receipt="{\"schema\":1,\"ts\":\"$ts\",\"event\":\"work_item.adapter_receipt\",\"run_id\":\"$esc_run\",\"phase\":null,\"actor\":\"ticket-sync\",\"summary\":\"$esc_summary\",\"artifacts\":[],\"data\":{\"status\":\"$status\",\"state\":\"$esc_state\",\"work_item_id\":\"$esc_id\",\"target_state\":\"$esc_target\",\"triggered_by\":\"hook\",\"response_excerpt\":\"$esc_excerpt\"}}"
+
+# Append to the canonical ledger (best-effort; create parent dir).
+mkdir -p "$(dirname "$CANON_WI_LEDGER")" 2>/dev/null
+printf '%s\n' "$receipt" >> "$CANON_WI_LEDGER" 2>/dev/null
+
+# Append to the run-local WI ledger (best-effort).
+printf '%s\n' "$receipt" >> "$RUN_WI_LEDGER" 2>/dev/null
+
+# Append a history bullet if the work item markdown has a History section.
+if grep -q '^## History' "$WORK_ITEM_PATH" 2>/dev/null; then
+  printf -- '- %s ticket-sync: %s → %s (%s)\n' \
+    "$ts" "$work_item_id" "$receipt_state" "$status" >> "$WORK_ITEM_PATH" 2>/dev/null
+fi
+
+exit 0

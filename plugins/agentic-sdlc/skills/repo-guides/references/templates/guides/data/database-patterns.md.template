@@ -1,0 +1,245 @@
+---
+# Database Patterns
+
+<!--
+GENERATION INSTRUCTIONS:
+Fill this template by scanning the host repository — never invent a fact you cannot cite.
+Every code block you emit MUST carry a provenance comment on its first line naming the
+source file and line range. Work through these steps in order:
+
+  1. DETECT the persistence approach: ORM (name it), query builder, raw SQL, or mixed.
+  2. SCAN the models/entities directory for relationships (1:N, N:M, 1:1).
+  3. PULL real query patterns from repositories/services — canonical example only.
+  4. FIND where transactions are opened and which layer owns the boundary.
+  5. LOCATE migration files and the exact commands that drive them.
+  6. KEEP the output concise — hard cap of 300 lines.
+
+Rules:
+  - Classify data access as one of: Repository | Active Record | DAO | Direct ORM | Service Layer.
+  - Classify pagination as one of: Offset-based | Cursor-based | Keyset.
+  - Take migration/seed commands VERBATIM from package.json, Makefile, or docs. Do not paraphrase.
+  - Any section without repo evidence gets N/A (seeds, soft delete, raw SQL → "Not used").
+  - Include the complex-query section ONLY if such a query actually exists in the codebase.
+  - Extract the PRIMARY data-access pattern, not every variant you find.
+-->
+
+**Project**: [Extract from config]
+**Database**: [PostgreSQL/MySQL/MongoDB/SQLite - detect from config]
+**Data Access**: [ORM name / query builder / raw SQL / mixed]
+**Models Location**: [Detect path]
+
+---
+
+## Connection Setup
+
+<!-- Detect the connection/pool configuration and the env vars that drive it. -->
+
+```[lang]
+// Source: [file:lines]
+[Extract the connection/pool init as written in the repo]
+```
+
+| Env Var | Purpose |
+|---------|---------|
+| `[DB_HOST/DATABASE_URL]` | [Connection target] |
+| `[DB_NAME]` | [Database name] |
+| `[DB_POOL_SIZE]` | [Max pooled connections] |
+
+---
+
+## Data Access Pattern
+
+<!-- Classify: Repository | Active Record | DAO | Direct ORM | Service Layer. -->
+
+**Pattern**: [detected classification]
+
+```[lang]
+// Source: [file:lines]
+[Canonical data-access example — the one pattern the repo uses everywhere]
+```
+
+**Adding new data access** (follow the repo's own convention):
+
+1. [Step 1 — e.g. define/extend the model or entity]
+2. [Step 2 — e.g. add the repository/DAO method]
+3. [Step 3 — e.g. call it from the owning service/handler]
+
+---
+
+## Entity Definition
+
+<!-- One representative model only. Do not dump the full model inventory or DDL. -->
+
+```[lang]
+// Source: [file:lines]
+[One representative entity/model definition]
+```
+
+| Convention | Value |
+|------------|-------|
+| Table naming | [singular/plural, snake_case/camelCase] |
+| Primary key | `[id/uuid/_id pattern]` |
+| Timestamps | `[created_at/createdAt, updated_at/updatedAt]` |
+| Soft delete | `[deleted_at field or N/A]` |
+| PK generation | `[timestamp_description | sequential | etc.]` |
+
+---
+
+## Relationships
+
+<!-- Map relationships found while scanning models. ASCII diagram + syntax table. -->
+
+```
+[ASCII map, e.g.]
+User ──1:N──> Order ──N:M──> Product
+Order ──1:1──> Invoice
+```
+
+| Relation | Implementation Syntax |
+|----------|----------------------|
+| 1:N | `[hasMany/OneToMany/references - as written]` |
+| N:M | `[belongsToMany/ManyToMany/join table]` |
+| 1:1 | `[hasOne/OneToOne]` |
+
+---
+
+## Query Patterns
+
+<!-- Pull CRUD, filtering, and pagination from real repository/service code. -->
+
+### Basic Operations
+
+| Operation | Syntax |
+|-----------|--------|
+| Find by ID | `[syntax]` <!-- Source: [file:line] --> |
+| Find many | `[syntax]` <!-- Source: [file:line] --> |
+| Create | `[syntax]` <!-- Source: [file:line] --> |
+| Update | `[syntax]` <!-- Source: [file:line] --> |
+| Delete | `[syntax]` <!-- Source: [file:line] --> |
+
+### Filtering & Pagination
+
+**Pagination style**: [Offset-based | Cursor-based | Keyset] — params `[page/limit or cursor/take]`
+
+```[lang]
+// Source: [file:lines]
+[Filter + paginate example as written]
+```
+
+### Complex Query
+
+<!-- Include this subsection ONLY if a join/aggregate example exists. Otherwise delete it. -->
+
+```[lang]
+// Source: [file:lines]
+[Representative join/aggregate query]
+```
+
+---
+
+## Transactions
+
+<!-- Find where transactions are opened; note the layer that owns the boundary. -->
+
+**Boundary owner**: [service | repository | controller]
+
+```[lang]
+// Source: [file:lines]
+[Transaction pattern as written — wrap related writes together]
+```
+
+**Inferred rules**:
+
+- [Rule 1 — e.g. related writes share one transaction]
+- [Rule 2 — e.g. commit on success, roll back on any error]
+
+---
+
+## Eager Loading (N+1 Avoidance)
+
+<!-- Extract the ORM's eager-load syntax used to prevent N+1 in loops. -->
+
+```[lang]
+// Source: [file:lines]
+[Eager-load example using [include/populate/joinedLoad/with - whatever ORM uses]]
+```
+
+---
+
+## Migrations
+
+<!-- Commands VERBATIM from package.json / Makefile / docs. -->
+
+| Action | Command |
+|--------|---------|
+| Create migration | `[exact command]` |
+| Run pending | `[exact command]` |
+| Rollback last | `[exact command]` |
+| Check status | `[exact command]` |
+
+**Location**: `[path or N/A]`
+**Naming**: [timestamp/sequence + description scheme]
+
+---
+
+## Seeding
+
+<!-- Seed/fixture commands verbatim, or N/A if none exist. -->
+
+| Action | Command |
+|--------|---------|
+| Run seeds | `[exact command or N/A]` |
+| Reset + seed | `[exact command or N/A]` |
+
+---
+
+## Raw Queries
+
+<!-- Scope raw-SQL usage. If none: state "Not used". Any example MUST be parameterized. -->
+
+**Scope**: [where/why raw SQL is used, or "Not used"]
+
+```[lang]
+// Source: [file:lines]
+[Parameterized raw query — placeholders/bind params, never interpolation]
+```
+
+⚠️ **Never**: String interpolation → SQL injection risk
+
+---
+
+## Error Handling
+
+<!-- Extract how the repo maps DB failures. -->
+
+| Case | Handling |
+|------|----------|
+| Not found | `[return null / throw NotFound / etc.]` <!-- Source: [file:line] --> |
+| Duplicate key | `[unique-violation handling]` <!-- Source: [file:line] --> |
+| Connection error | `[retry / surface / fail-fast]` <!-- Source: [file:line] --> |
+
+---
+
+## Conventions Summary
+
+| ✅ DO | ❌ DON'T |
+|------|---------|
+| Access the DB through the [detected] layer | Call the DB directly from the wrong layer |
+| Eager-load related rows up front | Lazy-load inside loops (N+1) |
+| Parameterize every query | Interpolate strings into SQL |
+| Wrap related writes in one transaction | Save related records with separate calls |
+| Soft-delete via `[deleted_at field]` | Hard-delete where soft delete is the convention |
+
+---
+
+## Quick Reference
+
+| What | Path | Naming Pattern |
+|------|------|---------------|
+| Models/Entities | `[path]` | `[naming]` |
+| Repositories/DAOs | `[path]` | `[naming]` |
+| Migrations | `[path]` | `[naming]` |
+| Seeds | `[path or N/A]` | `[naming or N/A]` |
+| DB Config | `[path]` | `[naming]` |
+
+---

@@ -1,0 +1,5 @@
+# Pin ShellCheck's dialect for everything in this directory.
+# The hooks are POSIX/bash 3.2 compatible, and the polyglot dispatcher
+# (run-hook.cmd) is not something ShellCheck can classify on its own, so we
+# tell it to treat the whole folder as bash instead of guessing per file.
+shell=bash

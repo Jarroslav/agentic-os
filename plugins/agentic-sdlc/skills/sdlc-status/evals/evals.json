@@ -1,0 +1,77 @@
+{
+  "skill_name": "sdlc-status",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "What SDLC runs do we have going right now?",
+      "expected_output": "Enumerates the run directories under docs/superpowers/runs/, newest first, with each run's current phase and status pulled from meta.json — no writes of any kind.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "catalog-is-read-only",
+          "description": "Listing every run produces no writes anywhere — this is pure R0 inspection."
+        },
+        {
+          "name": "newest-run-first",
+          "description": "Runs are ordered with the most recently created run at the top of the list."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run PROJ-4471 stopped partway through — can you pick it back up?",
+      "expected_output": "Shows the run's current phase and status, then explicitly asks the user to confirm before handing the resume off to sdlc-pipeline — it does not resume unprompted.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "resume-waits-for-yes",
+          "description": "The skill surfaces the run's state and asks for explicit confirmation before any resume handoff happens."
+        },
+        {
+          "name": "delegates-execution-elsewhere",
+          "description": "Once confirmed, the actual phase execution is handed to sdlc-pipeline rather than run by this skill itself."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Resume the run that finished last week, PROJ-4200.",
+      "expected_output": "Checks meta.status first, finds it completed, and refuses to resume or write anything to that run's directory — a completed run is treated as immutable no matter what the user asks for.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "completed-run-refuses-writes",
+          "description": "A run whose meta.status is completed is never written to, and a resume request against it is declined."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Resume PROJ-4310 — I know it was aborted earlier but we want to pick it up again.",
+      "expected_output": "Surfaces that the run's meta.status is aborted and asks a direct yes/no question before doing anything further; only proceeds to hand off a resume after an explicit yes.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "aborted-run-needs-explicit-yes",
+          "description": "An aborted run is never resumed on an implicit or assumed confirmation — the skill asks directly and waits."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The status for PROJ-4390 looks off — meta.json says phase 4 but I thought it finished phase 6.",
+      "expected_output": "Reads events.jsonl, finds it shows phase 6 already completed, and treats the event log as the source of truth: appends a status.repaired event and corrects the meta.json snapshot to match — never rewrites or truncates events.jsonl itself.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "event-log-wins-over-snapshot",
+          "description": "When meta.json and events.jsonl disagree, the snapshot is corrected to match the append-only log, not the other way around."
+        },
+        {
+          "name": "correction-is-additive",
+          "description": "Fixing the mismatch appends a status.repaired event rather than editing or truncating the existing event history."
+        }
+      ]
+    }
+  ]
+}

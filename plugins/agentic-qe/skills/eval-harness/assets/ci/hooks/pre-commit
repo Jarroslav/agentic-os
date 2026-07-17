@@ -1,0 +1,30 @@
+#!/bin/sh
+# pre-commit — gate every commit on the deterministic eval layer.
+#
+# Runs the code-based (deterministic, credential-free) skill evals before
+# git finalizes a commit, so a broken skill contract never lands in history.
+# The LLM-judge eval layer is intentionally NOT run here: it needs API
+# credentials and adds cost/latency, so run it manually or in CI instead.
+#
+# Install: keep hooks tracked in the repo and point git at them:
+#   git config core.hooksPath .github/hooks
+#
+# Variant: save this same script as `pre-push` to gate pushes instead.
+# Bypass:  git commit --no-verify   (or push --no-verify)
+#
+# Exit status: 0 lets the commit proceed; anything non-zero aborts it.
+
+set -e
+
+# Always run from the repository root, no matter which subdirectory the
+# commit was started from.
+cd "$(git rev-parse --show-toplevel)"
+
+# --- Deterministic eval command -------------------------------------------
+# Keep exactly ONE of the lines below active, matching your project's
+# language/harness. The command must be fast, deterministic, need no
+# credentials, and exit non-zero on any contract breakage.
+
+npm test
+# python -m pytest evals/test_runner.py
+# python evals/run_evals.py

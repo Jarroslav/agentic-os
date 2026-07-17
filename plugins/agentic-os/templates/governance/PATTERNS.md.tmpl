@@ -1,0 +1,38 @@
+# {{PROJECT_NAME}} — Coding Patterns (Index)
+
+> Canonical hard rules live under [`.agentic/guides/`](.agentic/guides/) — one guide per
+> domain. This file is the stable index; agents read it first and follow the links.
+> Rules are never restated here or inside agent contracts — referenced by link only.
+>
+> Deviating from any rule requires the owner's explicit say-so in chat — never silently.
+
+| Domain | Canonical guide |
+|---|---|
+| Git workflow (branch flow, commit format, sync-before-work) | [`.agentic/guides/standards/git-workflow.md`](.agentic/guides/standards/git-workflow.md) |
+| Code quality (tests & gates, blind review, comments, dead code) | [`.agentic/guides/standards/code-quality.md`](.agentic/guides/standards/code-quality.md) |
+| Quality gate commands (run/pass/fail/skip per gate) | [`.agentic/guides/standards/quality-gates.md`](.agentic/guides/standards/quality-gates.md) |
+| Working with agents (vertical slices, prototype-vs-contract, challenge prompting) | [`.agentic/guides/standards/working-with-agents.md`](.agentic/guides/standards/working-with-agents.md) |
+| Instruction quality grading (evidence-accuracy rubric) | [`.agentic/guides/standards/instruction-quality-rubric.md`](.agentic/guides/standards/instruction-quality-rubric.md) |
+| QA / test strategy | [`.agentic/guides/standards/qa-strategy-stub.md`](.agentic/guides/standards/qa-strategy-stub.md) *(replaced by `.agentic/guides/testing/qa-strategy.md` after `/sdlc:qa-init`)* |
+{{QA_GUIDE_ROWS}}| HITL policy (autonomy matrix, escalation ladder, safety) | [`.agentic/guides/policy/`](.agentic/guides/policy/) |
+| Agent routing (intent → owning asset) | [`.agentic/guides/agent-registry.md`](.agentic/guides/agent-registry.md) |
+| Project overview & conventions (stack, adapters) | [`.agentic/guides/project.md`](.agentic/guides/project.md) |
+| <!-- generated-guide-rows --> | |
+
+<!-- The row above is the append point: Phase 5 inserts one row per generated
+     stack guide (.agentic/guides/{data,api,development,architecture}/…) directly
+     below it. It is a real, mostly-empty table row, NOT a standalone comment line —
+     a bare comment would terminate the GFM table and the appended rows would render
+     as paragraph text. Never remove or edit the marker row itself. -->
+
+Agent contracts: [AGENTS.md](AGENTS.md).
+
+## How to propose a change
+
+The guides are **living**. When a new bug, ADR, or convention crystallises a pattern:
+
+1. Add it as a MUST/SHOULD rule in the right guide under `.agentic/guides/`.
+2. Quote the bug, migration, or commit it came from in the *Why*.
+3. PR title: `docs(patterns): <rule short title>`.
+4. Owner reviews — patterns are the spec, not a draft. Only the owner can approve
+   removing or weakening a rule.

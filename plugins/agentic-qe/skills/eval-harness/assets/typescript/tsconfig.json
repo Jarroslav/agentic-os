@@ -1,0 +1,18 @@
+{
+  // Compiler settings for the eval harness only — kept separate from the host
+  // repo's own tsconfig so harness strictness never leaks into product builds.
+  "compilerOptions": {
+    "target": "ES2022", // vitest runs on modern Node; no down-leveling needed
+    "lib": ["ES2022"], // no DOM — the harness is Node-only
+    "module": "Node16", // native ESM with .mts support for the judge runner
+    "moduleResolution": "node16", // match the module setting above
+    "types": ["node"], // process/fs typings; add "vitest/globals" if you enable them
+    "strict": true, // the harness is small; keep it fully strict
+    "esModuleInterop": true,
+    "resolveJsonModule": true, // eval specs are plain JSON imports
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true, // catch case-typos on mac/linux CI
+    "noEmit": true // vitest transpiles on the fly; nothing is built from here
+  },
+  "include": ["*.ts", "*.mts"] // flat dir: runner, judge runner, and their tests
+}

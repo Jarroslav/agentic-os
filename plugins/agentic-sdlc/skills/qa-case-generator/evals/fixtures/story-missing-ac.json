@@ -1,0 +1,20 @@
+{
+  "ticket_id": "PROJ-278",
+  "ticket_url": "https://jira.example.com/browse/PROJ-278",
+  "title": "Saved views for the ticket queue",
+  "description": "Support leads want to pin their own filtered slices of the ticket queue. From the queue toolbar:\n- Let a user name and save the current filter + sort combination as a view.\n- Show saved views as tabs across the top of the queue, in the order they were created.\n- Selecting a view applies its filters and sort instantly without a full page reload.\n- A user can rename or delete only the views they created.\n- Deleting the active view falls back to the default All Open view.",
+  "acceptance_criteria": null,
+  "priority": "High",
+  "issue_type": "Story",
+  "labels": ["queue", "saved-views", "ux"],
+  "comments": [
+    {
+      "author": "dev.lead@example.com",
+      "created_at": "2026-05-22T14:40:00Z",
+      "body": "AC field was left blank in Jira — the behaviour is spelled out as bullets in the description, please derive from there rather than guessing new rules."
+    }
+  ],
+  "subtasks": [],
+  "linked_items": [],
+  "attachments": []
+}

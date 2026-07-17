@@ -1,0 +1,146 @@
+{
+  "skill_name": "qa-e2e-generator",
+  "version": "0.1.0",
+  "evals": [
+    {
+      "id": 1,
+      "name": "first-run-preflight-provisions-directory",
+      "description": "A never-before-seen work item enters Phase 0 preflight: the run folder is provisioned and the opening event is recorded, but the finalization meta stays unwritten.",
+      "prompt": "Nothing has been generated for BILL-58 yet. Please spin up end-to-end coverage for it from scratch.",
+      "files": [
+        ".agentic/guides/testing/qa-strategy.md",
+        ".agentic/guides/project.md"
+      ],
+      "expected_output": "Because no prior event stream exists for the work item, the skill takes the fresh-preflight branch of Phase 0. It provisions docs/superpowers/qa-tasks/2026-07-03-bill-58/e2e/ and appends the Phase 0 preflight event to events.jsonl with status complete. meta.json is intentionally left unwritten at this point — it is only produced later at Phase 11 finalization.",
+      "assertions": [
+        {
+          "name": "run-directory-provisioned",
+          "description": "A run directory matching docs/superpowers/qa-tasks/*-bill-58/e2e/ is created under the superpowers task tree."
+        },
+        {
+          "name": "preflight-event-recorded",
+          "description": "events.jsonl holds the Phase 0 preflight event carrying status complete."
+        },
+        {
+          "name": "meta-not-yet-emitted",
+          "description": "meta.json does not exist after preflight; its creation is deferred to Phase 11."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "resumable-run-offers-continue-or-regenerate",
+      "description": "Phase 0 spots a half-finished run, reads how far it got, and asks the operator to either pick up where it left off or scrap it and start over.",
+      "prompt": "I already started /qa-e2e-generator NOTIF-12 earlier and it stopped partway. Run it again and figure out whether to keep going or wipe it.",
+      "files": [
+        ".agentic/guides/testing/qa-strategy.md",
+        "docs/superpowers/qa-tasks/2026-06-28-notif-12/e2e/events.jsonl"
+      ],
+      "expected_output": "Phase 0 finds an existing events.jsonl, resolves LAST_PHASE from its final completed entry, and hands off to AskUserQuestion presenting exactly two paths: continue and regenerate. Choosing continue sets RESUME_FROM to LAST_PHASE so the dispatcher skips every already-finished phase. Choosing regenerate tears down the run directory with rm -rf — no backup is taken — and restarts the pipeline from the top.",
+      "assertions": [
+        {
+          "name": "last-phase-resolved",
+          "description": "LAST_PHASE is derived from the most recent completed entry in events.jsonl."
+        },
+        {
+          "name": "exactly-two-choices-offered",
+          "description": "AskUserQuestion surfaces only the continue and regenerate options — no third path such as a backup."
+        },
+        {
+          "name": "continue-primes-resume-marker",
+          "description": "On continue, RESUME_FROM is assigned the value of LAST_PHASE so completed phases are bypassed."
+        },
+        {
+          "name": "regenerate-purges-without-backup",
+          "description": "On regenerate the run directory is deleted via rm -rf with no backup retained before the restart."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "environment-validation-pulls-work-item-adapter",
+      "description": "Phase 1 lifts the work-item adapter out of the QA strategy document, records the validation event, and clears the way to Phase 2.",
+      "prompt": "Kick off E2E generation for PROFILE-205 — the QA strategy doc already declares the adapter it should use.",
+      "files": [
+        ".agentic/guides/testing/qa-strategy.md"
+      ],
+      "expected_output": "During Phase 1 environment validation the skill reads adapter_config.work_item from qa-strategy.md and loads it into ADAPTER. It deliberately does not consult test-runner configuration or the package manifest for this value — the strategy document is the single source of truth. The Phase 1 environment-validation event is appended to events.jsonl and control advances toward Phase 2.",
+      "assertions": [
+        {
+          "name": "adapter-read-from-strategy-doc",
+          "description": "ADAPTER is populated from adapter_config.work_item inside qa-strategy.md, not from test-runner config files or the package manifest."
+        },
+        {
+          "name": "validation-event-recorded",
+          "description": "events.jsonl gains the Phase 1 environment-validation event with status complete."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "absent-adapter-blocks-progression",
+      "description": "When the strategy document carries no work-item adapter, Phase 1 refuses to advance and surfaces the precise, adapter-specific failure message.",
+      "prompt": "Try running /qa-e2e-generator EXPORT-30 against a strategy doc that never declares a work-item adapter and show me what happens.",
+      "files": [
+        ".agentic/guides/testing/qa-strategy.md"
+      ],
+      "expected_output": "Phase 1 cannot locate adapter_config.work_item in qa-strategy.md, so it stops before Phase 2 ever starts. The run reports the exact message 'adapter not found in qa-strategy.md'. It must not fall back to the generic runner-detection message 'No test automation framework detected', and no test artifacts are produced.",
+      "assertions": [
+        {
+          "name": "stops-ahead-of-phase-two",
+          "description": "The pipeline halts before Phase 2 begins."
+        },
+        {
+          "name": "emits-adapter-specific-error",
+          "description": "The failure string is exactly 'adapter not found in qa-strategy.md'."
+        },
+        {
+          "name": "avoids-generic-framework-error",
+          "description": "The message 'No test automation framework detected' is never emitted for this halt."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "full-run-lands-artifacts-and-external-tests",
+      "description": "A clean end-to-end pass drives all twelve phases to completion, writes every expected artifact, deposits the generated specs in the external test repo, and consumes the git workflow standards for the review handoff.",
+      "prompt": "Take WALLET-140 all the way through — generate the E2E suite, produce the run artifacts, drop the tests into the test repo, and get it ready for the merge request.",
+      "files": [
+        ".agentic/guides/testing/qa-strategy.md",
+        ".agentic/guides/project.md",
+        ".agentic/guides/standards/git-workflow.md"
+      ],
+      "expected_output": "The pipeline runs phases 0 through 11 and each one reaches status complete in events.jsonl. Under docs/superpowers/qa-tasks/2026-07-06-wallet-140/e2e/ the run emits context-manifest.json (with framework, test_repo, and feature_area), test-plan.md (holding at least one TC- scenario row), execution-results.json (with total, passing, failing, fixes_applied, test_files, and unresolved_failures, where test_files is non-empty and points at paths under test_repo.root), and meta.json written at Phase 11. The actual generated test files live in the external test repo root rather than inside the run directory, and git-workflow.md is read to drive the merge-request handoff.",
+      "assertions": [
+        {
+          "name": "every-phase-reaches-complete",
+          "description": "Phases 0 through 11 are all logged with status complete in events.jsonl."
+        },
+        {
+          "name": "run-artifacts-all-present",
+          "description": "context-manifest.json, test-plan.md, execution-results.json, and meta.json all exist under the run e2e directory."
+        },
+        {
+          "name": "context-manifest-shape",
+          "description": "context-manifest.json exposes the framework, test_repo, and feature_area fields."
+        },
+        {
+          "name": "test-plan-carries-tc-row",
+          "description": "test-plan.md includes at least one TC- scenario row."
+        },
+        {
+          "name": "execution-results-shape",
+          "description": "execution-results.json carries total, passing, failing, fixes_applied, test_files, and unresolved_failures, with test_files non-empty."
+        },
+        {
+          "name": "generated-tests-in-external-repo",
+          "description": "The produced test files sit under test_repo.root, not inside the run/output directory."
+        },
+        {
+          "name": "meta-written-only-at-finalization",
+          "description": "meta.json is produced during Phase 11 finalization rather than earlier."
+        }
+      ]
+    }
+  ]
+}

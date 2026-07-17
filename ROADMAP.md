@@ -1,0 +1,67 @@
+# Roadmap
+
+This tracks what's shipped, what's next, and what's explicitly deferred.
+Item-level detail lives closer to the code (`tests/universal/README.md` for
+universal-stack-support coverage, `plugins/agentic-sdlc/README.md`'s own
+Roadmap section for SDLC-pipeline-specific items); this file is the
+top-level index.
+
+## Shipped
+
+- Six curated stack profiles (Next.js/Supabase, Django, Spring, Rails, Go,
+  Playwright TAF) with instant, high-confidence matching.
+- Universal stack support: evidence-grounded repository discovery for any
+  stack, not just the six curated ones — proven live against non-curated
+  fixtures spanning both persistence paradigms (migration-managed,
+  model-defined-no-migration) and both UI paradigms (component-framework,
+  template-engine). See `tests/universal/README.md` for the full evidence
+  trail.
+- Seven role presets (developer, qa, ba-po, architect, pm-delivery, devops,
+  portfolio), additive composition, strictest-HITL-wins union semantics.
+- The HITL escalation ladder, decision-router, write-scope enforcement,
+  blind pre-commit review, and the instruction-quality audit/scorecard gate
+  — see `docs/PRINCIPLES.md` for what each does and why.
+- `/agentic-doctor` (8-check install verification) and `/agentic-upgrade`
+  (three-way journal/current/newrender reconciliation, including the
+  agent-registry hybrid-file special case).
+- Per-plugin release tags (`agentic-<plugin>-v<X.Y.Z>` per `CONTRIBUTING.md`
+  § Releasing) are live — activating the clean template-only upgrade diff
+  documented in `plugins/agentic-os/docs/UPGRADING.md`.
+- **`agentic-qe`** — a third, standalone plugin: a tool-agnostic catalog of 28
+  Quality Engineering AI blueprints organized by STLC stage, the `qe-blueprints`
+  scaffolder (blueprint → ready-to-fill agent framework for Claude Code,
+  Cursor, or GitHub Copilot), and the `eval-harness` eval-framework generator.
+  Independent of the governance flow — no `/agentic-init` required.
+
+## In progress / next
+
+- **Codex packaging for the `agentic-os` and `agentic-qe` plugins.** Only
+  `agentic-sdlc` ships a `.codex-plugin/` manifest today, so on Codex you get
+  the SDLC pipeline but not the governance installer or the QE blueprints; the
+  README scopes its claims accordingly.
+
+- **`i18n` capability on a non-curated fixture.** Persistence, server-writes,
+  and both UI paradigms all have live non-curated proof; `i18n`/
+  `gen/i18n-agent` generation has not yet been run end-to-end against a
+  non-curated fixture. Tracked in `tests/universal/README.md` § "What's
+  proven vs. still open."
+- **Zero-capability install path end-to-end.** A `pm-delivery`/`qa`-only role
+  preset (`generated: []`) has deterministic coverage
+  (`tests/lib/check-presets.py`) but has never been driven through a live
+  `/agentic-init` run to confirm the discovery-front-end path degrades
+  cleanly with nothing to generate.
+
+## Deferred, by design
+
+- **Paradigm fragments** for generated agent contracts (pre-written,
+  paradigm-specific rule blocks the installer could append). The seam exists
+  in the generator prompts, but zero fragments have been written — every
+  non-curated fixture run so far has shown the paradigm-neutral exemplar
+  skeleton alone is sufficient (no vocabulary transplant observed). Per
+  YAGNI, this stays unbuilt until a real fixture or install surfaces a
+  transplant the neutral skeleton misses. See `tests/universal/README.md` §
+  "Decision: paradigm fragments not added."
+- **`agentic-sdlc` v2 items** (adaptive mode switching mid-flow, `sdlc-status`
+  support for `sdlc-task` runs, native PR integration, cross-run memory
+  promotion) — see `plugins/agentic-sdlc/README.md` § Roadmap for the current
+  list; not duplicated here to avoid the two files drifting out of sync.

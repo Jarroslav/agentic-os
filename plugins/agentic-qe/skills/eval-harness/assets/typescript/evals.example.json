@@ -1,0 +1,59 @@
+{
+  "skill_name": "example-skill",
+  "contracts": {
+    "required_paths": ["SKILL.md", "scripts/report.py", "assets/template.md"],
+    "skill_md_includes": ["## Usage", "Blast radius"],
+    "skill_md_matches": ["blast\\s+radius:\\s*r[01]"],
+    "scripts": {
+      "scripts/report.py": {
+        "compile": true,
+        "smoke": {
+          "argv": [],
+          "exit": [2],
+          "output_includes": ["usage:"]
+        },
+        "includes": ["def main"],
+        "matches": ["argparse\\.ArgumentParser"]
+      }
+    }
+  },
+  "context_files": ["docs/reference.md"],
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The nightly quality gates failed on the attached run log. Identify the failing gate and propose the smallest fix.",
+      "expected_output": "A short diagnosis naming the failing gate (unit tests), the offending module, and a concrete one-line fix — prose guidance for report readers, never graded.",
+      "files": ["eval/fixtures/run-log.txt"],
+      "assertions": [
+        {
+          "name": "names_failing_gate",
+          "description": "The response identifies which quality gate failed, grounded in the supplied run log rather than invented details."
+        },
+        {
+          "name": "proposes_concrete_fix",
+          "description": "The response proposes a specific, actionable fix or next step (stated intent to apply it counts)."
+        },
+        {
+          "name": "no_fabricated_output",
+          "description": "The response does not fabricate command or tool output; any commands are stated as intended actions."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Summarize the current QA coverage for this repository and list the top three gaps.",
+      "expected_output": "A grounded coverage summary citing the reference docs, plus three prioritized gaps.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "grounded_summary",
+          "description": "The summary only uses facts present in the reference context; it does not invent coverage numbers."
+        },
+        {
+          "name": "three_gaps_listed",
+          "description": "Exactly three gaps are listed, each with a short rationale."
+        }
+      ]
+    }
+  ]
+}

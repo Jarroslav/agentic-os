@@ -1,0 +1,48 @@
+# Project Context
+
+<!-- Rendered by /agentic-init. agentic-sdlc reads this file to resolve the
+     ticket and MR adapters; keep adapter configuration ONLY in the two
+     Adapter sections below — do not duplicate it elsewhere. -->
+
+## Project Identity
+
+| Field | Value | Source |
+|---|---|---|
+| Project name | {{PROJECT_NAME}} | interview / repo manifest |
+| Project code/key | {{TICKET_PREFIX}} | interview |
+
+## Work Item Tracker
+
+| Field | Value |
+|---|---|
+| Provider | {{TICKET_ADAPTER}} |
+| Key/prefix | {{TICKET_PREFIX}} |
+
+## Ticket Adapter
+
+**Status**: configured
+**Adapter**: {{TICKET_ADAPTER}}
+**Lookup**: resolve a `{{TICKET_PREFIX}}-NNN` identifier to title, description, and
+acceptance criteria using the provider named above (MCP tools when available,
+otherwise the provider CLI). If the provider is `none`, skills that need a ticket
+fall back to free-form task descriptions.
+**Create**: create work items through the same provider; always show the full
+payload and get human confirmation before any external write.
+**Output**: work-item identifier and URL.
+
+## Source Control And Review
+
+| Field | Value |
+|---|---|
+| Default target branch | {{DEFAULT_BRANCH}} |
+| Review artifact type | MR/PR via {{MR_ADAPTER}} |
+
+## MR Adapter
+
+**Status**: configured
+**Adapter**: {{MR_ADAPTER}}
+**Instructions**: branches follow `feature/*` / `fix/*` naming and target
+**`{{DEFAULT_BRANCH}}`**. Reference the `{{TICKET_PREFIX}}-NNN` work item in the
+MR/PR body when one exists. Conventional commit messages; no AI attribution
+footers. Production promotion is human-gated (see
+`.agentic/guides/policy/escalation-policy.md`).

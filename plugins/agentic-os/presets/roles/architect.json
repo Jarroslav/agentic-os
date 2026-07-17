@@ -1,0 +1,51 @@
+{
+  "name": "architect",
+  "description": "Governance and instruction-quality: full governance scaffolding (AGENTS/PATTERNS/registry), instruction-auditor with scorecard and spawn gate, generated architecture guides, knowledge-audit glue.",
+  "templates": [
+    "hooks/precommit-review-gate",
+    "hooks/subagent-gate",
+    "hooks/instruction-gate",
+    "hooks/instruction-stale-notice",
+    "hooks/write-scope-guard",
+    "hooks/session-bootstrap",
+    "hooks/precompact-checkpoint",
+    "hooks/settings-fragment",
+    "hooks/session-learnings-notice",
+    "hooks/context-monitor",
+    "hooks/prompt-scan-guard",
+    "hooks/lint-on-save",
+    "hooks/guarded-write-paths",
+    "hooks/human-gated-commands",
+    "githooks/pre-commit",
+    "scripts/install-git-hooks",
+    "governance/claude-section",
+    "governance/agents",
+    "governance/patterns",
+    "governance/agent-registry",
+    "policy/ai-policy",
+    "policy/escalation-policy",
+    "policy/safety-policy",
+    "guides/git-workflow",
+    "guides/code-quality",
+    "guides/quality-gates",
+    "guides/instruction-quality-rubric",
+    "guides/working-with-agents",
+    "agents/blind-code-reviewer",
+    "agents/instruction-auditor",
+    "commands/pipeline-orchestrator",
+    "sdlc/config",
+    "sdlc/project"
+  ],
+  "generated": [
+    "gen/stack-guides"
+  ],
+  "default_hitl": "gated-autonomous",
+  "default_orchestration": "pipeline",
+  "sdlc_skills": [
+    "repo-audit-guides",
+    "repo-guides",
+    "role-memory",
+    "sdlc-start",
+    "decision-router"
+  ]
+}

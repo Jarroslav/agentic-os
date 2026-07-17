@@ -1,0 +1,27 @@
+{
+  "ticket_id": "PROJ-263",
+  "ticket_url": "https://jira.example.com/browse/PROJ-263",
+  "title": "Reservations REST API",
+  "description": "Expose a backend-only REST surface for the reservations service. No UI in this ticket — consumers are the mobile app and partner integrations. All routes require a Bearer token; unauthenticated requests return 401.",
+  "acceptance_criteria": [
+    "AC1: GET /api/reservations returns a paginated list; each item carries a status of one of open|held|confirmed|cancelled.",
+    "AC2: GET /api/reservations/{id} returns a single reservation, or 404 when the id does not exist.",
+    "AC3: POST /api/reservations creates a reservation and responds 201 Created with a Location header pointing at the new resource.",
+    "AC4: PUT /api/reservations/{id} replaces a reservation; a malformed body returns 400.",
+    "AC5: DELETE /api/reservations/{id} performs a soft delete by setting status=cancelled rather than removing the row.",
+    "AC6: Any request missing or presenting an invalid Bearer token returns 401 regardless of route."
+  ],
+  "priority": "High",
+  "issue_type": "Story",
+  "labels": ["api", "backend", "rest"],
+  "comments": [
+    {
+      "author": "api.owner@example.com",
+      "created_at": "2026-05-25T11:05:00Z",
+      "body": "Sample create payload: {\"guest_id\": 4821, \"party_size\": 4, \"slot\": \"2026-06-01T19:30:00Z\"}. Expect 201 with Location: /api/reservations/9007."
+    }
+  ],
+  "subtasks": [],
+  "linked_items": [],
+  "attachments": []
+}

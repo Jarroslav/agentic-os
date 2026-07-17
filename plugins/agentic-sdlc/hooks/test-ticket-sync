@@ -1,0 +1,312 @@
+#!/usr/bin/env bash
+#
+# test-ticket-sync — bash test harness for the ticket-sync Stop/SubagentStop hook.
+#
+# Each test runs in its own mktemp sandbox that stands in for a repo root. The
+# harness fabricates the exact adapter config, pipeline run, work item and event
+# ledgers that ticket-sync consumes, invokes the hook, then asserts on the
+# receipt events it emits. A stub adapter script echoes the value of
+# $TICKET_SYNC_TEST_RESPONSE so tests can steer the succeeded/pending decision.
+#
+# Runs under plain bash 3.2 (no associative arrays); tests are listed
+# explicitly. Prints "=== N passed, M failed ===" and exits 1 on any failure.
+
+# Absolute path to the hook under test (sibling file in this directory).
+HOOK_DIR=$(cd "$(dirname "$0")" && pwd)
+HOOK="$HOOK_DIR/ticket-sync"
+
+# The canonical Stop-hook stdin payload; the hook must read and discard it.
+STOP_STDIN='{"session_id":"s1","transcript_path":"/tmp/t","stop_hook_active":false}'
+
+# Fixed identifiers used across the fixtures. Neutral, never a real tracker key.
+TICKET="PROJ-1234"
+CANON_LEDGER="docs/superpowers/work-items/work-item-events.jsonl"
+WORK_ITEM_MD="docs/superpowers/work-items/${TICKET}.md"
+
+PASS=0
+FAIL=0
+
+# ---------------------------------------------------------------------------
+# Assertion primitives.
+# ---------------------------------------------------------------------------
+
+pass() { PASS=$((PASS + 1)); printf 'ok   - %s\n' "$1"; }
+fail() { FAIL=$((FAIL + 1)); printf 'FAIL - %s\n' "$1"; }
+
+# Run the hook and assert it exits 0 (the hook is always a silent no-op or best
+# effort — it never returns non-zero).
+assert_silent_exit() {
+  # $1 = label
+  printf '%s' "$STOP_STDIN" | "$HOOK" >/dev/null 2>&1
+  if [ "$?" -eq 0 ]; then pass "$1 (exit 0)"; else fail "$1 (expected exit 0)"; fi
+}
+
+# Count `work_item.adapter_receipt` lines in a ledger. Missing file counts as 0.
+receipt_count() {
+  # $1 = ledger path
+  if [ -f "$1" ]; then
+    grep -c '"event":"work_item.adapter_receipt"' "$1" 2>/dev/null || echo 0
+  else
+    echo 0
+  fi
+}
+
+assert_receipt_count() {
+  # $1 = label, $2 = ledger path, $3 = expected count
+  got=$(receipt_count "$2")
+  if [ "$got" -eq "$3" ] 2>/dev/null; then
+    pass "$1 (receipts=$3)"
+  else
+    fail "$1 (expected $3 receipts, got $got in $2)"
+  fi
+}
+
+# Extract a JSON string field from a single line ("key":"value").
+line_field() {
+  # $1 = line, $2 = key
+  printf '%s' "$1" | sed -n "s/.*\"$2\":\"\\([^\"]*\\)\".*/\\1/p" | head -n1
+}
+
+# Assert the last receipt's data.<field> equals an expected value.
+assert_last_receipt_field() {
+  # $1 = label, $2 = ledger, $3 = field key, $4 = expected value
+  last=$(grep '"event":"work_item.adapter_receipt"' "$2" 2>/dev/null | tail -n1)
+  got=$(line_field "$last" "$3")
+  if [ "$got" = "$4" ]; then
+    pass "$1 ($3=$4)"
+  else
+    fail "$1 (expected $3='$4', got '$got')"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Fixtures.
+# ---------------------------------------------------------------------------
+
+# Create an isolated sandbox and cd into it. Caller cleans up via cleanup_tmp.
+with_tmpdir() {
+  TMP=$(mktemp -d 2>/dev/null || mktemp -d -t ticketsync)
+  cd "$TMP" || exit 1
+}
+
+cleanup_tmp() {
+  cd / 2>/dev/null
+  [ -n "$TMP" ] && rm -rf "$TMP"
+}
+
+# Write the adapter config ticket-flow.md.
+#   $1 = adapter invocation (with {message})
+#   $2 = known states (comma separated)
+#   $3 = transitions table body (one "| trigger | target |" row per line)
+write_flow_file() {
+  mkdir -p .agentic/guides/integration
+  {
+    printf '# Ticket flow adapter\n\n'
+    printf '**Adapter invocation**: %s\n' "$1"
+    printf '**Known states**: %s\n' "$2"
+    printf '**Action message template**: "{ticket_id} moved to {state}"\n\n'
+    printf '| When | Set state |\n'
+    printf '|------|-----------|\n'
+    printf '%s\n' "$3"
+  } > .agentic/guides/integration/ticket-flow.md
+}
+
+# Create a pipeline run: meta.json, work item markdown, empty run-local ledgers.
+#   $1 = external ticket value written into the work item markdown
+write_run() {
+  ticket_val="$1"
+  run_id="run-0001"
+  RUN_DIR="docs/superpowers/runs/$run_id"
+  mkdir -p "$RUN_DIR"
+  mkdir -p "$(dirname "$WORK_ITEM_MD")"
+
+  printf '{"run_id":"%s","status":"running","canonical_path":"%s"}\n' \
+    "$run_id" "$WORK_ITEM_MD" > "$RUN_DIR/meta.json"
+
+  {
+    printf '# %s\n\n' "$TICKET"
+    printf '**External Ticket**: %s\n\n' "$ticket_val"
+    printf '## History\n\n'
+    printf -- '- created\n'
+  } > "$WORK_ITEM_MD"
+
+  : > "$RUN_DIR/events.jsonl"
+  : > "$RUN_DIR/work-item-events.jsonl"
+}
+
+# Append a raw JSON line to a ledger.
+#   $1 = ledger path, $2 = json line
+emit_event() {
+  mkdir -p "$(dirname "$1")"
+  printf '%s\n' "$2" >> "$1"
+}
+
+# Create the stub adapter that echoes $TICKET_SYNC_TEST_RESPONSE.
+make_stub_adapter() {
+  cat > adapter-stub <<'STUB'
+#!/usr/bin/env bash
+# Stub external-tracker adapter: ignore the message, echo the canned response.
+echo "$TICKET_SYNC_TEST_RESPONSE"
+STUB
+  chmod +x adapter-stub
+}
+
+# The adapter invocation string the flow file declares.
+ADAPTER_CMD='bash ./adapter-stub "{message}"'
+
+# A default known-states list and transition table reused by most tests.
+KNOWN_STATES='TO DO, DEV, TO REVIEW, DONE'
+TRANSITIONS='| `phase.completed phase=2` | DEV |
+| `work_item.linked_artifact kind=mr` | TO REVIEW |
+| `feature.verified` | DONE |'
+
+# Emit a phase.completed event for phase N into the run event ledger.
+emit_phase() {
+  emit_event "$RUN_DIR/events.jsonl" "{\"event\":\"phase.completed\",\"phase\":$1}"
+}
+
+# Emit an mr link for the ticket into the run-local WI ledger.
+emit_mr_link() {
+  emit_event "$RUN_DIR/work-item-events.jsonl" \
+    "{\"event\":\"work_item.linked_artifact\",\"work_item_id\":\"$TICKET\",\"kind\":\"mr\"}"
+}
+
+# ---------------------------------------------------------------------------
+# Tests.
+# ---------------------------------------------------------------------------
+
+# (1) No flow file at all → silent no-op, and no canonical ledger is created.
+test_no_flow_file() {
+  with_tmpdir
+  make_stub_adapter
+  assert_silent_exit "no flow file"
+  if [ ! -f "$CANON_LEDGER" ]; then
+    pass "no flow file (no canonical ledger)"
+  else
+    fail "no flow file (canonical ledger should not exist)"
+  fi
+  cleanup_tmp
+}
+
+# (2) Flow file present but no run discoverable → silent, zero receipts.
+test_flow_but_no_run() {
+  with_tmpdir
+  make_stub_adapter
+  write_flow_file "$ADAPTER_CMD" "$KNOWN_STATES" "$TRANSITIONS"
+  assert_silent_exit "flow but no run"
+  assert_receipt_count "flow but no run" "$CANON_LEDGER" 0
+  cleanup_tmp
+}
+
+# (3) External Ticket is "Not configured" → skipped, zero receipts.
+test_ticket_not_configured() {
+  with_tmpdir
+  make_stub_adapter
+  write_flow_file "$ADAPTER_CMD" "$KNOWN_STATES" "$TRANSITIONS"
+  write_run "Not configured"
+  assert_silent_exit "ticket not configured"
+  assert_receipt_count "ticket not configured" "$CANON_LEDGER" 0
+  cleanup_tmp
+}
+
+# (4) phase=2 completed → one canonical + one run-local receipt, succeeded, DEV.
+test_phase_completed_fires() {
+  with_tmpdir
+  make_stub_adapter
+  write_flow_file "$ADAPTER_CMD" "$KNOWN_STATES" "$TRANSITIONS"
+  write_run "$TICKET"
+  emit_phase 2
+  TICKET_SYNC_TEST_RESPONSE="Transitioned to DEV"
+  export TICKET_SYNC_TEST_RESPONSE
+  assert_silent_exit "phase completed fires"
+  assert_receipt_count "phase completed fires (canonical)" "$CANON_LEDGER" 1
+  assert_receipt_count "phase completed fires (run-local)" \
+    "$RUN_DIR/work-item-events.jsonl" 1
+  assert_last_receipt_field "phase completed fires" "$CANON_LEDGER" "status" "succeeded"
+  assert_last_receipt_field "phase completed fires" "$CANON_LEDGER" "state" "DEV"
+  unset TICKET_SYNC_TEST_RESPONSE
+  cleanup_tmp
+}
+
+# (5) Firing twice with the same trigger → dedup keeps a single receipt.
+test_dedup_repeat_fire() {
+  with_tmpdir
+  make_stub_adapter
+  write_flow_file "$ADAPTER_CMD" "$KNOWN_STATES" "$TRANSITIONS"
+  write_run "$TICKET"
+  emit_phase 2
+  TICKET_SYNC_TEST_RESPONSE="Transitioned to DEV"
+  export TICKET_SYNC_TEST_RESPONSE
+  printf '%s' "$STOP_STDIN" | "$HOOK" >/dev/null 2>&1
+  printf '%s' "$STOP_STDIN" | "$HOOK" >/dev/null 2>&1
+  assert_receipt_count "dedup repeat fire" "$CANON_LEDGER" 1
+  unset TICKET_SYNC_TEST_RESPONSE
+  cleanup_tmp
+}
+
+# (6) Response contains no known state → one receipt, status pending.
+test_pending_when_state_absent() {
+  with_tmpdir
+  make_stub_adapter
+  write_flow_file "$ADAPTER_CMD" "$KNOWN_STATES" "$TRANSITIONS"
+  write_run "$TICKET"
+  emit_phase 2
+  TICKET_SYNC_TEST_RESPONSE="acknowledged"
+  export TICKET_SYNC_TEST_RESPONSE
+  assert_silent_exit "pending when state absent"
+  assert_receipt_count "pending when state absent" "$CANON_LEDGER" 1
+  assert_last_receipt_field "pending when state absent" "$CANON_LEDGER" "status" "pending"
+  unset TICKET_SYNC_TEST_RESPONSE
+  cleanup_tmp
+}
+
+# (7) Both phase.completed and mr-link fired → furthest-forward row wins.
+test_furthest_forward_wins() {
+  with_tmpdir
+  make_stub_adapter
+  write_flow_file "$ADAPTER_CMD" "$KNOWN_STATES" "$TRANSITIONS"
+  write_run "$TICKET"
+  emit_phase 2
+  emit_mr_link
+  TICKET_SYNC_TEST_RESPONSE="Now in TO REVIEW"
+  export TICKET_SYNC_TEST_RESPONSE
+  assert_silent_exit "furthest forward wins"
+  assert_last_receipt_field "furthest forward wins" "$CANON_LEDGER" "state" "TO REVIEW"
+  unset TICKET_SYNC_TEST_RESPONSE
+  cleanup_tmp
+}
+
+# (8) A pre-seeded pending receipt does not block retry → a 2nd receipt lands,
+#     and the latest is succeeded.
+test_pending_does_not_block_retry() {
+  with_tmpdir
+  make_stub_adapter
+  write_flow_file "$ADAPTER_CMD" "$KNOWN_STATES" "$TRANSITIONS"
+  write_run "$TICKET"
+  emit_phase 2
+  # Seed a prior pending receipt for the same target — must not count as current.
+  emit_event "$CANON_LEDGER" \
+    "{\"schema\":1,\"ts\":\"2026-01-01T00:00:00Z\",\"event\":\"work_item.adapter_receipt\",\"run_id\":\"run-0001\",\"phase\":null,\"actor\":\"ticket-sync\",\"summary\":\"seed\",\"artifacts\":[],\"data\":{\"status\":\"pending\",\"state\":\"DEV\",\"work_item_id\":\"$TICKET\",\"target_state\":\"DEV\",\"triggered_by\":\"hook\",\"response_excerpt\":\"\"}}"
+  TICKET_SYNC_TEST_RESPONSE="Transitioned to DEV"
+  export TICKET_SYNC_TEST_RESPONSE
+  assert_silent_exit "pending does not block retry"
+  assert_receipt_count "pending does not block retry" "$CANON_LEDGER" 2
+  assert_last_receipt_field "pending does not block retry" "$CANON_LEDGER" "status" "succeeded"
+  unset TICKET_SYNC_TEST_RESPONSE
+  cleanup_tmp
+}
+
+# ---------------------------------------------------------------------------
+# Runner — tests listed explicitly (bash 3.2, no arrays required).
+# ---------------------------------------------------------------------------
+test_no_flow_file
+test_flow_but_no_run
+test_ticket_not_configured
+test_phase_completed_fires
+test_dedup_repeat_fire
+test_pending_when_state_absent
+test_furthest_forward_wins
+test_pending_does_not_block_retry
+
+printf '=== %d passed, %d failed ===\n' "$PASS" "$FAIL"
+[ "$FAIL" -eq 0 ] || exit 1

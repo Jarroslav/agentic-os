@@ -1,0 +1,46 @@
+name: ci
+
+# Gates every pull request into main. Branch protection requires this check to
+# pass before merge, so a red run blocks the PR.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Hook unit tests (t0)
+        run: |
+          bash tests/t0/run.sh
+          bash tests/t0/run-output-contract.sh
+
+      - name: Acceptance matrix (T1–T8)
+        run: bash tests/run-matrix.sh
+
+      - name: Validate JSON manifests & presets
+        run: python3 tests/lib/check-manifests.py
+
+      - name: Skill contract check
+        run: python3 tests/lib/check-skill-contract.py
+
+      - name: Neutrality & PII scan
+        run: |
+          python3 tests/lib/check-neutrality.py --self-test
+          python3 tests/lib/check-neutrality.py
+
+      - name: Run-artifact schema check
+        run: python3 tests/lib/check-schemas.py
+
+      # Originality check — self-tests the detector here; the tree scan runs
+      # only where a maintainer has built the local, git-ignored fingerprint
+      # store (absent on CI runners, so it skips with an ok note).
+      - name: Originality check
+        run: |
+          python3 tests/lib/check-provenance.py --self-test
+          python3 tests/lib/check-provenance.py

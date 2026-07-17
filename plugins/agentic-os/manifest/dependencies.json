@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "comment": "Plugins the scaffolded architecture depends on. /agentic-init verifies each against ~/.claude/plugins/installed_plugins.json and registers missing ones via extraKnownMarketplaces + enabledPlugins in the target repo's .claude/settings.json (a session restart activates them; /agentic-doctor tracks 'pending restart').",
+  "plugins": [
+    {
+      "name": "superpowers",
+      "marketplace": "claude-plugins-official",
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      },
+      "min": "6.1.0",
+      "optional": false,
+      "why": "Process skills: brainstorming, TDD, systematic debugging, verification-before-completion. Fallback marketplace: obra/superpowers-marketplace (if not present in the official marketplace).",
+      "fallback_source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    },
+    {
+      "name": "agentic-sdlc",
+      "marketplace": "agentic-os",
+      "source": {
+        "source": "github",
+        "repo": "Jarroslav/agentic-os"
+      },
+      "min": "0.1.0",
+      "optional": false,
+      "why": "SDLC pipeline + decision-router (HITL/autonomous judgment gates with escalation and audit)."
+    },
+    {
+      "name": "ponytail",
+      "marketplace": "ponytail",
+      "source": {
+        "source": "github",
+        "repo": "dietrichgebert/ponytail"
+      },
+      "min": "4.8.0",
+      "optional": true,
+      "why": "YAGNI/minimalism mode. Recommended; not required by any gate."
+    }
+  ]
+}

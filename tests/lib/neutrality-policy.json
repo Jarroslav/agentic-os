@@ -1,0 +1,75 @@
+{
+  "_doc": [
+    "Policy for tests/lib/check-neutrality.py — the mechanical guarantee that no",
+    "PII, personal names, or organization names ship in this repo.",
+    "",
+    "Layer 1 (`patterns`): cleartext regex classes that are safe to publish —",
+    "each names a *shape* (an email, a home-directory path, a confidentiality",
+    "marker, a vendor model ID), never a banned value. `allow` entries are",
+    "regexes tested against the matched text; `allow_files` are repo-relative",
+    "paths where the class is permitted (e.g. an eval-runner model pin).",
+    "",
+    "Layer 2 (`banned_token_hashes`): SHA-256 of case-normalized banned tokens,",
+    "so the banned names themselves never appear here in cleartext. To add one:",
+    "  python3 -c \"import hashlib;print(hashlib.sha256(b'<lowercase token>').hexdigest())\"",
+    "Multi-word phrases are hashed as the words joined by single spaces and",
+    "carry their word count in `words`.",
+    "",
+    "`layer1_exempt_paths` exists because this file must spell out the",
+    "confidentiality-marker phrases to detect them; it stays subject to Layer 2."
+  ],
+  "patterns": {
+    "email": {
+      "regex": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",
+      "allow": [
+        "@example\\.(com|org|net)$",
+        "@users\\.noreply\\.github\\.com$",
+        "^noreply@"
+      ],
+      "allow_files": []
+    },
+    "home_path": {
+      "regex": "/(?:Users|home)/[A-Za-z][A-Za-z0-9_.-]{2,}",
+      "allow": [
+        "^/home/(?:runner|user|node|app|ci)$"
+      ],
+      "allow_files": []
+    },
+    "confidentiality_marker": {
+      "regex": "(?i)proprietary\\s*(?:&|and)\\s*confidential|internal\\s+use\\s+only|company\\s+confidential",
+      "allow": [],
+      "allow_files": []
+    },
+    "vendor_model_id": {
+      "regex": "(?i)(?<![a-z0-9])(?:claude-(?:opus|sonnet|haiku|fable|[0-9])[a-z0-9.-]*|gpt-[0-9][a-z0-9.-]*|gemini-[0-9][a-z0-9.-]*|us\\.anthropic\\.[a-z0-9.:_-]+)",
+      "allow": [],
+      "allow_files": [
+        "plugins/agentic-sdlc/evals/plugin-eval-benchmark.json"
+      ]
+    }
+  },
+  "banned_token_hashes": [
+    {"sha256": "a1ce7a1b010b368f1d833a408dc8dcffc2d04c5fb34812c2eaa1965afbd2af45", "words": 1},
+    {"sha256": "7981440b6bdcb812115cd1ecb66265734d909df815194da325ebc0ea6083f43b", "words": 1},
+    {"sha256": "34cfdbc7d75aa3a3effda9abbc9afc2d3ffbaebf632ba6c53ebaabcfe476090d", "words": 1},
+    {"sha256": "688d72340e30ea65edc960f3219b3284a030a6f379c626c08e50812e53fcf922", "words": 1},
+    {"sha256": "a5515368ffb39ce1f6fa7670740d5bd345c998b43813aecf3f5c58828e54e85f", "words": 1},
+    {"sha256": "c3d7ef1d62df3140b7b8d8dc2454470138a466a6366ac40bdf722e91b14b0827", "words": 1},
+    {"sha256": "fb1a8d33715942c65721d49c277c1b3ca71f33ca6c81d74fb69dddabc9a6a6a7", "words": 3},
+    {"sha256": "f07e180e74d85a9dee8510b55ceee130b02d4218a1037f311bfaed0efb5a586e", "words": 1},
+    {"sha256": "5691ac6bf1e06f149ec16354dcca3aa55ed32d1d571b0859f7696c3a42258adf", "words": 1},
+    {"sha256": "ae4a3092e16d599057c9d0208e45f562436931b2ead6f9de231949e139447390", "words": 1},
+    {"sha256": "1c80f07184d8154815e18bdce103e57f3be00252eafe3517db7f105c3071fdb1", "words": 1},
+    {"sha256": "aaadc31b1826c3b92a9fb03cb28c0f06110f82942877a040acebb8604937ba12", "words": 1},
+    {"sha256": "fb73478a8028d4f86231ff71d79ddbcb9dde49af63e9915a065ab76194136306", "words": 1},
+    {"sha256": "7c6b02241c6168fbaf37a98edf103c0c08b850ebb6827e572bee4911dfa8f020", "words": 1},
+    {"sha256": "ef337a3643ca434d921818a7c235f2c07aade90da5de5418676545ea91238511", "words": 1},
+    {"sha256": "e3a5be31f8396dd219128848a2a517c80fa36721788257480ee3e31bf207bc04", "words": 2},
+    {"sha256": "a71047b3ce13a11023edc6e8f5da704a80ec120e74e6d66e2547017608b76bca", "words": 1},
+    {"sha256": "6f76532cf9c0617f3155b8678e8176c69eedc47a275b0cce42b7093fb6553a97", "words": 1}
+  ],
+  "layer1_exempt_paths": [
+    "tests/lib/neutrality-policy.json",
+    "tests/lib/provenance-fingerprints.json"
+  ]
+}

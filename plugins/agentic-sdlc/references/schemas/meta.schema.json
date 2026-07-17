@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "sdlc-pipeline run meta.json",
+  "type": "object",
+  "required": [
+    "run_id",
+    "mode",
+    "started_at",
+    "task_input",
+    "current_phase",
+    "status",
+    "phases"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "hitl",
+        "autonomous"
+      ]
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "task_input": {
+      "type": "string"
+    },
+    "branch": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "work_item": {
+      "type": "object",
+      "properties": {
+        "canonical_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "run_mirror": {
+          "type": "string"
+        },
+        "event_ledger": {
+          "type": "string"
+        }
+      }
+    },
+    "current_phase": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 12
+    },
+    "status": {
+      "enum": [
+        "running",
+        "completed",
+        "aborted"
+      ]
+    },
+    "escalate_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "loops": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "count",
+          "cap",
+          "on_cap"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cap": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "on_cap": {
+            "enum": [
+              "halt",
+              "escalate"
+            ]
+          }
+        }
+      }
+    },
+    "phases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "completed",
+              "failed",
+              "skipped"
+            ]
+          },
+          "started_at": {
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      }
+    },
+    "branch_guard": {
+      "type": "object",
+      "required": [
+        "current_branch",
+        "base_branch",
+        "working_tree",
+        "decision"
+      ],
+      "properties": {
+        "current_branch": {
+          "type": "string"
+        },
+        "base_branch": {
+          "type": "string"
+        },
+        "target_branch": {
+          "type": "string"
+        },
+        "working_tree": {
+          "enum": [
+            "clean",
+            "dirty"
+          ]
+        },
+        "upstream": {
+          "enum": [
+            "none",
+            "ahead",
+            "behind",
+            "diverged",
+            "in-sync"
+          ]
+        },
+        "target_branch_exists": {
+          "type": "boolean"
+        },
+        "base_refreshed": {
+          "type": "boolean"
+        },
+        "decision": {
+          "enum": [
+            "continue",
+            "stash",
+            "commit-first",
+            "hard-reset",
+            "proceed-dirty",
+            "abort",
+            "halted"
+          ]
+        }
+      }
+    },
+    "classification": {
+      "enum": [
+        "story",
+        "bug",
+        "hotfix",
+        "spike",
+        "epic"
+      ]
+    },
+    "phase_set": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 12
+      }
+    }
+  }
+}

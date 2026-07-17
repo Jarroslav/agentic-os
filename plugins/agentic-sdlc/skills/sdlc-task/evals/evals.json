@@ -1,0 +1,133 @@
+{
+  "skill_name": "sdlc-task",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Just need a one-word typo fixed in the CLI error banner -- 'seperate' should be 'separate'. Handle it with sdlc-task.",
+      "expected_output": "sdlc-task takes its own short stage sequence -- brainstorm-lite, spec, plan, inline TDD, a single code-review pass, then qa-gates -- and does not hand this off to sdlc-pipeline's full multi-phase run. The fix itself is written and tested in place, not spun out to a per-item subagent.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "slim-sequence",
+          "description": "Confirms the reply commits to sdlc-task's own shorter stage list rather than routing into sdlc-pipeline."
+        },
+        {
+          "name": "embedded-test-first",
+          "description": "Confirms the fix is implemented directly with a test-first loop instead of being delegated to a separate implementation subagent."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I've already sized this at XS: rename the maxRetries field to retryCeiling in the worker config. Don't bother running it through complexity scoring.",
+      "expected_output": "Because the size tier was pre-classified as XS, sdlc-task skips the complexity-scoring step entirely and moves straight into its spec/plan stages, recording live spec.md and plan.md under docs/superpowers/tasks/<slug>/.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "bypasses-sizing-scoring",
+          "description": "Confirms complexity-scoring is not dispatched given the user-supplied XS classification."
+        },
+        {
+          "name": "job-records",
+          "description": "Confirms spec.md and plan.md are written under the docs/superpowers/tasks/<slug>/ path."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Kick off sdlc-task for tightening the input mask on the phone field. Heads up, git status --porcelain currently shows a handful of modified files I haven't committed yet on this feature branch.",
+      "expected_output": "sdlc-task runs its dirty-branch guard ahead of writing any task artifacts, surfaces the pending modifications, and pauses for a decision -- offering stash, hard reset, proceed with the existing dirty state, or abort -- rather than folding the new work in on top of the uncommitted changes.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "job-unclean-ref-safeguard",
+          "description": "Confirms the dirty-branch guard runs (via git status --porcelain) before any task artifact is written."
+        },
+        {
+          "name": "job-stated-options",
+          "description": "Confirms the four plain-branch options -- stash, hard reset, proceed with existing dirty state, abort -- are all offered."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Add a retry-count badge to the sync status widget. This repo has no Jira or Azure DevOps adapter wired up -- there's no ticket id to reference.",
+      "expected_output": "With no ticket id or tracker adapter configured, sdlc-task opens a local work item under docs/superpowers/tasks/ instead of stalling, then continues into spec/plan without waiting on any tracker integration to appear.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "in-repo-job-unit-backup",
+          "description": "Confirms a local work item under docs/superpowers/tasks is created or referenced in place of an external ticket."
+        },
+        {
+          "name": "skips-outside-issue-tool-stopper",
+          "description": "Confirms planning proceeds without being blocked by the missing tracker adapter."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Small XS task on top of main -- tweak the footer copyright year. Only catch: main itself is dirty right now, git status --porcelain shows edited files plus a couple of new untracked ones.",
+      "expected_output": "sdlc-task's guard flags that the dirty state sits on the base branch itself, which widens the option set: stash, commit first, hard reset with an explicit confirmation step, proceed with a warning, or abort -- and it waits for the user to pick one before touching anything.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "job-unclean-trunk-safeguard",
+          "description": "Confirms detection that the dirty state (modified plus untracked) is specifically on the base/main branch."
+        },
+        {
+          "name": "job-human-gated-unclean-options",
+          "description": "Confirms the wider base-branch option set -- stash, commit first, hard reset with explicit confirmation, proceed with warning, abort -- is presented and awaited."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Pick back up on the task/retry-ceiling-rename branch -- I left some edits uncommitted there, and it already has two commits of mine that never got merged anywhere.",
+      "expected_output": "sdlc-task notices the branch is both dirty and carries unmerged local commits, so it does not quietly reuse, overwrite, or recreate it -- it asks how the branch and its relationship to the target branch should be resolved before continuing.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "job-unclean-prior-topic-ref",
+          "description": "Confirms recognition that the existing feature branch is dirty and holds unique unmerged commits."
+        },
+        {
+          "name": "job-destination-ref-verdict",
+          "description": "Confirms the user is asked to resolve the branch/target-branch ambiguity rather than it being auto-resolved."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "task/retry-ceiling-rename is already sitting there clean, and I rebased it onto the latest main this morning -- just carry on with the work on it.",
+      "expected_output": "After the branch guard confirms there is no dirty state, sdlc-task verifies the branch is current with the latest configured base branch and reuses it as-is, moving straight into the remaining stages without asking for a resolution choice.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "job-clean-prior-topic-ref",
+          "description": "Confirms a clean existing feature branch is reused directly once the guard passes."
+        },
+        {
+          "name": "job-newest-trunk-verified",
+          "description": "Confirms the branch is checked against the latest base branch before being reused."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Running sdlc-task unattended from the nightly automation host, no one around to answer prompts -- and git status --porcelain is showing modified files on the working branch.",
+      "expected_output": "Because this is an autonomous, no-prompt context and the dirty-state resolution path is HITL-only, sdlc-task halts on detecting the modified files instead of guessing -- it will not auto-stash, auto-hard-reset, or silently proceed with the dirty state.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "job-unattended-unclean-halts",
+          "description": "Confirms the run halts on dirty state when operating in an autonomous/no-prompt host."
+        },
+        {
+          "name": "job-skips-irreversible-unattended-step",
+          "description": "Confirms no automatic stash, hard reset, or dirty-state proceed happens without a user decision."
+        }
+      ]
+    }
+  ]
+}

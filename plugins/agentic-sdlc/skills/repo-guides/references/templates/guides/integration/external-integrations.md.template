@@ -1,0 +1,187 @@
+<!--
+GENERATOR CONTRACT — external-integrations guide
+Read this block, apply the fill rules, then delete it from the planted file.
+
+Scope: how [PROJECT_NAME] talks to third-party HTTP services only. Not for
+in-repo module interfaces — those belong to a different guide.
+
+Evidence rule: every claim and every code fence must trace to the real repo.
+Never invent an endpoint, header, or pattern that the source does not show.
+
+Fill rules:
+- Code snippets: 5-15 lines, hard ceiling 20. One example per pattern — never two.
+- Prefer a `[file:lines]` pointer to a pasted block; paste only when the shape
+  is load-bearing and cannot be described.
+- Reach for a table whenever you cover more than one item of the same kind.
+- Every fence opens with a source line (see annotation format below).
+- Forbidden: duplicate examples for one pattern, verbose prose, whole-function
+  copies, restating what the code already shows.
+
+Length: the planted guide MUST NOT exceed 400 lines. No minimum — shorter is
+better. After writing, run the self-check at the bottom before proceeding.
+
+Source-annotation format — first line inside every fence:
+  # Source: [file:lines]
+-->
+
+# External Integrations — [PROJECT_NAME]
+
+**Category**: Integration
+**Complexity**: Medium-High
+**Prerequisites**: HTTP clients, async/await, API fundamentals
+
+> Convention doc, not a tutorial. It records how this repo already calls out to
+> third-party services so an agent can extend that surface without reinventing it.
+
+## Service Inventory
+
+> One row per external service the repo talks to. `Source` points at where the
+> client is built or configured.
+
+| Service | Purpose | Auth | Source |
+| --- | --- | --- | --- |
+| [Service1] | [Purpose] | [Method] | [file:lines] |
+| [Service2] | [Purpose] | [Method] | [file:lines] |
+
+## Client Construction
+
+> Show the one canonical way this repo builds a client. Cover the four moving
+> parts: base URL, auth, retries, timeouts. If every service shares a factory,
+> point at it; do not repeat it per service.
+
+```[language]
+# Source: [file:lines]
+[client_class]
+```
+
+Clients live under `[path/to/clients]`. Reuse the existing constructor — do not
+hand-roll a new request path.
+
+## Authentication
+
+> Document only the variants the repo actually uses. Drop the other.
+
+### API Key
+
+```[language]
+# Source: [file:lines]
+[api_key_auth]
+```
+
+### OAuth2
+
+```[language]
+# Source: [file:lines]
+[oauth2_auth]
+```
+
+**Token management**: keep secrets in secure storage; refresh tokens ahead of
+expiry rather than reacting to the first 401.
+
+## Error Handling
+
+> Branch on status class, not on individual codes. Map each class to an action.
+
+| Status | Action |
+| --- | --- |
+| 4xx | Log; do not retry |
+| 5xx | Log; retry with backoff |
+| Timeout | Retry with backoff |
+
+```[language]
+# Source: [file:lines]
+[error_handling]
+```
+
+> 4xx is the caller's fault — retrying repeats a request the server already
+> rejected. 5xx and timeouts are transient and worth another attempt.
+
+## Retry Policy
+
+| Field | Value |
+| --- | --- |
+| Strategy | Exponential backoff |
+| Max Retries | [N] |
+| When | 5xx, timeouts, connection errors |
+| When Not | 4xx (usually), authentication failures |
+
+```[language]
+# Source: [file:lines]
+[retry_pattern]
+```
+
+Cap attempts at `[N]`; never retry without a bound.
+
+## Rate Limiting
+
+> Read the server's budget signals and honor them. Respect `X-RateLimit-*` to
+> pace requests and `Retry-After` to time a backoff.
+
+```[language]
+# Source: [file:lines]
+[rate_limit]
+```
+
+## Timeout Configuration
+
+> Set every timeout explicitly. Distinguish the three:
+
+| Timeout | Covers |
+| --- | --- |
+| Connection | Establishing the socket |
+| Read | Waiting for response bytes |
+| Total | End-to-end ceiling for the call |
+
+```[language]
+# Source: [file:lines]
+[timeout_config]
+```
+
+## Practices
+
+| Do | Don't |
+| --- | --- |
+| Backoff retries | Infinite retries |
+| Explicit timeouts | Unbounded waits |
+| Log external calls | Silent failures |
+| Cache responses | Repeated identical calls |
+| Secrets in secure storage | Hardcoded keys |
+
+## Security Checklist
+
+Required:
+
+- [ ] Credentials from env vars or a secrets manager
+- [ ] HTTPS only
+- [ ] TLS certificate validation on
+
+Forbidden:
+
+- [ ] Logging API keys or tokens
+- [ ] Ignoring or disabling certificate errors
+
+## Testing
+
+> Unit tests mock the transport; integration tests hit a real or sandbox test
+> endpoint. Show one mock example and point at the test file.
+
+```[language]
+# Source: [test_file:lines]
+[mock_example]
+```
+
+| Layer | Target |
+| --- | --- |
+| Unit | Mocked HTTP responses |
+| Integration | Real / test API endpoint |
+
+## References
+
+[Links]
+
+<!--
+SELF-CHECK — run before you finish:
+  wc -l [this-file]
+If the count exceeds 400, or any section reads as padding, condense: cut prose,
+collapse repeated examples, replace pasted blocks with [file:lines] pointers.
+-->

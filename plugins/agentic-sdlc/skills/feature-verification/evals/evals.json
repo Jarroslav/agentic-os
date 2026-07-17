@@ -1,0 +1,73 @@
+{
+  "skill_name": "feature-verification",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "My branch edits src/components/CheckoutSummary.tsx to add a discount line, and we already ship an e2e suite at e2e/checkout.spec.ts with Playwright wired up. Verify the feature before I send it to review.",
+      "expected_output": "Detects that the TSX change touches a user-visible surface, resolves the configured Playwright runner, prefers the existing checkout coverage over authoring a new spec, drives the discount-line surface in a browser, and writes verification-evidence.json capturing screenshot, console errors, network failures, assertions, and result. Marks the feature verified=true.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "surface-diff-flagged",
+          "description": "Treats the component edit as a user-visible surface that must be exercised in a browser rather than waved through."
+        },
+        {
+          "name": "coverage-reuse-preferred",
+          "description": "Derives the verification from the already-present e2e spec instead of generating a fresh check when usable coverage exists."
+        },
+        {
+          "name": "receipt-persisted",
+          "description": "Emits verification-evidence.json carrying screenshot, console, and network signals with verified=true."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The change adds a new /settings/notifications toggle under app/settings/ but there is no browser test covering it yet. Playwright is installed in the repo. Verify it works end to end.",
+      "expected_output": "Because the changed surface is user-visible and no coverage exists but a Playwright runner is resolvable, authors a focused Playwright verification aimed at the notifications toggle, runs it, and records the outcome. Writes verification-evidence.json with the captured screenshot, console errors, network failures, assertions, and result, and marks the feature verified.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "focused-check-authored",
+          "description": "Generates a narrowly scoped Playwright verification for the uncovered toggle when no existing coverage can be reused."
+        },
+        {
+          "name": "browser-signals-harvested",
+          "description": "Captures screenshot plus console and network failure signals from the executed run into the evidence artifact."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "This PR only rewrites README.md and docs/architecture/overview.md. Do I still owe a functional verification step, and what gets recorded?",
+      "expected_output": "Inspects the diff, finds no user-visible surface, and skips browser verification without error. Still writes verification-evidence.json with applies=false, the reason no user-visible surface in diff, and verified=true so the pipeline holds a receipt for the skipped step.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "docs-only-passthrough",
+          "description": "Classifies the documentation-only diff as having no user-visible surface and does not launch a browser run."
+        },
+        {
+          "name": "abstention-receipt-written",
+          "description": "Still produces verification-evidence.json with applies=false, verified=true, and the reason string no user-visible surface in diff."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Verify my login page change at app/login/page.tsx. Heads up: this repo has no Playwright, no Cypress, and no Storybook test runner configured.",
+      "expected_output": "The diff touches a user-visible route page, but no recognized browser verification tool (Playwright, Cypress, Storybook test runner) is present and no feature_verification.command is configured. Reports BLOCKED, withholds the verified verdict, and writes remediation into verification-evidence.json telling the user to install Playwright or configure the feature_verification.command custom command.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "halts-without-runner",
+          "description": "Returns BLOCKED and leaves the feature unverified when a user-visible change has no resolvable verification tool."
+        },
+        {
+          "name": "install-or-configure-hint",
+          "description": "Stores remediation in the evidence pointing at installing Playwright or setting the feature_verification.command key."
+        }
+      ]
+    }
+  ]
+}

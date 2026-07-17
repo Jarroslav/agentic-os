@@ -1,0 +1,141 @@
+<!--
+  TEMPLATE — version-control standards scaffold.
+  Instantiate to: .ai-run/guides/standards/git-workflow.md
+  Consumed by:     mr-creator skill (commit + branch conventions; ticket enforcement)
+  Companion:       .ai-run/guides/project.md (MR/PR adapter — do not duplicate it here)
+
+  FILL-IN CONTRACT (obey while generating; delete these comments from the output):
+  - Replace every [PLACEHOLDER] with the host project's real value. No token left behind.
+  - Hard cap: generated file <= 400 lines. No minimum. Verify with `wc -l [this-file]`;
+    if over cap or padded, condense before proceeding.
+  - Code samples 5-15 lines (never above 20). Exactly ONE example per pattern.
+  - Prefer file:line pointers over pasted code. Use a table when several patterns exist.
+  - Forbidden: duplicate examples, verbose prose, whole-function copies, git tutorials.
+  - Record the project's ACTUAL merge policy — do not invent or prescribe one.
+-->
+
+# [PROJECT_NAME] — Git Workflow Standards
+
+> Category: Standards · Complexity: Simple · Prerequisite: basic git knowledge
+
+Source-control conventions for this repo. Downstream automation parses this file, so keep
+headings and the machine-readable formats below intact.
+
+## Working loop
+
+Four steps per change:
+
+1. Branch off an up-to-date main.
+   ```bash
+   git switch main && git pull
+   git switch -c feature/[name]
+   ```
+2. Commit incrementally as work lands: `git add [files]` then `git commit -m "[message]"`.
+3. Push the branch: `git push -u origin [branch]`.
+4. Open a PR (host UI or CLI — see `.ai-run/guides/project.md`).
+
+## Branch naming
+
+| Type    | Pattern           | Role                     |
+| ------- | ----------------- | ------------------------ |
+| Main    | `main`            | production               |
+| Feature | `feature/[name]`  | new work                 |
+| Bugfix  | `bugfix/[name]`   | defect fixes             |
+| Hotfix  | `hotfix/[name]`   | urgent production fixes  |
+
+> Project override — if this repo uses its own scheme, record it and it wins over the defaults:
+> `[Your specific pattern]`
+
+## Commit messages
+
+Machine-parsed format (mr-creator depends on this shape):
+
+```
+[type]([scope]): [subject]
+
+[optional body]
+
+[optional footer]
+```
+
+Allowed `[type]` values: `feat | fix | docs | style | refactor | test | chore`
+
+Examples:
+
+- `feat(auth): add OAuth2 login`
+- `fix(api): resolve timeout issue`
+- `docs(readme): update setup instructions`
+
+| Do                                       | Don't                              |
+| ---------------------------------------- | ---------------------------------- |
+| Keep each commit atomic                  | Mix unrelated changes in one commit |
+| Write a descriptive, present-tense subject | Ship vague subjects ("fix stuff") |
+| Reference the issue/ticket               | Use past tense                     |
+| Give enough context in the body          | Leave the reason unstated          |
+
+> Ticket references: the mr-creator skill enforces the ticket-ID format at commit time.
+> Document the project's expected reference style in `[Details]`.
+
+## Pull requests
+
+PR title mirrors the commit format:
+
+```
+[type]([scope]): [description]
+```
+
+Description skeleton:
+
+```markdown
+## Summary
+What and why, in a sentence or two.
+
+## Changes
+- Key change 1
+- Key change 2
+
+## Testing
+How this was verified.
+
+## Checklist
+- [ ] Tests added or updated
+- [ ] Manual verification done
+- [ ] Complies with project standards
+- [ ] All tests pass
+- [ ] No merge conflicts
+```
+
+Reviewer checklist:
+
+1. Standards compliance
+2. Logic correctness
+3. Test adequacy
+4. Security
+5. Docs updated
+
+## Merge policy
+
+| Field          | Value                             |
+| -------------- | --------------------------------- |
+| Strategy       | `[Merge commit / Squash / Rebase]` |
+| Merge command  | `[merge_command]`                 |
+
+After merge, delete the feature branch locally: `git branch -d [branch]`.
+
+> Strategy is a per-project choice — this is not prescribed. Record the policy this repo
+> actually enforces.
+
+## Command cheat-sheet
+
+| Action                          | Command                    |
+| ------------------------------- | -------------------------- |
+| Status                          | `git status`               |
+| Stage                           | `git add [files]`          |
+| Commit                          | `git commit -m "[message]"` |
+| Push branch                     | `git push origin [branch]` |
+| Pull branch                     | `git pull origin [branch]` |
+| Undo last commit, keep changes  | `git reset --soft HEAD~1`  |
+
+Further reading: `[Link if documented]`
+
+<!-- Before finishing: run `wc -l [this-file]` and confirm <= 400 lines. Condense if over. -->

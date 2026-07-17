@@ -1,0 +1,60 @@
+<!-- agentic-os:begin v{{AGENTIC_OS_VERSION}} -->
+## Agentic OS — governance (managed block, do not edit inside the markers)
+
+This repo runs the agentic-os process layer. Role presets active: {{ROLE_PRESETS_ACTIVE}}.
+HITL mode: **{{HITL_MODE}}** (dial and autonomy matrix: `.agentic/guides/policy/ai-policy.md`).
+
+### Subagent bootstrap (read this first if you were just spawned)
+
+1. **Identify your role** from the command or prompt that spawned you.
+2. **Read your contract** at `{{AGENTS_CANONICAL_DIR}}<your-name>.md` — it is your full
+   instruction set. `.claude/agents/<your-name>.md` is a thin pointer to it.
+3. **Read `PATTERNS.md`** (index) — follow it to the guides under `.agentic/guides/`;
+   those are the canonical coding rules.
+4. **Respect your `write_scope` absolutely.** Writing outside it is blocked by
+   `.claude/hooks/write_scope_guard.py` and treated as an orchestration error.
+5. **End your final message with the output contract**: `## Summary / ## Why /
+   ## Blocking / ## Non-blocking / ## Escalate to human`. A missing contract is
+   treated as Blocking (fail-closed).
+6. **Gate agents are read-only.** Their output must contain the literal token `PASS`
+   for a pipeline to advance.
+
+The agent roster and routing matrix live in [AGENTS.md](AGENTS.md) and
+`.agentic/guides/agent-registry.md` — only orchestrators spawn subagents.
+
+### Blind code review before every commit (MANDATORY)
+
+Every `git commit` must be preceded by a `blind-code-reviewer` pass over the exact
+staged diff. Enforced by two independent layers:
+
+1. **PreToolUse(Bash) hook** — `python3 .claude/hooks/precommit_review_gate.py`
+   blocks the commit (exit 2) unless the staged diff is approved.
+2. **Native git `pre-commit` hook** — `.githooks/pre-commit` (installed via
+   `bash scripts/install-git-hooks.sh`) blocks at the git level even outside the harness.
+
+Workflow: run the quality gates → stage exactly what you intend to commit → spawn
+`blind-code-reviewer` on the staged diff (pass a one-paragraph functional brief only,
+never your reasoning) → address every Blocker/Major → record approval
+(`python3 .claude/hooks/precommit_review_gate.py approve`) → commit. Any further
+`git add` invalidates the stamp. Escape hatch for merge/mechanical commits only:
+`[skip-review]` in the message or `SKIP_REVIEW=1 git commit …`.
+
+### Quality gates
+
+Run before staging (commands catalogued in
+`.agentic/guides/standards/quality-gates.md`):
+
+```
+{{GATE_COMMANDS}}
+```
+
+### Human-gated operations (never autonomous)
+
+Listed in `.agentic/guides/policy/escalation-policy.md` and hook-enforced by
+`.claude/hooks/human_gated_commands.py` + `guarded_write_paths.py`. When blocked,
+stop and escalate — never work around a gate.
+
+### Stack
+
+{{STACK_SUMMARY}}
+<!-- agentic-os:end -->

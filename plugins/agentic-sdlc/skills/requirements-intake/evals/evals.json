@@ -1,0 +1,93 @@
+{
+  "skill_name": "requirements-intake",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Wire it up.",
+      "expected_output": "The literal text \"Wire it up.\" is copied into requirements.md exactly as typed, with no guessed goal or paraphrase. Every detail the phrase leaves undecided (what \"it\" refers to, which surface is affected, what would count as done) is enumerated under Open questions rather than resolved silently.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "keeps-vague-input-verbatim",
+          "description": "The raw phrase the user typed survives into requirements.md unchanged, with no invented intent layered over it."
+        },
+        {
+          "name": "surfaces-clarifying-items",
+          "description": "Each detail the terse input leaves undefined is listed as an entry under Open questions instead of being assumed away."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We need a way for support leads to bulk-archive stale tickets in one action. There's no Jira issue for this yet — just capture the requirements.",
+      "expected_output": "Because no external ticket was supplied, the skill opens a local work item under docs/superpowers/work-items, writes the run-local work-item.md mirror, appends the creation to work-item-events.jsonl, points the requirements Source / Work Item field at that local path, and completes intake without pausing to request a ticket number.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "mirrors-freeform-to-local",
+          "description": "A local work item is created under docs/superpowers/work-items and its path becomes the Source / Work Item value in requirements.md."
+        },
+        {
+          "name": "writes-run-local-copy",
+          "description": "A run-scoped work-item.md mirror is written and a corresponding row is appended to work-item-events.jsonl for the new item."
+        },
+        {
+          "name": "absent-ticket-does-not-halt",
+          "description": "Intake runs to completion without stopping to demand an external ticket identifier."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Take CART-73104 and normalize it into the requirements doc for this run.",
+      "expected_output": "The skill discovers the ticket adapter from .agentic/guides and resolves CART-73104 only through whatever backend that adapter names. If no adapter is configured, it tags the item ticket-unresolved, records an Open question about the ticket it could not reach, and continues rather than aborting the whole intake.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "resolves-ticket-via-adapter",
+          "description": "Ticket lookup is routed through the project adapter discovered under .agentic/guides, with no tracker or source-control backend hardcoded into the skill."
+        },
+        {
+          "name": "degrades-when-ticket-unreachable",
+          "description": "When no adapter is configured the run marks the item ticket-unresolved and files an Open question instead of failing the intake."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The story already lives at docs/superpowers/work-items/coupon-stacking-limits.md. I just opened the merge request at https://scm.internal.example/checkout-service/merge_requests/318 — link it back to that item.",
+      "expected_output": "The skill accepts docs/superpowers/work-items/coupon-stacking-limits.md as the authoritative source of truth, keeps its run-local mirror current, and appends the merge-request URL to the item's history as a work_item.linked_artifact event — recording the linkage cleanly even though no external ticket is attached.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "local-record-is-canonical",
+          "description": "The supplied docs/superpowers/work-items path is treated as the authoritative source of truth for the requirement."
+        },
+        {
+          "name": "links-mr-into-local-log",
+          "description": "The merge-request URL is appended to the local item's history as a work_item.linked_artifact event."
+        },
+        {
+          "name": "external-sync-stays-optional",
+          "description": "The linkage is recorded correctly with no external ticket ever present."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Rough idea: a nightly digest email that tells the ops team which warehouse SKUs need restocking. Turn this into requirements — I haven't pinned down the exact thresholds or format yet.",
+      "expected_output": "The unstructured description is funneled into a single requirements.md. Because the user named no pass/fail conditions, no acceptance criteria are fabricated; the undecided thresholds and format are captured under Open questions instead.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "funnels-freeform-into-doc",
+          "description": "Loose prose with no structure is consolidated into one normalized requirements.md."
+        },
+        {
+          "name": "never-fabricates-criteria",
+          "description": "Acceptance criteria appear only when the user actually stated them; the gaps here are deferred to Open questions rather than invented."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "agentic-os",
+  "owner": {
+    "name": "Yaroslav Krivushenko",
+    "url": "https://github.com/Jarroslav"
+  },
+  "plugins": [
+    {
+      "name": "agentic-os",
+      "source": "./plugins/agentic-os",
+      "description": "Installer, doctor, and upgrade skills that scaffold a governed multi-agent architecture (agents, hooks, gates, policies, guides) into a target repo."
+    },
+    {
+      "name": "agentic-sdlc",
+      "source": "./plugins/agentic-sdlc",
+      "description": "Skill-first SDLC orchestrator: requirements -> spec -> plan -> TDD -> QA gates -> MR, with HITL/autonomous decision routing."
+    },
+    {
+      "name": "agentic-qe",
+      "source": "./plugins/agentic-qe",
+      "description": "Tool-agnostic AI blueprints for Quality Engineering across the STLC, with a scaffolder that turns a chosen blueprint into a ready-to-fill agent framework and an eval-framework generator for skills and agents."
+    }
+  ]
+}

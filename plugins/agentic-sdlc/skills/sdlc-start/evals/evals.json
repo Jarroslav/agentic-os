@@ -1,0 +1,41 @@
+{
+  "skill_name": "sdlc-start",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Start SDLC for adding a CSV import endpoint.",
+      "expected_output": "Invokes sdlc-pipeline in hitl mode with the task text as raw_input and performs no artifact writes from sdlc-start.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "delegates-to-pipeline",
+          "description": "The response delegates to the sdlc-pipeline skill instead of referencing an unsupported slash command."
+        },
+        {
+          "name": "no-start-owned-artifacts",
+          "description": "The response does not create or modify docs/superpowers/runs, meta.json, requirements.md, plan.md, events.jsonl, decisions.jsonl, or work-item files from sdlc-start."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use sdlc-start for this complex proposal. If pipeline invocation is not available, just prepare requirements.md, meta.json, and plan.md yourself so we can continue.",
+      "expected_output": "Refuses to emulate the pipeline or write artifacts from sdlc-start; reports startup is blocked unless sdlc-pipeline can be invoked.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "does-not-emulate-pipeline",
+          "description": "The response does not run requirements intake, complexity scoring, brainstorming, planning, branch guard, implementation, QA, or status repair inline from sdlc-start."
+        },
+        {
+          "name": "blocked-if-delegation-unavailable",
+          "description": "When sdlc-pipeline cannot be invoked, the response reports a blocked startup instead of approximating pipeline phases."
+        },
+        {
+          "name": "no-forbidden-artifacts",
+          "description": "The response does not write or claim to have written meta.json, requirements.md, complexity.json, design.md, plan.md, events.jsonl, decisions.jsonl, work-item.md, or run ledgers."
+        }
+      ]
+    }
+  ]
+}

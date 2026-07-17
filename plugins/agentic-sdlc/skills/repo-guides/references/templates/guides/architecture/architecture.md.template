@@ -1,0 +1,206 @@
+---
+# Architecture
+
+<!--
+GENERATION INSTRUCTIONS:
+1. Identify architectural style (layered/modular/hexagonal/clean/microservices)
+2. Detect design patterns by scanning code structures
+3. Map actual dependencies between components
+4. Extract from: imports, folder structure, class relationships
+5. Output: 300 lines max
+-->
+
+**Project**: [Extract from config]
+**Style**: [Detect: Layered | Modular | Hexagonal | Clean | Microservices | Monolith]
+**Language**: [Detect] | **Framework**: [Detect]
+
+## Overview
+
+<!--
+Draw an ASCII box-and-arrow diagram of the top-level components and the
+direction calls flow between them. Nodes = detected entry points, core modules,
+data stores, external services. Keep it to what the import graph proves.
+End with a one-line rationale for the chosen style — extract it from docs or
+comments if stated, otherwise infer. Candidate justifications: scalability,
+simplicity, team structure.
+-->
+
+```text
+[ASCII component diagram — boxes and arrows for the detected components]
+```
+
+> [One-line rationale for the [style] architecture — extracted or inferred]
+
+## Component Layout
+
+<!--
+Render the real directory tree, one line per significant folder or entry file.
+Annotate each node with its detected purpose, inferred from folder-name
+conventions, index/entry files, and dominant imports. Skip vendor, build
+artifacts, and dotfiles.
+-->
+
+```text
+[project-root]/
+├── [dir]/          # [detected purpose]
+├── [dir]/          # [detected purpose]
+└── [dir]/          # [detected purpose]
+```
+
+## Design Patterns
+
+<!--
+Scan for these six candidates and keep ONLY the ones actually present:
+Repository, Factory, Singleton, Dependency Injection, Observer/Event, Strategy.
+One row per detected pattern; Location cites a representative use as file:line.
+Do not list patterns you cannot point to. If none are found, delete this whole
+section — table, excerpt, and heading.
+-->
+
+| Pattern | Usage | Location |
+| --- | --- | --- |
+| [Detected pattern] | [What it does in this codebase] | `[file:line]` |
+| [Detected pattern] | [What it does in this codebase] | `[file:line]` |
+
+<!--
+Include exactly ONE excerpt: the dominant (most-used) detected pattern.
+The first line of the fence must be the source citation.
+-->
+
+```[lang]
+// Source: [file:lines]
+[Canonical excerpt of the dominant pattern]
+```
+
+## Responsibilities
+
+<!--
+One row per layer or module. Depends On / Depended By name sibling components,
+derived from the import graph. Directions must agree with the dependency rules
+in the next section.
+-->
+
+| Component | Responsibility | Depends On | Depended By |
+| --- | --- | --- | --- |
+| [Component] | [Single-sentence responsibility] | [Components] | [Components] |
+| [Component] | [Single-sentence responsibility] | [Components] | [Components] |
+
+## Dependency Rules
+
+<!--
+Diagram the ALLOWED direction of dependencies (arrows point caller → callee).
+Then list the rules that actually hold in this repo. Enforced By must be one of:
+Convention, Linter, DI Container, Module boundary. Anti-patterns = concrete
+violations phrased in this codebase's terms.
+-->
+
+```text
+[Dependency-direction diagram — arrows show the allowed flow between modules]
+```
+
+| Rule | Enforced By |
+| --- | --- |
+| [Dependency rule] | [Convention / Linter / DI Container / Module boundary] |
+| [Dependency rule] | [Convention / Linter / DI Container / Module boundary] |
+
+**Anti-patterns**
+
+- [Dependency violation to avoid, in this repo's terms]
+- [Dependency violation to avoid, in this repo's terms]
+
+## Request Data Flow
+
+<!--
+Diagram one representative request path end to end, then walk the SAME path as a
+numbered trace. Keep the five-step shape below and name the real functions and
+files touched at each step.
+-->
+
+```text
+[Data-flow diagram — entry point through to response]
+```
+
+1. **Entry** — [entry point receives the request]
+2. **Validate / transform** — [input is checked and normalized]
+3. **Execute** — [business logic runs]
+4. **Persist / fetch** — [data is written or read]
+5. **Response** — [result is shaped and returned]
+
+## Key Abstractions
+
+<!--
+Interfaces or base types that form the seams of the system. Implementations
+name the concrete types/modules that satisfy each one. Follow with ONE
+interface excerpt, source-cited on its first line.
+-->
+
+| Abstraction | Purpose | Implementations |
+| --- | --- | --- |
+| [Interface / base type] | [What it abstracts] | [Concrete implementations] |
+| [Interface / base type] | [What it abstracts] | [Concrete implementations] |
+
+```[lang]
+// Source: [file:lines]
+[Interface / contract excerpt]
+```
+
+## Extension Recipes
+
+<!--
+Ordered steps grounded in THIS repo's patterns — reference real directories and
+the abstractions listed above, not generic advice.
+-->
+
+**Add an entity / resource**
+
+1. [Define the model or type in [path]]
+2. [Add data access following the [detected] pattern]
+3. [Wire business logic in [path]]
+4. [Expose the entry point in [path]]
+
+**Add an external integration**
+
+1. [Declare the adapter interface in [path]]
+2. [Implement the adapter against that interface]
+3. [Register the implementation where dependencies are wired]
+
+## Configuration
+
+<!--
+One row per config source actually present. Location = the file or environment
+source; Accessed Via = the accessor code uses to read it.
+-->
+
+| Config Type | Location | Accessed Via |
+| --- | --- | --- |
+| Environment | [env vars / process env] | [accessor] |
+| App Config | [config file or path] | [accessor] |
+| Secrets | [secret source] | [accessor] |
+
+## Boundaries
+
+<!--
+Repo-specific rules for where code may and may not go. The first DO/DON'T row is
+pre-filled and must stay verbatim; append detected rows beneath it.
+-->
+
+| ✅ DO | ❌ DON'T |
+| --- | --- |
+| Follow existing patterns for new code | Introduce new patterns without a clear reason |
+| [Detected practice to follow] | [Detected practice to avoid] |
+
+## Quick Reference
+
+<!--
+Map each common need to where it lives and the pattern to follow. Cover all six
+needs; fill Location with a real path and Pattern with the local convention.
+-->
+
+| Need | Location | Pattern |
+| --- | --- | --- |
+| Entry point | [path] | [pattern] |
+| Business logic | [path] | [pattern] |
+| Data access | [path] | [pattern] |
+| External services | [path] | [pattern] |
+| Shared utilities | [path] | [pattern] |
+| Configuration | [path] | [pattern] |
