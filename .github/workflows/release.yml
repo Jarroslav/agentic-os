@@ -1,0 +1,161 @@
+name: release
+
+# Publishes agentic-os-mcp to npm and the MCP Registry when a tag matching
+# agentic-os-mcp-v<X.Y.Z> is pushed (see CONTRIBUTING.md § Releasing and
+# mcp/RELEASE.md for the maintainer runbook).
+#
+# Ordering is not a style choice: the Registry's npm validator fetches the
+# *published* package from registry.npmjs.org and requires its `mcpName` to
+# equal server.json's `name` — it cannot see a version that only exists
+# locally. So npm publish must fully succeed before `mcp-publisher publish`
+# runs. Every step from "Publish to npm" onward carries `if: success()` so a
+# failed npm publish never leads into a confusing Registry failure or a
+# GitHub release for a package that isn't actually on npm.
+#
+# The `gate` job mirrors .github/workflows/ci.yml's `gate` job and `mcp` job
+# step-for-step (single Node version here — the 20/22 matrix is a PR-time
+# concern) so a release can never ship something the PR gate would have
+# rejected.
+on:
+  push:
+    tags:
+      - 'agentic-os-mcp-v*'
+
+permissions:
+  contents: write # attach the .mcpb to the GitHub release
+  id-token: write # npm provenance, and mcp-publisher's GitHub OIDC login
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # this job only reads and tests; no write/OIDC needed
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hook unit tests (t0)
+        run: |
+          bash tests/t0/run.sh
+          bash tests/t0/run-output-contract.sh
+
+      - name: Acceptance matrix (T1-T8)
+        run: bash tests/run-matrix.sh
+
+      - name: Validate JSON manifests & presets
+        run: python3 tests/lib/check-manifests.py
+
+      - name: Skill contract check
+        run: python3 tests/lib/check-skill-contract.py
+
+      - name: Neutrality & PII scan
+        run: |
+          python3 tests/lib/check-neutrality.py --self-test
+          python3 tests/lib/check-neutrality.py
+
+      - name: Run-artifact schema check
+        run: python3 tests/lib/check-schemas.py
+
+      - name: Originality check
+        run: |
+          python3 tests/lib/check-provenance.py --self-test
+          python3 tests/lib/check-provenance.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install mcp dependencies
+        working-directory: mcp
+        run: npm ci
+
+      # Runs before the build: catches a plugin edit whose author forgot to
+      # regenerate the index, same rationale as the `mcp` job in ci.yml.
+      - name: Content drift check
+        working-directory: mcp
+        run: npm run check:drift
+
+      - name: Build
+        working-directory: mcp
+        run: npm run build
+
+      - name: Test
+        working-directory: mcp
+        run: npm test
+
+  publish:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        working-directory: mcp
+        run: npm ci
+
+      # Prevents a whole class of mis-release: server.json/manifest.json
+      # agreement with package.json is already pinned by
+      # mcp/tests/package.test.ts (exercised in `gate`, above) — this is the
+      # fourth leg, the tag itself, which no test can see ahead of time.
+      - name: Assert tag matches package.json version
+        working-directory: mcp
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/agentic-os-mcp-v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag agentic-os-mcp-v${TAG_VERSION} does not match package.json version ${PKG_VERSION}"
+            exit 1
+          fi
+          echo "tag version ${TAG_VERSION} matches package.json version ${PKG_VERSION}"
+
+      # `npm publish`'s prepack lifecycle script runs `npm run build`
+      # (see mcp/package.json), so dist/ exists for the .mcpb build step
+      # below without a separate build step here.
+      - name: Publish to npm
+        working-directory: mcp
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # --- Everything below only proceeds once npm publish has actually
+      # succeeded, and only once the version is visible at
+      # registry.npmjs.org for the Registry's own validator to fetch. ---
+
+      - name: Install mcp-publisher
+        if: success()
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      # GitHub OIDC ("github-oidc"): authenticates using this workflow's own
+      # id-token, no PAT to provision, store, or rotate. Confirmed against
+      # upstream (modelcontextprotocol/registry, docs/reference/cli/commands.md
+      # and docs/modelcontextprotocol-io/github-actions.mdx as of 2026-07),
+      # which recommends OIDC over a PAT for CI specifically because it
+      # needs no dedicated secret and the token cannot outlive the job.
+      # Requires the `id-token: write` permission declared above (inherited
+      # from the workflow-level block; this job does not override it).
+      - name: Authenticate to MCP Registry
+        if: success()
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish to MCP Registry
+        if: success()
+        run: ./mcp-publisher publish mcp/server.json
+
+      - name: Build .mcpb bundle
+        if: success()
+        working-directory: mcp
+        run: npm run build:mcpb
+
+      - name: Attach .mcpb to GitHub release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" mcp/mcp.mcpb --title "$TAG" --generate-notes \
+            || gh release upload "$TAG" mcp/mcp.mcpb --clobber
