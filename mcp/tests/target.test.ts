@@ -174,4 +174,24 @@ describe('Target read/sha256/exists/isExecutable', () => {
       await rm(linkPath, { force: true });
     }
   });
+
+  it('returns undefined for a linked intermediate directory pointing outside root', async () => {
+    if (!canCreateSymlinks) {
+      console.warn('Skipping linked-intermediate-directory test: platform cannot create links');
+      return;
+    }
+    // Create a symlink directory inside root that points outside root, then
+    // try to read a file inside that linked directory. This tests that
+    // realpath resolves the whole path (including intermediate directory
+    // symlinks), not just the final segment.
+    const linkedDirPath = join(root, 'linked-dir');
+    await symlink(outside, linkedDirPath);
+    try {
+      expect(await target.read('linked-dir/secret.txt')).toBeUndefined();
+      expect(await target.sha256('linked-dir/secret.txt')).toBeUndefined();
+      expect(await target.exists('linked-dir/secret.txt')).toBe(false);
+    } finally {
+      await rm(linkedDirPath, { force: true });
+    }
+  });
 });

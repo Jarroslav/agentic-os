@@ -35,6 +35,20 @@ import { isAbsolute, join, relative, resolve, sep } from 'node:path';
  *  result be neither empty, `.`, nor start with `..`/be absolute — treats
  *  root as a directory boundary rather than a string prefix.
  *
+ *  TOCTOU window: containedRealPath validates a path and returns it, then
+ *  each of the four public methods (read, sha256, exists, isExecutable)
+ *  makes an independent stat/access/readFile call on that path string.
+ *  Between the validation and the read, an attacker with concurrent write
+ *  access to the target tree could swap the file for a link pointing
+ *  outside the root. This is an accepted risk, not a bug to engineer around:
+ *  run_doctor audits the user's own repository at their request, so exploiting
+ *  this window requires an attacker who already has write access to the thing
+ *  being audited—someone who, by definition, already controls the inspected
+ *  content. Closing the window would require holding file descriptors open
+ *  across the validation and read (open + fstat + read-from-fd), adding
+ *  material complexity for no gain against the threat model. This design is
+ *  intentional and has been considered.
+ *
  *  Read-only: only readFile, stat, realpath, and access are used here. No
  *  write API of any kind, and no import of node:child_process — both are
  *  enforced independently by the static scan in mcp/tests/readonly.test.ts.
@@ -138,8 +152,8 @@ export class Target {
   }
 
   /** True only if `rel` is contained within root, refers to an existing
-   *  regular file, and carries an execute bit for at least one of
-   *  owner/group/other. */
+   *  regular file, and the calling process has permission to execute it
+   *  (taking into account the process's user/group and the file's mode). */
   async isExecutable(rel: string): Promise<boolean> {
     const real = await this.containedRealPath(rel);
     if (real === undefined) return false;
@@ -167,8 +181,8 @@ function isContained(root: string, candidate: string): boolean {
   if (rel === '') return true;
   if (rel.startsWith('..')) return false;
   if (isAbsolute(rel)) return false;
-  // Belt-and-suspenders alongside the relative() check above: candidate
-  // must literally begin with root + separator once we know it isn't a
-  // `..`-prefixed or absolute relative path.
-  return candidate === root || candidate.startsWith(root + sep) || candidate.startsWith(join(root, rel));
+  // At this point, rel is a non-empty relative path that doesn't escape
+  // root (no `..` and not absolute), so candidate must be a child of root.
+  // Verify candidate literally begins with root + separator.
+  return candidate.startsWith(root + sep);
 }
