@@ -60,6 +60,7 @@ export async function runNativeChecks(target: Target): Promise<CheckResult[]> {
     await checkManifest(target, files),
     await checkSettings(target, files),
     await checkGitHook(target),
+    checkDependencies(),
     await checkScorecard(target, files),
     await checkRegistry(target, files),
   ];
@@ -122,19 +123,31 @@ interface HookWiring {
   command: string;
 }
 
-/** The fragment's layout, per `templates/hooks/settings-fragment.json.tmpl`
- *  and SKILL.md Check 5's parenthetical. Only these named "gate" hooks are
- *  checked for wiring — a mature repo's `.claude/hooks/` may also carry a
- *  team's own scripts, which are none of this check's business. */
+/** The fragment's actual layout — read from
+ *  `plugins/agentic-os/templates/hooks/settings-fragment.json.tmpl` directly,
+ *  not from SKILL.md Check 5's parenthetical illustration, which turned out
+ *  to omit four of the fragment's fifteen entries (prompt_scan_guard.py,
+ *  lint_on_save.py, context_monitor.py, session_learnings_notice.py) — a
+ *  settings.json that dropped the prompt-injection scanner previously PASSED
+ *  this check. `doctor.ts` receives a `Target`, not the bundle `Content`, so
+ *  this list cannot be derived from the template file at check time; it must
+ *  be kept in lockstep with the fragment by hand. If the fragment's wiring
+ *  changes, update this list to match — only these named "gate" hooks are
+ *  checked; a mature repo's `.claude/hooks/` may also carry a team's own
+ *  scripts, which are none of this check's business. */
 const EXPECTED_WIRING: HookWiring[] = [
+  { file: 'prompt_scan_guard.py', event: 'UserPromptSubmit', command: 'python3 .claude/hooks/prompt_scan_guard.py' },
   { file: 'human_gated_commands.py', event: 'PreToolUse', command: 'python3 .claude/hooks/human_gated_commands.py' },
   { file: 'precommit_review_gate.py', event: 'PreToolUse', command: 'python3 .claude/hooks/precommit_review_gate.py' },
   { file: 'guarded_write_paths.py', event: 'PreToolUse', command: 'python3 .claude/hooks/guarded_write_paths.py' },
   { file: 'write_scope_guard.py', event: 'PreToolUse', command: 'python3 .claude/hooks/write_scope_guard.py block' },
   { file: 'migration_notice.py', event: 'PostToolUse', command: 'python3 .claude/hooks/migration_notice.py' },
   { file: 'instruction_stale_notice.py', event: 'PostToolUse', command: 'python3 .claude/hooks/instruction_stale_notice.py' },
+  { file: 'lint_on_save.py', event: 'PostToolUse', command: 'python3 .claude/hooks/lint_on_save.py' },
+  { file: 'context_monitor.py', event: 'PostToolUse', command: 'python3 .claude/hooks/context_monitor.py' },
   { file: 'instruction_gate.py', event: 'SubagentStart', command: 'python3 .claude/hooks/instruction_gate.py' },
   { file: 'subagent_gate.py', event: 'Stop', command: 'python3 .claude/hooks/subagent_gate.py' },
+  { file: 'session_learnings_notice.py', event: 'Stop', command: 'python3 .claude/hooks/session_learnings_notice.py' },
   { file: 'subagent_gate.py', event: 'SubagentStop', command: 'python3 .claude/hooks/subagent_gate.py' },
   { file: 'session_start_bootstrap.py', event: 'SessionStart', command: 'python3 .claude/hooks/session_start_bootstrap.py' },
   { file: 'precompact_checkpoint.py', event: 'PreCompact', command: 'python3 .claude/hooks/precompact_checkpoint.py' },
@@ -224,33 +237,105 @@ async function checkSettings(
 }
 
 // ---------------------------------------------------------------------------
-// Check 6 — Git hook (dependencies sub-check intentionally out of scope)
+// Check 6 — git_hook + dependencies
 // ---------------------------------------------------------------------------
 //
-// SKILL.md's Check 6 also verifies plugin dependencies against
+// SKILL.md's Check 6 defines two verdict keys: `git_hook` and `dependencies`.
+// The dependency half verifies plugin sources against
 // `~/.claude/plugins/installed_plugins.json` — a path outside the target
-// repository entirely, and outside `manifest/dependencies.json` (a plugin
-// bundle file, not a target-repo file). Neither is reachable through
-// `Target`, whose containment guarantee is scoped to the target repo, so
-// that half of Check 6 cannot be a "pure file inspection" of the target and
-// is not implemented natively. See the task report for the full reasoning.
+// repository entirely — cross-referenced with `manifest/dependencies.json` (a
+// plugin-bundle file, not a target-repo file). Neither is reachable through
+// `Target`, whose containment guarantee is scoped to the target repo, so that
+// half cannot be a "pure file inspection" of the target and is not
+// implemented natively; `checkDependencies` below emits an explicit,
+// honest placeholder instead of silently dropping the key (see its doc
+// comment for why `passed: false`, not a skip-shaped `true`).
+
+/** True for anything that is not a plain repo-relative path: a POSIX absolute
+ *  path, a Windows drive-letter path, or a UNC path. `Target` already refuses
+ *  an absolute `rel` outright (see target.ts's containment rule), so
+ *  accepting one here would only produce a failing check whose message
+ *  embeds the operator's real filesystem path — exactly the leak this
+ *  guards against (F4). */
+function isAbsoluteHooksPath(value: string): boolean {
+  return value.startsWith('/') || value.startsWith('\\') || /^[A-Za-z]:[\\/]/.test(value);
+}
+
+/** The value of the *last* `hooksPath = ...` assignment inside the `[core]`
+ *  section of a git config file — git's own precedence rule (last wins),
+ *  restricted to the section the key is actually scoped to. A commented-out
+ *  line (`#`/`;` after trimming) is skipped, and a `hooksPath` sitting under
+ *  some other `[section]` is ignored, so `# hooksPath = old` or a same-named
+ *  key in an unrelated section can never shadow the real value. */
+function lastCoreHooksPath(config: string): string | undefined {
+  let inCore = false;
+  let found: string | undefined;
+  for (const rawLine of config.split('\n')) {
+    const line = rawLine.trim();
+    if (line.length === 0 || line.startsWith('#') || line.startsWith(';')) continue;
+    const section = /^\[([^\]]+)\]/.exec(line);
+    if (section) {
+      inCore = (section[1] ?? '').trim().toLowerCase() === 'core';
+      continue;
+    }
+    if (!inCore) continue;
+    const match = /^hooksPath\s*=\s*(.+)$/.exec(line);
+    const raw = match?.[1];
+    if (raw !== undefined) found = raw.trim();
+  }
+  return found;
+}
+
 async function resolveHooksDir(target: Target): Promise<string> {
   const config = await target.read('.git/config');
   if (config !== undefined) {
-    const match = /hooksPath\s*=\s*(.+)/.exec(config);
-    const raw = match?.[1];
+    const raw = lastCoreHooksPath(config);
     if (raw !== undefined) {
-      const value = raw.trim().replace(/\/+$/, '');
-      if (value.length > 0) return value;
+      const value = raw.replace(/\/+$/, '');
+      // An absolute hooksPath is rejected outright rather than surfaced: it
+      // is unreachable through Target (containment refuses absolute input)
+      // and interpolating it into a failure message would leak the
+      // operator's filesystem path (F4). Falling back to the conventional
+      // default is the honest behavior — the check still fails, just
+      // without a leak.
+      if (value.length > 0 && !isAbsoluteHooksPath(value)) return value;
     }
   }
   return '.git/hooks';
 }
 
 async function checkGitHook(target: Target): Promise<CheckResult> {
+  const trackedTwin = '.githooks/pre-commit';
+  const trackedExists = await target.exists(trackedTwin);
+
+  // A gitlink — `.git` is a regular *file* containing `gitdir: <path>`,
+  // rather than a directory — means this checkout is a git worktree or
+  // submodule (F3). The real hooks directory the gitlink points to lives
+  // outside the target root, and `Target`'s containment guarantee will never
+  // follow it there. Falling through to the directory-based logic below
+  // would read `.git/config` as undefined (there is no such path under a
+  // gitlink), fall back to the default `.git/hooks`, find nothing there
+  // either, and report a hard FAIL whose remedy
+  // (`bash scripts/install-git-hooks.sh`) installs into the *real* repo's
+  // hooks dir, not this checkout's — a failure that could never clear.
+  // `target.exists` reports true only for a regular file, so this one call
+  // is sufficient to distinguish the gitlink case from an ordinary `.git/`
+  // directory.
+  const gitIsGitlink = await target.exists('.git');
+  if (gitIsGitlink) {
+    const parts = [
+      '.git is a gitlink (this checkout is a git worktree or submodule); the installed ' +
+        'git hooks directory it points to is outside the target root and is not verifiable natively',
+    ];
+    parts.push(trackedExists ? `tracked twin ${trackedTwin} present` : `tracked twin ${trackedTwin} is missing`);
+    // Only the part that is genuinely unreachable (the installed hook) is
+    // treated as non-authoritative; the tracked twin is an ordinary
+    // repo-relative file and stays a real failure if missing.
+    return { key: 'git_hook', passed: trackedExists, detail: parts.join('; ') };
+  }
+
   const hooksDir = await resolveHooksDir(target);
   const installedPath = `${hooksDir}/pre-commit`;
-  const trackedTwin = '.githooks/pre-commit';
   const localPath = `${hooksDir}/pre-commit.local`;
 
   const installedExists = await target.exists(installedPath);
@@ -259,7 +344,6 @@ async function checkGitHook(target: Target): Promise<CheckResult> {
   const hasMarker = installedContent !== undefined && installedContent.includes('agentic-os:');
   const installed = installedExists && installedExecutable && hasMarker;
 
-  const trackedExists = await target.exists(trackedTwin);
   const hasLocal = await target.exists(localPath);
 
   const failures: string[] = [];
@@ -280,7 +364,29 @@ async function checkGitHook(target: Target): Promise<CheckResult> {
     ? [`installed hook present, executable, and marked at ${installedPath}; tracked twin ${trackedTwin} present`]
     : [...failures];
   if (hasLocal) parts.push(`chained foreign hook detected at ${localPath} (informational)`);
-  return { key: 'githook', passed, detail: parts.join('; ') };
+  return { key: 'git_hook', passed, detail: parts.join('; ') };
+}
+
+/** The `dependencies` half of SKILL.md's Check 6, emitted as an explicit,
+ *  honest placeholder rather than silently omitted (F1). It genuinely cannot
+ *  run natively (see the comment atop this section), but it DOES apply to
+ *  every install — unlike the true "not applicable" skips elsewhere in this
+ *  module (registry when its template wasn't installed, scorecard when the
+ *  gate isn't installed), where `passed: true` correctly means "this check
+ *  has nothing to say here." Reporting dependencies as passed by default
+ *  would silently hide a genuinely missing non-optional plugin behind a
+ *  green check, so this is a deliberate fail-closed `passed: false`: a
+ *  consumer must see it as outstanding, and the host is expected to replace
+ *  this placeholder with the real verdict after resolving
+ *  installed_plugins.json itself. */
+function checkDependencies(): CheckResult {
+  return {
+    key: 'dependencies',
+    passed: false,
+    detail:
+      'not verifiable natively — requires ~/.claude/plugins/installed_plugins.json, ' +
+      'outside the target root; the host must run this check',
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -345,6 +451,15 @@ async function checkScorecard(
       continue;
     }
     const currentHash = await target.sha256(path);
+    // A missing file (sha256 undefined) is not staleness — content_sha256
+    // !== undefined would otherwise be true for every missing file and
+    // mislabel it as "stale (content changed since grading)". The file's
+    // absence is already the manifest check's finding; report it accurately
+    // here instead of implying content drift that never happened.
+    if (currentHash === undefined) {
+      failures.push(`${path} is missing from disk (see the manifest check) — no content change occurred`);
+      continue;
+    }
     if (entry.content_sha256 !== currentHash) {
       failures.push(`${path} scorecard entry is stale (content changed since grading)`);
       continue;
@@ -359,13 +474,27 @@ async function checkScorecard(
   }
 
   // 7b — full-fleet coverage.
+  //
+  // F5 (disclosure only): SKILL.md says "every .md file in the canonical
+  // agents dir"; `Target` has no directory-listing primitive, so the fleet
+  // below is enumerated from `journal.files` instead — a contract dropped
+  // straight into `.agentic/agents/` without going through the installer is
+  // invisible here, the exact hole 7b exists to close. That limitation is
+  // surfaced in this check's `detail` below rather than left implicit.
   const fleet = new Set<string>();
   for (const path of Object.keys(files)) {
     const match = /^\.agentic\/agents\/([^/]+)\.md$/.exec(path);
     if (match !== null) {
       fleet.add(path);
       const name = match[1];
-      if (name !== undefined) fleet.add(`.claude/agents/${name}.md`);
+      // Gated on existence, same as the CLAUDE.md/AGENTS.md/PATTERNS.md
+      // pointers below — a generated contract whose .claude/agents/<name>.md
+      // pointer was never created must not manufacture a "no scorecard
+      // entry" failure for a file that isn't there at all.
+      if (name !== undefined) {
+        const pointerPath = `.claude/agents/${name}.md`;
+        if (await target.exists(pointerPath)) fleet.add(pointerPath);
+      }
     }
   }
   for (const extra of ['CLAUDE.md', 'AGENTS.md', 'PATTERNS.md']) {
@@ -399,6 +528,12 @@ async function checkScorecard(
       `${fleet.size} fleet file(s) and ${generatedAgentPaths.length} generated contract(s) scorecarded above threshold`,
     );
   }
+  // F5 (disclosure only): make the journal-only enumeration visible on every
+  // outcome, not just the passing path.
+  parts.push(
+    'fleet enumerated from the install journal (7b) — a file not journaled (e.g. an agent contract ' +
+      'hand-dropped into .agentic/agents/ outside the installer) is not enumerated by this check',
+  );
   return { key: 'scorecard', passed, detail: parts.join('; ') };
 }
 
@@ -613,9 +748,12 @@ async function checkRegistry(
   }
 
   // 8g — the tail survived: after the routing block, a non-empty tail
-  // containing "## Orchestration rules".
+  // containing "## Orchestration rules" as an actual level-2 heading.
+  // Anchored to line start with exactly two hashes (`(?!#)` refuses a third)
+  // so a deeper heading like "### Orchestration rules" — from a mis-rendered
+  // or hand-edited tail — is never mistaken for the required section.
   const tailText = lines.slice(routing.end + 1).join('\n');
-  if (tailText.trim().length === 0 || !/##\s+Orchestration rules/.test(tailText)) {
+  if (tailText.trim().length === 0 || !/^##(?!#)\s+Orchestration rules/m.test(tailText)) {
     failures.push(
       '8g: no non-empty tail with "## Orchestration rules" after the routing table ' +
         '(registry truncated at the marker row)',

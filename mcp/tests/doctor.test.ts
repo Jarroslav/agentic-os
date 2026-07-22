@@ -70,7 +70,7 @@ describe('runNativeChecks: not-installed precondition', () => {
     const results = await runNativeChecks(target);
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ key: 'not-installed', passed: false });
-    for (const key of ['manifest', 'settings', 'githook', 'scorecard', 'registry']) {
+    for (const key of ['manifest', 'settings', 'git_hook', 'dependencies', 'scorecard', 'registry']) {
       expect(results.find((r) => r.key === key)).toBeUndefined();
     }
   });
@@ -206,9 +206,39 @@ describe('settings check', () => {
     expect(settings.passed).toBe(false);
     expect(settings.detail).toContain('Read(.env*)');
   });
+
+  // F2: EXPECTED_WIRING was transcribed from SKILL.md's Check 5 parenthetical
+  // rather than from settings-fragment.json.tmpl, the file that parenthetical
+  // cites, and dropped four hooks the fragment actually wires. Each of these
+  // would previously PASS with the hook installed and journaled but never
+  // wired anywhere in settings.json — including prompt_scan_guard.py, the
+  // prompt-injection scanner.
+  const MISSING_WIRINGS: [string, string][] = [
+    ['prompt_scan_guard.py', 'UserPromptSubmit'],
+    ['lint_on_save.py', 'PostToolUse'],
+    ['context_monitor.py', 'PostToolUse'],
+    ['session_learnings_notice.py', 'Stop'],
+  ];
+
+  for (const [file, event] of MISSING_WIRINGS) {
+    it(`fails when managed ${file} is installed and journaled but not wired under ${event}`, async () => {
+      const root = await makeRoot();
+      const hookBody = '# hook\n';
+      await put(root, `.claude/hooks/${file}`, hookBody);
+      await put(root, '.claude/settings.json', JSON.stringify(MINIMAL_SETTINGS));
+      await writeJournal(root, {
+        [`.claude/hooks/${file}`]: { sha256: sha256(hookBody), owner: 'managed' },
+      });
+      const results = await runNativeChecks(await Target.open(root));
+      const settings = getCheck(results, 'settings');
+      expect(settings.passed).toBe(false);
+      expect(settings.detail).toContain(file);
+      expect(settings.detail).toContain(event);
+    });
+  }
 });
 
-describe('githook check', () => {
+describe('git_hook check', () => {
   it('passes when the installed hook exists, is executable, carries the marker, and the tracked twin exists', async () => {
     const root = await makeRoot();
     const body = '#!/usr/bin/env bash\n# agentic-os: pre-commit gate\necho ok\n';
@@ -216,7 +246,7 @@ describe('githook check', () => {
     await put(root, '.githooks/pre-commit', body);
     await writeJournal(root, {});
     const results = await runNativeChecks(await Target.open(root));
-    expect(getCheck(results, 'githook').passed).toBe(true);
+    expect(getCheck(results, 'git_hook').passed).toBe(true);
   });
 
   it('fails when the installed hook is missing', async () => {
@@ -224,9 +254,104 @@ describe('githook check', () => {
     await put(root, '.githooks/pre-commit', '#!/usr/bin/env bash\n# agentic-os: pre-commit gate\necho ok\n');
     await writeJournal(root, {});
     const results = await runNativeChecks(await Target.open(root));
-    const githook = getCheck(results, 'githook');
-    expect(githook.passed).toBe(false);
-    expect(githook.detail).toContain('install-git-hooks.sh');
+    const gitHook = getCheck(results, 'git_hook');
+    expect(gitHook.passed).toBe(false);
+    expect(gitHook.detail).toContain('install-git-hooks.sh');
+  });
+
+  it('fails when the installed hook exists but is not executable', async () => {
+    const root = await makeRoot();
+    const body = '#!/usr/bin/env bash\n# agentic-os: pre-commit gate\necho ok\n';
+    await put(root, '.git/hooks/pre-commit', body); // no chmod -> not executable
+    await put(root, '.githooks/pre-commit', body);
+    await writeJournal(root, {});
+    const results = await runNativeChecks(await Target.open(root));
+    const gitHook = getCheck(results, 'git_hook');
+    expect(gitHook.passed).toBe(false);
+    expect(gitHook.detail).toContain('not executable');
+  });
+
+  it('resolves a relative core.hooksPath from .git/config and checks the hook there', async () => {
+    const root = await makeRoot();
+    const body = '#!/usr/bin/env bash\n# agentic-os: pre-commit gate\necho ok\n';
+    await put(root, '.git/config', '[core]\n\trepositoryformatversion = 0\n\thooksPath = .customhooks\n');
+    await putExecutable(root, '.customhooks/pre-commit', body);
+    await put(root, '.githooks/pre-commit', body);
+    await writeJournal(root, {});
+    const results = await runNativeChecks(await Target.open(root));
+    const gitHook = getCheck(results, 'git_hook');
+    expect(gitHook.passed).toBe(true);
+    expect(gitHook.detail).toContain('.customhooks/pre-commit');
+  });
+
+  // F4: an absolute hooksPath must never leak the operator's filesystem path
+  // into `detail`, even though the check correctly fails (Target refuses to
+  // resolve an absolute path, so the configured hook is unreachable).
+  it('rejects an absolute core.hooksPath and never leaks it into detail', async () => {
+    const root = await makeRoot();
+    await put(root, '.git/config', '[core]\n\thooksPath = /Users/someoperator/.githooks\n');
+    await put(root, '.githooks/pre-commit', '#!/usr/bin/env bash\n# agentic-os: pre-commit gate\necho ok\n');
+    await writeJournal(root, {});
+    const results = await runNativeChecks(await Target.open(root));
+    const gitHook = getCheck(results, 'git_hook');
+    expect(gitHook.passed).toBe(false);
+    expect(gitHook.detail).not.toContain('/Users/someoperator');
+    expect(gitHook.detail).toContain('.git/hooks/pre-commit'); // falls back to the default
+  });
+
+  it('anchors hooksPath parsing to [core] and ignores a comment or a value from another section', async () => {
+    const root = await makeRoot();
+    const body = '#!/usr/bin/env bash\n# agentic-os: pre-commit gate\necho ok\n';
+    await put(
+      root,
+      '.git/config',
+      '[core]\n' +
+        '\t# hooksPath = .stale-comment\n' +
+        '\thooksPath = .customhooks\n' +
+        '[someother]\n' +
+        '\thooksPath = .not-this-one\n',
+    );
+    await putExecutable(root, '.customhooks/pre-commit', body);
+    await put(root, '.githooks/pre-commit', body);
+    await writeJournal(root, {});
+    const results = await runNativeChecks(await Target.open(root));
+    const gitHook = getCheck(results, 'git_hook');
+    expect(gitHook.passed).toBe(true);
+    expect(gitHook.detail).toContain('.customhooks/pre-commit');
+  });
+
+  // F3: a gitlink (.git is a *file*, as in a worktree or submodule) must
+  // never fall through to a hard FAIL with an unactionable remedy — the real
+  // hooks dir it points to is outside the target root and unfixable from
+  // inside it.
+  it('reports the gitlink case (worktree/submodule) honestly instead of a false FAIL', async () => {
+    const root = await makeRoot();
+    await put(root, '.git', 'gitdir: /somewhere/outside/the/target/.git/worktrees/thisone\n');
+    await put(root, '.githooks/pre-commit', '#!/usr/bin/env bash\n# agentic-os: pre-commit gate\necho ok\n');
+    await writeJournal(root, {});
+    const results = await runNativeChecks(await Target.open(root));
+    const gitHook = getCheck(results, 'git_hook');
+    expect(gitHook.passed).toBe(true);
+    expect(gitHook.detail.toLowerCase()).toContain('gitlink');
+    expect(gitHook.detail).not.toContain('install-git-hooks.sh');
+  });
+});
+
+describe('dependencies check (F1)', () => {
+  // The dependency half of SKILL.md's Check 6 needs
+  // ~/.claude/plugins/installed_plugins.json, outside the target root and
+  // unreachable through Target — it cannot run natively. The prior
+  // implementation silently dropped the key; a consumer diffing this report
+  // against the skill's six-key schema could not tell whether it passed,
+  // failed, or never ran.
+  it('emits an explicit, honest, fail-closed result naming the host follow-up', async () => {
+    const root = await makeRoot();
+    await writeJournal(root, {});
+    const results = await runNativeChecks(await Target.open(root));
+    const deps = getCheck(results, 'dependencies');
+    expect(deps.passed).toBe(false);
+    expect(deps.detail).toContain('installed_plugins.json');
+    expect(deps.detail).not.toContain(root);
   });
 });
 
@@ -323,6 +448,100 @@ describe('scorecard check', () => {
     const scorecard = getCheck(results, 'scorecard');
     expect(scorecard.passed).toBe(false);
     expect(scorecard.detail).toContain('80');
+  });
+
+  // 7a stale-vs-missing distinction: a scorecard entry for a generated
+  // contract whose file is no longer on disk must never be reported as
+  // "stale" (target.sha256 returns undefined for a missing file, and an
+  // unguarded `!==` comparison against that undefined makes every missing
+  // file look like a content change). The file's absence is the manifest
+  // check's finding; 7a must describe it accurately, not as staleness.
+  it('reports a missing (not stale) message when a generated contract file is absent from disk', async () => {
+    const root = await makeRoot();
+    const gateBody = '# gate\n';
+    const agentBody = '# generated agent contract\n';
+    await put(root, '.claude/hooks/instruction_gate.py', gateBody);
+    // Note: the agent file itself is never written to disk.
+    await put(
+      root,
+      'docs/audits/instruction-scorecard.json',
+      JSON.stringify({
+        schema: 1,
+        threshold: 95,
+        files: {
+          '.agentic/agents/schema-writer.md': { content_sha256: sha256(agentBody), composite_score: 100 },
+        },
+      }),
+    );
+    await writeJournal(root, {
+      '.claude/hooks/instruction_gate.py': { sha256: sha256(gateBody), owner: 'managed' },
+      '.agentic/agents/schema-writer.md': { sha256: sha256(agentBody), owner: 'generated' },
+    });
+    const results = await runNativeChecks(await Target.open(root));
+    const scorecard = getCheck(results, 'scorecard');
+    expect(scorecard.passed).toBe(false);
+    expect(scorecard.detail).not.toContain('stale');
+    expect(scorecard.detail.toLowerCase()).toContain('missing');
+  });
+
+  // F5 (disclosure only): 7b enumerates the fleet from journal.files because
+  // Target has no directory-listing primitive, so an agent contract dropped
+  // straight into .agentic/agents/ without going through the installer is
+  // invisible to this check. That limitation must be visible in the detail,
+  // not silently assumed.
+  it('discloses that the fleet was enumerated from the journal, not a directory scan', async () => {
+    const root = await makeRoot();
+    const gateBody = '# gate\n';
+    const claudeMd = '# CLAUDE\n';
+    await put(root, '.claude/hooks/instruction_gate.py', gateBody);
+    await put(root, 'CLAUDE.md', claudeMd);
+    await put(
+      root,
+      'docs/audits/instruction-scorecard.json',
+      JSON.stringify({
+        schema: 1,
+        threshold: 95,
+        files: { 'CLAUDE.md': { content_sha256: sha256(claudeMd), composite_score: 100, source: 'template-inherited' } },
+      }),
+    );
+    await writeJournal(root, {
+      '.claude/hooks/instruction_gate.py': { sha256: sha256(gateBody), owner: 'managed' },
+      'CLAUDE.md': { sha256: sha256(claudeMd), owner: 'managed' },
+    });
+    const results = await runNativeChecks(await Target.open(root));
+    const scorecard = getCheck(results, 'scorecard');
+    expect(scorecard.detail.toLowerCase()).toContain('journal');
+  });
+
+  // Minor: 7b previously added .claude/agents/<name>.md to the fleet
+  // unconditionally, while gating CLAUDE.md/AGENTS.md/PATTERNS.md on
+  // `exists`. A generated agent whose pointer file was never created (e.g.
+  // an install that stopped short) got a spurious "no scorecard entry"
+  // failure for a file that isn't there at all.
+  it('does not require a scorecard entry for a .claude/agents pointer that was never created', async () => {
+    const root = await makeRoot();
+    const gateBody = '# gate\n';
+    const agentBody = '# generated agent contract\n';
+    await put(root, '.claude/hooks/instruction_gate.py', gateBody);
+    await put(root, '.agentic/agents/schema-writer.md', agentBody);
+    // Note: .claude/agents/schema-writer.md pointer is never created.
+    await put(
+      root,
+      'docs/audits/instruction-scorecard.json',
+      JSON.stringify({
+        schema: 1,
+        threshold: 95,
+        files: { '.agentic/agents/schema-writer.md': { content_sha256: sha256(agentBody), composite_score: 100 } },
+      }),
+    );
+    await writeJournal(root, {
+      '.claude/hooks/instruction_gate.py': { sha256: sha256(gateBody), owner: 'managed' },
+      '.agentic/agents/schema-writer.md': { sha256: sha256(agentBody), owner: 'generated' },
+    });
+    const results = await runNativeChecks(await Target.open(root));
+    const scorecard = getCheck(results, 'scorecard');
+    expect(scorecard.passed).toBe(true);
+    expect(scorecard.detail).not.toContain('.claude/agents/schema-writer.md');
   });
 });
 
@@ -461,10 +680,35 @@ Some prose paragraph breaks the block here.
     expect(registry.passed).toBe(false);
     expect(registry.detail).toContain('8g');
   });
+
+  // Minor: 8g's regex must anchor to exactly two leading hashes at line
+  // start, or a deeper heading like "### Orchestration rules" (from a
+  // mis-rendered or hand-edited tail) would be misread as the required
+  // section and let a truncated registry pass.
+  it('fails (8g) when only a deeper heading ("### Orchestration rules") is present, not "##"', async () => {
+    const root = await makeRoot();
+    const deeperHeading = `# Agent Registry
+
+| Trigger / intent | Owning asset | Human gate / escalation notes |
+| --- | --- | --- |
+| Route ambiguous requests | \`.agentic/agents/dispatcher.md\` | read-only |
+| <!-- generated-agent-rows --> | | |
+
+### Orchestration rules
+`;
+    await put(root, '.agentic/guides/agent-registry.md', deeperHeading);
+    await writeJournal(root, {
+      '.agentic/guides/agent-registry.md': { sha256: sha256(deeperHeading), owner: 'generated' },
+    });
+    const results = await runNativeChecks(await Target.open(root));
+    const registry = getCheck(results, 'registry');
+    expect(registry.passed).toBe(false);
+    expect(registry.detail).toContain('8g');
+  });
 });
 
 describe('completeness and path hygiene', () => {
-  it('runs all five checks (in addition to a healthy manifest) even when several checks fail', async () => {
+  it('runs all six checks (in addition to a healthy manifest) even when several checks fail', async () => {
     const root = await makeRoot();
     // Nothing installed at all except the journal itself: every check should
     // still produce a result, and several should legitimately fail.
@@ -473,7 +717,7 @@ describe('completeness and path hygiene', () => {
     });
     const results = await runNativeChecks(await Target.open(root));
     const keys = results.map((r) => r.key).sort();
-    expect(keys).toEqual(['githook', 'manifest', 'registry', 'scorecard', 'settings']);
+    expect(keys).toEqual(['dependencies', 'git_hook', 'manifest', 'registry', 'scorecard', 'settings']);
   });
 
   it('never includes an absolute filesystem path in any detail string', async () => {
