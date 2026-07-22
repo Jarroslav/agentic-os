@@ -9,6 +9,25 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 ## [Unreleased]
 
 ### Added
+- **Packaging for publication (Phase 3).** `LICENSE` and `NOTICE` now ship
+  in the npm tarball (copied from the repo root at build time), and the
+  orphaned `.map` files that used to leak in are gone — both pinned by
+  `mcp/tests/package.test.ts`, which also asserts the tarball contains
+  every `content-index.json` entry and only those.
+- `server.json` (MCP Registry server descriptor) and `manifest.json` (`.mcpb`
+  bundle manifest), plus `mcp/scripts/build-mcpb.mjs` and `.mcpbignore`,
+  producing a production-only `.mcpb` bundle (no devDependencies, no
+  `tests/`/`src/`/`scripts/`) that unpacks and serves all 7 tools from the
+  unpacked layout. `package.json`, `server.json`, and `manifest.json` are
+  asserted to agree on version, name, and identifier by the same test file
+  — proven to fail on drift.
+- `.github/workflows/release.yml` — a tag-triggered (`agentic-os-mcp-v*`)
+  release workflow: reruns the full repo gate, asserts the tag matches
+  `package.json`'s version, publishes to npm with provenance, and only on
+  npm success publishes `server.json` to the MCP Registry (via
+  `mcp-publisher login github-oidc`), then attaches the built `.mcpb` to a
+  GitHub release. See `mcp/RELEASE.md` for the maintainer runbook this
+  workflow implements.
 - `list_presets` — the seven agentic-os role presets with HITL default,
   orchestration mode, and SDLC skills.
 - `list_qe_blueprints` — the 28 Quality Engineering blueprints, filterable by

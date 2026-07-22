@@ -13,10 +13,14 @@ you review each one.
 ## Install
 
 > **Not yet published.** `agentic-os-mcp` is not on npm yet — publishing is a
-> later phase of this project. The `npx -y agentic-os-mcp` commands below are
-> the shape the install will take once it ships; running them today will
-> either fail or resolve to an unrelated package of the same name. Until then,
-> point your host at the local build instead:
+> later phase of this project (see `RELEASE.md`). The one-click links,
+> badges, and `npx -y agentic-os-mcp` commands below are the shape the
+> install will take once it ships; clicking or running them today will
+> either fail or resolve to an unrelated package of the same name. **This
+> caveat, and only this caveat, is removed by a follow-up commit once the
+> first release actually lands** — the snippets themselves are meant to be
+> correct in advance, not placeholders to rewrite later. Until then, point
+> your host at the local build instead:
 >
 > ```bash
 > claude mcp add agentic-os -- node /absolute/path/to/mcp/dist/index.js
@@ -33,11 +37,19 @@ Codex:
 
     codex mcp add agentic-os -- npx -y agentic-os-mcp
 
-VS Code:
+VS Code — one-click:
+
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](vscode:mcp/install?name=agentic-os&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22agentic-os-mcp%22%5D%7D)
+
+or from the command line:
 
     code --add-mcp '{"name":"agentic-os","command":"npx","args":["-y","agentic-os-mcp"]}'
 
-Cursor or Claude Desktop — add to `.cursor/mcp.json` or
+Cursor — one-click:
+
+[![Add to Cursor](https://img.shields.io/badge/Cursor-Add_MCP-000000?style=flat-square)](cursor://anysphere.cursor-deeplink/mcp/install?name=agentic-os&config=eyJ0eXBlIjoic3RkaW8iLCJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImFnZW50aWMtb3MtbWNwIl19)
+
+or add to `.cursor/mcp.json` directly, same as Claude Desktop's
 `claude_desktop_config.json`:
 
     { "mcpServers": { "agentic-os": { "command": "npx", "args": ["-y", "agentic-os-mcp"] } } }
@@ -125,6 +137,11 @@ read.
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).
+
+## Releasing
+
+Maintainer-only. See [RELEASE.md](RELEASE.md) for the one-time setup and
+per-release runbook.
 
 ## Requirements
 
