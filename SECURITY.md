@@ -40,11 +40,44 @@ modes. Reports of particular interest:
   condition.
 - Any script under `.claude/hooks/`, `.githooks/`, or `scripts/` that
   executes untrusted input unsafely.
-- A way to make the MCP server (`mcp/`) serve a path that is not a literal
-  key of its build-time `content-index.json` — that membership check is its
-  entire access-control model (no path arithmetic, so this is meant to make
-  traversal and absolute paths inexpressible), and a bypass of it is a
-  security bug.
+- A way to bypass either of the MCP server's (`mcp/`) two file readers. It
+  has two, gated differently, because they read from two different places:
+  - The **bundle reader** (`mcp/src/content.ts`) serves the plugin content
+    this repo ships. A path is servable only if it is a literal key of the
+    build-time `content-index.json` — that membership check is its entire
+    access-control model; there is no path arithmetic against caller input,
+    so traversal and absolute paths are inexpressible.
+  - The **target reader** (`mcp/src/target.ts`), added in Phase 2b for
+    `run_doctor`, opens a directory the *caller* names — a repo to audit —
+    so index membership doesn't apply; there is no build-time index of
+    someone else's repository. It is gated instead by root containment,
+    checked on every access: the requested path is resolved against the
+    canonicalized root, then canonicalized itself (`fs.realpath`, so a
+    symlink is resolved to what it actually points at) and verified to still
+    be inside the canonicalized root before any read. An absolute input is
+    rejected outright. Any violation returns `undefined`/`false` rather than
+    throwing, and no error message ever carries a filesystem path.
+  - **The server never writes**, to the bundle or to a target repo, and
+    **never executes** anything — `run_doctor`'s three checks that require
+    running Python are returned as commands for the host to run, not
+    executed by the server. A static test (`mcp/tests/readonly.test.ts`)
+    bans both write APIs (`writeFile`, `mkdir`, `rm`, `rename`, `symlink`,
+    etc.) and process-execution APIs — including the `child_process` module
+    specifier in any quoting — across `mcp/src/**`.
+  - **Accepted risk, disclosed, not a bug:** the target reader has a
+    TOCTOU window between validating a path's containment and the
+    subsequent read (each read is an independent `stat`/`readFile` call on
+    the already-validated path string). An attacker with concurrent write
+    access to the repo being audited could in principle swap a file for an
+    out-of-root symlink between those two steps. Exploiting it requires
+    write access to the very tree `run_doctor` is auditing at the caller's
+    own request — i.e., an attacker who already controls the thing being
+    inspected. This is documented in `mcp/src/target.ts` and considered
+    acceptable given that threat model; a report proposing a *cheaper*
+    close (e.g., a reason closing it wouldn't require holding file
+    descriptors open across validation and read) is still welcome.
+  - A bypass of either reader's gate — bundle membership or target
+    containment — is a security bug and should be reported.
 
 Prompt-injection resistance of the underlying LLM is out of scope for this
 project specifically — report those upstream to the model provider — but a
