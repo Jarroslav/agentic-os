@@ -107,7 +107,7 @@ describe('read-only guarantee', () => {
         await client.callTool({ name: tool.name, arguments: args });
         exercised.push(tool.name);
       }
-      // Sanity check on the loop itself: every one of the 6 tools shipped so
+      // Sanity check on the loop itself: every one of the 7 tools shipped so
       // far must actually have been called, not merely present in TOOL_ARGS
       // unused.
       expect(exercised.sort()).toEqual([
