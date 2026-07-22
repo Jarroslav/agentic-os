@@ -336,6 +336,26 @@ describe('list_presets', () => {
     const res = await client.callTool({ name: 'list_presets', arguments: {} });
     expect(JSON.stringify(res.structuredContent)).not.toContain('hooks/precommit-review-gate');
   });
+
+  it('returns exactly as many presets as the content index has preset files', async () => {
+    // Guards against list_presets.ts reverting to a hardcoded role list: the
+    // index (mcp/content-index.json), built from the filesystem at build
+    // time, is the authority on what preset files actually exist. A
+    // hardcoded array that drifts from that set — a preset added or removed
+    // under plugins/agentic-os/presets/roles/ without updating the constant —
+    // must fail this test.
+    const index: Record<string, string> = JSON.parse(
+      await readFile(join(MCP_ROOT, 'content-index.json'), 'utf8'),
+    );
+    const PRESET_PATH = /^plugins\/agentic-os\/presets\/roles\/([^/]+)\.json$/;
+    const presetFileCount = Object.keys(index).filter(k => PRESET_PATH.test(k)).length;
+
+    const res = await client.callTool({ name: 'list_presets', arguments: {} });
+    const { presets } = res.structuredContent as { presets: Array<{ name: string }> };
+
+    expect(presetFileCount).toBeGreaterThan(0);
+    expect(presets.length).toBe(presetFileCount);
+  });
 });
 
 describe('preset and blueprint URI aliases', () => {
