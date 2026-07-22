@@ -2,8 +2,9 @@
 // Copies plugins/** into dist/content/ and emits content-index.json.
 // This is the ONLY path from plugins/ into the published package.
 import { createHash } from 'node:crypto';
-import { readdir, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
-import { dirname, join, relative, sep } from 'node:path';
+import { readFile, mkdir, writeFile, rm } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -11,29 +12,28 @@ export const MCP_ROOT = join(HERE, '..');
 export const REPO_ROOT = join(MCP_ROOT, '..');
 export const PLUGINS_DIR = join(REPO_ROOT, 'plugins');
 
-// Directories never shipped: caches and per-skill eval fixtures the server
-// has no way to run. Excluding them keeps the package lean and the index stable.
-const SKIP_DIRS = new Set(['__pycache__', 'node_modules', '.git']);
-
-async function walk(dir, out = []) {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (entry.isDirectory()) {
-      if (SKIP_DIRS.has(entry.name)) continue;
-      await walk(join(dir, entry.name), out);
-    } else if (entry.isFile()) {
-      out.push(join(dir, entry.name));
-    }
-  }
-  return out;
+// The index's source of truth is git-tracked files under plugins/, not the
+// working tree. Anything untracked (a local .pytest_cache, .DS_Store, .venv,
+// .idea, editor swap file, …) is invisible to `git ls-files` and therefore
+// can never be baked into the committed index — no per-name skip list to
+// keep up to date, and no way for one contributor's local debris to end up
+// shipped in another contributor's tarball.
+function gitTrackedPluginFiles() {
+  const out = execFileSync('git', ['ls-files', '-z', 'plugins'], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8',
+  });
+  // `-z` NUL-terminates every entry, including the last, so splitting on '\0'
+  // always yields one trailing empty string — drop it.
+  return out.split('\0').filter(rel => rel.length > 0);
 }
 
 /** @returns {Promise<Record<string,string>>} repo-relative POSIX path -> sha256 */
 export async function buildIndex() {
-  const files = (await walk(PLUGINS_DIR)).sort();
+  const files = gitTrackedPluginFiles().sort();
   const index = {};
-  for (const abs of files) {
-    const rel = relative(REPO_ROOT, abs).split(sep).join('/');
-    const buf = await readFile(abs);
+  for (const rel of files) {
+    const buf = await readFile(join(REPO_ROOT, rel));
     index[rel] = createHash('sha256').update(buf).digest('hex');
   }
   return index;

@@ -1,5 +1,12 @@
 import { describe, expect, it, beforeAll } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadContent, type Content } from '../src/content.js';
+
+const MCP_ROOT = fileURLToPath(new URL('..', import.meta.url));
+const REPO_ROOT = join(MCP_ROOT, '..');
 
 let content: Content;
 beforeAll(async () => { content = await loadContent(); });
@@ -70,5 +77,39 @@ describe('content layer', () => {
       expect(s.description.startsWith('>')).toBe(false);
       expect(s.description.startsWith('|')).toBe(false);
     }
+  });
+
+  // Regression guard for the class of bug where build-content.mjs's walk()
+  // read the working tree instead of git's index: an untracked local file
+  // (a .pytest_cache, .DS_Store, .venv, …) could get baked into the
+  // committed content-index.json, shipping local debris and failing
+  // check:drift on every fresh clone. Every indexed key must be a
+  // git-tracked path under plugins/ — this is what makes that class of bug
+  // impossible to reintroduce, independent of how the index was built.
+  it('indexes only git-tracked paths', async () => {
+    const indexPath = join(MCP_ROOT, 'content-index.json');
+    const index: Record<string, string> = JSON.parse(await readFile(indexPath, 'utf8'));
+
+    const out = execFileSync('git', ['ls-files', '-z', 'plugins'], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+    });
+    const tracked = new Set(out.split('\0').filter(rel => rel.length > 0));
+
+    const untracked = Object.keys(index).filter(path => !tracked.has(path));
+    expect(untracked).toEqual([]);
+  });
+
+  // The resource template (`agentic-os://file/{+path}`) round-trips a path
+  // through `URL`, while get_document's URI parsing does not — they only
+  // agree because no plugin file currently has a space, '#', or '%' in its
+  // name. Pinning the character set cheaply guards that unstated invariant.
+  it('every index key matches the safe path character set', async () => {
+    const indexPath = join(MCP_ROOT, 'content-index.json');
+    const index: Record<string, string> = JSON.parse(await readFile(indexPath, 'utf8'));
+    const SAFE_PATH = /^[A-Za-z0-9._/-]+$/;
+
+    const unsafe = Object.keys(index).filter(path => !SAFE_PATH.test(path));
+    expect(unsafe).toEqual([]);
   });
 });
