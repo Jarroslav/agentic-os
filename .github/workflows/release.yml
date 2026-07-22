@@ -7,19 +7,55 @@ name: release
 # Ordering is not a style choice: the Registry's npm validator fetches the
 # *published* package from registry.npmjs.org and requires its `mcpName` to
 # equal server.json's `name` — it cannot see a version that only exists
-# locally. So npm publish must fully succeed before `mcp-publisher publish`
-# runs. Every step from "Publish to npm" onward carries `if: success()` so a
-# failed npm publish never leads into a confusing Registry failure or a
-# GitHub release for a package that isn't actually on npm.
+# locally. So the actual `mcp-publisher publish` call must still happen after
+# npm publish has succeeded *and* propagated. What moves earlier is only
+# `mcp-publisher login` and a read-only permission check: both are
+# side-effect-free (no server-side write, nothing to undo), unlike
+# `npm publish`, which is irreversible the moment it succeeds. Doing the
+# permission check before the irreversible step turns a would-be "npm
+# published, Registry 403, version burned" failure into a clean abort with
+# nothing published. Every step from "Publish to npm" onward carries
+# `if: success()` so a failed npm publish never leads into a confusing
+# Registry failure or a GitHub release for a package that isn't actually on
+# npm.
 #
-# The `gate` job mirrors .github/workflows/ci.yml's `gate` job and `mcp` job
-# step-for-step (single Node version here — the 20/22 matrix is a PR-time
-# concern) so a release can never ship something the PR gate would have
-# rejected.
+# The `gate` job mirrors .github/workflows/ci.yml's `gate` job and `mcp` job,
+# including the Inspector CLI smoke, so a release can never ship something
+# the PR gate would have rejected. It intentionally does NOT mirror ci.yml's
+# node ['20','22'] matrix — a release is cut from a commit that has already
+# passed that matrix once as a PR (mcp/RELEASE.md step 3 of "each release"),
+# so re-running both versions here would only re-verify something already
+# proven; this job runs the single Node version (22) the release itself
+# publishes and builds with.
 on:
   push:
     tags:
       - 'agentic-os-mcp-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: >
+          Existing agentic-os-mcp-v* tag to resume the Registry publish for.
+          Use this ONLY after a release run's npm publish succeeded but a
+          later step (propagation wait, Registry publish, .mcpb build, or
+          GitHub release attach) failed — see "If the release workflow fails
+          partway through" in mcp/RELEASE.md. This never runs `npm publish`;
+          it verifies the version is already live on npm and picks up from
+          there. Still runs the full gate job first, same as a tag push —
+          this input cannot be used to skip quality checks.
+        required: true
+        type: string
+
+# A workflow-wide (not per-tag) group: two releases publishing to npm and the
+# Registry at the same time is the race this exists to prevent, not just two
+# pushes of the same tag. cancel-in-progress is false because the earlier run
+# may already be mid-way through the irreversible npm publish step — queuing
+# behind it is safe, cancelling it is not (a cancelled `npm publish` can leave
+# the package half-published with no clean way to detect that from the next
+# run).
+concurrency:
+  group: mcp-release
+  cancel-in-progress: false
 
 permissions:
   contents: write # attach the .mcpb to the GitHub release
@@ -32,6 +68,12 @@ jobs:
       contents: read # this job only reads and tests; no write/OIDC needed
     steps:
       - uses: actions/checkout@v4
+        with:
+          # For a tag push, github.event.inputs.tag is unset and this falls
+          # back to github.ref (the pushed tag). For workflow_dispatch, this
+          # re-validates the exact tagged commit the maintainer names, not
+          # whatever ref the workflow file happens to be dispatched from.
+          ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Hook unit tests (t0)
         run: |
@@ -82,7 +124,18 @@ jobs:
         working-directory: mcp
         run: npm test
 
+      # Version pinned deliberately so an upstream release cannot turn an
+      # unrelated release run red. Should be bumped intentionally when
+      # upgrading the Inspector CLI (kept in sync with ci.yml's `mcp` job).
+      - name: Inspector CLI smoke
+        working-directory: mcp
+        run: |
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method tools/list
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method resources/list
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method prompts/list
+
   publish:
+    if: github.event_name == 'push'
     needs: gate
     runs-on: ubuntu-latest
     steps:
@@ -112,6 +165,42 @@ jobs:
           fi
           echo "tag version ${TAG_VERSION} matches package.json version ${PKG_VERSION}"
 
+      # --- Preflight: prove the Registry grant actually covers what we are
+      # about to publish, BEFORE npm publish runs. This is what closes the
+      # "npm published, Registry 403, version burned" failure mode — see the
+      # workflow header comment and mcp/RELEASE.md's "One-time setup" § 3.
+      # Login here is read-only against our own account state (no server-side
+      # write, nothing to undo); npm publish two steps below is not.
+
+      # Pinned to a specific release tag, not `releases/latest`: upstream
+      # itself calls the Registry a preview with possible breaking changes
+      # (modelcontextprotocol/registry docs), so an unpinned `latest` could
+      # silently change mcp-publisher's behavior on a future release run.
+      # Bump deliberately; re-verify the login/publish steps still work.
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.0/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      # GitHub OIDC ("github-oidc"): authenticates using this workflow's own
+      # id-token, no PAT to provision, store, or rotate. Confirmed against
+      # upstream (modelcontextprotocol/registry, docs/reference/cli/commands.md
+      # and docs/modelcontextprotocol-io/github-actions.mdx as of 2026-07),
+      # which recommends OIDC over a PAT for CI specifically because it
+      # needs no dedicated secret and the token cannot outlive the job.
+      # Requires the `id-token: write` permission declared above (inherited
+      # from the workflow-level block; this job does not override it).
+      - name: Authenticate to MCP Registry (preflight)
+        run: ./mcp-publisher login github-oidc
+
+      # Decodes the JWT this login just wrote to
+      # ~/.config/mcp-publisher/token.json and asserts its granted
+      # `permissions[].resource` (case-sensitively, matching upstream's own
+      # prefix-match logic — see the script's header comment) actually covers
+      # server.json's `name`. Fails the job here, before npm publish, if not.
+      - name: Assert Registry permission covers our declared name
+        working-directory: mcp
+        run: node scripts/check-registry-permission.mjs server.json
+
       # `npm publish`'s prepack lifecycle script runs `npm run build`
       # (see mcp/package.json), so dist/ exists for the .mcpb build step
       # below without a separate build step here.
@@ -122,23 +211,41 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # --- Everything below only proceeds once npm publish has actually
-      # succeeded, and only once the version is visible at
-      # registry.npmjs.org for the Registry's own validator to fetch. ---
+      # succeeded. ---
 
-      - name: Install mcp-publisher
+      # Polls registry.npmjs.org directly for the exact version just
+      # published, rather than guessing a fixed delay. Upstream's own
+      # validator (internal/validators/registries/npm.go) treats a 404 here
+      # as "wait and retry" and 429/5xx as transient — this loop gives it
+      # that time before we ever call `mcp-publisher publish`, so ordinary
+      # propagation lag doesn't turn into a failed release after the
+      # irreversible step.
+      - name: Wait for npm propagation
         if: success()
+        working-directory: mcp
         run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          URL="https://registry.npmjs.org/agentic-os-mcp/${PKG_VERSION}"
+          echo "Polling ${URL} for the just-published version..."
+          for i in $(seq 1 20); do
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$URL")
+            if [ "$STATUS" = "200" ]; then
+              echo "npm registry has agentic-os-mcp@${PKG_VERSION} (attempt ${i}/20)."
+              exit 0
+            fi
+            echo "Attempt ${i}/20: ${URL} returned ${STATUS}, not yet visible. Waiting 15s..."
+            sleep 15
+          done
+          echo "::error::npm registry never returned 200 for agentic-os-mcp@${PKG_VERSION} after 20 attempts (~5 minutes) at ${URL}. npm publish itself succeeded above -- this is propagation lag, not a failed publish. See 'If the release workflow fails partway through' in mcp/RELEASE.md: re-run the Registry publish once the URL responds 200 (this workflow's workflow_dispatch input resumes from here without re-running npm publish)."
+          exit 1
 
-      # GitHub OIDC ("github-oidc"): authenticates using this workflow's own
-      # id-token, no PAT to provision, store, or rotate. Confirmed against
-      # upstream (modelcontextprotocol/registry, docs/reference/cli/commands.md
-      # and docs/modelcontextprotocol-io/github-actions.mdx as of 2026-07),
-      # which recommends OIDC over a PAT for CI specifically because it
-      # needs no dedicated secret and the token cannot outlive the job.
-      # Requires the `id-token: write` permission declared above (inherited
-      # from the workflow-level block; this job does not override it).
-      - name: Authenticate to MCP Registry
+      # Re-authenticate with a fresh token immediately before the real
+      # publish call: the Registry JWT is short-lived (5 minutes, per
+      # upstream's JWTManager), and the preflight login above plus the
+      # propagation wait can together take longer than that. The permission
+      # check already ran against the preflight token; this login only needs
+      # to be valid, not re-checked.
+      - name: Authenticate to MCP Registry (fresh token)
         if: success()
         run: ./mcp-publisher login github-oidc
 
@@ -157,5 +264,82 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" mcp/mcp.mcpb --title "$TAG" --generate-notes \
+            || gh release upload "$TAG" mcp/mcp.mcpb --clobber
+
+  # Manual recovery entry point for "npm publish succeeded but something
+  # after it failed" (see mcp/RELEASE.md). Deliberately excludes npm
+  # publish — it only verifies the named version is already live on npm and
+  # then runs the same post-npm steps as `publish`, above. `needs: gate`
+  # means this can never skip the repo/mcp quality gate, same as a normal
+  # tag-push release.
+  resume-registry:
+    if: github.event_name == 'workflow_dispatch'
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install
+        working-directory: mcp
+        run: npm ci
+
+      - name: Assert given tag matches package.json version
+        working-directory: mcp
+        run: |
+          TAG_VERSION="${{ github.event.inputs.tag }}"
+          TAG_VERSION="${TAG_VERSION#agentic-os-mcp-v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag agentic-os-mcp-v${TAG_VERSION} does not match package.json version ${PKG_VERSION} at that ref"
+            exit 1
+          fi
+          echo "tag version ${TAG_VERSION} matches package.json version ${PKG_VERSION}"
+
+      # This job never runs `npm publish`. It only proceeds if the version is
+      # already live -- if it is not, the maintainer needs to investigate and
+      # publish npm by hand (or re-run the full tag-push release) before
+      # using this recovery path.
+      - name: Verify npm already has this version published
+        working-directory: mcp
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          URL="https://registry.npmjs.org/agentic-os-mcp/${PKG_VERSION}"
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$URL")
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::${URL} returned ${STATUS}, not 200 -- agentic-os-mcp@${PKG_VERSION} is not live on npm. This recovery path only resumes the Registry publish onward; it will not run 'npm publish'. Publish to npm first (or re-run the tag-push release) before using this workflow_dispatch input."
+            exit 1
+          fi
+          echo "npm has agentic-os-mcp@${PKG_VERSION} (status ${STATUS})."
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.0/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate to MCP Registry
+        run: ./mcp-publisher login github-oidc
+
+      - name: Assert Registry permission covers our declared name
+        working-directory: mcp
+        run: node scripts/check-registry-permission.mjs server.json
+
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish mcp/server.json
+
+      - name: Build .mcpb bundle
+        working-directory: mcp
+        run: npm run build:mcpb
+
+      - name: Attach .mcpb to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
           gh release create "$TAG" mcp/mcp.mcpb --title "$TAG" --generate-notes \
             || gh release upload "$TAG" mcp/mcp.mcpb --clobber

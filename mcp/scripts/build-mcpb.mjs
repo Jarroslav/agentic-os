@@ -33,6 +33,14 @@ const MCP_ROOT = join(HERE, '..');
 // excludes tests/, src/, and scripts/ — dev-only, and also belt-and-braces
 // covered by .mcpbignore in case this script is ever bypassed in favour of
 // a plain `mcpb pack`.
+// Version pinned deliberately (same rationale as ci.yml's Inspector CLI
+// pin): this runs after `npm publish` in the release workflow, so an
+// unrelated upstream @anthropic-ai/mcpb release cannot turn a release run
+// red at the one point where a failure is most disruptive to recover from.
+// Should be bumped intentionally, verifying with `npm run build:mcpb`
+// locally first.
+const MCPB_VERSION = '2.1.2';
+
 const RUNTIME_ENTRIES = [
   'dist',
   'content-index.json',
@@ -82,7 +90,7 @@ async function main() {
     console.log('[build-mcpb] packing...');
     execFileSync(
       'npx',
-      ['--yes', '@anthropic-ai/mcpb', 'pack', stageDir, outputPath],
+      ['--yes', `@anthropic-ai/mcpb@${MCPB_VERSION}`, 'pack', stageDir, outputPath],
       { cwd: MCP_ROOT, stdio: 'inherit' },
     );
     console.log(`[build-mcpb] wrote ${outputPath}`);
