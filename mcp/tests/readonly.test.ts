@@ -42,10 +42,20 @@ const TOOL_ARGS: Record<string, Record<string, unknown>> = {
 };
 
 describe('read-only guarantee', () => {
-  it('no source file calls a write-capable fs API', async () => {
+  it('no source file writes to the filesystem or spawns a process', async () => {
     // NOTE: link, open, chmod, chown are deliberately omitted — they're common English words
     // likely to appear in prose/comments and would make this scan unreliable.
-    const banned = /\b(writeFile|writeFileSync|mkdir|mkdirSync|rm|rmSync|rmdir|rmdirSync|unlink|appendFile|createWriteStream|copyFile|copyFileSync|rename|renameSync|truncate|truncateSync|symlink|symlinkSync)\b/;
+    //
+    // The process-execution half bans the unambiguous call names
+    // (execSync/execFile/execFileSync/spawn/spawnSync/fork) rather than the
+    // bare word `exec`, which would false-positive on RegExp.prototype.exec —
+    // used throughout this codebase (PRESET_URI.exec(uri), CATALOG.exec(doc.path),
+    // SKILL_RE.exec(path), etc.). The reliable signal is banning the module
+    // itself: no source file may reference the `node:child_process` or
+    // `'child_process'` specifier, so even an aliased import
+    // (`import { execSync as run } from 'node:child_process'`) is caught by
+    // the module-specifier match even if a caller renamed the call.
+    const banned = /\b(writeFile|writeFileSync|mkdir|mkdirSync|rm|rmSync|rmdir|rmdirSync|unlink|appendFile|createWriteStream|copyFile|copyFileSync|rename|renameSync|truncate|truncateSync|symlink|symlinkSync|execSync|execFileSync|execFile|spawnSync|spawn|fork)\b|node:child_process|'child_process'/;
     const offenders: string[] = [];
     const walk = async (d: string): Promise<void> => {
       for (const e of await readdir(d, { withFileTypes: true })) {

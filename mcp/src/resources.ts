@@ -1,15 +1,12 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Content } from './content.js';
+import { BLUEPRINT_PATH, PRESET_PATH, SKILL_PATH } from './paths.js';
 
 const SKILL_URI = /^agentic-os:\/\/skills\/([^/]+)\/([^/]+)$/;
 const FILE_URI = /^agentic-os:\/\/file\/(.+)$/;
 const PRESET_URI = /^agentic-os:\/\/presets\/([^/]+)$/;
 const BLUEPRINT_URI = /^agentic-os:\/\/qe\/blueprints\/([^/]+)\/([^/]+)$/;
-
-const PRESET_PATH = /^plugins\/agentic-os\/presets\/roles\/([^/]+)\.json$/;
-const BLUEPRINT_PATH =
-  /^plugins\/agentic-qe\/skills\/qe-blueprints\/references\/catalog\/([^/]+)\/([^/]+)\.md$/;
 
 /** Translate a URI to a repo-relative path. Returns undefined for anything
  *  malformed; Content.readDoc is the authority on whether the path exists. */
@@ -33,7 +30,7 @@ export function uriToPath(uri: string): string | undefined {
 }
 
 export function pathToUri(path: string): string {
-  const m = /^plugins\/([^/]+)\/skills\/([^/]+)\/SKILL\.md$/.exec(path);
+  const m = SKILL_PATH.exec(path);
   if (m?.[1] && m[2]) return `agentic-os://skills/${m[1]}/${m[2]}`;
 
   const preset = PRESET_PATH.exec(path);
