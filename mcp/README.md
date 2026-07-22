@@ -52,6 +52,8 @@ Cursor or Claude Desktop — add to `.cursor/mcp.json` or
 | `list_qe_blueprints` | List the agentic-qe Quality Engineering blueprints, filterable by STLC stage. |
 | `list_sdlc_phases` | List the agentic-sdlc pipeline phase map with its judgment gates. |
 
+The tool surface is deliberately capped at 8 tools. Agent tool-selection accuracy degrades sharply as the number of available tools grows — research shows the performance cliff occurs around 30–40 tools, and real deployments (e.g., GitHub's MCP server) report measurable gains (2–5 points on SWE-Lancer and SWEbench-Verified, plus ~400ms lower latency) after cutting from ~40 tools to 13. The current surface exposes five tools; `plan_install` and `run_doctor` are planned additions.
+
 ## Resources
 
 31 `agentic-os://skills/<plugin>/<skill>` resources, one per `SKILL.md`

@@ -93,7 +93,7 @@ describe('every advertised tool', () => {
   it('stays within the documented tool cap', async () => {
     const { tools } = await client.listTools();
     expect(tools.length).toBeGreaterThan(0);
-    expect(tools.length).toBeLessThanOrEqual(8); // makes the documented tool cap executable
+    expect(tools.length).toBeLessThanOrEqual(8); // see mcp/README.md Tools section for cap rationale
   });
 
   it('is advertised read-only with an output schema', async () => {
