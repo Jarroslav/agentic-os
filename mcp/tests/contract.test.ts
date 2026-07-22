@@ -145,6 +145,30 @@ describe('search_methodology', () => {
     const { results } = res.structuredContent as { results: unknown[] };
     expect(results).toEqual([]);
   });
+
+  it('never emits an unpaired surrogate in a snippet whose window crosses an astral emoji', async () => {
+    // plugins/agentic-sdlc/agents/guide-sync.md contains four astral-plane
+    // emoji (📊 🔴 🟡 🔵) starting at UTF-16 code unit 8168. "findings" is
+    // this document's first word-start match for that token — at index
+    // 8009 — and snippet()'s window is [match.index - 80, match.index +
+    // 160), so the end edge lands at 8169: exactly one code unit past 8168,
+    // the high surrogate of 📊. A raw `text.slice(start, end)` there keeps
+    // the high surrogate and drops its low-surrogate partner (verified by
+    // temporarily reverting safeBoundary() and confirming this assertion
+    // fails); safeBoundary() must nudge the edge back off that boundary.
+    const UNPAIRED_SURROGATE =
+      /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+    const res = await client.callTool({
+      name: 'search_methodology',
+      arguments: { query: 'findings', plugin: 'agentic-sdlc', limit: 25 },
+    });
+    const { results } = res.structuredContent as {
+      results: Array<{ uri: string; snippet: string }>;
+    };
+    const hit = results.find(r => r.uri === 'agentic-os://file/agentic-sdlc/agents/guide-sync.md');
+    expect(hit).toBeDefined();
+    expect(UNPAIRED_SURROGATE.test(hit!.snippet)).toBe(false);
+  });
 });
 
 describe('get_document', () => {
@@ -156,7 +180,7 @@ describe('get_document', () => {
     const out = res.structuredContent as
       { text: string; truncated: boolean; total_chars: number };
     expect(out.truncated).toBe(false);
-    expect(out.text.length).toBe(out.total_chars);
+    expect(Array.from(out.text).length).toBe(out.total_chars);
     expect(out.text).toContain('install verifier');
   });
 
