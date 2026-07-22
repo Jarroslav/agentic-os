@@ -60,3 +60,43 @@ describe('protocol contract', () => {
     expect(text).toContain('agentic-init — the installer');
   });
 });
+
+describe('search_methodology', () => {
+  it('is advertised as read-only with an output schema', async () => {
+    const { tools } = await client.listTools();
+    const t = tools.find(x => x.name === 'search_methodology');
+    expect(t?.annotations?.readOnlyHint).toBe(true);
+    expect(t?.outputSchema).toBeDefined();
+  });
+
+  it('finds the escalation ladder', async () => {
+    const res = await client.callTool({
+      name: 'search_methodology',
+      arguments: { query: 'HITL escalation ladder' },
+    });
+    const { results } = res.structuredContent as {
+      results: Array<{ uri: string; snippet: string }>;
+    };
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]?.uri.startsWith('agentic-os://')).toBe(true);
+    expect(results[0]?.snippet.length).toBeGreaterThan(0);
+  });
+
+  it('filters by plugin', async () => {
+    const res = await client.callTool({
+      name: 'search_methodology',
+      arguments: { query: 'blueprint', plugin: 'agentic-qe' },
+    });
+    const { results } = res.structuredContent as { results: Array<{ plugin: string }> };
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every(r => r.plugin === 'agentic-qe')).toBe(true);
+  });
+
+  it('returns an empty list rather than erroring on no match', async () => {
+    const res = await client.callTool({
+      name: 'search_methodology',
+      arguments: { query: 'zzzzqqqxxnomatch' },
+    });
+    expect((res.structuredContent as { results: unknown[] }).results).toEqual([]);
+  });
+});

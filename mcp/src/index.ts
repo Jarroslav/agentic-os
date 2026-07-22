@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { loadContent, type Content } from './content.js';
 import { registerResources } from './resources.js';
 import { registerPrompts } from './prompts.js';
+import { registerSearchMethodology } from './tools/search_methodology.js';
 
 export function createServer(content: Content): McpServer {
   const server = new McpServer(
@@ -18,6 +19,7 @@ export function createServer(content: Content): McpServer {
   );
   registerResources(server, content);
   registerPrompts(server, content);
+  registerSearchMethodology(server, content);
   return server;
 }
 
