@@ -185,3 +185,71 @@ describe('get_document', () => {
       .toContain('search_methodology');
   });
 });
+
+describe('get_document surrogate safety and max_chars ceiling', () => {
+  // plugins/agentic-sdlc/agents/guide-sync.md contains four astral-plane
+  // emoji (📊 U+1F4CA, 🔴 U+1F534, 🟡 U+1F7E1, 🔵 U+1F535). A scan of the
+  // file (`Array.from(text)` vs raw UTF-16 index) found the first, 📊, at
+  // UTF-16 code units 8168 (high surrogate) / 8169 (low surrogate) — no
+  // astral character occurs earlier in the file, so the UTF-16 offset and
+  // the code-point offset agree up to that point. max_chars: 8169 is
+  // exactly the cut a naive `text.slice(0, max_chars)` would make: it keeps
+  // code unit 8168 (the high surrogate) but drops unit 8169 (its low-half
+  // partner), which is precisely the split this fix must prevent.
+  const ASTRAL_URI = 'agentic-os://file/agentic-sdlc/agents/guide-sync.md';
+  const SPLIT_OFFSET = 8169;
+  const UNPAIRED_SURROGATE =
+    /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+
+  it('is servable and truncation never emits an unpaired surrogate at the astral boundary', async () => {
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: { uri: ASTRAL_URI, max_chars: SPLIT_OFFSET },
+    });
+    const out = res.structuredContent as
+      { text: string; truncated: boolean; total_chars: number };
+    expect(out.truncated).toBe(true);
+    expect(UNPAIRED_SURROGATE.test(out.text)).toBe(false);
+  });
+
+  it('keeps total_chars greater than the returned text, measured in the same unit', async () => {
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: { uri: ASTRAL_URI, max_chars: SPLIT_OFFSET },
+    });
+    const out = res.structuredContent as
+      { text: string; truncated: boolean; total_chars: number };
+    expect(out.truncated).toBe(true);
+    // total_chars is counted in Unicode code points (see get_document.ts),
+    // so compare against the returned text's code-point count rather than
+    // its UTF-16 .length, to use the same unit total_chars is measured in.
+    expect(out.total_chars).toBeGreaterThan(Array.from(out.text).length);
+  });
+
+  it('rejects max_chars above the new 50,000 ceiling', async () => {
+    // The MCP SDK surfaces a zod schema failure as a resolved CallToolResult
+    // with isError: true (same convention as the "unknown URI" test above),
+    // not a rejected promise — so assert on isError, not on `.rejects`.
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: {
+        uri: 'agentic-os://skills/agentic-os/agentic-doctor',
+        max_chars: 200_000,
+      },
+    });
+    expect(res.isError).toBe(true);
+    expect(String((res.content as Array<{ text: string }>)[0]?.text))
+      .toContain('50000');
+  });
+
+  it('accepts max_chars at the new 50,000 ceiling', async () => {
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: {
+        uri: 'agentic-os://skills/agentic-os/agentic-doctor',
+        max_chars: 50_000,
+      },
+    });
+    expect(res.isError).toBeFalsy();
+  });
+});

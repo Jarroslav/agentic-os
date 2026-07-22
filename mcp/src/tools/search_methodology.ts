@@ -59,13 +59,37 @@ function score(doc: Doc, terms: RegExp[]): number {
   return total;
 }
 
+/** Nudge a UTF-16 slice boundary so it never splits a surrogate pair.
+ *  `forStart` says which side of the window this boundary is: a start
+ *  boundary landing on a pair's low half moves forward past it, an end
+ *  boundary landing just after a pair's high half moves back before it —
+ *  either way the split character is fully excluded rather than risk
+ *  emitting an unpaired surrogate. A targeted check (rather than
+ *  `Array.from()`-ing the whole document, as get_document.ts does) is used
+ *  here because snippet() runs once per search result — up to `limit` times
+ *  per query — and only needs to inspect the handful of code units right at
+ *  the window edge, not materialize the full document as code points. */
+function safeBoundary(text: string, index: number, forStart: boolean): number {
+  if (index <= 0 || index >= text.length) return index;
+  const before = text.charCodeAt(index - 1);
+  const at = text.charCodeAt(index);
+  const splitsPair = before >= 0xD800 && before <= 0xDBFF && at >= 0xDC00 && at <= 0xDFFF;
+  if (!splitsPair) return index;
+  return forStart ? index + 1 : index - 1;
+}
+
 function snippet(doc: Doc, term: RegExp): string {
   const body = doc.text.toLowerCase();
   term.lastIndex = 0;
   const m = term.exec(body);
-  if (!m) return doc.text.slice(0, 200).trim();
+  if (!m) {
+    const end = safeBoundary(doc.text, Math.min(200, doc.text.length), false);
+    return doc.text.slice(0, end).trim();
+  }
   const at = m.index;
-  return doc.text.slice(Math.max(0, at - 80), at + 160).replace(/\s+/g, ' ').trim();
+  const start = safeBoundary(doc.text, Math.max(0, at - 80), true);
+  const end = safeBoundary(doc.text, Math.min(doc.text.length, at + 160), false);
+  return doc.text.slice(start, end).replace(/\s+/g, ' ').trim();
 }
 
 export function registerSearchMethodology(server: McpServer, content: Content): void {

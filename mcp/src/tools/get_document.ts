@@ -11,8 +11,15 @@ const inputShape = {
     'or agentic-os://file/agentic-os/presets/roles/qa.json. ' +
     'Get these from search_methodology.',
   ),
-  max_chars: z.number().int().min(200).max(200_000).default(DEFAULT_MAX)
-    .describe('Truncate the body at this many characters.'),
+  // Ceiling lowered from 200_000 to 50_000: the largest real document in the
+  // corpus is ~40 KB, so a 200 KB ceiling was five times what the content
+  // can ever produce, and the body is already carried twice per response
+  // (content[0].text and structuredContent.text, per MCP spec compliance).
+  max_chars: z.number().int().min(200).max(50_000).default(DEFAULT_MAX)
+    .describe(
+      'Truncate the body at this many Unicode code points (not UTF-16 ' +
+      'code units — astral-plane characters such as emoji count as one).',
+    ),
 };
 
 const outputShape = {
@@ -44,13 +51,23 @@ export function registerGetDocument(server: McpServer, content: Content): void {
           }],
         };
       }
-      const truncated = doc.text.length > max_chars;
+      // Slicing by UTF-16 code unit (`doc.text.slice(0, max_chars)`) can cut
+      // a surrogate pair in half — the corpus really does contain astral
+      // characters (e.g. emoji in agents/guide-sync.md) — and an unpaired
+      // surrogate is malformed text once handed back to the calling model.
+      // Array.from() splits the string into code points instead, so slicing
+      // the resulting array can never land inside a pair. Materializing the
+      // array is O(n), but the corpus tops out around 40 KB, so the cost is
+      // negligible; total_chars and max_chars are both counted in this same
+      // code-point unit so the truncated flag stays meaningful.
+      const codePoints = Array.from(doc.text);
+      const truncated = codePoints.length > max_chars;
       const out = {
         uri,
         title: doc.title,
-        text: truncated ? doc.text.slice(0, max_chars) : doc.text,
+        text: truncated ? codePoints.slice(0, max_chars).join('') : doc.text,
         truncated,
-        total_chars: doc.text.length,
+        total_chars: codePoints.length,
       };
       return {
         content: [{ type: 'text' as const, text: out.text }],
