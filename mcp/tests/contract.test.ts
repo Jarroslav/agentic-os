@@ -99,4 +99,50 @@ describe('search_methodology', () => {
     });
     expect((res.structuredContent as { results: unknown[] }).results).toEqual([]);
   });
+
+  it('does not treat "ai" as a substring match inside unrelated words', async () => {
+    // Before the word-start fix, "ai" matched inside "again", "maintain",
+    // "domain", "explain", "available", etc. via raw indexOf. Measured
+    // against this corpus that's 182 of 195 documents (global, unscoped) —
+    // vastly more than the 51 that contain "ai" as (or at the start of) an
+    // actual word.
+    //
+    // The tool's `limit` schema caps at 25, and both the buggy count (182)
+    // and the fixed count (51) exceed that cap, so an unscoped query
+    // returns exactly 25 results either way — asserting on that number
+    // alone can't distinguish the two behaviors. Scoping to the
+    // `agentic-sdlc` plugin (111 docs) avoids the cap: raw substring
+    // matches 100 of them (still capped at 25), but word-start matching
+    // only 9, so a fixed implementation returns well under 25 results here.
+    const res = await client.callTool({
+      name: 'search_methodology',
+      arguments: { query: 'ai', plugin: 'agentic-sdlc', limit: 25 },
+    });
+    const { results } = res.structuredContent as { results: Array<{ uri: string }> };
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.length).toBeLessThan(20);
+  });
+
+  it('still matches suffixed forms at a word start ("gate" finds "gates")', async () => {
+    const res = await client.callTool({
+      name: 'search_methodology',
+      arguments: { query: 'gate', limit: 25 },
+    });
+    const { results } = res.structuredContent as {
+      results: Array<{ snippet: string }>;
+    };
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.some(r => /gates/i.test(r.snippet))).toBe(true);
+  });
+
+  it('does not match a term that only ever occurs mid-word', async () => {
+    // "tio" (as in "action", "section", "solution") never begins a word
+    // anywhere in the corpus, so word-start matching must find nothing.
+    const res = await client.callTool({
+      name: 'search_methodology',
+      arguments: { query: 'tio', limit: 25 },
+    });
+    const { results } = res.structuredContent as { results: unknown[] };
+    expect(results).toEqual([]);
+  });
 });

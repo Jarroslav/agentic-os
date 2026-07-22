@@ -26,24 +26,45 @@ function pluginOf(path: string): string {
   return /^plugins\/([^/]+)\//.exec(path)?.[1] ?? '';
 }
 
+/** Escape a string for literal use inside a RegExp. `tokenize()` currently
+ *  only ever emits `[a-z0-9]+` runs, so nothing here needs escaping today —
+ *  but building a regex from a value without escaping it is a latent
+ *  injection risk the moment tokenize's rules change, so escape anyway. */
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** A word-START match: `\b` anchors the term to the beginning of a word so
+ *  "ai" doesn't match inside "again"/"maintain"/"domain", while "gate" still
+ *  matches "gates"/"gating" (no trailing `\b`, which would require a full
+ *  word and break that suffix case). */
+function wordStartRegExp(term: string): RegExp {
+  return new RegExp('\\b' + escapeRegExp(term), 'g');
+}
+
 /** Term-frequency scoring with a title boost. Deliberately dependency-free:
  *  the corpus is ~200 small files, so an index is not worth the weight. */
-function score(doc: Doc, terms: string[]): number {
+function score(doc: Doc, terms: RegExp[]): number {
   const body = doc.text.toLowerCase();
   const title = doc.title.toLowerCase();
   let total = 0;
   for (const term of terms) {
-    let hits = 0, from = 0, at: number;
-    while ((at = body.indexOf(term, from)) !== -1) { hits++; from = at + term.length; }
+    term.lastIndex = 0;
+    let hits = 0;
+    while (term.exec(body) !== null) hits++;
     if (hits === 0) return 0;          // every term must appear — AND, not OR
-    total += Math.log1p(hits) + (title.includes(term) ? 3 : 0);
+    term.lastIndex = 0;
+    total += Math.log1p(hits) + (term.test(title) ? 3 : 0);
   }
   return total;
 }
 
-function snippet(doc: Doc, term: string): string {
-  const at = doc.text.toLowerCase().indexOf(term);
-  if (at === -1) return doc.text.slice(0, 200).trim();
+function snippet(doc: Doc, term: RegExp): string {
+  const body = doc.text.toLowerCase();
+  term.lastIndex = 0;
+  const m = term.exec(body);
+  if (!m) return doc.text.slice(0, 200).trim();
+  const at = m.index;
   return doc.text.slice(Math.max(0, at - 80), at + 160).replace(/\s+/g, ' ').trim();
 }
 
@@ -61,7 +82,7 @@ export function registerSearchMethodology(server: McpServer, content: Content): 
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ query, plugin, limit }) => {
-      const terms = tokenize(query);
+      const terms = tokenize(query).map(wordStartRegExp);
       const results = terms.length === 0 ? [] : content.markdownDocs()
         .filter(d => !plugin || pluginOf(d.path) === plugin)
         .map(d => ({ doc: d, score: score(d, terms) }))
