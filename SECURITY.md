@@ -60,10 +60,12 @@ modes. Reports of particular interest:
   - **The server never writes**, to the bundle or to a target repo, and
     **never executes** anything — `run_doctor`'s three checks that require
     running Python are returned as commands for the host to run, not
-    executed by the server. A static test (`mcp/tests/readonly.test.ts`)
-    bans both write APIs (`writeFile`, `mkdir`, `rm`, `rename`, `symlink`,
-    etc.) and process-execution APIs — including the `child_process` module
-    specifier in any quoting — across `mcp/src/**`.
+    executed by the server. A static test (`mcp/tests/readonly.test.ts`,
+    pattern in `mcp/tests/banned-pattern.ts`) bans both write APIs
+    (`writeFile`, `mkdir`, `rm`, `rename`, `symlink`, `cp`, `mkdtemp`, etc.)
+    and code-execution surfaces — the `child_process`, `vm`, and
+    `worker_threads` module specifiers in any quoting, plus `eval(`,
+    `new Function`, and dynamic `import(` — across `mcp/src/**`.
   - **Accepted risk, disclosed, not a bug:** the target reader has a
     TOCTOU window between validating a path's containment and the
     subsequent read (each read is an independent `stat`/`readFile` call on
@@ -73,9 +75,12 @@ modes. Reports of particular interest:
     write access to the very tree `run_doctor` is auditing at the caller's
     own request — i.e., an attacker who already controls the thing being
     inspected. This is documented in `mcp/src/target.ts` and considered
-    acceptable given that threat model; a report proposing a *cheaper*
-    close (e.g., a reason closing it wouldn't require holding file
-    descriptors open across validation and read) is still welcome.
+    acceptable given that threat model. Closing the window properly would
+    mean holding file descriptors open across validation and read (open,
+    then fstat, then read from that same fd) — real complexity for no gain
+    against this threat model, which is why it hasn't been done. A report
+    proposing a cheaper way to close the window — one that doesn't require
+    that open-fstat-read-from-fd approach — is still welcome.
   - A bypass of either reader's gate — bundle membership or target
     containment — is a security bug and should be reported.
 
