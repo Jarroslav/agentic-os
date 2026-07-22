@@ -1,6 +1,11 @@
 import { describe, expect, it, beforeAll, afterAll } from 'vitest';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+
+const MCP_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 let client: Client;
 
@@ -9,13 +14,28 @@ beforeAll(async () => {
   await client.connect(new StdioClientTransport({
     command: 'node',
     args: ['dist/index.js'],
-    cwd: new URL('..', import.meta.url).pathname,
+    cwd: MCP_ROOT,
   }));
 }, 30_000);
 
 afterAll(async () => { await client.close(); });
 
 describe('protocol contract', () => {
+  // mcp/src/index.ts hardcodes `version` in the McpServer constructor,
+  // duplicating package.json's version with nothing asserting they agree —
+  // the existing repo-wide version-sync gate (tests/lib/check-manifests.py)
+  // only walks plugins/, so it does not cover mcp/. This test is that
+  // missing assertion: it connects like a real client and reads the
+  // reported version back from the initialize handshake via the SDK's
+  // getServerVersion(), rather than re-reading package.json from src/ at
+  // runtime (which would give content.ts a second filesystem reader).
+  it('reports a server version matching package.json', async () => {
+    const pkg = JSON.parse(
+      await readFile(join(MCP_ROOT, 'package.json'), 'utf8'),
+    ) as { version: string };
+    expect(client.getServerVersion()?.version).toBe(pkg.version);
+  });
+
   it('lists one resource per skill', async () => {
     const { resources } = await client.listResources();
     expect(resources.length).toBeGreaterThanOrEqual(31);

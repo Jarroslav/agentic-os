@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
-const MCP_ROOT = new URL('..', import.meta.url).pathname;
+const MCP_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPO_ROOT = join(MCP_ROOT, '..');
 
 async function fingerprint(dir: string): Promise<string> {
