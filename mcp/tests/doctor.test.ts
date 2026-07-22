@@ -289,13 +289,13 @@ describe('git_hook check', () => {
   // resolve an absolute path, so the configured hook is unreachable).
   it('rejects an absolute core.hooksPath and never leaks it into detail', async () => {
     const root = await makeRoot();
-    await put(root, '.git/config', '[core]\n\thooksPath = /Users/someoperator/.githooks\n');
+    await put(root, '.git/config', '[core]\n\thooksPath = /opt/elsewhere/.githooks\n');
     await put(root, '.githooks/pre-commit', '#!/usr/bin/env bash\n# agentic-os: pre-commit gate\necho ok\n');
     await writeJournal(root, {});
     const results = await runNativeChecks(await Target.open(root));
     const gitHook = getCheck(results, 'git_hook');
     expect(gitHook.passed).toBe(false);
-    expect(gitHook.detail).not.toContain('/Users/someoperator');
+    expect(gitHook.detail).not.toContain('/opt/elsewhere');
     expect(gitHook.detail).toContain('.git/hooks/pre-commit'); // falls back to the default
   });
 
