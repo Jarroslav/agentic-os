@@ -298,6 +298,46 @@ describe('get_document surrogate safety and max_chars ceiling', () => {
   });
 });
 
+describe('list_presets', () => {
+  it('is advertised read-only with an output schema', async () => {
+    const { tools } = await client.listTools();
+    const t = tools.find(x => x.name === 'list_presets');
+    expect(t?.annotations?.readOnlyHint).toBe(true);
+    expect(t?.outputSchema).toBeDefined();
+  });
+
+  it('returns all seven role presets', async () => {
+    const res = await client.callTool({ name: 'list_presets', arguments: {} });
+    const { presets } = res.structuredContent as {
+      presets: Array<{ name: string; uri: string; hitl_default: string }>;
+    };
+    expect(presets.map(p => p.name).sort()).toEqual([
+      'architect', 'ba-po', 'developer', 'devops',
+      'pm-delivery', 'portfolio', 'qa',
+    ]);
+  });
+
+  it('carries the HITL default and a resolvable uri', async () => {
+    const res = await client.callTool({ name: 'list_presets', arguments: {} });
+    const { presets } = res.structuredContent as {
+      presets: Array<{ name: string; uri: string; hitl_default: string; template_count: number }>;
+    };
+    const qa = presets.find(p => p.name === 'qa');
+    expect(qa?.hitl_default).toBe('strict');
+    expect(qa?.uri).toBe('agentic-os://presets/qa');
+    expect(qa?.template_count).toBeGreaterThan(0);
+
+    // the uri it advertises must actually resolve
+    const doc = await client.readResource({ uri: qa!.uri });
+    expect(String(doc.contents[0]?.text)).toContain('"name": "qa"');
+  });
+
+  it('does not dump full template arrays', async () => {
+    const res = await client.callTool({ name: 'list_presets', arguments: {} });
+    expect(JSON.stringify(res.structuredContent)).not.toContain('hooks/precommit-review-gate');
+  });
+});
+
 describe('preset and blueprint URI aliases', () => {
   it('reads a preset by its alias', async () => {
     const res = await client.readResource({ uri: 'agentic-os://presets/qa' });
