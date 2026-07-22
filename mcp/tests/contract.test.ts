@@ -454,3 +454,44 @@ describe('list_qe_blueprints', () => {
     expect(blueprints.every(b => !UNPAIRED_SURROGATE.test(b.summary))).toBe(true);
   });
 });
+
+describe('list_sdlc_phases', () => {
+  it('returns all 13 phases in order', async () => {
+    const res = await client.callTool({ name: 'list_sdlc_phases', arguments: {} });
+    const { phases } = res.structuredContent as {
+      phases: Array<{ number: number; name: string; skippable: string; gates: string[] }>;
+    };
+    expect(phases).toHaveLength(13);
+    expect(phases[0]?.number).toBe(0);
+    expect(phases[12]?.number).toBe(12);
+    expect(phases.map(p => p.number)).toEqual([...Array(13).keys()]);
+  });
+
+  it('extracts gate names from the table', async () => {
+    const res = await client.callTool({ name: 'list_sdlc_phases', arguments: {} });
+    const { phases } = res.structuredContent as {
+      phases: Array<{ number: number; gates: string[] }>;
+    };
+    expect(phases.find(p => p.number === 1)?.gates)
+      .toEqual(expect.arrayContaining(['requirements.ambiguous']));
+    expect(phases.find(p => p.number === 5)?.gates).toEqual(['plan.approved']);
+    expect(phases.find(p => p.number === 0)?.gates).toEqual([]);  // em dash -> none
+  });
+
+  it('names the phases', async () => {
+    const res = await client.callTool({ name: 'list_sdlc_phases', arguments: {} });
+    const { phases } = res.structuredContent as {
+      phases: Array<{ number: number; name: string }>;
+    };
+    expect(phases.find(p => p.number === 1)?.name).toContain('Requirements');
+    expect(phases.every(p => p.name.length > 2)).toBe(true);
+  });
+
+  it('points at the document it parsed', async () => {
+    const res = await client.callTool({ name: 'list_sdlc_phases', arguments: {} });
+    const { source_uri } = res.structuredContent as { source_uri: string };
+    expect(source_uri).toBe('agentic-os://skills/agentic-sdlc/sdlc-pipeline');
+    const doc = await client.readResource({ uri: source_uri });
+    expect(String(doc.contents[0]?.text)).toContain('## Phase map');
+  });
+});
