@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { BANNED_PATTERN } from './banned-pattern.js';
 
 const MCP_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPO_ROOT = join(MCP_ROOT, '..');
@@ -51,11 +52,14 @@ describe('read-only guarantee', () => {
     // bare word `exec`, which would false-positive on RegExp.prototype.exec —
     // used throughout this codebase (PRESET_URI.exec(uri), CATALOG.exec(doc.path),
     // SKILL_RE.exec(path), etc.). The reliable signal is banning the module
-    // itself: no source file may reference the `node:child_process` or
-    // `'child_process'` specifier, so even an aliased import
+    // itself: no source file may reference the `child_process` specifier in
+    // any of its four spellings (single/double quotes, with/without the
+    // `node:` prefix), so even an aliased import
     // (`import { execSync as run } from 'node:child_process'`) is caught by
-    // the module-specifier match even if a caller renamed the call.
-    const banned = /\b(writeFile|writeFileSync|mkdir|mkdirSync|rm|rmSync|rmdir|rmdirSync|unlink|appendFile|createWriteStream|copyFile|copyFileSync|rename|renameSync|truncate|truncateSync|symlink|symlinkSync|execSync|execFileSync|execFile|spawnSync|spawn|fork)\b|node:child_process|'child_process'/;
+    // the module-specifier match even if a caller renamed the call. See
+    // banned-pattern.ts for the pattern itself and banned-pattern.test.ts
+    // for direct unit coverage of all four spellings.
+    const banned = BANNED_PATTERN;
     const offenders: string[] = [];
     const walk = async (d: string): Promise<void> => {
       for (const e of await readdir(d, { withFileTypes: true })) {

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SKILL_PATH } from './paths.js';
 
 export type Doc = { path: string; title: string; text: string };
 export type Skill = {
@@ -18,8 +19,6 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // Both resolve to <mcp>/dist/content.
 const CONTENT_ROOT = join(HERE, '..', 'dist', 'content');
 const INDEX_PATH = join(HERE, '..', 'content-index.json');
-
-const SKILL_RE = /^plugins\/([^/]+)\/skills\/([^/]+)\/SKILL\.md$/;
 
 /** Strip one matching pair of surrounding quotes (single or double), if present. */
 function unquote(value: string): string {
@@ -110,7 +109,7 @@ export class Content {
       const text = await readFile(join(CONTENT_ROOT, path), 'utf8');
       docs.set(path, { path, title: firstHeading(text, path), text });
 
-      const m = SKILL_RE.exec(path);
+      const m = SKILL_PATH.exec(path);
       if (m?.[1] && m[2]) {
         const fm = frontmatter(text);
         skills.push({
