@@ -69,8 +69,10 @@ export function registerResources(server: McpServer, content: Content): void {
     {
       title: 'Plugin file',
       description:
-        'Serves the markdown, JSON, and text files shipped by the agentic-os, ' +
-        'agentic-sdlc, and agentic-qe plugins, addressed as ' +
+        'Serves any file shipped by the agentic-os, agentic-sdlc, and ' +
+        'agentic-qe plugins that is indexed in content-index.json — not just ' +
+        'markdown, JSON, and text, but template sources, hook scripts, and ' +
+        'other plugin-tracked files too — addressed as ' +
         'agentic-os://file/<plugin>/<path>.',
     },
     async (uri: URL) => {

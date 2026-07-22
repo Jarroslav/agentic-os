@@ -76,14 +76,34 @@ commands and folded their results back in); it is `"incomplete"` whenever
 `host_must_run` still has entries, and `"failed"` only when a native check
 itself found a real problem. A reader who sees `"incomplete"` on its own
 should read it as "native checks passed; three checks are still owed to
-the host," not as a failure.
+the host," not as a failure. `host_must_run` is never empty on a single
+server-side call, so this server alone never returns `"passed"`.
+
+**A host that automatically runs `host_must_run`'s commands writes to the
+target repo, even though the server itself never does.** Two of the three
+command sets do: `dry_runs` creates `.agentic/agents/__agentic_doctor_probe__.md`
+(a one-line dummy contract, to exercise `instruction_gate.py`'s
+never-graded case) and deletes it in the next command, unconditionally;
+`hitl_smoke` creates a temporary working directory outside the target repo
+(via `mktemp -d`) holding synthetic transcript files, removed automatically
+on exit by a shell `trap`. Both are the doctor's real, documented
+procedure — nothing here is left behind — but it means the "read-only"
+claim above is a property of this server's own code, not of what happens
+if a host executes what `run_doctor` hands back. See each `host_must_run`
+entry's `why` field for the exact commands.
 
 ## Resources
 
 31 `agentic-os://skills/<plugin>/<skill>` resources, one per `SKILL.md`
 across the three plugins, plus a resource template,
-`agentic-os://file/{+path}`, that serves any other markdown, JSON, or text
-file shipped by a plugin (e.g. `agentic-os://file/agentic-sdlc/agents/guide-sync.md`).
+`agentic-os://file/{+path}`, that serves any other file shipped by a plugin
+that is tracked in `content-index.json` — not just markdown, JSON, or text:
+template sources (`.md.tmpl`/`.json.tmpl`/`.py.tmpl`), plain hook scripts
+(`.py`/`.sh` and six extensionless git hooks), and a long tail of one-off
+files (`sdlc.html`, `scaffold.ps1`, `run-hook.cmd`, `.ts`/`.mts` sources,
+`.shellcheckrc`, `*.md.template` repo-guide templates) are all servable too
+(e.g. `agentic-os://file/agentic-sdlc/agents/guide-sync.md`). Index
+membership is the entire access-control model — see `mcp/src/content.ts`.
 The template is the primary integration point for clients that want to reach
 content beyond the curated skill list.
 

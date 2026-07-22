@@ -33,6 +33,18 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
   never executes code from a target repository. `verdict: "incomplete"` is
   the expected result of a server-side-only run, not a failure signal.
 - Tool surface now stands at 7 of the documented 8-tool cap.
+- **Bundle surface widened**: `content.ts`'s loader dropped its `md|json|txt`
+  extension filter so `plan_install`'s template lookups (and the resources
+  they point at) stop silently failing for any template that wasn't a plain
+  `.md` file. This makes ~70 additional `content-index.json` entries
+  servable through `get_document` and the public
+  `agentic-os://file/{+path}` resource template — hook scripts (`.py`/`.sh`
+  and six extensionless git hooks), `.tmpl` template sources, and one-off
+  files such as `scaffold.ps1`, `sdlc.html`, `run-hook.cmd`, and
+  `.shellcheckrc`. Verified: 326 total index entries, 256 of which end in
+  `.md`/`.json`/`.txt`, so exactly 70 previously-unservable entries are now
+  reachable. Index membership remains the entire access-control model — no
+  extension-based gate was reintroduced.
 - `mcp/tests/readonly.test.ts` extended to prove no source file writes to
   the filesystem or spawns a process (banning both write APIs and the
   `child_process` module specifier in any quoting) across `mcp/src/**`, and
