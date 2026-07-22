@@ -10,6 +10,7 @@ import { registerListPresets } from './tools/list_presets.js';
 import { registerListQeBlueprints } from './tools/list_qe_blueprints.js';
 import { registerListSdlcPhases } from './tools/list_sdlc_phases.js';
 import { registerPlanInstall } from './tools/plan_install.js';
+import { registerRunDoctor } from './tools/run_doctor.js';
 
 export function createServer(content: Content): McpServer {
   const server = new McpServer(
@@ -30,6 +31,7 @@ export function createServer(content: Content): McpServer {
   registerListQeBlueprints(server, content);
   registerListSdlcPhases(server, content);
   registerPlanInstall(server, content);
+  registerRunDoctor(server);
   return server;
 }
 

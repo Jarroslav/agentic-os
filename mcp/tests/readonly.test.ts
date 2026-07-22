@@ -41,6 +41,10 @@ const TOOL_ARGS: Record<string, Record<string, unknown>> = {
   list_qe_blueprints: {},
   list_sdlc_phases: {},
   plan_install: { roles: ['developer'] },
+  // Points at the repo root itself — it exists, is a directory, and is safe
+  // to read. run_doctor is read-only through Target, so exercising it here
+  // never writes to or executes anything under this path.
+  run_doctor: { target_path: REPO_ROOT },
 };
 
 describe('read-only guarantee', () => {
@@ -108,7 +112,7 @@ describe('read-only guarantee', () => {
       // unused.
       expect(exercised.sort()).toEqual([
         'get_document', 'list_presets', 'list_qe_blueprints',
-        'list_sdlc_phases', 'plan_install', 'search_methodology',
+        'list_sdlc_phases', 'plan_install', 'run_doctor', 'search_methodology',
       ]);
 
       // Also exercise the resource and prompt surfaces alongside the tool

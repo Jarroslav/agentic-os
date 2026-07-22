@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeAll, afterAll } from 'vitest';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -619,5 +620,100 @@ describe('plan_install', () => {
     });
     expect(res.isError).toBe(true);
     expect(String((res.content as Array<{ text: string }>)[0]?.text)).toContain('list_presets');
+  });
+});
+
+describe('run_doctor', () => {
+  // Temp dirs created directly with node:fs/promises are fine here — only
+  // mcp/src/** is banned from touching the filesystem (see
+  // readonly.test.ts); this test file is exempt, same as target.test.ts and
+  // doctor.test.ts.
+  const roots: string[] = [];
+  afterAll(async () => {
+    while (roots.length > 0) {
+      const r = roots.pop();
+      if (r !== undefined) await rm(r, { recursive: true, force: true });
+    }
+  });
+  async function makeRoot(): Promise<string> {
+    const root = await mkdtemp(join(tmpdir(), 'run-doctor-target-'));
+    roots.push(root);
+    return root;
+  }
+
+  it('reports a non-existent target_path as a recoverable error, not a thrown/rejected call', async () => {
+    const res = await client.callTool({
+      name: 'run_doctor',
+      arguments: { target_path: join(tmpdir(), 'run-doctor-does-not-exist-xyz') },
+    });
+    expect(res.isError).toBe(true);
+    expect(String((res.content as Array<{ text: string }>)[0]?.text).length).toBeGreaterThan(0);
+  });
+
+  it('reports installed: false with a single not-installed check when the journal is missing', async () => {
+    const root = await makeRoot();
+    const res = await client.callTool({
+      name: 'run_doctor',
+      arguments: { target_path: root },
+    });
+    const out = res.structuredContent as {
+      installed: boolean;
+      checks: Array<{ key: string; passed: boolean }>;
+      verdict: string;
+    };
+    expect(out.installed).toBe(false);
+    expect(out.checks).toHaveLength(1);
+    expect(out.checks[0]?.key).toBe('not-installed');
+    expect(out.checks[0]?.passed).toBe(false);
+    expect(out.verdict).toBe('failed');
+  });
+
+  it('host_must_run has exactly 3 entries, each with a non-empty commands array and a non-empty why, on an installed repo — and verdict is never "passed" while it is non-empty (the integrity rule)', async () => {
+    // "Installed" only requires .agentic/agentic-os/install.json to exist
+    // and parse as JSON — runNativeChecks() doesn't require any journaled
+    // files to be present on disk for the not-installed sentinel to be
+    // skipped (see doctor.ts / doctor.test.ts). A bare, empty journal is
+    // therefore enough to exercise the installed path without needing a
+    // full fixture install.
+    const root = await makeRoot();
+    await mkdir(join(root, '.agentic', 'agentic-os'), { recursive: true });
+    await writeFile(
+      join(root, '.agentic', 'agentic-os', 'install.json'),
+      JSON.stringify({ agentic_os_version: '0.1.0', files: {} }, null, 2),
+      'utf8',
+    );
+
+    const res = await client.callTool({
+      name: 'run_doctor',
+      arguments: { target_path: root },
+    });
+    const out = res.structuredContent as {
+      installed: boolean;
+      verdict: string;
+      host_must_run: Array<{ key: string; why: string; commands: string[] }>;
+    };
+    expect(out.installed).toBe(true);
+    expect(out.host_must_run).toHaveLength(3);
+    expect(out.host_must_run.map((h) => h.key).sort()).toEqual(
+      ['dry_runs', 'hitl_smoke', 'py_compile'],
+    );
+    for (const entry of out.host_must_run) {
+      expect(entry.commands.length).toBeGreaterThan(0);
+      expect(entry.commands.every((c) => c.length > 0)).toBe(true);
+      expect(entry.why.length).toBeGreaterThan(0);
+    }
+
+    // The integrity rule itself: host_must_run is non-empty here, so
+    // verdict must never be 'passed' — regardless of what the native
+    // checks reported.
+    expect(out.host_must_run.length).toBeGreaterThan(0);
+    expect(out.verdict).not.toBe('passed');
+  });
+
+  it('is advertised read-only (covered generically above; confirms the suite stays green with a 7th tool)', async () => {
+    const { tools } = await client.listTools();
+    const tool = tools.find((t) => t.name === 'run_doctor');
+    expect(tool).toBeDefined();
+    expect(tool?.annotations?.readOnlyHint).toBe(true);
   });
 });
