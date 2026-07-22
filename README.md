@@ -129,6 +129,11 @@ This repo is a **marketplace** (Claude Code and Cursor) hosting three plugins:
   for skills and agents. Independent of the governance flow — no
   `/agentic-init` required.
 
+There's also **`mcp/`** — a read-only MCP server that serves this same
+governance/SDLC/QE methodology to hosts that don't speak the Claude Code or
+Cursor plugin format (any MCP-capable client). It's a separate, not-yet-published
+package with its own build; see [`mcp/README.md`](mcp/README.md).
+
 **Which plugin?** For the governed platform, install **agentic-os** +
 **agentic-sdlc** plus **superpowers**: `agentic-os` is the installer/governance
 layer, `agentic-sdlc` is the SDLC orchestrator, and `/agentic-init` wires them
@@ -591,6 +596,7 @@ One-liners for the jargon used above, no forward references required:
 bash tests/t0/run.sh                 # 61 hook unit tests
 bash tests/t0/run-output-contract.sh # 12 output-contract parser checks
 bash tests/run-matrix.sh             # T1–T8 acceptance (38 checks; re-runs the output-contract suite as T7)
+cd mcp && npm run build && npm test  # mcp/ server: contract, content, and read-only tests
 ```
 
 **What CI proves, deterministically, on every PR:** 99 checks — 61 hook unit
@@ -641,6 +647,7 @@ CI-passing pull request**, and contributor PRs require a code-owner review. See
 - Upgrade flow: [`plugins/agentic-os/docs/UPGRADING.md`](plugins/agentic-os/docs/UPGRADING.md)
 - Changelog: [`plugins/agentic-os/CHANGELOG.md`](plugins/agentic-os/CHANGELOG.md)
 - Preset composition rules: [`plugins/agentic-os/presets/README.md`](plugins/agentic-os/presets/README.md)
+- MCP server (non-plugin hosts): [`mcp/README.md`](mcp/README.md)
 - Roadmap: [`ROADMAP.md`](ROADMAP.md)
 - Security policy: [`SECURITY.md`](SECURITY.md)
 - Code of conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)

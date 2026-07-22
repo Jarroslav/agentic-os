@@ -40,6 +40,11 @@ modes. Reports of particular interest:
   condition.
 - Any script under `.claude/hooks/`, `.githooks/`, or `scripts/` that
   executes untrusted input unsafely.
+- A way to make the MCP server (`mcp/`) serve a path that is not a literal
+  key of its build-time `content-index.json` — that membership check is its
+  entire access-control model (no path arithmetic, so this is meant to make
+  traversal and absolute paths inexpressible), and a bypass of it is a
+  security bug.
 
 Prompt-injection resistance of the underlying LLM is out of scope for this
 project specifically — report those upstream to the model provider — but a
