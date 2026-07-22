@@ -85,6 +85,13 @@ export function registerPlanInstall(server: McpServer, content: Content): void {
       // Strictest wins: strict > gated-autonomous > autonomous.
       const hitl = HITL_ORDER.find(level =>
         presets.some(p => p.default_hitl === level)) ?? '';
+      if (!hitl) {
+        follow_ups.push(
+          `No selected preset (${roles.join(', ')}) declares a recognized ` +
+          `default_hitl; hitl_default is empty, not a valid HITL level — ` +
+          `set it explicitly before installing.`,
+        );
+      }
 
       // Every style in the union installs — a dev+qa team needs BOTH
       // orchestrators. Separately, the pre-filled default comes from the
@@ -95,6 +102,13 @@ export function registerPlanInstall(server: McpServer, content: Content): void {
       const orchestration_default = hitl === 'strict'
         ? 'dispatcher'
         : (presets[0]?.default_orchestration ?? '');
+      if (!orchestration_default) {
+        follow_ups.push(
+          `No selected preset (${roles.join(', ')}) declares a ` +
+          `default_orchestration; orchestration_default is empty, not a ` +
+          `valid orchestration style — set it explicitly before installing.`,
+        );
+      }
 
       const out = {
         roles, hitl_default: hitl,

@@ -105,15 +105,21 @@ export class Content {
     const skills: Skill[] = [];
 
     for (const path of Object.keys(index)) {
-      // Every git-tracked path under plugins/ is a text file (methodology
-      // docs, presets, and — as of Phase 2b — template sources: .py/.sh
-      // hooks, .md.tmpl/.json.tmpl/.py.tmpl/.sh.tmpl scaffolds). Loading all
-      // of them, not just .md/.json/.txt, is what the class docstring above
-      // already promises: index membership is the whole access-control
-      // model. A prior narrower filter here left template files invisible to
-      // both paths() and readDoc(), so plan_install's resolveTemplateId
-      // lookups (and the resources they point at) silently failed for any
-      // template that wasn't a plain .md file.
+      // Every git-tracked path under plugins/ is a text file: methodology
+      // docs, presets, and — as of Phase 2b — template sources
+      // (.md.tmpl/.json.tmpl/.py.tmpl scaffolds, plain .py/.sh hooks), plus
+      // a long tail of one-off outliers that a .md/.json/.txt filter would
+      // also have hidden: sdlc.html, scaffold.ps1, run-hook.cmd,
+      // runner.ts/llm_eval_runner.mts, .shellcheckrc, nine
+      // *.md.template repo-guide templates, and six extensionless hook
+      // files (pre-commit, sdlc-stage-guard, ticket-sync, and their
+      // test- variants). Loading all of them, not just a fixed extension
+      // allowlist, is what the class docstring above already promises:
+      // index membership is the whole access-control model. A prior
+      // narrower filter here left template files invisible to both paths()
+      // and readDoc(), so plan_install's resolveTemplateId lookups (and the
+      // resources they point at) silently failed for any template that
+      // wasn't a plain .md file.
       const text = await readFile(join(CONTENT_ROOT, path), 'utf8');
       docs.set(path, { path, title: firstHeading(text, path), text });
 
