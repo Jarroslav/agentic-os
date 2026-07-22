@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { BANNED_PATTERN } from './banned-pattern.js';
 
 const MCP_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPO_ROOT = join(MCP_ROOT, '..');
@@ -39,13 +40,31 @@ const TOOL_ARGS: Record<string, Record<string, unknown>> = {
   list_presets: {},
   list_qe_blueprints: {},
   list_sdlc_phases: {},
+  plan_install: { roles: ['developer'] },
+  // Points at the repo root itself — it exists, is a directory, and is safe
+  // to read. run_doctor is read-only through Target, so exercising it here
+  // never writes to or executes anything under this path.
+  run_doctor: { target_path: REPO_ROOT },
 };
 
 describe('read-only guarantee', () => {
-  it('no source file calls a write-capable fs API', async () => {
+  it('no source file writes to the filesystem or spawns a process', async () => {
     // NOTE: link, open, chmod, chown are deliberately omitted — they're common English words
     // likely to appear in prose/comments and would make this scan unreliable.
-    const banned = /\b(writeFile|writeFileSync|mkdir|mkdirSync|rm|rmSync|rmdir|rmdirSync|unlink|appendFile|createWriteStream|copyFile|copyFileSync|rename|renameSync|truncate|truncateSync|symlink|symlinkSync)\b/;
+    //
+    // The process-execution half bans the unambiguous call names
+    // (execSync/execFile/execFileSync/spawn/spawnSync/fork) rather than the
+    // bare word `exec`, which would false-positive on RegExp.prototype.exec —
+    // used throughout this codebase (PRESET_URI.exec(uri), CATALOG.exec(doc.path),
+    // SKILL_RE.exec(path), etc.). The reliable signal is banning the module
+    // itself: no source file may reference the `child_process` specifier in
+    // any of its four spellings (single/double quotes, with/without the
+    // `node:` prefix), so even an aliased import
+    // (`import { execSync as run } from 'node:child_process'`) is caught by
+    // the module-specifier match even if a caller renamed the call. See
+    // banned-pattern.ts for the pattern itself and banned-pattern.test.ts
+    // for direct unit coverage of all four spellings.
+    const banned = BANNED_PATTERN;
     const offenders: string[] = [];
     const walk = async (d: string): Promise<void> => {
       for (const e of await readdir(d, { withFileTypes: true })) {
@@ -88,12 +107,12 @@ describe('read-only guarantee', () => {
         await client.callTool({ name: tool.name, arguments: args });
         exercised.push(tool.name);
       }
-      // Sanity check on the loop itself: every one of the 5 tools shipped in
-      // this phase must actually have been called, not merely present in
-      // TOOL_ARGS unused.
+      // Sanity check on the loop itself: every one of the 7 tools shipped so
+      // far must actually have been called, not merely present in TOOL_ARGS
+      // unused.
       expect(exercised.sort()).toEqual([
         'get_document', 'list_presets', 'list_qe_blueprints',
-        'list_sdlc_phases', 'search_methodology',
+        'list_sdlc_phases', 'plan_install', 'run_doctor', 'search_methodology',
       ]);
 
       // Also exercise the resource and prompt surfaces alongside the tool

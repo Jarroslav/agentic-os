@@ -16,6 +16,40 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 - `list_sdlc_phases` — the SDLC pipeline phase map with its judgment gates.
 - Resource URI aliases `agentic-os://presets/{role}` and
   `agentic-os://qe/blueprints/{stage}/{id}`.
+- `plan_install` — composes one or more role presets into an ordered file
+  manifest (template id, source `agentic-os://` uri, owner), applying
+  strictest-HITL-wins and unioning every orchestration style across the
+  selected roles. Returns a plan only; the caller performs the writes.
+- `run_doctor` — audits an agentic-os install in a target repo the caller
+  names. Adds the server's second filesystem reader, `mcp/src/target.ts`,
+  gated by root containment (canonicalized, symlinks resolved) rather than
+  the bundle reader's build-time index — see SECURITY.md for the full
+  access-control writeup and its one accepted risk (a TOCTOU window between
+  containment validation and read, scoped to an attacker who already has
+  write access to the repo being audited). Six of the doctor's checks run
+  natively as pure file inspection; the three that require executing Python
+  (hook compile+import, canned-event dry-runs, HITL smoke) come back as
+  exact commands in `host_must_run` for the host to run itself — the server
+  never executes code from a target repository. `verdict: "incomplete"` is
+  the expected result of a server-side-only run, not a failure signal.
+- Tool surface now stands at 7 of the documented 8-tool cap.
+- **Bundle surface widened**: `content.ts`'s loader dropped its `md|json|txt`
+  extension filter so `plan_install`'s template lookups (and the resources
+  they point at) stop silently failing for any template that wasn't a plain
+  `.md` file. This makes ~70 additional `content-index.json` entries
+  servable through `get_document` and the public
+  `agentic-os://file/{+path}` resource template — hook scripts (`.py`/`.sh`
+  and six extensionless git hooks), `.tmpl` template sources, and one-off
+  files such as `scaffold.ps1`, `sdlc.html`, `run-hook.cmd`, and
+  `.shellcheckrc`. Verified: 326 total index entries, 256 of which end in
+  `.md`/`.json`/`.txt`, so exactly 70 previously-unservable entries are now
+  reachable. Index membership remains the entire access-control model — no
+  extension-based gate was reintroduced.
+- `mcp/tests/readonly.test.ts` extended to prove no source file writes to
+  the filesystem or spawns a process (banning both write APIs and the
+  `child_process` module specifier in any quoting) across `mcp/src/**`, and
+  that exercising every tool — including `run_doctor` against a live target
+  — leaves `plugins/` byte-identical.
 
 ## [0.1.0]
 

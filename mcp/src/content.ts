@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SKILL_PATH } from './paths.js';
 
 export type Doc = { path: string; title: string; text: string };
 export type Skill = {
@@ -18,8 +19,6 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // Both resolve to <mcp>/dist/content.
 const CONTENT_ROOT = join(HERE, '..', 'dist', 'content');
 const INDEX_PATH = join(HERE, '..', 'content-index.json');
-
-const SKILL_RE = /^plugins\/([^/]+)\/skills\/([^/]+)\/SKILL\.md$/;
 
 /** Strip one matching pair of surrounding quotes (single or double), if present. */
 function unquote(value: string): string {
@@ -106,11 +105,25 @@ export class Content {
     const skills: Skill[] = [];
 
     for (const path of Object.keys(index)) {
-      if (!/\.(md|json|txt)$/.test(path)) continue;
+      // Every git-tracked path under plugins/ is a text file: methodology
+      // docs, presets, and — as of Phase 2b — template sources
+      // (.md.tmpl/.json.tmpl/.py.tmpl scaffolds, plain .py/.sh hooks), plus
+      // a long tail of one-off outliers that a .md/.json/.txt filter would
+      // also have hidden: sdlc.html, scaffold.ps1, run-hook.cmd,
+      // runner.ts/llm_eval_runner.mts, .shellcheckrc, nine
+      // *.md.template repo-guide templates, and six extensionless hook
+      // files (pre-commit, sdlc-stage-guard, ticket-sync, and their
+      // test- variants). Loading all of them, not just a fixed extension
+      // allowlist, is what the class docstring above already promises:
+      // index membership is the whole access-control model. A prior
+      // narrower filter here left template files invisible to both paths()
+      // and readDoc(), so plan_install's resolveTemplateId lookups (and the
+      // resources they point at) silently failed for any template that
+      // wasn't a plain .md file.
       const text = await readFile(join(CONTENT_ROOT, path), 'utf8');
       docs.set(path, { path, title: firstHeading(text, path), text });
 
-      const m = SKILL_RE.exec(path);
+      const m = SKILL_PATH.exec(path);
       if (m?.[1] && m[2]) {
         const fm = frontmatter(text);
         skills.push({

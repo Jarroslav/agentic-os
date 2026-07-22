@@ -3,13 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Content } from '../content.js';
 import { pathToUri } from '../resources.js';
 import { truncateCodePoints } from '../text.js';
-
-// Same shape as resources.ts's own BLUEPRINT_PATH — kept as a local copy
-// rather than imported (see list_presets.ts's PRESET_PATH for the same
-// pattern and rationale). If the catalog layout ever changes, both this
-// regex and resources.ts's BLUEPRINT_PATH must change together.
-const CATALOG =
-  /^plugins\/agentic-qe\/skills\/qe-blueprints\/references\/catalog\/([^/]+)\/([^/]+)\.md$/;
+import { BLUEPRINT_PATH as CATALOG } from '../paths.js';
 
 const outputShape = {
   blueprints: z.array(z.object({

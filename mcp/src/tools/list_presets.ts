@@ -2,13 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Content } from '../content.js';
 import { pathToUri } from '../resources.js';
-
-// Same shape as resources.ts's own PRESET_PATH — kept as a local copy rather
-// than importing, so this tool depends only on Content.paths() (the index)
-// and not on resources.ts's internals. resources.ts does not export its
-// regex, and exporting it solely for this one caller would widen that
-// module's public surface for no benefit to its own responsibilities.
-const PRESET_PATH = /^plugins\/agentic-os\/presets\/roles\/([^/]+)\.json$/;
+import { PRESET_PATH } from '../paths.js';
 
 const outputShape = {
   presets: z.array(z.object({

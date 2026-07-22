@@ -50,6 +50,43 @@ describe('content layer', () => {
     expect(content.markdownDocs().every(d => d.path.endsWith('.md'))).toBe(true);
   });
 
+  // Pins the widened invariant this class's docstring claims: every indexed
+  // path is servable. A future re-narrowing of the loader (e.g. a
+  // reintroduced extension filter) would shrink docs below the index's key
+  // count, and this test catches that directly at the module that owns the
+  // guarantee — rather than incidentally, via a different file's
+  // plan_install file-count assertion.
+  it('serves every indexed path — paths().length matches the index size', async () => {
+    const indexPath = join(MCP_ROOT, 'content-index.json');
+    const index: Record<string, string> = JSON.parse(await readFile(indexPath, 'utf8'));
+    expect(content.paths().length).toBe(Object.keys(index).length);
+  });
+
+  // With the extension filter gone, Content.load() reads every indexed file
+  // as utf8 with nothing checking that it actually is text. If a binary
+  // (PNG, font, archive, ...) were ever committed under plugins/, it would
+  // be read at startup and served as mojibake with U+FFFD replacement
+  // characters — silently, no crash, no warning. A NUL byte is the
+  // reliable positive signal for binary content, regardless of extension;
+  // an extension denylist is only a cheap secondary check. This is a
+  // test-only guard by design (see content.ts's comment): a failure here
+  // means a human must look, not that the loader should start skipping
+  // files — that would quietly reintroduce the second access-control
+  // mechanism this task removed.
+  it('no loaded document contains a NUL byte', () => {
+    const withNul = content.paths()
+      .filter(p => content.readDoc(p)?.text.includes('\0'));
+    expect(withNul).toEqual([]);
+  });
+
+  it('no index key uses a common binary file extension', async () => {
+    const indexPath = join(MCP_ROOT, 'content-index.json');
+    const index: Record<string, string> = JSON.parse(await readFile(indexPath, 'utf8'));
+    const BINARY_EXT = /\.(png|jpe?g|gif|webp|bmp|ico|pdf|zip|gz|tar|woff2?|ttf|otf|eot|mp3|mp4|mov|wasm|exe|dll|so|class|jar)$/i;
+    const suspicious = Object.keys(index).filter(p => BINARY_EXT.test(p));
+    expect(suspicious).toEqual([]);
+  });
+
   it('resolves a folded block scalar (">-") description to real text', () => {
     const qaGates = content.listSkills().find(
       s => s.plugin === 'agentic-sdlc' && s.skill === 'qa-gates',
