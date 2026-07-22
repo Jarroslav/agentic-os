@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.jarroslav/agentic-os",
+  "name": "io.github.Jarroslav/agentic-os",
   "description": "Read-only, never-executing MCP server for the agentic-os governance, SDLC, and QE methodology.",
   "version": "0.1.0",
   "packages": [
