@@ -297,3 +297,42 @@ describe('get_document surrogate safety and max_chars ceiling', () => {
     expect(res.isError).toBeFalsy();
   });
 });
+
+describe('preset and blueprint URI aliases', () => {
+  it('reads a preset by its alias', async () => {
+    const res = await client.readResource({ uri: 'agentic-os://presets/qa' });
+    expect(res.contents[0]?.mimeType).toBe('application/json');
+    expect(String(res.contents[0]?.text)).toContain('"name": "qa"');
+  });
+
+  it('reads a blueprint by its alias', async () => {
+    const res = await client.readResource({
+      uri: 'agentic-os://qe/blueprints/design/test-cases',
+    });
+    expect(String(res.contents[0]?.text)).toContain('# Generate test cases');
+  });
+
+  it('still accepts the file/ form for the same documents', async () => {
+    const res = await client.readResource({
+      uri: 'agentic-os://file/agentic-os/presets/roles/qa.json',
+    });
+    expect(String(res.contents[0]?.text)).toContain('"name": "qa"');
+  });
+
+  it('get_document accepts an alias without change', async () => {
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: { uri: 'agentic-os://presets/developer' },
+    });
+    expect((res.structuredContent as { text: string }).text)
+      .toContain('"name": "developer"');
+  });
+
+  it('rejects an alias for a role that does not exist', async () => {
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: { uri: 'agentic-os://presets/not-a-role' },
+    });
+    expect(res.isError).toBe(true);
+  });
+});
