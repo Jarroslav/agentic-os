@@ -81,14 +81,39 @@ describe('protocol contract', () => {
   });
 });
 
-describe('search_methodology', () => {
-  it('is advertised as read-only with an output schema', async () => {
+describe('every advertised tool', () => {
+  // The stated global constraint is that *every* tool — not just the ones
+  // someone remembered to assert on individually — is read-only, carries an
+  // output schema, and follows the naming conventions the namespace prefix
+  // and MCP host UIs depend on. Replaces the two ad hoc per-tool
+  // readOnlyHint/outputSchema assertions that used to live in the
+  // search_methodology and list_presets describe blocks below: a new tool
+  // registered without the annotation now fails here regardless of whether
+  // anyone thought to write a tool-specific assertion for it.
+  it('stays within the documented tool cap', async () => {
     const { tools } = await client.listTools();
-    const t = tools.find(x => x.name === 'search_methodology');
-    expect(t?.annotations?.readOnlyHint).toBe(true);
-    expect(t?.outputSchema).toBeDefined();
+    expect(tools.length).toBeGreaterThan(0);
+    expect(tools.length).toBeLessThanOrEqual(8); // makes the documented tool cap executable
   });
 
+  it('is advertised read-only with an output schema', async () => {
+    const { tools } = await client.listTools();
+    for (const t of tools) {
+      expect(t.annotations?.readOnlyHint).toBe(true);
+      expect(t.outputSchema).toBeDefined();
+    }
+  });
+
+  it('has a valid, host-safe name', async () => {
+    const { tools } = await client.listTools();
+    for (const t of tools) {
+      expect(t.name).toMatch(/^[a-z][a-z0-9_]*$/);
+      expect(('agentic-os:' + t.name).length).toBeLessThan(60);
+    }
+  });
+});
+
+describe('search_methodology', () => {
   it('finds the escalation ladder', async () => {
     const res = await client.callTool({
       name: 'search_methodology',
@@ -299,13 +324,6 @@ describe('get_document surrogate safety and max_chars ceiling', () => {
 });
 
 describe('list_presets', () => {
-  it('is advertised read-only with an output schema', async () => {
-    const { tools } = await client.listTools();
-    const t = tools.find(x => x.name === 'list_presets');
-    expect(t?.annotations?.readOnlyHint).toBe(true);
-    expect(t?.outputSchema).toBeDefined();
-  });
-
   it('returns all seven role presets', async () => {
     const res = await client.callTool({ name: 'list_presets', arguments: {} });
     const { presets } = res.structuredContent as {
@@ -437,6 +455,41 @@ describe('list_qe_blueprints', () => {
       name: 'list_qe_blueprints', arguments: { stage: 'nonsense' },
     });
     expect(res.isError).toBe(true);
+  });
+
+  it('derives its stage enum from the content index, not a hardcoded tuple', async () => {
+    // Mirrors list_presets's analogous index-derived guard above: computes
+    // the expected stage set directly from content-index.json (the same
+    // authority list_qe_blueprints.ts itself reads at registration time) and
+    // checks both that the tool's unfiltered output matches it exactly and
+    // that every one of those stages is schema-valid to filter by. A stage
+    // directory added under
+    // plugins/agentic-qe/skills/qe-blueprints/references/catalog/ without
+    // regenerating the schema from the index would fail the second half of
+    // this test even if it passed the first (the tool would emit blueprints
+    // for the new stage but reject it as a filter).
+    const index: Record<string, string> = JSON.parse(
+      await readFile(join(MCP_ROOT, 'content-index.json'), 'utf8'),
+    );
+    const CATALOG_PATH =
+      /^plugins\/agentic-qe\/skills\/qe-blueprints\/references\/catalog\/([^/]+)\/[^/]+\.md$/;
+    const expectedStages = new Set(
+      Object.keys(index)
+        .map(k => CATALOG_PATH.exec(k)?.[1])
+        .filter((s): s is string => s !== undefined),
+    );
+    expect(expectedStages.size).toBeGreaterThan(0);
+
+    const res = await client.callTool({ name: 'list_qe_blueprints', arguments: {} });
+    const { blueprints } = res.structuredContent as { blueprints: Array<{ stage: string }> };
+    expect(new Set(blueprints.map(b => b.stage))).toEqual(expectedStages);
+
+    for (const stage of expectedStages) {
+      const filtered = await client.callTool({
+        name: 'list_qe_blueprints', arguments: { stage },
+      });
+      expect(filtered.isError).toBeFalsy();
+    }
   });
 
   it('never emits an unpaired surrogate in any summary', async () => {

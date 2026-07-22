@@ -25,6 +25,22 @@ async function fingerprint(dir: string): Promise<string> {
   return hash.digest('hex');
 }
 
+// Minimal valid arguments for every tool this server advertises, keyed by
+// tool name. This enumeration is deliberately NOT the source of truth for
+// which tools get exercised — client.listTools() is (see the test below) —
+// it only supplies arguments for tools whose required inputs can't be
+// synthesized generically from the schema. A tool advertised by
+// listTools() with no entry here fails that test loudly, rather than being
+// silently skipped, which is what enrolls a future Phase 2b tool
+// automatically instead of relying on someone remembering to add it here.
+const TOOL_ARGS: Record<string, Record<string, unknown>> = {
+  search_methodology: { query: 'escalation gate review' },
+  get_document: { uri: 'agentic-os://skills/agentic-os/agentic-init' },
+  list_presets: {},
+  list_qe_blueprints: {},
+  list_sdlc_phases: {},
+};
+
 describe('read-only guarantee', () => {
   it('no source file calls a write-capable fs API', async () => {
     // NOTE: link, open, chmod, chown are deliberately omitted — they're common English words
@@ -53,13 +69,35 @@ describe('read-only guarantee', () => {
     }));
 
     try {
-      await client.callTool({
-        name: 'search_methodology', arguments: { query: 'escalation gate review' },
-      });
-      await client.callTool({
-        name: 'get_document',
-        arguments: { uri: 'agentic-os://skills/agentic-os/agentic-init' },
-      });
+      // Drive the exercise loop off the server's own advertised tool list,
+      // not a hand-written one — a tool added in a later phase is exercised
+      // here automatically, and one with no argument mapping fails this test
+      // instead of silently passing uncovered.
+      const { tools } = await client.listTools();
+      const exercised: string[] = [];
+      for (const tool of tools) {
+        const args = TOOL_ARGS[tool.name];
+        if (args === undefined) {
+          throw new Error(
+            `Tool "${tool.name}" is advertised by listTools() but has no entry ` +
+            `in TOOL_ARGS (mcp/tests/readonly.test.ts). Add minimal valid ` +
+            `arguments for it so this read-only proof actually exercises it — ` +
+            `see IMPORTANT 1 in the Phase 2a review.`,
+          );
+        }
+        await client.callTool({ name: tool.name, arguments: args });
+        exercised.push(tool.name);
+      }
+      // Sanity check on the loop itself: every one of the 5 tools shipped in
+      // this phase must actually have been called, not merely present in
+      // TOOL_ARGS unused.
+      expect(exercised.sort()).toEqual([
+        'get_document', 'list_presets', 'list_qe_blueprints',
+        'list_sdlc_phases', 'search_methodology',
+      ]);
+
+      // Also exercise the resource and prompt surfaces alongside the tool
+      // loop above, for the same byte-identical guarantee.
       await client.readResource({
         uri: 'agentic-os://file/agentic-os/presets/roles/qa.json',
       });
