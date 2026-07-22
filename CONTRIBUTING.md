@@ -1,8 +1,8 @@
 # Contributing
 
 `main` is protected: **no direct pushes — by anyone, including the owner.** Every
-change lands through a pull request whose `gate` CI check passes. Pull requests
-from contributors also require review from a code owner (@Jarroslav).
+change lands through a pull request whose `gate` and `mcp` CI checks pass. Pull
+requests from contributors also require review from a code owner (@Jarroslav).
 
 ## Workflow
 
@@ -15,14 +15,35 @@ bash tests/t0/run.sh                 # 105 hook unit tests
 bash tests/t0/run-output-contract.sh # 12 output-contract parser checks
 bash tests/run-matrix.sh             # T1–T8 acceptance (re-runs the output-contract suite as T7)
 
+# If you touched anything under plugins/**, also rebuild and commit the mcp
+# content index (see "The mcp/ content index" below):
+cd mcp && npm run build:content && cd ..
+git add mcp/content-index.json
+
 # 3. Push the branch and open a PR
 git push -u origin feat/my-change
 gh pr create --fill --base main
 ```
 
 CI (`.github/workflows/ci.yml`) re-runs the hook unit tests and the T1–T8
-acceptance matrix on every PR. A red run blocks merge. `@Jarroslav` is a code
-owner, so the PR requests their review automatically.
+acceptance matrix (the `gate` job) and, separately, builds and tests the `mcp/`
+server on Node 20 and 22 (the `mcp` job, shown as `mcp (20)` / `mcp (22)`).
+Both are required checks — a red run on either blocks merge. `@Jarroslav` is a
+code owner, so the PR requests their review automatically.
+
+> Branch protection must be configured to require both `gate` and every `mcp`
+> matrix leg (`mcp (20)`, `mcp (22)`) as status checks. Until that's done in
+> the repo's GitHub settings, the `mcp` job's drift and read-only gates are
+> advisory only — this file cannot change that setting, only document it.
+
+## The `mcp/` content index
+
+`mcp/` serves `plugins/**` to MCP clients through a build-time index
+(`mcp/content-index.json`) rather than reading the working tree live. If you
+add, edit, or remove a file under `plugins/**`, you must also run
+`cd mcp && npm run build:content` and commit the resulting
+`mcp/content-index.json` — otherwise the `mcp` job's content-drift check
+(`npm run check:drift`) fails CI.
 
 ## Rules that CI enforces
 
@@ -38,6 +59,10 @@ owner, so the PR requests their review automatically.
   classes (emails, home paths, confidentiality markers, vendor model IDs)
   plus a hashed token denylist in `tests/lib/neutrality-policy.json`. The
   canonical plugin-author identity is the one sanctioned exception.
+- **The `mcp/` content index stays in sync with `plugins/`** (`mcp` CI job,
+  `npm run check:drift`): `mcp/content-index.json` is a build-time snapshot
+  of every git-tracked file under `plugins/`, and it must match exactly — see
+  "The `mcp/` content index" above.
 
 ## Releasing
 
@@ -57,6 +82,10 @@ Each plugin versions independently, so releases are cut and tagged per plugin:
 
 Tags activate the clean template-only upgrade diff documented in
 [`plugins/agentic-os/docs/UPGRADING.md`](plugins/agentic-os/docs/UPGRADING.md).
+
+`mcp/` carries its own independent `version` in `mcp/package.json` but is not
+yet released — its npm package (`agentic-os-mcp`) is unpublished, so there is
+no tag convention for it yet; one will be settled when it first publishes.
 
 ## Commit style
 
