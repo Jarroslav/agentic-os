@@ -131,6 +131,8 @@ export class Content {
   markdownDocs(): Doc[] {
     return [...this.docs.values()].filter(d => d.path.endsWith('.md'));
   }
+  /** Every servable path, sorted. The index is the authority on what exists. */
+  paths(): string[] { return [...this.docs.keys()].sort(); }
 }
 
 export async function loadContent(): Promise<Content> { return Content.load(); }

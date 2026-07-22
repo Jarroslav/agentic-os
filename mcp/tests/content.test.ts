@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadContent, type Content } from '../src/content.js';
+import { pathToUri, uriToPath } from '../src/resources.js';
 
 const MCP_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPO_ROOT = join(MCP_ROOT, '..');
@@ -111,5 +112,36 @@ describe('content layer', () => {
 
     const unsafe = Object.keys(index).filter(path => !SAFE_PATH.test(path));
     expect(unsafe).toEqual([]);
+  });
+
+  it('every index key round-trips through pathToUri and uriToPath', async () => {
+    const indexPath = join(MCP_ROOT, 'content-index.json');
+    const index: Record<string, string> = JSON.parse(await readFile(indexPath, 'utf8'));
+
+    const mismatches: string[] = [];
+    for (const path of Object.keys(index)) {
+      const uri = pathToUri(path);
+      const reconstructed = uriToPath(uri);
+      if (reconstructed !== path) {
+        mismatches.push(`Path: ${path} → URI: ${uri} → Reconstructed: ${reconstructed}`);
+      }
+    }
+    expect(mismatches).toEqual([]);
+  });
+
+  it('emits canonical forms for presets and blueprints, not file/ form', async () => {
+    // Test preset canonical form
+    const presetPath = 'plugins/agentic-os/presets/roles/qa.json';
+    const presetUri = pathToUri(presetPath);
+    expect(presetUri).toBe('agentic-os://presets/qa');
+
+    // Test blueprint canonical form
+    const blueprintPath = 'plugins/agentic-qe/skills/qe-blueprints/references/catalog/analyze/change-impact-scoping.md';
+    const blueprintUri = pathToUri(blueprintPath);
+    expect(blueprintUri).toBe('agentic-os://qe/blueprints/analyze/change-impact-scoping');
+
+    // Test that pathToUri does not emit file/ form for presets or blueprints
+    expect(presetUri).not.toContain('file/');
+    expect(blueprintUri).not.toContain('file/');
   });
 });
