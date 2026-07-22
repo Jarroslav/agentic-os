@@ -24,4 +24,4 @@ docs/workstreams/
 NOTES*.md
 *.internal.md
 mcp/dist/
-mcp/node_modules/
+node_modules/
