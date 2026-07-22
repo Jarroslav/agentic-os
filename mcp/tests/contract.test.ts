@@ -146,3 +146,42 @@ describe('search_methodology', () => {
     expect(results).toEqual([]);
   });
 });
+
+describe('get_document', () => {
+  it('returns a whole small document untruncated', async () => {
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: { uri: 'agentic-os://skills/agentic-os/agentic-doctor' },
+    });
+    const out = res.structuredContent as
+      { text: string; truncated: boolean; total_chars: number };
+    expect(out.truncated).toBe(false);
+    expect(out.text.length).toBe(out.total_chars);
+    expect(out.text).toContain('install verifier');
+  });
+
+  it('truncates and flags when over max_chars', async () => {
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: {
+        uri: 'agentic-os://skills/agentic-os/agentic-doctor',
+        max_chars: 200,
+      },
+    });
+    const out = res.structuredContent as
+      { text: string; truncated: boolean; total_chars: number };
+    expect(out.truncated).toBe(true);
+    expect(out.text.length).toBe(200);
+    expect(out.total_chars).toBeGreaterThan(200);
+  });
+
+  it('reports an unknown URI as a tool error, not a crash', async () => {
+    const res = await client.callTool({
+      name: 'get_document',
+      arguments: { uri: 'agentic-os://file/agentic-os/does/not/exist.md' },
+    });
+    expect(res.isError).toBe(true);
+    expect(String((res.content as Array<{ text: string }>)[0]?.text))
+      .toContain('search_methodology');
+  });
+});

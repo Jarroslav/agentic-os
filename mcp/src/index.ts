@@ -5,6 +5,7 @@ import { loadContent, type Content } from './content.js';
 import { registerResources } from './resources.js';
 import { registerPrompts } from './prompts.js';
 import { registerSearchMethodology } from './tools/search_methodology.js';
+import { registerGetDocument } from './tools/get_document.js';
 
 export function createServer(content: Content): McpServer {
   const server = new McpServer(
@@ -20,6 +21,7 @@ export function createServer(content: Content): McpServer {
   registerResources(server, content);
   registerPrompts(server, content);
   registerSearchMethodology(server, content);
+  registerGetDocument(server, content);
   return server;
 }
 
