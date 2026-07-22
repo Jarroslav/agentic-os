@@ -1,6 +1,6 @@
 # agentic-os-mcp
 
-<!-- mcp-name: io.github.jarroslav/agentic-os -->
+<!-- mcp-name: io.github.Jarroslav/agentic-os -->
 
 Read-only MCP server for the agentic-os methodology: governance
 (**agentic-os**), the SDLC pipeline (**agentic-sdlc**), and Quality
@@ -39,7 +39,19 @@ Codex:
 
 VS Code — one-click:
 
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](vscode:mcp/install?name=agentic-os&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22agentic-os-mcp%22%5D%7D)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522agentic-os%2522%252C%2522command%2522%253A%2522npx%2522%252C%2522args%2522%253A%255B%2522-y%2522%252C%2522agentic-os-mcp%2522%255D%257D)
+
+<!--
+  The badge above uses the https://insiders.vscode.dev/redirect?url=... form,
+  not a bare `vscode:` href — GitHub's markdown sanitizer strips custom URI
+  schemes from rendered links, which makes a `vscode:`/`cursor://` href
+  inert on the rendered README even though it works when pasted into a
+  browser address bar directly. The redirect form is what VS Code's own
+  ecosystem (and other MCP servers' READMEs) uses for exactly this reason.
+  It double-encodes: the inner `vscode:mcp/install?{json}` link is itself
+  URL-encoded as the outer redirect's `url=` value. Decodes to:
+  vscode:mcp/install?{"name":"agentic-os","command":"npx","args":["-y","agentic-os-mcp"]}
+-->
 
 or from the command line:
 
@@ -47,7 +59,17 @@ or from the command line:
 
 Cursor — one-click:
 
-[![Add to Cursor](https://img.shields.io/badge/Cursor-Add_MCP-000000?style=flat-square)](cursor://anysphere.cursor-deeplink/mcp/install?name=agentic-os&config=eyJ0eXBlIjoic3RkaW8iLCJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImFnZW50aWMtb3MtbWNwIl19)
+[![Add to Cursor](https://img.shields.io/badge/Cursor-Add_MCP-000000?style=flat-square)](https://cursor.com/en/install-mcp?name=agentic-os&config=eyJjb21tYW5kIjoibnB4IC15IGFnZW50aWMtb3MtbWNwIn0%3D)
+
+<!--
+  Same reasoning as the VS Code badge above: cursor.com/en/install-mcp is
+  Cursor's own https redirect form, replacing the bare `cursor://` deeplink
+  that GitHub's sanitizer would strip. `config` is base64 of a single JSON
+  object with the whole command line in one "command" string (this is
+  Cursor's own convention for this endpoint, not this server's cursor-deeplink
+  format) -- decodes to: {"command":"npx -y agentic-os-mcp"}
+-->
+
 
 or add to `.cursor/mcp.json` directly, same as Claude Desktop's
 `claude_desktop_config.json`:

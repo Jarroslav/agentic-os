@@ -27,24 +27,69 @@ package is broken, the fix is a **new** version, not a redo of the old one.
    variables → Actions → New repository secret, name `NPM_TOKEN`). This is
    the secret `.github/workflows/release.yml`'s "Publish to npm" step reads
    as `NODE_AUTH_TOKEN`.
-3. **Confirm the MCP Registry namespace case.** `mcp/package.json` declares
-   `mcpName: "io.github.jarroslav/agentic-os"` (lowercase), and
-   `mcp/server.json`'s `name` matches it — but the GitHub account is
-   `Jarroslav` (capital J). GitHub Registry namespaces are derived from your
-   GitHub login, and **only an actual `mcp-publisher login github` (or
-   `github-oidc`) run against the real registry proves which case it
-   normalizes to.** Do not assume lowercase is correct just because it's
-   the npm/URL convention elsewhere.
-   - Before the first release, run `mcp-publisher login github` locally (or
-     watch the first `release.yml` run's "Authenticate to MCP Registry"
-     step) and check what namespace it grants.
-   - If the Registry expects `io.github.Jarroslav/agentic-os` instead, update
-     `mcpName` in `package.json` and `name` in `server.json` together (both
-     must still agree, per `mcp/tests/package.test.ts`) **before** cutting
-     the first release — a namespace mismatch after publish means a wasted,
-     unreusable npm version (see the note above).
-   - This step needs doing exactly once; after the first successful Registry
-     publish, the correct case is confirmed and this note can be deleted.
+3. **The MCP Registry namespace case has already been confirmed — read this
+   before touching it again.** `mcp/package.json`'s `mcpName` and
+   `mcp/server.json`'s `name` are both `io.github.Jarroslav/agentic-os`
+   (capital `J`), matching the real GitHub owner login exactly.
+
+   **How this was confirmed, and why "run `mcp-publisher login github` and
+   see what it prints" does not work:** `login` only ever prints
+   `Logging in with %s...` and `✓ Successfully logged in` (upstream
+   `cmd/publisher/commands/login.go`) — it never prints the granted
+   namespace. Watching the first `release.yml` run's "Authenticate to MCP
+   Registry" step doesn't work either, for the same reason: that step's
+   output is identical, and by the time it runs, `npm publish` has already
+   happened — the door is already closed if the case turns out wrong.
+
+   The procedure that actually answers the question: log in locally, then
+   decode the JWT the CLI saved and read its granted permissions directly.
+
+   ```bash
+   mcp-publisher login github        # opens a device-code flow in your browser
+   node -e "
+     const fs = require('fs');
+     const os = require('os');
+     const path = require('path');
+     const { token } = JSON.parse(fs.readFileSync(
+       path.join(os.homedir(), '.config', 'mcp-publisher', 'token.json'), 'utf8'
+     ));
+     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+     console.log(JSON.stringify(payload.permissions, null, 2));
+   "
+   ```
+
+   This is exactly what `mcp/scripts/check-registry-permission.mjs` does in
+   CI (see `.github/workflows/release.yml`'s "Assert Registry permission
+   covers our declared name" step) — it decodes the same token file and
+   checks the same `permissions[].resource` field against `server.json`'s
+   `name`, and fails the job before `npm publish` runs if it doesn't match.
+   Running the command above locally is the same check, by hand, before you
+   even push a tag.
+
+   **What was found, verified directly against upstream
+   `modelcontextprotocol/registry` source (2026-07):**
+   - `internal/api/handlers/v0/auth/github_oidc.go`'s `buildPermissions`
+     grants `io.github.<repository_owner>/*` using the raw GitHub OIDC
+     `repository_owner` claim — no case-folding.
+   - `internal/auth/jwt.go`'s `isResourceMatch` is `strings.HasPrefix`,
+     case-sensitive, with zero `ToLower` calls anywhere in that file,
+     `publish.go`, or `github_oidc.go`.
+   - This repo's actual GitHub owner login is `Jarroslav` (capital `J`) —
+     confirmed via `gh api repos/Jarroslav/agentic-os --jq .owner.login`.
+   - So the grant is `io.github.Jarroslav/*`, and `mcpName` / `name` must be
+     `io.github.Jarroslav/agentic-os` to match. **Lowercase
+     (`io.github.jarroslav/...`) is wrong and would 403 at the Registry
+     publish step — after npm publish has already succeeded and burned the
+     version number.** This was caught before the first release, not after.
+   - One correction to the field name, for anyone re-deriving this from the
+     JWT payload: the permission's namespace pattern is the JSON field
+     `resource` (Go struct tag `json:"resource"` on
+     `auth.Permission.ResourcePattern`), **not** `resource_pattern` —
+     easy to guess wrong from the Go field name alone.
+
+   If this repository's GitHub owner login ever changes (a rename, or a
+   transfer to another account/org), this whole confirmation is void and
+   must be redone from scratch — do not assume the case carries over.
 
 No setup is needed for the Registry side beyond the above: the release
 workflow authenticates with `mcp-publisher login github-oidc`, which uses the
@@ -76,17 +121,52 @@ workflow's own GitHub Actions OIDC token — no PAT, no additional secret.
    ```
 
    Pushing the tag triggers `.github/workflows/release.yml`, which re-runs
-   the full repo gate, asserts the tag matches `package.json`'s version,
-   publishes to npm (`npm publish --provenance --access public`), then — only
-   if that succeeded — publishes `server.json` to the MCP Registry, then
-   builds the `.mcpb` bundle and attaches it to a GitHub release for the tag.
+   the full repo gate, asserts the tag matches `package.json`'s version, logs
+   in to the MCP Registry and asserts the granted permission actually covers
+   `server.json`'s `name` (the preflight described above — this is where a
+   namespace-case mismatch is caught, before anything is published),
+   publishes to npm (`npm publish --provenance --access public`), waits for
+   the version to propagate on `registry.npmjs.org`, then — only if all of
+   that succeeded — publishes `server.json` to the MCP Registry, builds the
+   `.mcpb` bundle, and attaches it to a GitHub release for the tag.
 5. **Watch the `release` workflow run to completion** in the Actions tab.
-   A failure partway through (e.g. the Registry publish, after npm already
-   succeeded) does not roll npm back — see "What is irreversible" above.
-   If the Registry step fails after a successful npm publish, you can re-run
-   just that step manually (`mcp-publisher login github-oidc && mcp-publisher
-   publish mcp/server.json` from a checkout at the tag) without touching npm
-   again.
+
+   **If it fails partway through, read this before doing anything by hand.**
+   Once "Publish to npm" has gone green, npm is done — irreversibly (see
+   "What is irreversible" above) — and every step after it runs `if:
+   success()`, so a failure in "Wait for npm propagation", "Publish to MCP
+   Registry", "Build .mcpb bundle", or "Attach .mcpb to GitHub release" means
+   those specific steps (and everything after the failed one) did not run.
+
+   - **Re-running the failed job is *not* a recovery.** `npm publish` will
+     itself fail on a version number that already exists on npm, and every
+     `if: success()` step after it will be skipped again — you'll get the
+     same shape of failure, not a completed release.
+   - **The `.mcpb` build and the GitHub release were skipped too** if the
+     Registry publish step is what failed — a Registry failure happens
+     before those steps run, not after.
+   - **Use the workflow's `workflow_dispatch` input to resume, not a manual
+     terminal command.** From the Actions tab, run the `release` workflow
+     manually with the `tag` input set to the tag that already published to
+     npm (e.g. `agentic-os-mcp-v0.2.0`). This runs the `resume-registry` job:
+     it still runs the full `gate` job first (so this can never be used to
+     skip quality checks), verifies the named version is genuinely already
+     live on npm (and refuses to proceed — and never calls `npm publish` —
+     if it isn't), then re-authenticates, re-runs the same permission
+     preflight, publishes to the Registry, builds the `.mcpb`, and attaches
+     the GitHub release — i.e., everything that was skipped, and nothing
+     that already happened.
+   - If you must do it by hand instead (e.g. Actions is unavailable): check
+     out the repo at the tag, then run
+     `mcp-publisher login github && mcp-publisher publish mcp/server.json`.
+     **`login github-oidc` will not work outside GitHub Actions** — it hard-
+     requires `ACTIONS_ID_TOKEN_REQUEST_TOKEN`/`ACTIONS_ID_TOKEN_REQUEST_URL`,
+     which only exist inside a running workflow job. Locally, use
+     `mcp-publisher login github` (the interactive device-code flow) instead.
+     You are then responsible for the `.mcpb` build
+     (`cd mcp && npm run build:mcpb`) and the GitHub release
+     (`gh release create <tag> mcp/mcp.mcpb --title <tag> --generate-notes`)
+     that the `workflow_dispatch` path would otherwise have done for you.
 
 ## Verifying a release afterwards
 
@@ -99,8 +179,7 @@ npm view agentic-os-mcp
 # 2. A fresh-machine install path — no local cache, no dist/ already built
 npx -y agentic-os-mcp
 
-# 3. The Registry listing (replace the namespace if step 3 of one-time
-#    setup above found it differs from io.github.jarroslav)
+# 3. The Registry listing
 curl -s https://registry.modelcontextprotocol.io/v0/servers?search=agentic-os
 ```
 

@@ -22,12 +22,22 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
   asserted to agree on version, name, and identifier by the same test file
   — proven to fail on drift.
 - `.github/workflows/release.yml` — a tag-triggered (`agentic-os-mcp-v*`)
-  release workflow: reruns the full repo gate, asserts the tag matches
-  `package.json`'s version, publishes to npm with provenance, and only on
-  npm success publishes `server.json` to the MCP Registry (via
-  `mcp-publisher login github-oidc`), then attaches the built `.mcpb` to a
-  GitHub release. See `mcp/RELEASE.md` for the maintainer runbook this
-  workflow implements.
+  release workflow: reruns the full repo gate (now including the Inspector
+  CLI smoke), asserts the tag matches `package.json`'s version, logs in to
+  the MCP Registry and asserts the granted permission covers `server.json`'s
+  `name` *before* publishing anything (`mcp/scripts/check-registry-permission.mjs`,
+  closing a failure mode where a namespace-case mismatch would otherwise 403
+  at the Registry only after npm publish already succeeded and burned the
+  version), publishes to npm with provenance, polls `registry.npmjs.org` for
+  the published version to propagate, and only then publishes `server.json`
+  to the MCP Registry (via a freshly re-authenticated
+  `mcp-publisher login github-oidc`, since its JWT is short-lived) and
+  attaches the built `.mcpb` to a GitHub release. A `workflow_dispatch` input
+  resumes just the post-npm steps if one of them fails, without skipping the
+  gate or re-running `npm publish`. See `mcp/RELEASE.md` for the maintainer
+  runbook this workflow implements, including how the Registry namespace
+  case (`io.github.Jarroslav/agentic-os`, matching the real GitHub owner
+  login exactly) was confirmed.
 - `list_presets` — the seven agentic-os role presets with HITL default,
   orchestration mode, and SDLC skills.
 - `list_qe_blueprints` — the 28 Quality Engineering blueprints, filterable by
