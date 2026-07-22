@@ -55,5 +55,6 @@ scope violation but didn't) is in scope.
 ## Supported versions
 
 Only the latest published version of each plugin (`agentic-os`,
-`agentic-sdlc`) receives security fixes. There is no long-term-support
-branch at this stage of the project.
+`agentic-sdlc`, `agentic-qe`) and of the `agentic-os-mcp` server (tagged
+`agentic-os-mcp-v<X.Y.Z>`) receives security fixes. There is no
+long-term-support branch at this stage of the project.

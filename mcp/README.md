@@ -57,7 +57,7 @@ Cursor or Claude Desktop — add to `.cursor/mcp.json` or
 31 `agentic-os://skills/<plugin>/<skill>` resources, one per `SKILL.md`
 across the three plugins, plus a resource template,
 `agentic-os://file/{+path}`, that serves any other markdown, JSON, or text
-file shipped by a plugin (e.g. `agentic-os://file/agentic-os/presets/roles/developer.json`).
+file shipped by a plugin (e.g. `agentic-os://file/agentic-sdlc/agents/guide-sync.md`).
 The template is the primary integration point for clients that want to reach
 content beyond the curated skill list.
 
@@ -65,13 +65,20 @@ Two families of shorter canonical aliases resolve to the same content:
 `agentic-os://presets/{role}` for a role preset and
 `agentic-os://qe/blueprints/{stage}/{id}` for a QE blueprint. `list_presets`
 and `list_qe_blueprints` return these aliases as each item's `uri`, and
-`search_methodology` returns whichever form applies to a given result — both
-forms always resolve via `get_document` or a direct resource read.
+`search_methodology` returns the blueprint alias for a blueprint hit — it
+searches markdown documents only, so a preset (JSON) can never be a
+`search_methodology` result in the first place. Both alias forms, and the
+plain `file/` form, always resolve via `get_document` or a direct resource
+read.
 
 ## Prompts
 
 `agentic-init`, `agentic-doctor`, `agentic-upgrade`, `sdlc-start`,
 `sdlc-task`, `qe-blueprint-scaffold`.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## Requirements
 

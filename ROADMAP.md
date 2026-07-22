@@ -32,6 +32,12 @@ top-level index.
   scaffolder (blueprint → ready-to-fill agent framework for Claude Code,
   Cursor, or GitHub Copilot), and the `eval-harness` eval-framework generator.
   Independent of the governance flow — no `/agentic-init` required.
+- **`mcp/`** — a read-only stdio MCP server (Phase 2a) exposing the same
+  agentic-os/agentic-sdlc/agentic-qe methodology to any MCP-capable host, not
+  just Claude Code or Cursor: five tools (`search_methodology`,
+  `get_document`, `list_presets`, `list_qe_blueprints`, `list_sdlc_phases`),
+  31 skill resources plus a `file/` template and canonical URI aliases, and
+  six workflow prompts. Not yet published to npm — see `mcp/README.md`.
 
 ## In progress / next
 
@@ -50,6 +56,9 @@ top-level index.
   (`tests/lib/check-presets.py`) but has never been driven through a live
   `/agentic-init` run to confirm the discovery-front-end path degrades
   cleanly with nothing to generate.
+- **MCP server Phase 2b** — `plan_install` and a `run_doctor` port, extending
+  `mcp/` past read-only methodology serving toward installer/doctor parity
+  with the Claude Code and Cursor plugin flow.
 
 ## Deferred, by design
 

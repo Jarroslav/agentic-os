@@ -648,6 +648,7 @@ CI-passing pull request**, and contributor PRs require a code-owner review. See
 - Changelog: [`plugins/agentic-os/CHANGELOG.md`](plugins/agentic-os/CHANGELOG.md)
 - Preset composition rules: [`plugins/agentic-os/presets/README.md`](plugins/agentic-os/presets/README.md)
 - MCP server (non-plugin hosts): [`mcp/README.md`](mcp/README.md)
+- MCP server changelog: [`mcp/CHANGELOG.md`](mcp/CHANGELOG.md)
 - Roadmap: [`ROADMAP.md`](ROADMAP.md)
 - Security policy: [`SECURITY.md`](SECURITY.md)
 - Code of conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
