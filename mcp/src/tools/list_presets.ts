@@ -61,7 +61,19 @@ export function registerListPresets(server: McpServer, content: Content): void {
         const path = `plugins/agentic-os/presets/roles/${role}.json`;
         const doc = content.readDoc(path);
         if (!doc) return [];
-        const p = JSON.parse(doc.text) as PresetFile;
+        // JSON.parse can throw on a malformed preset file. The PresetFile
+        // type above is already defensive about missing/extra *keys*; this
+        // extends that same defensiveness to a malformed *parse*. One bad
+        // file is skipped — the same flatMap-skip pattern used just above
+        // for a missing doc — rather than failing the whole call, so a
+        // single corrupt preset doesn't take every other preset down with
+        // it. (The all-presets-broken case is still caught below.)
+        let p: PresetFile;
+        try {
+          p = JSON.parse(doc.text) as PresetFile;
+        } catch {
+          return [];
+        }
         return [{
           name: p.name ?? role,
           description: p.description ?? '',
@@ -73,6 +85,22 @@ export function registerListPresets(server: McpServer, content: Content): void {
           sdlc_skills: p.sdlc_skills ?? [],
         }];
       });
+
+      // list_presets has no filter parameter — every call is "unfiltered" —
+      // so zero presets can only mean the preset directory itself failed to
+      // load (missing files, or every file unparseable), not a legitimate
+      // empty result. Matches list_sdlc_phases's "produced nothing means
+      // broken" convention.
+      if (presets.length === 0) {
+        return {
+          isError: true,
+          content: [{
+            type: 'text' as const,
+            text: 'No agentic-os role presets were found in the content bundle. ' +
+              'plugins/agentic-os/presets/roles/ may be missing or empty.',
+          }],
+        };
+      }
 
       return {
         content: [{ type: 'text' as const, text: JSON.stringify({ presets }, null, 2) }],

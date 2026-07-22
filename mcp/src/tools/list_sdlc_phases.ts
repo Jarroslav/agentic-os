@@ -88,6 +88,10 @@ export function registerListSdlcPhases(server: McpServer, content: Content): voi
         };
       }
       const phases = parsePhaseMap(doc.text);
+      // list_sdlc_phases has no filter parameter, so — same convention now
+      // applied to list_presets and list_qe_blueprints's unfiltered case —
+      // an empty result here can only mean the parser broke, not a
+      // legitimate empty answer.
       if (phases.length === 0) {
         return {
           isError: true,
