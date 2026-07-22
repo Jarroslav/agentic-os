@@ -155,3 +155,29 @@ describe('server.json / manifest.json / package.json agreement', () => {
     expect(existsSync(join(MCP_ROOT, entryPoint))).toBe(true);
   });
 });
+
+describe('.mcpbignore excludes dev-only directories from the .mcpb bundle', () => {
+  // `mcpb pack` (unlike `npm pack`) has no manifest-driven `files` allowlist —
+  // it ships whatever isn't excluded. .mcpbignore is what keeps this
+  // package's own tests/ and src/ (a TypeScript compiler's raw input, and a
+  // duplicate of what dist/ already ships compiled) out of the distributable
+  // artifact. This only reads the ignore file and checks for the entries —
+  // it does not invoke `mcpb pack` itself (see mcp/scripts/build-mcpb.mjs
+  // and the task's manual verification for that).
+  it('lists anchored excludes for tests/ and src/', async () => {
+    const ignoreContent = await readFile(join(MCP_ROOT, '.mcpbignore'), 'utf8');
+    const lines = ignoreContent
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(l => l.length > 0 && !l.startsWith('#'));
+
+    // Anchored (leading `/`) on purpose: several plugins ship their own
+    // content directories literally named tests/ or src/ under
+    // dist/content/plugins/**, which must still be packed. An unanchored
+    // bare `tests/` or `src/` pattern would also match those nested paths
+    // and silently drop shipped plugin content — the same class of bug the
+    // tsconfig.json entry in this same file was added to fix.
+    expect(lines).toContain('/tests/');
+    expect(lines).toContain('/src/');
+  });
+});

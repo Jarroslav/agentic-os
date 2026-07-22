@@ -20,7 +20,7 @@
     "build:content": "node scripts/build-content.mjs",
     "build:ts": "tsc -p tsconfig.json",
     "build": "npm run build:content && npm run build:ts",
-    "build:mcpb": "npx --yes @anthropic-ai/mcpb pack",
+    "build:mcpb": "node scripts/build-mcpb.mjs",
     "check:drift": "node scripts/check-content-drift.mjs",
     "test": "vitest run",
     "prepack": "npm run build"

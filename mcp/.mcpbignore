@@ -1,3 +1,19 @@
+# Dev-only source and build-tooling directories at the *package root* —
+# never needed at run time, only dist/ (already compiled) and the runtime
+# deps in node_modules are. These would otherwise ship a TypeScript
+# compiler's raw input, this package's own test suite, and its build
+# scripts inside a one-click-install artifact.
+#
+# Anchored with a leading `/` on purpose: several plugins ship their own
+# content directories literally named tests/, src/, or scripts/ under
+# dist/content/plugins/**, and those are shipped product content, not this
+# package's dev tooling (see the tsconfig.json precedent below — a bare,
+# unanchored pattern here would silently drop that content the same way
+# the built-in tsconfig.json exclusion once did).
+/tests/
+/src/
+/scripts/
+
 # @anthropic-ai/mcpb's built-in EXCLUDE_PATTERNS treats any file named
 # `tsconfig.json` anywhere in the tree as a dev-config file and drops it —
 # but dist/content/ ships one plugin's TypeScript eval-harness asset
