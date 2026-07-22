@@ -34,15 +34,77 @@ const inputShape = {
 };
 
 const outputShape = {
-  installed: z.boolean(),
+  installed: z.boolean().describe(
+    'Whether .agentic/agentic-os/install.json exists at target_path and ' +
+    'parses as JSON. false means none of the checks below ran — ' +
+    'checks will contain the single not-installed sentinel instead.',
+  ),
   checks: z.array(z.object({
-    key: z.string(), passed: z.boolean(), detail: z.string(),
-  })),
+    key: z.string().describe(
+      'One of: manifest, settings, git_hook, dependencies, scorecard, ' +
+      'registry — or the single not-installed sentinel when installed is false.',
+    ),
+    passed: z.boolean().describe(
+      'Whether this check found no problem. For key "dependencies" this is ' +
+      'always false — see this array\'s top-level description — so callers ' +
+      'must not read passed: false here as "this install is unhealthy" ' +
+      'without checking key first.',
+    ),
+    detail: z.string().describe(
+      'Human-readable explanation of the result: what was checked, and — on ' +
+      'failure — which path(s) or wiring caused it. Long detail strings are ' +
+      'capped (see mcp/src/doctor.ts\'s capDetail) rather than growing without ' +
+      'bound on a badly broken repo.',
+    ),
+  })).describe(
+    'Every native (pure file inspection) check this server ran, including ' +
+    '"dependencies" — a permanent, structural placeholder that always reports ' +
+    'passed: false because verifying installed plugin sources requires ' +
+    '~/.claude/plugins/installed_plugins.json, a path outside the target repo ' +
+    'this server cannot read. It is always reported here for visibility, but ' +
+    'it is excluded from both the verdict decision and failures below: it ' +
+    'reflects what this server cannot check, not a defect in the target repo.',
+  ),
   host_must_run: z.array(z.object({
-    key: z.string(), why: z.string(), commands: z.array(z.string()),
-  })),
-  failures: z.array(z.string()),
-  verdict: z.enum(['passed', 'failed', 'incomplete']),
+    key: z.string().describe('One of: py_compile, dry_runs, hitl_smoke.'),
+    why: z.string().describe(
+      'Why this server cannot run the check itself, and exactly what the ' +
+      'commands below do — including any write/delete the commands perform ' +
+      'in the target repo, since this server is read-only but a host that ' +
+      'runs these commands is not.',
+    ),
+    commands: z.array(z.string()).describe(
+      'Exact, copy-pasteable shell/Python commands implementing this check. ' +
+      'Run them against target_path and fold the result back into your own ' +
+      'verdict — this server never executes them.',
+    ),
+  })).describe(
+    'Command sets for the three checks that require executing Python ' +
+    '(hook compile+import, canned-event dry-runs, HITL smoke). Empty when ' +
+    'installed is false (nothing to check yet). Non-empty entries here are ' +
+    'why verdict can be "incomplete" even when every entry in checks passed.',
+  ),
+  failures: z.array(z.string()).describe(
+    '"key: detail" for every entry in checks with passed: false, EXCLUDING ' +
+    '"dependencies" — which always reports passed: false but is not a real ' +
+    'failure (see checks\' description above). An empty failures array means ' +
+    'every check this server can actually verify came back clean; it does ' +
+    'not by itself mean verdict is "passed" — host_must_run may still have ' +
+    'entries outstanding.',
+  ),
+  verdict: z.enum(['passed', 'failed', 'incomplete']).describe(
+    '"failed": at least one check other than "dependencies" reported ' +
+    'passed: false — a real, native-verifiable problem exists in the target ' +
+    'repo. "incomplete": every other native check passed, but host_must_run ' +
+    'still has entries the host has not run and folded back in yet — this ' +
+    'is the expected, correct result of a server-side-only call, not an ' +
+    'error. "passed": every native check passed AND host_must_run is empty ' +
+    '— this requires the host to have already run the host_must_run ' +
+    'commands from a prior call and re-invoked run_doctor after resolving ' +
+    'them (or otherwise established there is nothing left to run); this ' +
+    'server alone, in a single call, never returns "passed" — a fresh ' +
+    'install-found call always has all three host_must_run entries pending.',
+  ),
 };
 
 const WHY_PREFIX =
@@ -102,7 +164,15 @@ function buildHostMustRun(): HostMustRunEntry[] {
         'and reading its rendered list attribute (HUMAN_GATED_COMMANDS, ' +
         'GUARDED_WRITE_PATHS) — never by scraping the source text, since ' +
         'the rendered value is a "\\n"-joined string on one source line, ' +
-        'and only run the probe when that list is non-empty.',
+        'and only run the probe when that list is non-empty. NOTE: running ' +
+        'these commands writes to the target repo — the instruction_gate.py ' +
+        'probe creates .agentic/agents/__agentic_doctor_probe__.md (a ' +
+        'one-line dummy contract) so the "ungraded contract exists" case can ' +
+        'be exercised, then deletes it in the very next command, even if ' +
+        'the probe in between failed. This is the doctor\'s real, intended ' +
+        'procedure, not a side effect — but it means a host that executes ' +
+        'this command set is creating and removing a file in the audited ' +
+        'repo, which is more than this server itself ever does.',
       commands: [
         // 1. human_gated_commands.py — derive <GATED>, then both probes.
         'python3 -c "\n' +
@@ -141,7 +211,12 @@ function buildHostMustRun(): HostMustRunEntry[] {
         '## Blocking section must exit 2, a clean PASS must exit 0, and an ' +
         '## Escalate to human section must exit 2 and print an ' +
         'AskUserQuestion instruction to stderr. Any deviation silently ' +
-        'disables the whole HITL pillar.',
+        'disables the whole HITL pillar. NOTE: running these commands writes ' +
+        'to disk — a temporary working directory (via mktemp -d, outside ' +
+        'the target repo) holding the three synthetic transcript files this ' +
+        'smoke test feeds the hook, removed automatically on exit by the ' +
+        '`trap ... EXIT` in the first command. Nothing under this directory ' +
+        'survives the command set finishing, successfully or not.',
       commands: [
         'HOOK="$(git rev-parse --show-toplevel)/.claude/hooks/subagent_gate.py"\n' +
           `WORK="$(mktemp -d)"; trap '${SH_RM} -rf "$WORK"' EXIT`,
@@ -213,10 +288,17 @@ export function registerRunDoctor(server: McpServer): void {
         'verdict for each; the three checks that need executing Python ' +
         '(hook compile+import, canned-event dry-runs, HITL smoke) come back ' +
         'as exact commands in host_must_run for you to run yourself — this ' +
-        'server never executes code from a target repository. verdict is ' +
-        '"passed" only when every native check passed AND host_must_run is ' +
-        'empty; it is "incomplete", never "passed", while host_must_run ' +
-        'still has entries.',
+        'server never executes code from a target repository, and two of ' +
+        'those three commands sets (dry_runs, hitl_smoke) write and then ' +
+        'delete a probe file under .agentic/agents/ in the target repo when ' +
+        'you run them (see each entry\'s why). verdict is "passed" only when ' +
+        'every native check passed AND host_must_run is empty; it is ' +
+        '"incomplete", never "passed", while host_must_run still has ' +
+        'entries — which is every install this server finds, since ' +
+        'host_must_run is never empty on a single server-side call. This ' +
+        'server alone therefore never returns "passed"; that verdict is only ' +
+        'reachable once the host has run the returned commands and folded ' +
+        'the result back in.',
       inputSchema: inputShape,
       outputSchema: outputShape,
       annotations: { readOnlyHint: true, openWorldHint: false },
@@ -257,7 +339,18 @@ export function registerRunDoctor(server: McpServer): void {
           ? 'incomplete'
           : 'passed';
 
-      const failures = checks.filter((c) => !c.passed).map((c) => `${c.key}: ${c.detail}`);
+      // `dependencies` is excluded here too, for the same reason it is
+      // excluded from the verdict decision above: it always reports
+      // passed: false as a structural placeholder, never as a finding about
+      // this particular target repo (see doctor.ts's checkDependencies doc
+      // comment). Including it here would put a non-actionable entry in
+      // failures on every single healthy install, so a caller's obvious
+      // `failures.length > 0` check would false-alarm 100% of the time. It
+      // still surfaces honestly in `checks` above — this exclusion is
+      // scoped to `failures` only.
+      const failures = checks
+        .filter((c) => !c.passed && c.key !== 'dependencies')
+        .map((c) => `${c.key}: ${c.detail}`);
 
       const out = { installed, checks, host_must_run, failures, verdict };
       return {
