@@ -21,15 +21,65 @@ const INDEX_PATH = join(HERE, '..', 'content-index.json');
 
 const SKILL_RE = /^plugins\/([^/]+)\/skills\/([^/]+)\/SKILL\.md$/;
 
+/** Strip one matching pair of surrounding quotes (single or double), if present. */
+function unquote(value: string): string {
+  if (value.length >= 2) {
+    const first = value[0];
+    const last = value[value.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      return value.slice(1, -1);
+    }
+  }
+  return value;
+}
+
 /** Pull `name:` and `description:` out of YAML frontmatter without a YAML dep.
- *  Skill frontmatter is flat scalar key/value only — see any SKILL.md. */
+ *  Skill frontmatter is flat scalar key/value plus YAML block scalars
+ *  (`>`, `>-`, `>+`, `|`, `|-`, `|+`) for multi-line descriptions — see any
+ *  SKILL.md. Chomping indicators (`-`/`+`/bare) are not distinguished: every
+ *  value here is a single-paragraph description, so all block scalars are
+ *  simply trimmed to a plain string rather than preserving trailing
+ *  newlines. */
 function frontmatter(text: string): Record<string, string> {
   const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
   if (!m?.[1]) return {};
   const out: Record<string, string> = {};
-  for (const line of m[1].split(/\r?\n/)) {
+  const lines = m[1].split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i] ?? '';
     const kv = /^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$/.exec(line);
-    if (kv?.[1] && kv[2] !== undefined) out[kv[1]] = kv[2].trim();
+    if (!kv?.[1] || kv[2] === undefined) continue;
+    const key = kv[1];
+    const rest = kv[2].trim();
+
+    const block = /^([>|])[-+]?$/.exec(rest);
+    if (block?.[1]) {
+      const folded = block[1] === '>';
+      const keyIndent = /^(\s*)/.exec(line)?.[1]?.length ?? 0;
+      const blockLines: string[] = [];
+      let j = i + 1;
+      for (; j < lines.length; j++) {
+        const l = lines[j] ?? '';
+        if (l.trim() === '') { blockLines.push(''); continue; }
+        const indent = /^(\s*)/.exec(l)?.[1]?.length ?? 0;
+        if (indent <= keyIndent) break;
+        blockLines.push(l);
+      }
+      i = j - 1;
+      const minIndent = blockLines
+        .filter(l => l.trim() !== '')
+        .reduce((min, l) => {
+          const indent = /^(\s*)/.exec(l)?.[1]?.length ?? 0;
+          return Math.min(min, indent);
+        }, Infinity);
+      const dedented = blockLines.map(l =>
+        l.trim() === '' ? '' : l.slice(minIndent === Infinity ? 0 : minIndent),
+      );
+      out[key] = dedented.join(folded ? ' ' : '\n').trim();
+      continue;
+    }
+
+    out[key] = unquote(rest);
   }
   return out;
 }

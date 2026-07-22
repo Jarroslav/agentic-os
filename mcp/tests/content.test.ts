@@ -27,12 +27,48 @@ describe('content layer', () => {
     expect(content.readDoc('plugins/nope/NOPE.md')).toBeUndefined();
   });
 
-  it('refuses paths outside plugins/ even with traversal', () => {
+  // readDoc is a Map.get() against keys populated solely from
+  // Object.keys(index) at load time (see Content.load). There is no path
+  // arithmetic here to defend against traversal — a string that was never
+  // indexed simply isn't a key, whether or not it looks like a traversal
+  // attempt. This test guards that only indexed paths are ever servable;
+  // it says nothing about traversal-specific handling because none exists.
+  it('serves only paths present in the build-time index', () => {
     expect(content.readDoc('plugins/../../etc/passwd')).toBeUndefined();
     expect(content.readDoc('../LICENSE')).toBeUndefined();
   });
 
   it('exposes markdown docs only for search', () => {
     expect(content.markdownDocs().every(d => d.path.endsWith('.md'))).toBe(true);
+  });
+
+  it('resolves a folded block scalar (">-") description to real text', () => {
+    const qaGates = content.listSkills().find(
+      s => s.plugin === 'agentic-sdlc' && s.skill === 'qa-gates',
+    );
+    expect(qaGates?.description).toContain(
+      "Run the host project's quality gates",
+    );
+    expect(qaGates?.description.startsWith('>')).toBe(false);
+  });
+
+  it('resolves a literal block scalar ("|-") description to real text', () => {
+    const testHeal = content.listSkills().find(
+      s => s.plugin === 'agentic-sdlc' && s.skill === 'test-heal',
+    );
+    expect(testHeal?.description).toContain(
+      "Repairs failing tests whose failure is the test's own fault",
+    );
+    expect(testHeal?.description.startsWith('|')).toBe(false);
+  });
+
+  it('never returns a raw block-scalar indicator or a too-short description', () => {
+    const skills = content.listSkills();
+    expect(skills.length).toBeGreaterThan(0);
+    for (const s of skills) {
+      expect(s.description.length).toBeGreaterThan(20);
+      expect(s.description.startsWith('>')).toBe(false);
+      expect(s.description.startsWith('|')).toBe(false);
+    }
   });
 });
