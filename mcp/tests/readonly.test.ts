@@ -40,6 +40,7 @@ const TOOL_ARGS: Record<string, Record<string, unknown>> = {
   list_presets: {},
   list_qe_blueprints: {},
   list_sdlc_phases: {},
+  plan_install: { roles: ['developer'] },
 };
 
 describe('read-only guarantee', () => {
@@ -102,12 +103,12 @@ describe('read-only guarantee', () => {
         await client.callTool({ name: tool.name, arguments: args });
         exercised.push(tool.name);
       }
-      // Sanity check on the loop itself: every one of the 5 tools shipped in
-      // this phase must actually have been called, not merely present in
-      // TOOL_ARGS unused.
+      // Sanity check on the loop itself: every one of the 6 tools shipped so
+      // far must actually have been called, not merely present in TOOL_ARGS
+      // unused.
       expect(exercised.sort()).toEqual([
         'get_document', 'list_presets', 'list_qe_blueprints',
-        'list_sdlc_phases', 'search_methodology',
+        'list_sdlc_phases', 'plan_install', 'search_methodology',
       ]);
 
       // Also exercise the resource and prompt surfaces alongside the tool

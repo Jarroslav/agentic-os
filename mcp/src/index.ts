@@ -9,6 +9,7 @@ import { registerGetDocument } from './tools/get_document.js';
 import { registerListPresets } from './tools/list_presets.js';
 import { registerListQeBlueprints } from './tools/list_qe_blueprints.js';
 import { registerListSdlcPhases } from './tools/list_sdlc_phases.js';
+import { registerPlanInstall } from './tools/plan_install.js';
 
 export function createServer(content: Content): McpServer {
   const server = new McpServer(
@@ -28,6 +29,7 @@ export function createServer(content: Content): McpServer {
   registerListPresets(server, content);
   registerListQeBlueprints(server, content);
   registerListSdlcPhases(server, content);
+  registerPlanInstall(server, content);
   return server;
 }
 

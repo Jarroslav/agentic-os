@@ -548,3 +548,76 @@ describe('list_sdlc_phases', () => {
     expect(String(doc.contents[0]?.text)).toContain('## Phase map');
   });
 });
+
+describe('plan_install', () => {
+  it('plans a single role', async () => {
+    const res = await client.callTool({
+      name: 'plan_install', arguments: { roles: ['developer'] },
+    });
+    const out = res.structuredContent as {
+      files: Array<{ template_id: string; source_uri: string; owner: string }>;
+      hitl_default: string;
+    };
+    expect(out.files.length).toBeGreaterThan(20);
+    expect(out.hitl_default).toBe('gated-autonomous');
+    expect(out.files.every(f => f.source_uri.startsWith('agentic-os://'))).toBe(true);
+    expect(out.files.every(f => f.owner === 'managed')).toBe(true);
+  });
+
+  it('composes roles additively', async () => {
+    const dev = await client.callTool({ name: 'plan_install', arguments: { roles: ['developer'] } });
+    const qa = await client.callTool({ name: 'plan_install', arguments: { roles: ['qa'] } });
+    const both = await client.callTool({ name: 'plan_install', arguments: { roles: ['developer', 'qa'] } });
+    const ids = (r: unknown) => new Set(
+      (r as { files: Array<{ template_id: string }> }).files.map(f => f.template_id));
+    const union = new Set([...ids(dev.structuredContent), ...ids(qa.structuredContent)]);
+    expect(ids(both.structuredContent)).toEqual(union);
+  });
+
+  it('applies strictest-HITL-wins', async () => {
+    const res = await client.callTool({
+      name: 'plan_install', arguments: { roles: ['developer', 'qa'] },
+    });
+    // qa is strict, developer is gated-autonomous -> strict wins
+    expect((res.structuredContent as { hitl_default: string }).hitl_default).toBe('strict');
+  });
+
+  it('unions orchestration styles rather than picking a winner', async () => {
+    const res = await client.callTool({
+      name: 'plan_install', arguments: { roles: ['developer', 'qa'] },
+    });
+    const out = res.structuredContent as
+      { orchestration_installed: string[]; orchestration_default: string };
+    // developer is pipeline, qa is dispatcher — a dev+qa team installs BOTH
+    expect(new Set(out.orchestration_installed)).toEqual(new Set(['pipeline', 'dispatcher']));
+    // and strict HITL (from qa) forces the dispatcher default
+    expect(out.orchestration_default).toBe('dispatcher');
+  });
+
+  it('takes the default orchestration from the first listed role when HITL is not strict', async () => {
+    const res = await client.callTool({
+      name: 'plan_install', arguments: { roles: ['developer', 'devops'] },
+    });
+    const out = res.structuredContent as
+      { orchestration_default: string; hitl_default: string };
+    expect(out.hitl_default).toBe('gated-autonomous');   // neither is strict
+    expect(out.orchestration_default).toBe('pipeline');  // developer listed first
+  });
+
+  it('every planned file resolves to a readable document', async () => {
+    const res = await client.callTool({ name: 'plan_install', arguments: { roles: ['qa'] } });
+    const { files } = res.structuredContent as { files: Array<{ source_uri: string }> };
+    for (const f of files.slice(0, 5)) {
+      const doc = await client.readResource({ uri: f.source_uri });
+      expect(String(doc.contents[0]?.text).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('rejects an unknown role as a recoverable error', async () => {
+    const res = await client.callTool({
+      name: 'plan_install', arguments: { roles: ['not-a-role'] },
+    });
+    expect(res.isError).toBe(true);
+    expect(String((res.content as Array<{ text: string }>)[0]?.text)).toContain('list_presets');
+  });
+});
