@@ -26,7 +26,9 @@ async function fingerprint(dir: string): Promise<string> {
 
 describe('read-only guarantee', () => {
   it('no source file calls a write-capable fs API', async () => {
-    const banned = /\b(writeFile|writeFileSync|mkdir|mkdirSync|rm|rmSync|unlink|appendFile|createWriteStream)\b/;
+    // NOTE: link, open, chmod, chown are deliberately omitted — they're common English words
+    // likely to appear in prose/comments and would make this scan unreliable.
+    const banned = /\b(writeFile|writeFileSync|mkdir|mkdirSync|rm|rmSync|rmdir|rmdirSync|unlink|appendFile|createWriteStream|copyFile|copyFileSync|rename|renameSync|truncate|truncateSync|symlink|symlinkSync)\b/;
     const offenders: string[] = [];
     const walk = async (d: string): Promise<void> => {
       for (const e of await readdir(d, { withFileTypes: true })) {
@@ -49,18 +51,21 @@ describe('read-only guarantee', () => {
       command: 'node', args: ['dist/index.js'], cwd: MCP_ROOT,
     }));
 
-    await client.callTool({
-      name: 'search_methodology', arguments: { query: 'escalation gate review' },
-    });
-    await client.callTool({
-      name: 'get_document',
-      arguments: { uri: 'agentic-os://skills/agentic-os/agentic-init' },
-    });
-    await client.readResource({
-      uri: 'agentic-os://file/agentic-os/presets/roles/qa.json',
-    });
-    await client.getPrompt({ name: 'sdlc-start', arguments: {} });
-    await client.close();
+    try {
+      await client.callTool({
+        name: 'search_methodology', arguments: { query: 'escalation gate review' },
+      });
+      await client.callTool({
+        name: 'get_document',
+        arguments: { uri: 'agentic-os://skills/agentic-os/agentic-init' },
+      });
+      await client.readResource({
+        uri: 'agentic-os://file/agentic-os/presets/roles/qa.json',
+      });
+      await client.getPrompt({ name: 'sdlc-start', arguments: {} });
+    } finally {
+      await client.close();
+    }
 
     expect(await fingerprint(join(REPO_ROOT, 'plugins'))).toBe(before);
   }, 30_000);
