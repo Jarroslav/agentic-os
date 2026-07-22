@@ -23,3 +23,5 @@ docs/audits/
 docs/workstreams/
 NOTES*.md
 *.internal.md
+mcp/dist/
+mcp/node_modules/
