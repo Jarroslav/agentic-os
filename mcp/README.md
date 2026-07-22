@@ -48,15 +48,25 @@ Cursor or Claude Desktop — add to `.cursor/mcp.json` or
 | --- | --- |
 | `search_methodology` | Find the right document. Start here. |
 | `get_document` | Fetch one document by its `agentic-os://` URI. |
+| `list_presets` | List the agentic-os role presets with HITL default, orchestration mode, and SDLC skills. |
+| `list_qe_blueprints` | List the agentic-qe Quality Engineering blueprints, filterable by STLC stage. |
+| `list_sdlc_phases` | List the agentic-sdlc pipeline phase map with its judgment gates. |
 
 ## Resources
 
-One resource per skill — 31 `agentic-os://skills/<plugin>/<skill>` resources,
-one per `SKILL.md` across the three plugins — plus a resource template,
+31 `agentic-os://skills/<plugin>/<skill>` resources, one per `SKILL.md`
+across the three plugins, plus a resource template,
 `agentic-os://file/{+path}`, that serves any other markdown, JSON, or text
 file shipped by a plugin (e.g. `agentic-os://file/agentic-os/presets/roles/developer.json`).
 The template is the primary integration point for clients that want to reach
 content beyond the curated skill list.
+
+Two families of shorter canonical aliases resolve to the same content:
+`agentic-os://presets/{role}` for a role preset and
+`agentic-os://qe/blueprints/{stage}/{id}` for a QE blueprint. `list_presets`
+and `list_qe_blueprints` return these aliases as each item's `uri`, and
+`search_methodology` returns whichever form applies to a given result — both
+forms always resolve via `get_document` or a direct resource read.
 
 ## Prompts
 

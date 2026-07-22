@@ -83,9 +83,11 @@ Each plugin versions independently, so releases are cut and tagged per plugin:
 Tags activate the clean template-only upgrade diff documented in
 [`plugins/agentic-os/docs/UPGRADING.md`](plugins/agentic-os/docs/UPGRADING.md).
 
-`mcp/` carries its own independent `version` in `mcp/package.json` but is not
-yet released — its npm package (`agentic-os-mcp`) is unpublished, so there is
-no tag convention for it yet; one will be settled when it first publishes.
+`mcp/` carries its own independent `version` in `mcp/package.json` and
+releases as **`agentic-os-mcp-v<X.Y.Z>`**, matching its npm package name so a
+tag, a GitHub release, and a published version line up. Its version is
+asserted against the running server by a contract test. The package
+(`agentic-os-mcp`) is not yet published to npm.
 
 ## Commit style
 

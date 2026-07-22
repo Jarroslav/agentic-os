@@ -41,8 +41,7 @@ export function registerListPresets(server: McpServer, content: Content): void {
     {
       title: 'List agentic-os role presets',
       description:
-        'List the agentic-os role presets (developer, qa, architect, devops, ' +
-        'ba-po, pm-delivery, portfolio) with each one\'s HITL default, ' +
+        'List the agentic-os role presets, each with its HITL default, ' +
         'orchestration mode, and SDLC skills. Read a preset in full via its uri.',
       inputSchema: {},
       outputSchema: outputShape,
