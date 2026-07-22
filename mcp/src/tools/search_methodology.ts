@@ -60,6 +60,10 @@ function score(doc: Doc, terms: RegExp[]): number {
 }
 
 /** Nudge a UTF-16 slice boundary so it never splits a surrogate pair.
+ *  Sibling problem to `truncateCodePoints()` in mcp/src/text.ts — that one
+ *  caps a prefix by code point; this one nudges both edges of a sliding
+ *  window — so it is not unified with it (see that file's callers for the
+ *  prefix-truncation case).
  *  `forStart` says which side of the window this boundary is: a start
  *  boundary landing on a pair's low half moves forward past it, an end
  *  boundary landing just after a pair's high half moves back before it —

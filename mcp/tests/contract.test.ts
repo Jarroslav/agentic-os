@@ -438,4 +438,19 @@ describe('list_qe_blueprints', () => {
     });
     expect(res.isError).toBe(true);
   });
+
+  it('never emits an unpaired surrogate in any summary', async () => {
+    // This currently passes trivially — no blueprint in the corpus contains
+    // an astral character today — but summarize() caps by code point via
+    // truncateCodePoints() (mcp/src/text.ts), the same helper get_document.ts
+    // uses, precisely so this stays true if a future blueprint's first
+    // paragraph both contains an astral character and crosses the 300-cap
+    // boundary.
+    const UNPAIRED_SURROGATE =
+      /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+    const res = await client.callTool({ name: 'list_qe_blueprints', arguments: {} });
+    const { blueprints } = res.structuredContent as { blueprints: Array<{ summary: string }> };
+    expect(blueprints.length).toBeGreaterThan(0);
+    expect(blueprints.every(b => !UNPAIRED_SURROGATE.test(b.summary))).toBe(true);
+  });
 });

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Content } from '../content.js';
 import { uriToPath } from '../resources.js';
+import { truncateCodePoints } from '../text.js';
 
 const DEFAULT_MAX = 40_000;
 
@@ -55,19 +56,18 @@ export function registerGetDocument(server: McpServer, content: Content): void {
       // a surrogate pair in half — the corpus really does contain astral
       // characters (e.g. emoji in agents/guide-sync.md) — and an unpaired
       // surrogate is malformed text once handed back to the calling model.
-      // Array.from() splits the string into code points instead, so slicing
-      // the resulting array can never land inside a pair. Materializing the
+      // truncateCodePoints() (mcp/src/text.ts) slices by code point instead,
+      // so it can never land inside a pair. Materializing the code-point
       // array is O(n), but the corpus tops out around 40 KB, so the cost is
       // negligible; total_chars and max_chars are both counted in this same
       // code-point unit so the truncated flag stays meaningful.
-      const codePoints = Array.from(doc.text);
-      const truncated = codePoints.length > max_chars;
+      const { text, truncated } = truncateCodePoints(doc.text, max_chars);
       const out = {
         uri,
         title: doc.title,
-        text: truncated ? codePoints.slice(0, max_chars).join('') : doc.text,
+        text,
         truncated,
-        total_chars: codePoints.length,
+        total_chars: Array.from(doc.text).length,
       };
       return {
         content: [{ type: 'text' as const, text: out.text }],

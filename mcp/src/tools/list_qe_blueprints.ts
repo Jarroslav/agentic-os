@@ -2,9 +2,14 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Content } from '../content.js';
 import { pathToUri } from '../resources.js';
+import { truncateCodePoints } from '../text.js';
 
 const STAGES = ['analyze', 'build', 'design', 'execute', 'operate', 'report'] as const;
 
+// Same shape as resources.ts's own BLUEPRINT_PATH — kept as a local copy
+// rather than imported (see list_presets.ts's PRESET_PATH for the same
+// pattern and rationale). If the catalog layout ever changes, both this
+// regex and resources.ts's BLUEPRINT_PATH must change together.
 const CATALOG =
   /^plugins\/agentic-qe\/skills\/qe-blueprints\/references\/catalog\/([^/]+)\/([^/]+)\.md$/;
 
@@ -26,7 +31,8 @@ function summarize(text: string): string {
   const body = text.replace(/^#[^\n]*\n/, '');
   const para = body.split(/\n\s*\n/).map(s => s.trim()).find(s => s && !s.startsWith('#'));
   const line = (para ?? '').replace(/\s+/g, ' ').trim();
-  return line.length > 300 ? line.slice(0, 300) + '…' : line;
+  const { text: capped, truncated } = truncateCodePoints(line, 300);
+  return truncated ? capped + '…' : capped;
 }
 
 export function registerListQeBlueprints(server: McpServer, content: Content): void {
