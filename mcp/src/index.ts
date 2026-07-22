@@ -32,7 +32,10 @@ async function main(): Promise<void> {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((err: unknown) => {
-    console.error('agentic-os-mcp failed to start:', err);
+    console.error(
+      'agentic-os-mcp failed to start:',
+      err instanceof Error ? err.message : String(err),
+    );
     process.exit(1);
   });
 }
