@@ -1,9 +1,28 @@
 import type { Target } from './target.js';
+import { truncateCodePoints } from './text.js';
 
 /** The result of one doctor check. `detail` is always target-relative text —
  *  never an absolute filesystem path — since this server may be auditing a
  *  repo it did not choose the location of. */
 export type CheckResult = { key: string; passed: boolean; detail: string };
+
+/** `checkManifest`, `checkScorecard`, and `checkRegistry` each build `detail`
+ *  by joining one message per journaled/generated/routed path, so a large or
+ *  badly broken repo (hundreds of missing files, an unscored fleet) can blow
+ *  `detail` up without bound — the same failure shape `get_document` and
+ *  `list_qe_blueprints` already guard against with `truncateCodePoints`
+ *  (mcp/src/text.ts). 4000 code points is generous for the common case (the
+ *  fixture baseline's longest passing detail is well under 200) while
+ *  keeping a pathological repo's `detail` bounded; callers needing the full,
+ *  untruncated list already have it via each check's own path-shaped source
+ *  data (the journal, the scorecard, the registry) rather than this
+ *  human-readable summary string. */
+const DETAIL_MAX_CHARS = 4000;
+
+function capDetail(detail: string): string {
+  const { text, truncated, total } = truncateCodePoints(detail, DETAIL_MAX_CHARS);
+  return truncated ? `${text}… [detail truncated at ${DETAIL_MAX_CHARS} of ${total} chars]` : text;
+}
 
 /** One entry in the install journal's `files` map
  *  (`.agentic/agentic-os/install.json`). */
@@ -110,7 +129,7 @@ async function checkManifest(
   if (missing.length === 0 && modified.length === 0 && missingUserOwned.length === 0) {
     parts.push('all present and matching');
   }
-  return { key: 'manifest', passed, detail: parts.join('; ') };
+  return { key: 'manifest', passed, detail: capDetail(parts.join('; ')) };
 }
 
 // ---------------------------------------------------------------------------
@@ -134,8 +153,16 @@ interface HookWiring {
  *  be kept in lockstep with the fragment by hand. If the fragment's wiring
  *  changes, update this list to match — only these named "gate" hooks are
  *  checked; a mature repo's `.claude/hooks/` may also carry a team's own
- *  scripts, which are none of this check's business. */
-const EXPECTED_WIRING: HookWiring[] = [
+ *  scripts, which are none of this check's business.
+ *
+ *  Exported so `fixture.test.ts`'s "EXPECTED_WIRING is pinned to the live
+ *  fragment" suite can assert set-equality of (event, hook-file) pairs
+ *  between this hand-maintained list and the fragment parsed straight out of
+ *  the content bundle — the fixture's own build-time index has `Content`
+ *  available even though `doctor.ts` at check time does not, so drift here
+ *  (e.g. a 16th hook added to the fragment but never added here) now fails
+ *  that test instead of silently passing every native check. */
+export const EXPECTED_WIRING: HookWiring[] = [
   { file: 'prompt_scan_guard.py', event: 'UserPromptSubmit', command: 'python3 .claude/hooks/prompt_scan_guard.py' },
   { file: 'human_gated_commands.py', event: 'PreToolUse', command: 'python3 .claude/hooks/human_gated_commands.py' },
   { file: 'precommit_review_gate.py', event: 'PreToolUse', command: 'python3 .claude/hooks/precommit_review_gate.py' },
@@ -534,7 +561,7 @@ async function checkScorecard(
     'fleet enumerated from the install journal (7b) — a file not journaled (e.g. an agent contract ' +
       'hand-dropped into .agentic/agents/ outside the installer) is not enumerated by this check',
   );
-  return { key: 'scorecard', passed, detail: parts.join('; ') };
+  return { key: 'scorecard', passed, detail: capDetail(parts.join('; ')) };
 }
 
 // ---------------------------------------------------------------------------
@@ -763,6 +790,6 @@ async function checkRegistry(
   const passed = failures.length === 0;
   const detail = passed
     ? `routing table valid; ${generatedAgentPaths.length} generated agent(s) routed below the marker; tail intact`
-    : failures.join('; ');
+    : capDetail(failures.join('; '));
   return { key: 'registry', passed, detail };
 }

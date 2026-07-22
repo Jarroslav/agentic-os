@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { EXPECTED_WIRING } from '../src/doctor.js';
 
 const MCP_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const REPO_ROOT = join(MCP_ROOT, '..');
@@ -84,6 +85,74 @@ describe('run_doctor host_must_run is pinned to the live SKILL.md', () => {
       expect(shippedText).toContain(fragment);
       expect(skillText).toContain(fragment);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Part C — pin doctor.ts's hand-maintained EXPECTED_WIRING to the live
+// settings-fragment template, by set-equality of (event, hook-file) pairs.
+//
+// This is the fix for IMPORTANT 1: nothing previously failed if the fragment
+// gained (or lost) an entry that EXPECTED_WIRING didn't track — exactly how
+// prompt_scan_guard.py went missing from the SKILL.md Check 5 parenthetical
+// earlier in this phase (see doctor.ts's comment atop EXPECTED_WIRING, and
+// ROADMAP.md's "Known issue" entry). Like Part B above, this reads the
+// fragment through the bundle reader (Content, via the file resource
+// template) rather than building a refinstall fixture, so it always runs —
+// no python3 dependency.
+// ---------------------------------------------------------------------------
+describe('doctor.ts EXPECTED_WIRING is pinned to the live settings fragment (set-equality)', () => {
+  let client: Client;
+
+  beforeAll(async () => {
+    client = new Client({ name: 'wiring-pin-test', version: '0.0.0' });
+    await client.connect(new StdioClientTransport({
+      command: 'node', args: ['dist/index.js'], cwd: MCP_ROOT,
+    }));
+  }, 30_000);
+
+  afterAll(async () => {
+    await client.close();
+  });
+
+  /** Extracts every (event, hook-file) pair actually wired in a parsed
+   *  settings-fragment.json.tmpl-shaped object, one entry per distinct pair
+   *  — a hook wired under two matchers within the same event (e.g.
+   *  guarded_write_paths.py under both the Write and Edit PreToolUse
+   *  matchers) collapses to a single pair, matching EXPECTED_WIRING's own
+   *  one-entry-per-(event,file) shape rather than one-per-matcher-group. */
+  function extractWiringPairs(fragment: {
+    hooks?: Record<string, Array<{ hooks?: Array<{ command?: string }> }>>;
+  }): Set<string> {
+    const pairs = new Set<string>();
+    for (const [event, groups] of Object.entries(fragment.hooks ?? {})) {
+      for (const group of groups) {
+        for (const h of group.hooks ?? []) {
+          const match = /\.claude\/hooks\/([A-Za-z0-9_.-]+\.py)/.exec(h.command ?? '');
+          const file = match?.[1];
+          if (file !== undefined) pairs.add(`${event}::${file}`);
+        }
+      }
+    }
+    return pairs;
+  }
+
+  it('EXPECTED_WIRING\'s (event, file) pairs exactly match the fragment\'s — no entry missing, none extra', async () => {
+    const res = await client.readResource({
+      uri: 'agentic-os://file/agentic-os/templates/hooks/settings-fragment.json.tmpl',
+    });
+    const fragmentText = String(res.contents[0]?.text ?? '');
+    expect(fragmentText.length).toBeGreaterThan(0);
+    const fragment = JSON.parse(fragmentText) as Parameters<typeof extractWiringPairs>[0];
+
+    const fromFragment = extractWiringPairs(fragment);
+    const fromExpected = new Set(EXPECTED_WIRING.map((w) => `${w.event}::${w.file}`));
+
+    const missingFromExpected = [...fromFragment].filter((p) => !fromExpected.has(p)).sort();
+    const extraInExpected = [...fromExpected].filter((p) => !fromFragment.has(p)).sort();
+
+    expect(missingFromExpected, 'pairs the fragment wires that EXPECTED_WIRING does not track').toEqual([]);
+    expect(extraInExpected, 'pairs EXPECTED_WIRING tracks that the fragment does not actually wire').toEqual([]);
   });
 });
 
