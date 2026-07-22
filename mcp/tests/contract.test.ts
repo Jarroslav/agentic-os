@@ -396,3 +396,46 @@ describe('preset and blueprint URI aliases', () => {
     expect(res.isError).toBe(true);
   });
 });
+
+describe('list_qe_blueprints', () => {
+  it('returns all 28 blueprints across 6 stages', async () => {
+    const res = await client.callTool({ name: 'list_qe_blueprints', arguments: {} });
+    const { blueprints } = res.structuredContent as {
+      blueprints: Array<{ id: string; stage: string; title: string; summary: string; uri: string }>;
+    };
+    expect(blueprints).toHaveLength(28);
+    expect(new Set(blueprints.map(b => b.stage))).toEqual(
+      new Set(['analyze', 'build', 'design', 'execute', 'operate', 'report']),
+    );
+  });
+
+  it('filters by stage', async () => {
+    const res = await client.callTool({
+      name: 'list_qe_blueprints', arguments: { stage: 'design' },
+    });
+    const { blueprints } = res.structuredContent as { blueprints: Array<{ stage: string }> };
+    expect(blueprints).toHaveLength(4);
+    expect(blueprints.every(b => b.stage === 'design')).toBe(true);
+  });
+
+  it('gives every blueprint a real title, a summary, and a resolvable uri', async () => {
+    const res = await client.callTool({ name: 'list_qe_blueprints', arguments: {} });
+    const { blueprints } = res.structuredContent as {
+      blueprints: Array<{ title: string; summary: string; uri: string }>;
+    };
+    for (const b of blueprints) {
+      expect(b.title.startsWith('#')).toBe(false);   // heading marker stripped
+      expect(b.title.length).toBeGreaterThan(3);
+      expect(b.summary.length).toBeGreaterThan(20);
+    }
+    const doc = await client.readResource({ uri: blueprints[0]!.uri });
+    expect(String(doc.contents[0]?.text).length).toBeGreaterThan(100);
+  });
+
+  it('rejects an unknown stage at the schema', async () => {
+    const res = await client.callTool({
+      name: 'list_qe_blueprints', arguments: { stage: 'nonsense' },
+    });
+    expect(res.isError).toBe(true);
+  });
+});

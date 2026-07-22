@@ -7,6 +7,7 @@ import { registerPrompts } from './prompts.js';
 import { registerSearchMethodology } from './tools/search_methodology.js';
 import { registerGetDocument } from './tools/get_document.js';
 import { registerListPresets } from './tools/list_presets.js';
+import { registerListQeBlueprints } from './tools/list_qe_blueprints.js';
 
 export function createServer(content: Content): McpServer {
   const server = new McpServer(
@@ -24,6 +25,7 @@ export function createServer(content: Content): McpServer {
   registerSearchMethodology(server, content);
   registerGetDocument(server, content);
   registerListPresets(server, content);
+  registerListQeBlueprints(server, content);
   return server;
 }
 
