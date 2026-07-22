@@ -44,3 +44,40 @@ jobs:
         run: |
           python3 tests/lib/check-provenance.py --self-test
           python3 tests/lib/check-provenance.py
+
+  mcp:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install
+        working-directory: mcp
+        run: npm ci
+
+      # Runs before the build: catches a plugin edit whose author forgot to
+      # regenerate the index, which is the drift failure we actually fear.
+      - name: Content drift check
+        working-directory: mcp
+        run: npm run check:drift
+
+      - name: Build
+        working-directory: mcp
+        run: npm run build
+
+      - name: Contract, content, and read-only tests
+        working-directory: mcp
+        run: npm test
+
+      - name: Inspector CLI smoke
+        working-directory: mcp
+        run: |
+          npx --yes @modelcontextprotocol/inspector --cli node dist/index.js --method tools/list
+          npx --yes @modelcontextprotocol/inspector --cli node dist/index.js --method resources/list
+          npx --yes @modelcontextprotocol/inspector --cli node dist/index.js --method prompts/list
