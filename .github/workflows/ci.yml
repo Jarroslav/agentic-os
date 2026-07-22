@@ -75,9 +75,11 @@ jobs:
         working-directory: mcp
         run: npm test
 
+      # Version pinned deliberately so an upstream release cannot turn an unrelated PR red.
+      # Should be bumped intentionally when upgrading the Inspector CLI.
       - name: Inspector CLI smoke
         working-directory: mcp
         run: |
-          npx --yes @modelcontextprotocol/inspector --cli node dist/index.js --method tools/list
-          npx --yes @modelcontextprotocol/inspector --cli node dist/index.js --method resources/list
-          npx --yes @modelcontextprotocol/inspector --cli node dist/index.js --method prompts/list
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method tools/list
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method resources/list
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method prompts/list
