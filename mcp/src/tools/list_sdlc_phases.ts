@@ -23,6 +23,7 @@ export function parsePhaseMap(markdown: string): Phase[] {
   if (!section) return [];
 
   const phases: Phase[] = [];
+  let sawSeparatorRow = false;
   for (const line of section.split('\n')) {
     if (!line.startsWith('|')) {
       if (phases.length > 0) break;   // table ended
@@ -30,8 +31,22 @@ export function parsePhaseMap(markdown: string): Phase[] {
     }
     const cells = line.split('|').slice(1, -1).map(c => c.trim());
     if (cells.length < 4) continue;
+
+    // A GFM separator row (e.g. `|---|:--|--:|`) marks the boundary between
+    // a header and its body. The *first* one belongs to this table's own
+    // header and is skipped below along with it. A *second* one — reached
+    // with no blank line in between, as when a second table immediately
+    // follows in the same section — means a new table has begun; stop here
+    // rather than absorbing its rows as if they were more phases.
+    const isSeparatorRow = cells.every(c => /^:?-+:?$/.test(c));
+    if (isSeparatorRow) {
+      if (sawSeparatorRow) break;
+      sawSeparatorRow = true;
+      continue;
+    }
+
     const num = Number(cells[0]);
-    if (!Number.isInteger(num)) continue;          // header and separator rows
+    if (!Number.isInteger(num)) continue;          // header row
 
     const gateCell = cells[3] ?? '';
     const gates = [...gateCell.matchAll(/`([^`]+)`/g)]
@@ -72,7 +87,19 @@ export function registerListSdlcPhases(server: McpServer, content: Content): voi
           }],
         };
       }
-      const out = { phases: parsePhaseMap(doc.text), source_uri: pathToUri(SOURCE) };
+      const phases = parsePhaseMap(doc.text);
+      if (phases.length === 0) {
+        return {
+          isError: true,
+          content: [{
+            type: 'text' as const,
+            text: `Could not parse the phase-map table out of the SDLC pipeline ` +
+              `skill (${SOURCE}). The document is present, but its "## Phase map" ` +
+              `section is missing or its table could not be read.`,
+          }],
+        };
+      }
+      const out = { phases, source_uri: pathToUri(SOURCE) };
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(out, null, 2) }],
         structuredContent: out,
