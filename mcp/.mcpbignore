@@ -1,0 +1,8 @@
+# @anthropic-ai/mcpb's built-in EXCLUDE_PATTERNS treats any file named
+# `tsconfig.json` anywhere in the tree as a dev-config file and drops it —
+# but dist/content/ ships one plugin's TypeScript eval-harness asset
+# *as content*, not as this package's own build config. Un-exclude it so the
+# bundled server actually finds it at startup instead of crashing with
+# ENOENT (verified: `mcpb pack` silently produced a bundle missing this file
+# until this line was added).
+!dist/content/plugins/agentic-qe/skills/eval-harness/assets/typescript/tsconfig.json

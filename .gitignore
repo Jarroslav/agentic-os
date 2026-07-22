@@ -31,3 +31,7 @@ node_modules/
 # of truth at the root, not duplicated in git.
 mcp/LICENSE
 mcp/NOTICE
+
+# .mcpb bundle is a release artifact built by `npm run build:mcpb`, never
+# committed.
+mcp/*.mcpb

@@ -89,3 +89,69 @@ describe('npm package contents', () => {
     expect(packedContentRelPaths).toEqual(expectedRelPaths);
   });
 });
+
+describe('server.json / manifest.json / package.json agreement', () => {
+  // The MCP Registry's npm ownership check fetches the *published* npm
+  // package and requires its `mcpName` to equal server.json's `name`. The
+  // .mcpb bundle's manifest ships alongside the same build. All three files
+  // describe one release and must not drift relative to each other — a
+  // human will not notice a version mismatch until publish fails.
+
+  async function readJson(relPath: string): Promise<Record<string, unknown>> {
+    return JSON.parse(await readFile(join(MCP_ROOT, relPath), 'utf8')) as Record<
+      string,
+      unknown
+    >;
+  }
+
+  it('server.json name matches package.json mcpName', async () => {
+    const pkg = await readJson('package.json');
+    const server = await readJson('server.json');
+    expect(server.name).toBe(pkg.mcpName);
+  });
+
+  it('server.json version matches package.json version', async () => {
+    const pkg = await readJson('package.json');
+    const server = await readJson('server.json');
+    expect(server.version).toBe(pkg.version);
+  });
+
+  it('server.json packages[0] identifier and version match package.json', async () => {
+    const pkg = await readJson('package.json');
+    const server = await readJson('server.json');
+    const packages = server.packages as Array<Record<string, unknown>>;
+    const firstPackage = packages[0];
+    if (firstPackage === undefined) {
+      throw new Error('server.json packages[] is empty');
+    }
+    expect(firstPackage.identifier).toBe(pkg.name);
+    expect(firstPackage.version).toBe(pkg.version);
+  });
+
+  it('manifest.json version matches package.json version', async () => {
+    const pkg = await readJson('package.json');
+    const manifest = await readJson('manifest.json');
+    expect(manifest.version).toBe(pkg.version);
+  });
+
+  it('manifest.json server paths point at a file the build actually produces', async () => {
+    const manifest = await readJson('manifest.json');
+    const server = manifest.server as Record<string, unknown>;
+    const mcpConfig = server.mcp_config as Record<string, unknown>;
+    const args = mcpConfig.args as string[];
+    const firstArg = args[0];
+    if (firstArg === undefined) {
+      throw new Error('manifest.json server.mcp_config.args is empty');
+    }
+
+    // entry_point is relative to the bundle root; the mcp_config arg is
+    // `${__dirname}/<path>` which resolves to the same bundle-relative path
+    // at run time. Both must resolve to a file the build emits.
+    const entryPoint = server.entry_point as string;
+    const argPath = firstArg.replace('${__dirname}/', '');
+    expect(argPath).toBe(entryPoint);
+
+    const { existsSync } = await import('node:fs');
+    expect(existsSync(join(MCP_ROOT, entryPoint))).toBe(true);
+  });
+});
