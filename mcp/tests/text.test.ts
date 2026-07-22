@@ -7,7 +7,7 @@ const UNPAIRED_SURROGATE =
 describe('truncateCodePoints', () => {
   it('returns text shorter than the cap unchanged, not truncated', () => {
     const result = truncateCodePoints('hello', 300);
-    expect(result).toEqual({ text: 'hello', truncated: false });
+    expect(result).toEqual({ text: 'hello', truncated: false, total: 5 });
   });
 
   it('does not truncate text exactly at the cap (strict > boundary)', () => {
@@ -15,6 +15,7 @@ describe('truncateCodePoints', () => {
     const result = truncateCodePoints(text, text.length);
     expect(result.truncated).toBe(false);
     expect(result.text).toBe(text);
+    expect(result.total).toBe(5);
   });
 
   it('never splits a surrogate pair, at a cap where naive slice would', () => {
@@ -35,6 +36,7 @@ describe('truncateCodePoints', () => {
     expect(result.truncated).toBe(true);
     expect(UNPAIRED_SURROGATE.test(result.text)).toBe(false);
     expect(result.text).toBe('aaaaa📊');
+    expect(result.total).toBe(8); // 5 ASCII + 3 astral code points, not 11 code units
   });
 
   it('counts by code point, not code unit', () => {
@@ -46,6 +48,7 @@ describe('truncateCodePoints', () => {
     const atCap = truncateCodePoints(astral, 3);
     expect(atCap.truncated).toBe(false);
     expect(atCap.text).toBe(astral);
+    expect(atCap.total).toBe(3);
 
     // Cap set below the code-point count: must truncate on a code-point
     // boundary, not a code-unit boundary.
@@ -53,5 +56,16 @@ describe('truncateCodePoints', () => {
     expect(belowCap.truncated).toBe(true);
     expect(belowCap.text).toBe('📊🔴');
     expect(UNPAIRED_SURROGATE.test(belowCap.text)).toBe(false);
+    expect(belowCap.total).toBe(3); // total counts the whole input, not the truncated output
+  });
+
+  it('reports the same total whether or not truncation happens', () => {
+    // `total` is the input's code-point count, independent of `max` — it
+    // must not silently become the *returned* text's length once truncation
+    // kicks in (that would defeat get_document.ts's total_chars use, which
+    // needs the pre-truncation size to report how much was cut).
+    const text = 'abcdefghij';
+    expect(truncateCodePoints(text, 3).total).toBe(10);
+    expect(truncateCodePoints(text, 100).total).toBe(10);
   });
 });

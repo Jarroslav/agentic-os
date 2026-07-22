@@ -9,7 +9,7 @@ const DEFAULT_MAX = 40_000;
 const inputShape = {
   uri: z.string().describe(
     'An agentic-os:// URI, e.g. agentic-os://skills/agentic-sdlc/qa-gates ' +
-    'or agentic-os://file/agentic-os/presets/roles/qa.json. ' +
+    'or agentic-os://file/agentic-sdlc/agents/guide-sync.md. ' +
     'Get these from search_methodology.',
   ),
   // Ceiling lowered from 200_000 to 50_000: the largest real document in the
@@ -57,17 +57,20 @@ export function registerGetDocument(server: McpServer, content: Content): void {
       // characters (e.g. emoji in agents/guide-sync.md) — and an unpaired
       // surrogate is malformed text once handed back to the calling model.
       // truncateCodePoints() (mcp/src/text.ts) slices by code point instead,
-      // so it can never land inside a pair. Materializing the code-point
-      // array is O(n), but the corpus tops out around 40 KB, so the cost is
-      // negligible; total_chars and max_chars are both counted in this same
-      // code-point unit so the truncated flag stays meaningful.
-      const { text, truncated } = truncateCodePoints(doc.text, max_chars);
+      // so it can never land inside a pair, and hands back the input's total
+      // code-point count as `total` from that same pass — so total_chars
+      // below is free, rather than a second `Array.from(doc.text)` just to
+      // count it again. Materializing the code-point array is O(n), but the
+      // corpus tops out around 40 KB, so the cost is negligible; total_chars
+      // and max_chars are both counted in this same code-point unit so the
+      // truncated flag stays meaningful.
+      const { text, truncated, total } = truncateCodePoints(doc.text, max_chars);
       const out = {
         uri,
         title: doc.title,
         text,
         truncated,
-        total_chars: Array.from(doc.text).length,
+        total_chars: total,
       };
       return {
         content: [{ type: 'text' as const, text: out.text }],
