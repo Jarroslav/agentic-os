@@ -1,10 +1,13 @@
 {
   "name": "agentic-os-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server serving the agentic-os governance, SDLC, and QE methodology. Read-only.",
   "mcpName": "io.github.Jarroslav/agentic-os",
   "license": "Apache-2.0",
-  "author": { "name": "Yaroslav Krivushenko", "url": "https://github.com/Jarroslav" },
+  "author": {
+    "name": "Yaroslav Krivushenko",
+    "url": "https://github.com/Jarroslav"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Jarroslav/agentic-os.git",
@@ -13,9 +16,18 @@
   "homepage": "https://github.com/Jarroslav/agentic-os/tree/main/mcp#readme",
   "bugs": "https://github.com/Jarroslav/agentic-os/issues",
   "type": "module",
-  "bin": { "agentic-os-mcp": "dist/index.js" },
-  "files": ["dist", "content-index.json", "LICENSE", "NOTICE"],
-  "engines": { "node": ">=20" },
+  "bin": {
+    "agentic-os-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "content-index.json",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build:content": "node scripts/build-content.mjs",
     "build:ts": "tsc -p tsconfig.json",

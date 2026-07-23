@@ -80,6 +80,24 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
   that exercising every tool — including `run_doctor` against a live target
   — leaves `plugins/` byte-identical.
 
+## [0.1.1]
+
+### Fixed
+- **Server never started when launched via its `bin` (the documented `npx -y
+  agentic-os-mcp` usage).** The entrypoint guard compared `import.meta.url`
+  against a raw `` `file://${process.argv[1]}` ``. npm installs the `bin` as a
+  link under `node_modules/.bin`, so `npx`, a global install, and every MCP
+  client launched the server through that link — where `process.argv[1]` is
+  the link's path but `import.meta.url` is the resolved real path of
+  `dist/index.js`. The two never matched, so `main()` was skipped and the
+  process exited `0` without connecting (clients reported `-32000: Connection
+  closed`). The guard now canonicalizes `process.argv[1]` with `realpathSync`
+  and builds the URL with `pathToFileURL`, matching in both the direct-path
+  and linked-`bin` launch modes. `mcp/tests/bin_entrypoint.test.ts` launches
+  the server through a link exactly as npm's `.bin` does and asserts the full
+  tool surface is reachable — the coverage gap that let this ship in 0.1.0,
+  where the only launch test used the literal `dist/index.js` path.
+
 ## [0.1.0]
 
 ### Added
