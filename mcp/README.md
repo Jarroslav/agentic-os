@@ -2,6 +2,10 @@
 
 <!-- mcp-name: io.github.Jarroslav/agentic-os -->
 
+[![npm](https://img.shields.io/npm/v/agentic-os-mcp)](https://www.npmjs.com/package/agentic-os-mcp)
+[![npm downloads](https://img.shields.io/npm/dw/agentic-os-mcp)](https://www.npmjs.com/package/agentic-os-mcp)
+[![License: Apache-2.0](https://img.shields.io/npm/l/agentic-os-mcp)](../LICENSE)
+
 Read-only MCP server for the agentic-os methodology: governance
 (**agentic-os**), the SDLC pipeline (**agentic-sdlc**), and Quality
 Engineering blueprints (**agentic-qe**).
@@ -11,23 +15,6 @@ writes to your repository. Your assistant performs the file writes itself, so
 you review each one.
 
 ## Install
-
-> **Not yet published.** `agentic-os-mcp` is not on npm yet — publishing is a
-> later phase of this project (see `RELEASE.md`). The one-click links,
-> badges, and `npx -y agentic-os-mcp` commands below are the shape the
-> install will take once it ships; clicking or running them today will
-> either fail or resolve to an unrelated package of the same name. **This
-> caveat, and only this caveat, is removed by a follow-up commit once the
-> first release actually lands** — the snippets themselves are meant to be
-> correct in advance, not placeholders to rewrite later. Until then, point
-> your host at the local build instead:
->
-> ```bash
-> claude mcp add agentic-os -- node /absolute/path/to/mcp/dist/index.js
-> ```
->
-> Build the local server first with `npm run build` from `mcp/`, and use an
-> absolute path — relative paths are not reliably resolved by every host.
 
 Claude Code:
 
