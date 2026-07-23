@@ -219,15 +219,29 @@ disables the whole HITL pillar.
 ## Check 5 — Settings registration
 
 Parse `.claude/settings.json`:
-- Every installed `.claude/hooks/*.py` gate is wired under `hooks` at its
-  event (per the fragment's layout in
-  `plugins/agentic-os/templates/hooks/settings-fragment.json.tmpl`:
+- Every installed **managed** gate hook is wired under `hooks` at its event.
+  The authoritative set is the fragment
+  `plugins/agentic-os/templates/hooks/settings-fragment.json.tmpl` — check
+  **every** hook it wires, not the subset shown in any older summary, and in
+  particular do not skip `prompt_scan_guard.py` (the prompt-injection scanner).
+  The full wiring is:
+  UserPromptSubmit → `prompt_scan_guard.py`;
   PreToolUse Bash → `human_gated_commands.py` + `precommit_review_gate.py`;
-  PreToolUse Write/Edit → `guarded_write_paths.py` + `write_scope_guard.py
-  block`; PostToolUse Write/Edit → `migration_notice.py` +
-  `instruction_stale_notice.py`; SubagentStart → `instruction_gate.py`;
-  Stop + SubagentStop → `subagent_gate.py`; SessionStart →
-  `session_start_bootstrap.py`; PreCompact → `precompact_checkpoint.py`).
+  PreToolUse Write/Edit → `guarded_write_paths.py` + `write_scope_guard.py block`;
+  PostToolUse Write/Edit → `migration_notice.py` + `instruction_stale_notice.py`
+  + `lint_on_save.py`;
+  PostToolUse (all tools) → `context_monitor.py`;
+  SubagentStart → `instruction_gate.py`;
+  Stop → `subagent_gate.py` + `session_learnings_notice.py`;
+  SubagentStop → `subagent_gate.py`;
+  SessionStart → `session_start_bootstrap.py`;
+  PreCompact → `precompact_checkpoint.py`.
+  A hook the fragment wires that is **installed but not registered** at its
+  event is a **failure**. A hook that is not installed (some are skipped by the
+  installer when their capability does not apply) is not — the check is over
+  the managed hooks actually present, matching Check 2's owner filter. Team-
+  owned hooks in `.claude/hooks/` are outside the fragment and are not this
+  check's business.
 - The inverse is a **failure**: a wired hook command whose script file does
   not exist (it would exit 2 on every event and block all tool use).
 - `permissions.deny` contains at least `Read(.env*)`, `Read(.auth/**)`,
