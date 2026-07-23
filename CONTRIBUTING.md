@@ -87,7 +87,8 @@ Tags activate the clean template-only upgrade diff documented in
 releases as **`agentic-os-mcp-v<X.Y.Z>`**, matching its npm package name so a
 tag, a GitHub release, and a published version line up. Its version is
 asserted against the running server by a contract test. The package
-(`agentic-os-mcp`) is not yet published to npm.
+(`agentic-os-mcp`) is published on npm and listed in the MCP Registry as
+`io.github.Jarroslav/agentic-os`.
 
 ## Commit style
 

@@ -37,7 +37,8 @@ top-level index.
   just Claude Code or Cursor: five tools (`search_methodology`,
   `get_document`, `list_presets`, `list_qe_blueprints`, `list_sdlc_phases`),
   31 skill resources plus a `file/` template and canonical URI aliases, and
-  six workflow prompts. Not yet published to npm — see `mcp/README.md`.
+  six workflow prompts. Published to npm as `agentic-os-mcp` — see
+  `mcp/README.md`.
 - **`mcp/` Phase 2b** — `plan_install` and `run_doctor`, taking the tool
   surface to 7 of the documented 8-tool cap. `run_doctor` audits an
   agentic-os install in a caller-named target repo through the server's
