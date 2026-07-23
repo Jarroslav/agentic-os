@@ -2,7 +2,7 @@
 // Copies plugins/** into dist/content/ and emits content-index.json.
 // This is the ONLY path from plugins/ into the published package.
 import { createHash } from 'node:crypto';
-import { readFile, mkdir, writeFile, rm } from 'node:fs/promises';
+import { readFile, mkdir, writeFile, rm, copyFile, access } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,6 +39,28 @@ export async function buildIndex() {
   return index;
 }
 
+// Apache-2.0 requires the licence text AND the NOTICE to travel with the
+// distribution. Both live at the repo root (one source of truth, not
+// duplicated into mcp/ in git — see the root .gitignore entries for
+// mcp/LICENSE and mcp/NOTICE) and npm only packs files inside the package
+// directory, so they're copied into mcp/ here at build time, the same way
+// dist/content/ is populated from plugins/. A silent skip (e.g. copying only
+// if the source happens to exist) would quietly reintroduce the exact
+// "no LICENSE in the tarball" defect this step fixes, so a missing source
+// throws rather than being swallowed.
+async function copyRootLegalFile(name) {
+  const src = join(REPO_ROOT, name);
+  try {
+    await access(src);
+  } catch {
+    throw new Error(
+      `build-content: required ${src} is missing — cannot ship a tarball ` +
+      `without it (Apache-2.0 requires ${name} to travel with the distribution).`,
+    );
+  }
+  await copyFile(src, join(MCP_ROOT, name));
+}
+
 async function main() {
   const index = await buildIndex();
   const contentDir = join(MCP_ROOT, 'dist', 'content');
@@ -52,6 +74,8 @@ async function main() {
     join(MCP_ROOT, 'content-index.json'),
     JSON.stringify(index, null, 2) + '\n',
   );
+  await copyRootLegalFile('LICENSE');
+  await copyRootLegalFile('NOTICE');
   console.log(`bundled ${Object.keys(index).length} files`);
 }
 

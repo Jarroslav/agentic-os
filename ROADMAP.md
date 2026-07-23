@@ -47,6 +47,19 @@ top-level index.
   come back as commands for the host to run. See `SECURITY.md` for the
   full two-reader access-control writeup and its one accepted (and
   disclosed) risk.
+- **`mcp/` Phase 3 — publish-ready.** The npm tarball now ships `LICENSE`
+  and `NOTICE` and drops orphaned source maps; `server.json` (MCP Registry)
+  and `manifest.json` (`.mcpb` bundle) exist and are held in three-way
+  version/name/identifier agreement with `package.json` by a test proven to
+  fail on drift; a production-only `.mcpb` bundle builds, unpacks, and
+  serves all 7 tools; and `.github/workflows/release.yml` publishes to npm
+  (with provenance) and then, only on npm success, to the MCP Registry, on
+  push of an `agentic-os-mcp-v*` tag. `mcp/RELEASE.md` is the maintainer
+  runbook. **This is packaging and automation only — the first actual
+  release (creating the `NPM_TOKEN` secret, confirming the Registry
+  namespace case, and pushing the first tag) is a maintainer action that
+  has not happened yet.** `agentic-os-mcp` remains unpublished until then;
+  see `mcp/README.md`'s Install section.
 
 ## In progress / next
 
@@ -65,10 +78,11 @@ top-level index.
   (`tests/lib/check-presets.py`) but has never been driven through a live
   `/agentic-init` run to confirm the discovery-front-end path degrades
   cleanly with nothing to generate.
-- **MCP server Phase 3** — npm publish of `agentic-os-mcp`, a `.mcpb` bundle,
-  a `server.json`, and an MCP Registry listing (plus the one-click install
-  badges the README's install snippets are already shaped for). Phase 2b
-  (`plan_install`, `run_doctor`) shipped — see Shipped above.
+- **`mcp/` Phase 3's first actual release** — pushing the first
+  `agentic-os-mcp-v*` tag once the one-time `NPM_TOKEN` setup and Registry
+  namespace confirmation in `mcp/RELEASE.md` are done. The packaging and
+  the release workflow that this triggers are already shipped — see Shipped
+  above.
 
 - **Known issue: `agentic-doctor`'s Check 5 parenthetical omits four hooks**
   (`prompt_scan_guard.py`, `lint_on_save.py`, `context_monitor.py`,

@@ -9,6 +9,35 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 ## [Unreleased]
 
 ### Added
+- **Packaging for publication (Phase 3).** `LICENSE` and `NOTICE` now ship
+  in the npm tarball (copied from the repo root at build time), and the
+  orphaned `.map` files that used to leak in are gone — both pinned by
+  `mcp/tests/package.test.ts`, which also asserts the tarball contains
+  every `content-index.json` entry and only those.
+- `server.json` (MCP Registry server descriptor) and `manifest.json` (`.mcpb`
+  bundle manifest), plus `mcp/scripts/build-mcpb.mjs` and `.mcpbignore`,
+  producing a production-only `.mcpb` bundle (no devDependencies, no
+  `tests/`/`src/`/`scripts/`) that unpacks and serves all 7 tools from the
+  unpacked layout. `package.json`, `server.json`, and `manifest.json` are
+  asserted to agree on version, name, and identifier by the same test file
+  — proven to fail on drift.
+- `.github/workflows/release.yml` — a tag-triggered (`agentic-os-mcp-v*`)
+  release workflow: reruns the full repo gate (now including the Inspector
+  CLI smoke), asserts the tag matches `package.json`'s version, logs in to
+  the MCP Registry and asserts the granted permission covers `server.json`'s
+  `name` *before* publishing anything (`mcp/scripts/check-registry-permission.mjs`,
+  closing a failure mode where a namespace-case mismatch would otherwise 403
+  at the Registry only after npm publish already succeeded and burned the
+  version), publishes to npm with provenance, polls `registry.npmjs.org` for
+  the published version to propagate, and only then publishes `server.json`
+  to the MCP Registry (via a freshly re-authenticated
+  `mcp-publisher login github-oidc`, since its JWT is short-lived) and
+  attaches the built `.mcpb` to a GitHub release. A `workflow_dispatch` input
+  resumes just the post-npm steps if one of them fails, without skipping the
+  gate or re-running `npm publish`. See `mcp/RELEASE.md` for the maintainer
+  runbook this workflow implements, including how the Registry namespace
+  case (`io.github.Jarroslav/agentic-os`, matching the real GitHub owner
+  login exactly) was confirmed.
 - `list_presets` — the seven agentic-os role presets with HITL default,
   orchestration mode, and SDLC skills.
 - `list_qe_blueprints` — the 28 Quality Engineering blueprints, filterable by

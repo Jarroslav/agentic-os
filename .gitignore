@@ -25,3 +25,13 @@ NOTES*.md
 *.internal.md
 mcp/dist/
 node_modules/
+
+# Copied from the repo root at build time (mcp/scripts/build-content.mjs) so
+# the npm tarball carries Apache-2.0's required LICENSE + NOTICE — one source
+# of truth at the root, not duplicated in git.
+mcp/LICENSE
+mcp/NOTICE
+
+# .mcpb bundle is a release artifact built by `npm run build:mcpb`, never
+# committed.
+mcp/*.mcpb
