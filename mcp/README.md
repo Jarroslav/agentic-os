@@ -10,9 +10,26 @@ Read-only MCP server for the agentic-os methodology: governance
 (**agentic-os**), the SDLC pipeline (**agentic-sdlc**), and Quality
 Engineering blueprints (**agentic-qe**).
 
-It serves documents, not actions. Every tool is read-only — the server never
-writes to your repository. Your assistant performs the file writes itself, so
-you review each one.
+## What this is, in plain words
+
+**agentic-os** puts *guardrails* on AI coding agents — what files they may touch,
+when they must stop and ask a human, and how their work gets independently
+reviewed before anything is committed. On top of that, **agentic-sdlc** is an
+optional pipeline that carries a ticket from idea → spec → plan → tested code →
+review-ready pull request, and **agentic-qe** is a catalog of Quality-Engineering
+blueprints. There are role setups for developers, QA, architects, DevOps,
+business analysts, and project/portfolio managers.
+
+This MCP server hands that whole methodology — the docs, a per-role install plan,
+the QE catalog, and an install auditor — to **any** MCP-capable assistant, not
+just the Claude Code / Cursor plugins. So you can explore agentic-os, plan an
+install, or audit an existing one from wherever your assistant runs.
+
+**It serves knowledge, not actions.** Every tool is read-only — the server never
+writes to your repository. It gives your assistant the documents and the plan;
+*your assistant* performs any file writes, so you review each one. To actually
+run the governed pipeline or scaffold files into a repo, install the plugins
+(see the [main README](../README.md#install)).
 
 ## Install
 
@@ -62,6 +79,39 @@ or add to `.cursor/mcp.json` directly, same as Claude Desktop's
 `claude_desktop_config.json`:
 
     { "mcpServers": { "agentic-os": { "command": "npx", "args": ["-y", "agentic-os-mcp"] } } }
+
+## How you use it
+
+You don't call these tools yourself — **your assistant does, when you ask in
+plain language.** A typical exchange:
+
+> **You:** "Search the agentic-os methodology for how to run a code review."
+>
+> **Assistant:** calls `search_methodology` → gets ranked `agentic-os://` URIs →
+> calls `get_document` on the top hit → summarizes the `code-review` skill for you.
+
+Start with `search_methodology` (find the right document) and `get_document`
+(read it). The other five tools list the presets, phases, and blueprints, turn a
+role into an install plan, or audit an existing install — see the examples below.
+
+## Examples by role
+
+Real things to ask your assistant once the server is connected. Each role is a
+preset; `list_presets` shows all seven with their human-in-the-loop mode.
+
+| Role | Ask your assistant | Tools it triggers | What you get |
+| --- | --- | --- | --- |
+| **Developer** | "Walk me through the agentic-sdlc pipeline, then plan a developer install." | `list_sdlc_phases`, `plan_install` | the 13-phase spec → plan → TDD → review → PR map, plus an ordered file manifest (stack-aware generator agents, blind + security review, QA gates) |
+| **QA** | "What QE blueprints do you have for the execution stage?" | `list_qe_blueprints` | the QE catalog (28 blueprints across 6 STLC stages) — e.g. `coverage-analysis`, `flaky-debugging` — to scaffold a test framework from |
+| **Architect** | "How does the blind pre-commit review gate work?" | `search_methodology` → `get_document` | the governance doc itself — the instruction-quality rubric, review gates, and patterns |
+| **DevOps** | "What does the devops role set up, and how does MR-watch fix CI?" | `list_presets`, `get_document` | the devops preset (git hooks, PR pipeline gate) and the `mr-watch` skill that monitors merge requests and auto-fixes CI until they merge |
+| **BA / PO** | "How do I turn a ticket into requirements with agentic-sdlc?" | `search_methodology`, `get_document` | the `requirements-intake` / `product-owner` method — a story with acceptance criteria and an early complexity read (no code) |
+| **PM / delivery** | "What's the PR-gate and status workflow for a delivery manager?" | `list_presets`, `get_document` | the pm-delivery preset — ticket/MR adapters, a PR pipeline gate, `mr-watch`, and status conventions |
+| **Portfolio** | "What cross-project oversight does the portfolio role give?" | `list_presets`, `get_document` | run status, repo/knowledge-health audits, and durable cross-session memory — read/report-only, no git footprint |
+
+`plan_install` turns any of these roles into an ordered file manifest; you (or
+your assistant, with your review) apply it. To run the pipeline or scaffold the
+files for real, install the plugins — see the [main README](../README.md#install).
 
 ## Tools
 
@@ -140,8 +190,16 @@ read.
 
 ## Prompts
 
-`agentic-init`, `agentic-doctor`, `agentic-upgrade`, `sdlc-start`,
-`sdlc-task`, `qe-blueprint-scaffold`.
+Ready-made entry points your assistant can offer by name:
+
+| Prompt | What it does |
+| --- | --- |
+| `agentic-init` | Interview to set up the governance guardrails in your repo |
+| `agentic-doctor` | Verify an existing agentic-os install is healthy |
+| `agentic-upgrade` | Upgrade the installed templates to a newer version |
+| `sdlc-start` | Run the governed SDLC pipeline on a task, stopping at human gates |
+| `sdlc-task` | Lightweight SDLC flow for a small (XS/S/M) task |
+| `qe-blueprint-scaffold` | Scaffold a fill-in-ready QE agent framework from a blueprint |
 
 ## Changelog
 

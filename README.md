@@ -131,8 +131,20 @@ This repo is a **marketplace** (Claude Code and Cursor) hosting three plugins:
 
 There's also **`mcp/`** — a read-only MCP server that serves this same
 governance/SDLC/QE methodology to hosts that don't speak the Claude Code or
-Cursor plugin format (any MCP-capable client). It's a separate, not-yet-published
-package with its own build; see [`mcp/README.md`](mcp/README.md).
+Cursor plugin format (any MCP-capable client). It's a separate package with its
+own build, published on npm and the MCP Registry; see
+[`mcp/README.md`](mcp/README.md).
+
+### Use it from any MCP client
+
+Don't use Claude Code or Cursor? The same methodology is a published MCP server —
+your assistant can search the docs, list the role presets and QE blueprints, turn
+a role into an install plan, and audit an existing install, all read-only:
+
+    claude mcp add agentic-os -- npx -y agentic-os-mcp
+
+Works in any MCP-capable assistant. See [`mcp/README.md`](mcp/README.md) for
+per-role examples and the full tool list.
 
 **Which plugin?** For the governed platform, install **agentic-os** +
 **agentic-sdlc** plus **superpowers**: `agentic-os` is the installer/governance
