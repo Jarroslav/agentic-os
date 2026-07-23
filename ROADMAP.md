@@ -84,14 +84,6 @@ top-level index.
   the release workflow that this triggers are already shipped — see Shipped
   above.
 
-- **Known issue: `agentic-doctor`'s Check 5 parenthetical omits four hooks**
-  (`prompt_scan_guard.py`, `lint_on_save.py`, `context_monitor.py`,
-  `session_learnings_notice.py`) that the real settings fragment wires — a
-  `settings.json` missing the prompt-injection scanner would still pass.
-  `mcp/src/doctor.ts`'s `EXPECTED_WIRING` reads the fragment directly and
-  doesn't have this gap; fixing the SKILL.md parenthetical is a small,
-  separate follow-up.
-
 ## Deferred, by design
 
 - **Paradigm fragments** for generated agent contracts (pre-written,

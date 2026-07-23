@@ -26,7 +26,7 @@
   "plugins/agentic-os/presets/roles/qa.json": "28f4bcb1b943bc4215ec3a2887dacabd20aa0226a66eb0e8d813fd5ac79bb626",
   "plugins/agentic-os/presets/validate-presets.sh": "39f1e6558a55e852947e2d5060062cd76ba32e9fb33f846c0a2a680ecc99c0e2",
   "plugins/agentic-os/skills/agentic-doctor/README.md": "41a49c0f5f5370fb014f19cbb4b263b75c65cd79f7466280f78a82941bcde462",
-  "plugins/agentic-os/skills/agentic-doctor/SKILL.md": "91c4e044f815a1add796b3b25b86d2c5484225b416dfc3e711699cc137e1b904",
+  "plugins/agentic-os/skills/agentic-doctor/SKILL.md": "c59d94bb4215ab17e8796b2ddded11c197c8f3de098f4e894738f01d2727c9ed",
   "plugins/agentic-os/skills/agentic-doctor/evals/evals.json": "80c0c21937a66b3e1f430f030cc6b2be049904e9966001178a9cefaa26e29fd7",
   "plugins/agentic-os/skills/agentic-init/README.md": "2dfb8e8fd751a823b8a8088f4046e7ab0cf8e7b0e543658911dafc02ff271c78",
   "plugins/agentic-os/skills/agentic-init/SKILL.md": "0a892ea2caa7c58a5479960acef2bdbf266df31cf088c13acf0b270e1817d3c2",
