@@ -190,6 +190,3 @@ pre-built `dist/`), and start the stdio server (Ctrl-C to exit; there is no
 output on a bare stdio connection with nothing talking to it, which is
 expected). The Registry query confirms the listing is live and its version
 matches.
-
-Once verified, remove the "Not yet published" caveat from `mcp/README.md`'s
-Install section in a follow-up commit (see the note left there).
