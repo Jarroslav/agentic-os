@@ -11,22 +11,6 @@ and the MCP Registry lists `io.github.Jarroslav/agentic-os`. Every directory
 below either ingests from the Registry or links to a live package; submitting
 earlier produces dead listings.
 
-## Do this first: remove the "not yet published" caveat
-
-The moment the first release is live, delete the unpublished-package block at
-the top of [README.md](README.md)'s Install section (the `> **Not yet
-published.**` blockquote and its local-dev alternative). Leaving it up after
-publishing is the one thing that will actively cost installs — a reader who
-sees "not published" stops there.
-
-Commit that as its own small change, e.g. `docs(mcp): package is published —
-drop the pre-release caveat`, and add an npm version badge to the README top
-now that it will resolve:
-
-```
-[![npm](https://img.shields.io/npm/v/agentic-os-mcp)](https://www.npmjs.com/package/agentic-os-mcp)
-```
-
 ## Discovery order
 
 The official Registry is the root of the graph — the directories feed from it —
