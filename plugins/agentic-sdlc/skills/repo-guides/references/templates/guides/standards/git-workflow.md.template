@@ -1,8 +1,8 @@
 <!--
   TEMPLATE — version-control standards scaffold.
-  Instantiate to: .ai-run/guides/standards/git-workflow.md
+  Instantiate to: .agentic/guides/standards/git-workflow.md
   Consumed by:     mr-creator skill (commit + branch conventions; ticket enforcement)
-  Companion:       .ai-run/guides/project.md (MR/PR adapter — do not duplicate it here)
+  Companion:       .agentic/guides/project.md (MR/PR adapter — do not duplicate it here)
 
   FILL-IN CONTRACT (obey while generating; delete these comments from the output):
   - Replace every [PLACEHOLDER] with the host project's real value. No token left behind.
@@ -32,7 +32,7 @@ Four steps per change:
    ```
 2. Commit incrementally as work lands: `git add [files]` then `git commit -m "[message]"`.
 3. Push the branch: `git push -u origin [branch]`.
-4. Open a PR (host UI or CLI — see `.ai-run/guides/project.md`).
+4. Open a PR (host UI or CLI — see `.agentic/guides/project.md`).
 
 ## Branch naming
 

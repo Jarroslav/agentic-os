@@ -30,7 +30,8 @@ idempotent.
       "<repo-relative path>": {
         "sha256": "<hex of the file as written>",
         "template": "<template ID, gen/* slot, or 'derived'>",
-        "owner": "managed|user|generated"
+        "owner": "managed|user|generated",
+        "origin": "plugin|adopted-existing|generated"
       }
     },
     "follow_ups": ["<human-readable follow-up items>"]
@@ -43,6 +44,10 @@ idempotent.
   upgrade when unmodified; `user` = pre-existed or user-declined — never
   touched again; `generated` = produced by a generator subagent — upgrades
   offer regeneration, never overwrite.
+- **Origin semantics**: `origin` records where a file came from, which `owner`
+  alone cannot express. Assets adopted from a fleet the repo already had carry
+  `owner: "user"` with `origin: "adopted-existing"` — they are inputs to
+  verification and never destinations for scaffolding or upgrade.
 - **Rendering** (registry: `PLUGIN/templates/VARIABLES.md`): substitution of
   `{{VAR}}` — no logic in templates; every conditional lives here. Files without
   `.tmpl` are copied verbatim. **How you substitute depends on the file type:**
@@ -128,7 +133,19 @@ idempotent.
    a clean tree makes the diff reviewable) but proceed on confirmation.
 3. `python3 --version` — missing ⇒ abort with install instructions (every
    enforcement hook is Python).
-4. **Stack discovery** (two tiers — full design and record schema in
+4. **Adoption probe.** Run `python3 PLUGIN/scripts/detect-adoption.py TARGET`
+   and journal its JSON as `journal.adoption`. Any conflict it reports is a hard
+   stop, not a warning — two competing fleets in one repo is a state the
+   installer must not create.
+
+   In `adopt-existing` mode the probe's paths become canonical: inventory
+   everything it returns as `owner: "user"`, `origin: "adopted-existing"`,
+   `template: "adopted"`, and leave existing contracts, skills, adapters, hooks,
+   rules, governance and scorecard entries exactly as they are. Governance that
+   is genuinely missing may be added, but only as a reviewed managed block. Hook
+   parity is reached by adapting the fleet's own implementation through a thin
+   harness shim — never by writing a second copy alongside it.
+5. **Stack discovery** (two tiers — full design and record schema in
    `PLUGIN/generators/stack-discovery.md`). **Re-run cost guard**: if
    `journal.stack_discovery` already exists (a prior run reached this step),
    skip both tiers and reuse the journaled record — same principle as Phase
@@ -171,13 +188,14 @@ idempotent.
      the human (confirms high-confidence findings, resolves anything
      `unresolved`); Phase 5's applicability filter reads the reconciled
      `capabilities.*` fields directly — see Phase 5 step 1.
-5. **Fresh vs mature**: mature if any of `TARGET/CLAUDE.md`,
-   `TARGET/.claude/`, `TARGET/.agentic/` already exists. Mode changes Phase 4
+6. **Fresh vs mature**: mature if the adoption probe chose `adopt-existing`,
+   or if any of `TARGET/CLAUDE.md`, `TARGET/.claude/`, `TARGET/.agentic/`
+   already exists. Mode changes Phase 4
    behavior (managed blocks, collision prompts) and the Phase 2 git-sync
    default.
-6. Detect `{{DEFAULT_BRANCH}}`: `git symbolic-ref refs/remotes/origin/HEAD`
+7. Detect `{{DEFAULT_BRANCH}}`: `git symbolic-ref refs/remotes/origin/HEAD`
    (fallback: `main` if it exists, else current branch).
-7. Journal `phase: "preflight"` + detection results.
+8. Journal `phase: "preflight"` + detection results.
 
 ## Phase 2 — Interview (six AskUserQuestion screens)
 
@@ -265,7 +283,9 @@ GitHub).
 Derived values (no screen): `{{PROJECT_NAME}}` = repo dir name (confirm on
 screen 5), `{{STACK_SUMMARY}}` = `journal.stack_discovery.stack_summary`,
 `{{ROLE_PRESETS_ACTIVE}}` = comma list from screen 1,
-`{{AGENTS_CANONICAL_DIR}}` = `.agentic/agents/`, `{{SCORECARD_PATH}}` =
+`{{AGENTS_CANONICAL_DIR}}` = the adoption probe's result (`.agentic/agents/`
+when nothing was adopted), `{{SKILLS_CANONICAL_DIR}}` and
+`{{ORCHESTRATION_STATE_DIR}}` = the probe's results, `{{SCORECARD_PATH}}` =
 `docs/audits/instruction-scorecard.json`, `{{SCORE_THRESHOLD}}` = `95`,
 `{{OUTPUT_CONTRACT_SECTIONS}}` =
 `Summary,Why,Blocking,Non-blocking,Escalate to human`,
@@ -275,7 +295,9 @@ screen 5), `{{STACK_SUMMARY}}` = `journal.stack_discovery.stack_summary`,
 
 1. Read `PLUGIN/manifest/dependencies.json` (`plugins` array: `name`,
    `marketplace`, `source`, `min`, `optional`, `fallback_source`).
-2. Check `~/.claude/plugins/installed_plugins.json` for each plugin at ≥ `min`.
+2. Check the active harness's own registry for each plugin at ≥ `min`:
+   Claude reads `~/.claude/plugins/installed_plugins.json`, Codex reads
+   `codex plugin list`.
 3. For each missing/outdated **non-optional** plugin, register it in
    `TARGET/.claude/settings.json` (create the file if absent) via deep-merge:
    - `extraKnownMarketplaces.<marketplace>` ← its `source` object (use

@@ -1,0 +1,41 @@
+{
+  "name": "agentic-os",
+  "version": "0.2.0",
+  "description": "Governed agent architecture installer and verifier with mature-repository adoption for Codex, Claude, and Cursor.",
+  "author": {
+    "name": "Yaroslav Krivushenko",
+    "url": "https://github.com/Jarroslav"
+  },
+  "homepage": "https://github.com/Jarroslav/agentic-os",
+  "repository": "https://github.com/Jarroslav/agentic-os",
+  "license": "Apache-2.0",
+  "keywords": [
+    "agents",
+    "codex",
+    "orchestration",
+    "hitl",
+    "sdlc",
+    "governance",
+    "multi-agent"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agentic OS",
+    "shortDescription": "Install or adopt governed agent architectures",
+    "longDescription": "Initializes, adopts, upgrades, and verifies governed multi-agent repositories without duplicating an existing harness-neutral fleet.",
+    "developerName": "Yaroslav Krivushenko",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Initialize Agentic OS in this repository",
+      "Adopt this repository's existing .agents fleet",
+      "Run Agentic Doctor"
+    ],
+    "brandColor": "#334155",
+    "screenshots": []
+  }
+}

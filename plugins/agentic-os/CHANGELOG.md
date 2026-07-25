@@ -5,6 +5,36 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.2.0] — mature fleet adoption and native Codex packaging
+
+### Added
+
+- Native Codex plugin metadata, so the governance plugin installs on Codex the
+  same way it does elsewhere.
+- A deterministic, fail-closed adoption probe
+  (`scripts/detect-adoption.py`) for repositories that already treat `.agents/`
+  as their canonical agent, skill, hook and state layer. It reports a conflict
+  rather than guessing, and a conflict stops the install.
+- An `origin` field in the install journal, distinguishing assets adopted from
+  a fleet the repo already had from the ones agentic-os wrote or generated —
+  `owner` alone could not express that difference.
+- `{{SKILLS_CANONICAL_DIR}}` and `{{ORCHESTRATION_STATE_DIR}}`, so templates can
+  address an adopted layout instead of assuming `.agentic/`.
+- Codex-aware dependency, adapter, hook, rule and doctor requirements.
+
+### Changed
+
+- `/agentic-init` adopts an existing neutral fleet rather than generating a
+  competing `.agentic/agents/` tree beside it.
+- `/agentic-upgrade` and `/agentic-doctor` resolve the canonical directories
+  from the journal, and treat adopted assets as user-owned: verified and
+  reported on, never rewritten.
+
+### Fixed
+
+- The git-workflow guide template now instantiates under `.agentic/guides/`,
+  matching the directory every other guide template uses.
+
 ## [0.1.0] — initial public release
 
 First public version.

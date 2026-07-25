@@ -19,6 +19,15 @@ Conventions (`PLUGIN`, `TARGET`, journal shape, rendering rules incl. the
 `skills/agentic-init/SKILL.md` — read its "Conventions" section first.
 Like init: never `git add`/`git commit` in the target repo.
 
+When `journal.adoption.mode == "adopt-existing"`, resolve canonical agents,
+skills and state from `journal.adoption` and never fall back to hardcoded
+`.agentic/` paths. Entries with `origin: "adopted-existing"` are immutable: you
+may verify them and report drift, but never render, replace, regenerate,
+re-synthesize or delete them — and that covers Codex TOML adapters, hook
+registrations and rules as much as agent contracts. Preserve Codex
+configuration keys you do not recognise; an upgrade that drops a key it did not
+write is indistinguishable from corruption.
+
 ## Phase 1 — Version gate
 
 1. Read `TARGET/.agentic/agentic-os/install.json`. Missing ⇒ stop: "no install
