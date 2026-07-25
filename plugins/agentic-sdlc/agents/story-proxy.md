@@ -64,11 +64,11 @@ Emit exactly one JSON object to stdout — no prose, no markdown code fence, no 
 
 ```json
 {
-  "decision": "<approve | request-changes | abort | one of the offered options>",
-  "rationale": "<1-3 sentences citing the rule that drove the decision>",
-  "follow_ups": ["<optional items the next phase should address>"],
-  "confidence": "<high | medium | low>",
-  "risk_flags": ["<optional: scope-explosion>"]
+  "decision": "approve | request-changes | abort | <whichever option was offered>",
+  "rationale": "<why, in a sentence or three, naming the rule you applied>",
+  "follow_ups": ["<anything the next phase has to pick up>"],
+  "confidence": "high | medium | low",
+  "risk_flags": ["scope-explosion"]
 }
 ```
 

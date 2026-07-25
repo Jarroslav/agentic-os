@@ -313,12 +313,12 @@ metadata lines, and Section 1 opening landed correctly before reporting completi
 Emit exactly this report shape back to the caller:
 
 ```
-## Technical Research Complete
+## Research done
 
-**Output**: <run_dir>/technical-analysis.md
-**Threads dispatched**: 5 (code structure, tests, config, dependencies, docs)
-**Layers identified**: <comma-separated list>
-**Risk indicators**: <count> found
+**Written to**: <run_dir>/technical-analysis.md
+**Threads run**: 5 — structure, tests, config, dependencies, docs
+**Layers in play**: <comma-separated>
+**Risks worth naming**: <count>
 ```
 
 ## Constraints

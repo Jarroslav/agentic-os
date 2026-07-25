@@ -102,8 +102,8 @@ Invoke the adapter tool named in `adapter_config.mr`. Pass:
 ```
 ## E2E Tests — {ticket_id}
 
-**Scenarios:** {N} (see test-plan.md for priority breakdown)
-**Framework:** {framework.tool}
+**Scenarios:** {N} — test-plan.md has the priority split
+**Driven with:** {framework.tool}
 **Execution:** {passing}/{total} passing
 
 Test plan: {run_dir}/e2e/test-plan.md

@@ -4,25 +4,17 @@
   "version": 2,
   "targetKind": "plugin",
   "targetName": "agentic-sdlc",
-  "runner": {
-    "type": "codex-cli",
-    "model": "economy",
-    "sandbox": "workspace-write",
-    "approvalPolicy": "never",
-    "extraArgs": []
-  },
-  "workspace": {
-    "sourcePath": ".",
-    "setupMode": "copy",
-    "preserve": "on-failure"
-  },
-  "targetProvisioning": {
-    "mode": "workspace-plugin-marketplace"
-  },
+  "notes": [
+    "Declarative only. This repo ships no benchmark runner, so nothing here is executed by CI — the verifier commands are plain shell, runnable by hand from a workspace that has the plugin provisioned.",
+    "Runner, sandbox and workspace settings are deliberately absent: naming a specific agent CLI and its flags here would describe a harness this repo does not have. Whatever harness runs this supplies its own.",
+    "Scope is install-and-look. It answers 'did the plugin land and can its entry points be found', and nothing at all about whether a pipeline run behaves.",
+    "Provisioning is expected to come from a marketplace inside the workspace, so a run never installs at global scope and never disturbs the operator's own plugin set.",
+    "The last verifier is a negative one: a commands/ directory would mean the skills-over-slash-commands move regressed, so its absence is asserted rather than assumed."
+  ],
   "verifiers": {
     "commands": [
-      "test -f .agents/plugins/marketplace.json",
       "test -d plugins/agentic-sdlc",
+      "test -f .agents/plugins/marketplace.json",
       "test -f plugins/agentic-sdlc/.codex-plugin/plugin.json",
       "test -f plugins/agentic-sdlc/skills/repo-guides/SKILL.md",
       "test -f plugins/agentic-sdlc/skills/sdlc-start/SKILL.md",
@@ -32,24 +24,17 @@
       "test ! -d plugins/agentic-sdlc/commands"
     ]
   },
-  "notes": [
-    "Smoke-only benchmark: proves the plugin provisions and exposes its skill entry points without driving any SDLC phase.",
-    "Provisioning uses an in-workspace marketplace, so nothing is installed at the global scope.",
-    "The negative verifier locks in the skills-over-slash-commands migration; a commands/ directory is a hard failure.",
-    "Launch from the repo root with: npm run eval:benchmarks",
-    "A working copy is retained only when a verifier or scenario fails, so investigators can inspect the exact failed state."
-  ],
   "scenarios": [
     {
       "id": "plugin-install-smoke",
-      "title": "Plugin install smoke test",
-      "purpose": "Confirm agentic-sdlc lands in a throwaway benchmark workspace and surfaces skill-based entry points, without kicking off any pipeline work.",
-      "userInput": "The agentic-sdlc plugin was just provisioned into this workspace through its local marketplace. Take a look at what got installed. Confirm the plugin is reachable via the in-workspace marketplace, that the repo-guides skill is available, and that the four sdlc-* control skills (sdlc-start, sdlc-autonomous, sdlc-status, sdlc-doctor) are present. Verify these run controls are wired up as skills rather than slash commands. Do not launch a full SDLC run of any kind -- this is discovery only.",
+      "title": "The plugin lands and its entry points are reachable",
+      "purpose": "Show that agentic-sdlc provisions into a throwaway workspace and that its skills can be found, while starting no pipeline work at all.",
+      "userInput": "This workspace just had the agentic-sdlc plugin provisioned into it from a local marketplace. Have a look at what arrived. Tell me whether the plugin is reachable, whether the repo-guides skill is there, and whether the four run controls -- sdlc-start, sdlc-autonomous, sdlc-status, sdlc-doctor -- are present. I also want to know they are skills, not slash commands. Do not start an SDLC run of any kind; I am only asking you to look.",
       "successChecklist": [
-        "The agent recognizes that the agentic-sdlc plugin has been installed and can point to how it was provisioned.",
-        "The agent confirms the repo-guides skill is present under the plugin.",
-        "The agent verifies the run controls are exposed as skills and not as slash commands.",
-        "The agent stops at discovery and never begins an end-to-end SDLC workflow."
+        "Says the plugin is installed, and can say how it got there.",
+        "Finds the repo-guides skill inside the plugin.",
+        "Establishes that the run controls are skills, with no slash commands involved.",
+        "Looks, reports, and stops — no pipeline is started, not even a first phase."
       ]
     }
   ]

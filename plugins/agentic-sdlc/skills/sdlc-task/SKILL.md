@@ -75,9 +75,9 @@ date of the initial Stage 1 invocation, fixed for the life of the task.
   "slug": "<slug>",
   "branch": "<current branch>",
   "phase": "main | maintenance",
-  "started_at": "<ISO>",
-  "completed_at": "<ISO, set at Stage 11>",
-  "last_sync_commit": "<HEAD sha at the moment of the last sync>"
+  "started_at": "<when Stage 1 began, ISO>",
+  "completed_at": "<written at Stage 11, ISO>",
+  "last_sync_commit": "<the HEAD sha the last sync reconciled against>"
 }
 ```
 

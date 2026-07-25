@@ -129,11 +129,11 @@ You are guide-sync, the agent that keeps the architecture-guide corpus under `.a
         "step": "08",
         "agent_skill": "guide-sync",
         "primitive": "agent",
-        "started_at": "<ISO8601 start time>",
-        "completed_at": "<ISO8601 now>",
+        "started_at": "<when this agent began, ISO8601>",
+        "completed_at": "<now, ISO8601>",
         "status": "completed",
-        "outcome": "Reviewed <N> guides. Applied <N> updates, declined <N>. Follow-up items: <N>.",
-        "artifacts": ["<list of updated guide paths>"],
+        "outcome": "<N> guides read, <N> updated, <N> left alone; <N> item(s) noted for later",
+        "artifacts": ["<each guide path you actually wrote>"],
         "next_step": "terminal"
       }
       ```

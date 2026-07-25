@@ -40,7 +40,7 @@ router ignores it.
 ```json
 {
   "decision": "approve | request-changes",
-  "rationale": "<1-3 sentences>",
+  "rationale": "<why, in a sentence or three>",
   "confidence": "high | medium | low",
   "risk_flags": ["security", "breaking-change", "public-api"],
   "business_review": [

@@ -177,11 +177,11 @@ test_mgmt_adapter = { system: string, adapter_name: string, sync_command: string
 On success, print the environment-validation confirmation:
 
 ```
-✅ Phase 1: Environment Validation
-   - QA documentation: found
-   - Test format: <gherkin|structured_steps|custom>
-   - Work-item adapter: <adapter_name>
-   - Test management adapter: <system or "not configured">
+✅ Phase 1 — environment looks workable
+   QA docs        found
+   case format    <gherkin|structured_steps|custom>
+   work items     <adapter_name>
+   case storage   <system, or "not configured">
 ```
 
 State carried forward to the next phase:

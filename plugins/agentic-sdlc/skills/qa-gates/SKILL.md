@@ -99,18 +99,24 @@ Persist the resolved plan to `<run_dir>/gate-plan.json`:
 ```json
 {
   "schema": 1,
-  "runner": "npm | pnpm | yarn | cargo | poetry | uv | python | go | custom",
+  "runner": "<one of the runners listed below>",
   "gates": [
-    {"id": "lint",  "command": "...", "available": true},
-    {"id": "build", "command": "...", "available": true},
-    {"id": "unit",  "command": "...", "available": true},
-    {"id": "affected", "command": "...", "available": false},
-    {"id": "ui",    "command": "...", "available": false}
+    {"id": "lint", "command": "<resolved command>", "available": true},
+    {"id": "build", "command": "<resolved command>", "available": true},
+    {"id": "unit", "command": "<resolved command>", "available": true},
+    {"id": "affected", "command": null, "available": false},
+    {"id": "ui", "command": null, "available": false}
   ],
   "ui_globs": ["\\.(tsx|jsx|css|html|vue|svelte)$", "src/(ui|frontend|components)/"],
   "detected_at": "<ISO>"
 }
 ```
+
+`runner` is whichever of these the repo turned out to use: `npm`, `pnpm`,
+`yarn`, `cargo`, `poetry`, `uv`, `python`, `go`, or `custom` when none of them
+fit. `gates` always carries all five ids in that order, so a reader can tell a
+gate that is unavailable from one that was never considered; `command` is `null`
+exactly when `available` is `false`.
 
 Re-detect the plan only when the cache is absent **or** a manifest/lockfile
 (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, or the lockfile) has
@@ -185,21 +191,26 @@ Per-gate report states: `PASS` | `FAIL` | `SKIPPED` | `N/A`.
 Write `<run_dir>/qa-report.md`:
 
 ```markdown
-# QA Gate Report — <run-id>
+# Gate run — <run-id>
 
+**Status**: PASSED | BLOCKED
 **Branch**: <branch>
 **Runner**: <detected runner>
 **Started**: <ISO timestamp>
-**Status**: PASSED | BLOCKED
 
 ## Gates
 
-| Gate  | Status | Duration | Command | Notes |
-|-------|--------|----------|---------|-------|
-| lint  | PASS / FAIL / SKIPPED | 12s | `<exact cmd>` | ... |
-| build | ... | ... | ... | ... |
-| unit  | ... | ... | ... | ... |
-| ui    | SKIPPED | — | (n/a) | no UI surface changed |
+| Gate | Outcome | Took | Ran | Why |
+|------|---------|------|-----|-----|
+| lint | PASS | 12s | `<exact cmd>` | |
+| build | PASS | 48s | `<exact cmd>` | |
+| unit | FAIL | 31s | `<exact cmd>` | 2 of 340 failed |
+| affected | SKIPPED | — | — | runner has no affected-only mode |
+| ui | SKIPPED | — | — | nothing matched ui_globs |
+
+Outcome is `PASS`, `FAIL` or `SKIPPED`. The **Why** column is required for
+anything that is not a PASS and empty otherwise — a bare `SKIPPED` with no reason
+is indistinguishable from a gate that was quietly dropped.
 
 ## Failure detail
 

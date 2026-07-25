@@ -166,14 +166,14 @@ reference those tokens, then invoke the adapter exactly as declared.
 Built-in body template (used only when the adapter provides none):
 
 ```
-## Summary
-[2-4 sentence overview]
+## What this does
+[two to four sentences — what changed and why]
 
-## Changes
-- [Key highlights only]
+## Worth looking at
+- [only the parts a reviewer would otherwise miss]
 
-## Impact
-[Optional: before/after for user-facing changes]
+## What a user notices
+[before and after, when the change is user-facing; omit when it is not]
 
 ## Checklist
 - [ ] Self-reviewed
@@ -193,8 +193,8 @@ the handoff:
   "step": "06",
   "agent_skill": "mr-creator",
   "primitive": "skill",
-  "started_at": "<ISO8601 start time>",
-  "completed_at": "<ISO8601 now>",
+  "started_at": "<when this skill began, ISO8601>",
+  "completed_at": "<now, ISO8601>",
   "status": "completed",
   "outcome": "...",
   "artifacts": ["<URL>"],
