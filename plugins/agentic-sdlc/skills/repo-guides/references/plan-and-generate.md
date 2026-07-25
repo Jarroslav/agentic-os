@@ -67,9 +67,9 @@ repo shape.
 | 9 | Subagent dispatch plan | Monorepo only |
 
 The audit summary must draw from the six Phase-1 sections by name:
-`Documentation Map`, `Documentation Analysis`, `Assistant Setup Analysis`,
-`Agentic Infrastructure Analysis`, `Conflict And Overlap Analysis`,
-`Foundation Readiness And Next Steps`.
+`Where the docs live`, `How usable the docs are`,
+`Assistant instruction files`, `Agents, skills and hooks`,
+`Where they disagree`, `Ready to plant?`.
 
 Output directories:
 

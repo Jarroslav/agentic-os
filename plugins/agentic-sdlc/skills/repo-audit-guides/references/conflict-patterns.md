@@ -1,6 +1,6 @@
 # Conflict Patterns
 
-Rubric for detecting contradictory or overlapping guidance during the repository audit. Apply every pattern below to the documentation and assistant setup you scan. Findings produced here go into the report section headed `## Conflict And Overlap Analysis`.
+Rubric for detecting contradictory or overlapping guidance during the repository audit. Apply every pattern below to the documentation and assistant setup you scan. Findings produced here go into the report section headed `## Where they disagree`.
 
 > Why this matters: a later planting phase writes generated guides under `.agentic/guides/` and updates entrypoints through gated diffs. Any conflict the audit waves through becomes load-bearing in that phase — either corrupting what gets written or institutionalizing the wrong rule. Frame every impact statement against that write phase.
 

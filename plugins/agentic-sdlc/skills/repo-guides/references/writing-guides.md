@@ -55,18 +55,22 @@ Never ship a `[NAME]` or `[NAME?]` token in a finished guide. A required token w
 
 ### Standard tokens and where their values come from
 
-| Token | Discovered from |
+Every value comes from a file in the repo. Where a token has more than one
+possible source, take the first one that exists — and if none does, that is a
+discovery failure to report, not a gap to fill with a plausible guess.
+
+| Token | Read it from |
 |---|---|
-| `[PROJECT_NAME]` | `package.json` name / `pyproject.toml` name / `pom.xml` artifactId / root folder name |
-| `[LANGUAGE]` | manifest language field |
-| `[FRAMEWORK]` | primary framework dependency |
-| `[VERSION]` | dependency version |
-| `[TEST_FRAMEWORK]` | test runner from devDependencies |
-| `[BUILD_COMMAND]` | manifest build script |
-| `[LINT_COMMAND]` | manifest lint script |
-| `[TEST_COMMAND]` | manifest test script |
-| `[file:lines]` | an evidence pointer in `file:line` form |
-| `[code_example]` | an inline snippet, only when unavoidable |
+| `[PROJECT_NAME]` | whichever manifest is present — `package.json`, `pyproject.toml`, `pom.xml` — falling back to the repository folder name |
+| `[LANGUAGE]` | the manifest's own language declaration |
+| `[FRAMEWORK]` | the dependency the application is actually built on, not the longest list entry |
+| `[VERSION]` | that framework's pinned version |
+| `[TEST_FRAMEWORK]` | the test runner among the dev dependencies |
+| `[BUILD_COMMAND]` | the manifest's build script, verbatim |
+| `[LINT_COMMAND]` | the manifest's lint script, verbatim |
+| `[TEST_COMMAND]` | the manifest's test script, verbatim |
+| `[file:lines]` | wherever the claim can be checked, as `path:line` |
+| `[code_example]` | the codebase itself — never an invented snippet |
 
 ## Evidence
 

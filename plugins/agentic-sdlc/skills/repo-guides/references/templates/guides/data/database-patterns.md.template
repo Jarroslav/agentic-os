@@ -170,12 +170,12 @@ Order ──1:1──> Invoice
 
 <!-- Commands VERBATIM from package.json / Makefile / docs. -->
 
-| Action | Command |
-|--------|---------|
-| Create migration | `[exact command]` |
-| Run pending | `[exact command]` |
-| Rollback last | `[exact command]` |
-| Check status | `[exact command]` |
+| To do this | Run |
+|------------|-----|
+| start a new migration | `[exact command]` |
+| apply what is outstanding | `[exact command]` |
+| undo the most recent one | `[exact command]` |
+| see where things stand | `[exact command]` |
 
 **Location**: `[path or N/A]`
 **Naming**: [timestamp/sequence + description scheme]

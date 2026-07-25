@@ -2,17 +2,17 @@
 # Architecture
 
 <!--
-GENERATION INSTRUCTIONS:
-1. Identify architectural style (layered/modular/hexagonal/clean/microservices)
-2. Detect design patterns by scanning code structures
-3. Map actual dependencies between components
-4. Extract from: imports, folder structure, class relationships
-5. Output: 300 lines max
+HOW TO FILL THIS IN
+Everything below is read off the code, not inferred from what the project
+probably does. Work from imports, the folder layout, and how types refer to each
+other; name the style the structure actually shows rather than the one the README
+claims. Record the dependencies you can trace, not the ones that ought to exist.
+Stop at 300 lines — a longer architecture guide stops being read.
 -->
 
-**Project**: [Extract from config]
-**Style**: [Detect: Layered | Modular | Hexagonal | Clean | Microservices | Monolith]
-**Language**: [Detect] | **Framework**: [Detect]
+**Project**: [from the manifest]
+**Style**: [Layered | Modular | Hexagonal | Clean | Microservices | Monolith]
+**Language**: [detected] | **Framework**: [detected]
 
 ## Overview
 
