@@ -598,11 +598,11 @@ interface AssertionReport {
   rate: number;
   mark: "PASS" | "FLAKY" | "FAIL";
   lastFailReason?: string;
-  baselinePasses?: number;
-  baselineTotal?: number;
-  baselineRate?: number;
+  baseline_passes?: number;
+  baseline_runs?: number;
+  baseline_rate?: number;
   delta?: number;
-  nonDiscriminating?: boolean;
+  indistinguishable?: boolean;
 }
 
 interface CaseReport {
@@ -620,17 +620,17 @@ interface SkillReport {
 }
 
 interface RunReport {
-  generated_at: string;
+  written_at: string;
   provider: string;
   model: string;
   repeats: number;
-  pass_threshold: number;
-  only_case: number | null;
-  skill_filter: string | null;
+  pass_mark: number;
+  case_filter: number | null;
+  skill_pattern: string | null;
   baseline: boolean;
-  baseline_bare?: boolean;
-  discrimination_margin?: number;
-  non_discriminating?: string[];
+  baseline_was_bare?: boolean;
+  min_margin?: number;
+  indistinguishable?: string[];
   summary: {
     assertions_total: number;
     fully_passed: number;
@@ -709,13 +709,13 @@ function summarizeAssertion(
     const bPasses = passCount(baselineRuns, assertion.name);
     const bTotal = baselineRuns.length;
     const bRate = bTotal > 0 ? bPasses / bTotal : 0;
-    report.baselinePasses = bPasses;
-    report.baselineTotal = bTotal;
-    report.baselineRate = bRate;
+    report.baseline_passes = bPasses;
+    report.baseline_runs = bTotal;
+    report.baseline_rate = bRate;
     report.delta = rate - bRate;
     // Diagnostic only: an assertion the baseline already clears, without a
     // clear improvement from the skill, does not discriminate. Never gates.
-    report.nonDiscriminating = bRate >= cfg.passThreshold && report.delta < cfg.margin;
+    report.indistinguishable = bRate >= cfg.passThreshold && report.delta < cfg.margin;
   }
 
   return report;
@@ -768,9 +768,9 @@ function printCase(skillName: string, report: CaseReport): void {
     if (a.mark !== "PASS" && a.lastFailReason) {
       tail += ` — last fail: ${a.lastFailReason.slice(0, 160)}`;
     }
-    if (a.baselineRate !== undefined && a.delta !== undefined) {
-      tail += ` [baseline ${pct(a.baselineRate)}, delta ${a.delta >= 0 ? "+" : ""}${pct(a.delta)}${
-        a.nonDiscriminating ? ", NON-DISCRIMINATING" : ""
+    if (a.baseline_rate !== undefined && a.delta !== undefined) {
+      tail += ` [baseline ${pct(a.baseline_rate)}, delta ${a.delta >= 0 ? "+" : ""}${pct(a.delta)}${
+        a.indistinguishable ? ", NON-DISCRIMINATING" : ""
       }]`;
     }
     console.log(`  [${a.mark}] ${a.name}: ${a.passes}/${a.total} (${pct(a.rate)})${tail}`);
@@ -785,14 +785,14 @@ function renderMarkdown(report: RunReport): string {
   const lines: string[] = [];
   lines.push("# Skill eval report");
   lines.push("");
-  lines.push(`- Generated: ${report.generated_at}`);
+  lines.push(`- Generated: ${report.written_at}`);
   lines.push(`- Provider: ${report.provider} (${report.model})`);
-  lines.push(`- Repeats: ${report.repeats}, pass threshold: ${report.pass_threshold}`);
-  if (report.only_case !== null) lines.push(`- Case filter: ${report.only_case}`);
-  if (report.skill_filter !== null) lines.push(`- Skill filter: ${report.skill_filter}`);
+  lines.push(`- Repeats: ${report.repeats}, pass threshold: ${report.pass_mark}`);
+  if (report.case_filter !== null) lines.push(`- Case filter: ${report.case_filter}`);
+  if (report.skill_pattern !== null) lines.push(`- Skill filter: ${report.skill_pattern}`);
   if (report.baseline) {
     lines.push(
-      `- Baseline A/B: on${report.baseline_bare ? " (bare)" : ""}, margin ${report.discrimination_margin}`,
+      `- Baseline A/B: on${report.baseline_was_bare ? " (bare)" : ""}, margin ${report.min_margin}`,
     );
   }
   lines.push("");
@@ -804,13 +804,13 @@ function renderMarkdown(report: RunReport): string {
   lines.push(`- Overall: ${report.summary.passed ? "PASS" : "FAIL"}`);
   lines.push("");
 
-  if (report.non_discriminating && report.non_discriminating.length > 0) {
+  if (report.indistinguishable && report.indistinguishable.length > 0) {
     lines.push("## Non-discriminating assertions");
     lines.push("");
     lines.push("> The baseline already clears these and the skill adds less than the margin —");
     lines.push("> tighten the assertion or the case. Diagnostic only; never gates the run.");
     lines.push("");
-    for (const id of report.non_discriminating) lines.push(`- ${id}`);
+    for (const id of report.indistinguishable) lines.push(`- ${id}`);
     lines.push("");
   }
 
@@ -826,15 +826,15 @@ function renderMarkdown(report: RunReport): string {
         lines.push(`**Expected (prose, not graded):** ${c.expected_output}`);
         lines.push("");
       }
-      const baselineCols = c.assertions.some((a) => a.baselineRate !== undefined);
+      const baselineCols = c.assertions.some((a) => a.baseline_rate !== undefined);
       if (baselineCols) {
         lines.push("| Assertion | Mark | Passes | Rate | Baseline | Delta |");
         lines.push("|---|---|---|---|---|---|");
         for (const a of c.assertions) {
           lines.push(
             `| ${a.name} | ${a.mark} | ${a.passes}/${a.total} | ${pct(a.rate)} | ${pct(
-              a.baselineRate ?? 0,
-            )} | ${(a.delta ?? 0) >= 0 ? "+" : ""}${pct(a.delta ?? 0)}${a.nonDiscriminating ? " ⚠" : ""} |`,
+              a.baseline_rate ?? 0,
+            )} | ${(a.delta ?? 0) >= 0 ? "+" : ""}${pct(a.delta ?? 0)}${a.indistinguishable ? " ⚠" : ""} |`,
           );
         }
       } else {
@@ -869,7 +869,7 @@ function renderMarkdown(report: RunReport): string {
 function writeReports(report: RunReport): void {
   try {
     fs.mkdirSync(cfg.reportDir, { recursive: true });
-    const stamp = report.generated_at.replace(/[:.]/g, "-");
+    const stamp = report.written_at.replace(/[:.]/g, "-");
     const json = JSON.stringify(report, null, 2);
     const md = renderMarkdown(report);
     fs.writeFileSync(path.join(cfg.reportDir, `${stamp}.json`), json);
@@ -954,24 +954,24 @@ async function main(): Promise<number> {
   const aboveThreshold = allAssertions.filter(({ a }) => a.rate >= cfg.passThreshold);
   const passed = aboveThreshold.length === allAssertions.length;
 
-  const nonDiscriminating = allAssertions
-    .filter(({ a }) => a.nonDiscriminating)
+  const indistinguishable = allAssertions
+    .filter(({ a }) => a.indistinguishable)
     .map(({ skill, caseId, a }) => `${skill}#${caseId}:${a.name}`);
 
   const report: RunReport = {
-    generated_at: new Date().toISOString(),
+    written_at: new Date().toISOString(),
     provider: cfg.provider,
     model,
     repeats: cfg.repeats,
-    pass_threshold: cfg.passThreshold,
-    only_case: cfg.onlyCase !== undefined && !Number.isNaN(cfg.onlyCase) ? cfg.onlyCase : null,
-    skill_filter: cfg.skillFilter ?? null,
+    pass_mark: cfg.passThreshold,
+    case_filter: cfg.onlyCase !== undefined && !Number.isNaN(cfg.onlyCase) ? cfg.onlyCase : null,
+    skill_pattern: cfg.skillFilter ?? null,
     baseline: cfg.baseline,
     ...(cfg.baseline
       ? {
-          baseline_bare: cfg.baselineBare,
-          discrimination_margin: cfg.margin,
-          non_discriminating: nonDiscriminating,
+          baseline_was_bare: cfg.baselineBare,
+          min_margin: cfg.margin,
+          indistinguishable: indistinguishable,
         }
       : {}),
     summary: {
