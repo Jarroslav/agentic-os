@@ -28,24 +28,28 @@ because each later one is easier once the earlier ones exist:
 
 ---
 
-## 1. Glama
+## 1. Glama — done
 
-Glama does **not** blanket-index every server; a maintainer with write/admin
-access submits the repo and authenticates through GitHub OAuth, after which
-Glama clones and continuously syncs the Git history (updates land within
-minutes of a push).
+**Listed:** <https://glama.ai/mcp/servers/Jarroslav/agentic-os> (submitted and
+approved 2026-07-23). Glama clones and continuously syncs the repo from here on,
+so pushes land in the listing without further action.
 
-- Go to <https://glama.ai/mcp/servers> and use the add/submit flow; sign in
-  with the GitHub account that owns `Jarroslav/agentic-os`.
-- Point it at `https://github.com/Jarroslav/agentic-os`.
+Notes for anyone repeating this, or listing a future server:
 
-**One caveat worth knowing:** Glama's build step wants a `Dockerfile`, either
-in the repo or inferred by its tooling. This server has none — it is an
-`npx`/stdio package, not a container. Glama can usually infer a Node build, but
-if the listing's build fails, the fix is a minimal `Dockerfile` in `mcp/`
-(`FROM node:20-slim`, copy the package, `npm ci --omit=dev`, `ENTRYPOINT
-["node","dist/index.js"]`). Treat that as a follow-up only if Glama's inferred
-build actually fails — do not add it speculatively.
+- Glama does **not** blanket-index every server. A maintainer with write/admin
+  access submits at <https://glama.ai/mcp/servers> and authenticates through
+  **GitHub OAuth** — their API is read-only and has no submit endpoint, so this
+  cannot be automated or done by an agent on your behalf.
+- Submissions are **human-reviewed** before becoming publicly visible; the
+  listing URL 404s until approval. Check your Glama account for the status.
+- The listing slug has **no `@`**: `/mcp/servers/Jarroslav/agentic-os`.
+- No `Dockerfile` was needed. Glama's build step wants one, either in the repo
+  or inferred, and it inferred this Node package fine despite the server living
+  in a `mcp/` subdirectory of a monorepo. If a future listing's build does fail,
+  a minimal `Dockerfile` in `mcp/` is the fix — but do not add one
+  speculatively.
+- The score badge is live and is on `mcp/README.md`:
+  `https://glama.ai/mcp/servers/Jarroslav/agentic-os/badges/score.svg`
 
 ## 2. mcp.so
 
