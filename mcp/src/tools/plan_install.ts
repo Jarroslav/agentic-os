@@ -10,21 +10,69 @@ const HITL_ORDER = ['strict', 'gated-autonomous', 'autonomous'];
 
 const inputShape = {
   roles: z.array(z.string()).min(1)
-    .describe('Role preset names to compose, e.g. ["developer","qa"]. ' +
-              'Get valid names from list_presets.'),
+    .describe(
+      'Role preset names to compose, e.g. ["developer","qa"]. At least one is ' +
+      'required. Get the valid names from list_presets — an unrecognized name ' +
+      'is an error, not a silent skip, and no partial plan is returned. ' +
+      'Composition is additive: pass every role the repo needs in one call ' +
+      'rather than planning each separately.',
+    ),
 };
 
 const outputShape = {
-  roles: z.array(z.string()),
-  hitl_default: z.string(),
-  orchestration_installed: z.array(z.string()),
-  orchestration_default: z.string(),
+  roles: z.array(z.string()).describe(
+    'The roles this plan composes, echoed back in the order given (which ' +
+    'determines orchestration_default).',
+  ),
+  hitl_default: z.string().describe(
+    'The human-in-the-loop level to install: the strictest among the chosen ' +
+    'roles ("strict" > "gated-autonomous" > "autonomous"). Empty if no role ' +
+    'declared a recognized level, in which case follow_ups says so.',
+  ),
+  orchestration_installed: z.array(z.string()).describe(
+    'Every orchestration style to install — the union across roles, not a ' +
+    'single choice, because a mixed team needs each one present.',
+  ),
+  orchestration_default: z.string().describe(
+    'The style to pre-select as active: the first listed role\'s default, ' +
+    'except that a "strict" hitl_default forces "dispatcher". Empty if ' +
+    'undeterminable, in which case follow_ups says to set it explicitly.',
+  ),
   files: z.array(z.object({
-    template_id: z.string(), source_uri: z.string(), owner: z.string(),
-  })),
-  generated_candidates: z.array(z.string()),
-  sdlc_skills: z.array(z.string()),
-  follow_ups: z.array(z.string()),
+    template_id: z.string().describe(
+      'The template\'s id in the agentic-os template manifest.',
+    ),
+    source_uri: z.string().describe(
+      'Read this with get_document to get the template body to write. It is ' +
+      'the source to copy from, not the destination path.',
+    ),
+    owner: z.string().describe(
+      'Ownership semantics for the written file. Always "managed" here: ' +
+      'agentic-os owns it and upgrades may rewrite it, so it is not a place ' +
+      'for hand edits.',
+    ),
+  })).describe(
+    'The files to scaffold, ordered by template id. This is the plan\'s ' +
+    'payload: you read each source_uri and perform the writes yourself. Any ' +
+    'template with no file in the bundle is reported in follow_ups and ' +
+    'omitted here rather than emitted as a broken entry.',
+  ),
+  generated_candidates: z.array(z.string()).describe(
+    'Stack-specific agent contracts this role set *could* generate — ' +
+    'candidates, not commitments. Generating one requires facts about the ' +
+    'target stack that this server does not have, so filter them against the ' +
+    'actual repository before writing any.',
+  ),
+  sdlc_skills: z.array(z.string()).describe(
+    'agentic-sdlc pipeline skills the composed roles enable. Empty if no ' +
+    'chosen role takes part in the SDLC flow.',
+  ),
+  follow_ups: z.array(z.string()).describe(
+    'Problems and decisions this plan could not settle — a missing template, ' +
+    'an undeterminable HITL level or orchestration default. Surface these ' +
+    'rather than installing past them: an empty array means the plan is ' +
+    'complete as returned.',
+  ),
 };
 
 type Preset = {
@@ -39,14 +87,24 @@ export function registerPlanInstall(server: McpServer, content: Content): void {
     {
       title: 'Plan an agentic-os install',
       description:
-        'Given one or more role presets, return the ordered list of files to ' +
-        'scaffold into a repo, each with a uri to read its template. Unions the ' +
-        'roles, applies strictest-HITL-wins, and installs every orchestration ' +
-        'style in the union. generated_candidates still need filtering against ' +
-        'the target stack. Returns a plan only — you perform the writes yourself.',
+        'Compose one or more agentic-os role presets into an ordered manifest ' +
+        'of the files an install should scaffold, each with a uri to read its ' +
+        'template from. Use it after list_presets to turn chosen roles into ' +
+        'concrete steps. Composition is additive: roles are unioned, the ' +
+        'strictest HITL level wins, and every orchestration style in the union ' +
+        'is installed. **This returns a plan and writes nothing** — no file is ' +
+        'created, and the target repository is neither read nor touched, so ' +
+        'the plan is not validated against what may already be installed ' +
+        '(use run_doctor for that). You perform every write yourself, so the ' +
+        'user can review each one. Read-only and idempotent.',
       inputSchema: inputShape,
       outputSchema: outputShape,
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        idempotentHint: true,
+        destructiveHint: false,
+      },
     },
     async ({ roles }) => {
       const paths = content.paths();

@@ -222,3 +222,24 @@ npm install
 npm run build   # build:content (indexes plugins/ + copies dist/content) + build:ts
 npm test        # vitest — requires the build above, since the content layer reads dist/content
 ```
+
+## Docker
+
+`npx -y agentic-os-mcp` is the supported install path; the [Dockerfile](../Dockerfile)
+at the repository root exists for MCP directories that introspect a server by
+building and running it in a sandbox. It is equivalent, not an alternative to
+recommend.
+
+Build from the **repository root**, never from `mcp/` — the content build reads
+`plugins/**`, the root `LICENSE`/`NOTICE`, and `git ls-files`:
+
+```bash
+docker build -t agentic-os-mcp .
+```
+
+The server speaks JSON-RPC over stdio, so `-i` is required and `-t` must not be
+used (a TTY corrupts the stream):
+
+```bash
+docker run --rm -i agentic-os-mcp
+```

@@ -7,10 +7,32 @@ const SOURCE = 'plugins/agentic-sdlc/skills/sdlc-pipeline/SKILL.md';
 
 const outputShape = {
   phases: z.array(z.object({
-    number: z.number(), name: z.string(),
-    skippable: z.string(), gates: z.array(z.string()),
-  })),
-  source_uri: z.string(),
+    number: z.number().describe(
+      'Phase number, starting at 0. Phases run in this order.',
+    ),
+    name: z.string().describe(
+      'The phase name, e.g. "Requirements" or "Final code review".',
+    ),
+    skippable: z.string().describe(
+      'Free-text skip condition copied verbatim from the pipeline table — ' +
+      'deliberately a string, not a boolean, because the real answers are ' +
+      'conditional: "no", "yes", "per phase_set" (derived from the work-type ' +
+      'classification), or "never once Phase 7 is reached". Do not coerce it ' +
+      'to a boolean; a phase marked "per phase_set" is skippable only for ' +
+      'some kinds of work.',
+    ),
+    gates: z.array(z.string()).describe(
+      'Judgment gates this phase raises, as dotted ids (e.g. ' +
+      '"spec.approved", "qa.drift"). Each is a point where the pipeline stops ' +
+      'for a human decision. Empty means the phase runs to completion without ' +
+      'raising one.',
+    ),
+  })).describe('Every pipeline phase, in execution order from phase 0.'),
+  source_uri: z.string().describe(
+    'URI of the pipeline skill this map was parsed from. Read it with ' +
+    'get_document for what each phase actually does — this tool returns only ' +
+    'the phase/gate skeleton.',
+  ),
 };
 
 type Phase = { number: number; name: string; skippable: string; gates: string[] };
@@ -69,12 +91,21 @@ export function registerListSdlcPhases(server: McpServer, content: Content): voi
     {
       title: 'List SDLC pipeline phases',
       description:
-        'List the agentic-sdlc pipeline phases in order, with which are ' +
-        'skippable and which judgment gates each one raises. Use this to drive ' +
-        'the SDLC flow in a host that cannot run the plugin.',
+        'List the agentic-sdlc pipeline phases in execution order, with each ' +
+        "phase's skip condition and the judgment gates it raises — the points " +
+        'where the flow must stop for a human decision. Use it to drive the ' +
+        'SDLC flow yourself in a host that cannot run the plugin, or to answer ' +
+        'what happens when in the pipeline. Returns the phase and gate ' +
+        'skeleton only; read source_uri for what each phase actually does. ' +
+        'Takes no arguments. Read-only and idempotent.',
       inputSchema: {},
       outputSchema: outputShape,
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        idempotentHint: true,
+        destructiveHint: false,
+      },
     },
     async () => {
       const doc = content.readDoc(SOURCE);

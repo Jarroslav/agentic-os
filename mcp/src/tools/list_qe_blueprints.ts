@@ -7,9 +7,28 @@ import { BLUEPRINT_PATH as CATALOG } from '../paths.js';
 
 const outputShape = {
   blueprints: z.array(z.object({
-    id: z.string(), stage: z.string(), title: z.string(),
-    summary: z.string(), uri: z.string(),
-  })),
+    id: z.string().describe(
+      'Blueprint identifier, e.g. "coverage-analysis". Unique within its ' +
+      'stage; pair it with stage to refer to one unambiguously.',
+    ),
+    stage: z.string().describe(
+      'The STLC stage this blueprint belongs to — the same value the stage ' +
+      'argument filters on.',
+    ),
+    title: z.string().describe("The blueprint's first markdown heading."),
+    summary: z.string().describe(
+      "The blueprint's opening purpose statement, collapsed to one line and " +
+      'capped at 300 code points with a trailing ellipsis when longer. Enough ' +
+      'to choose between blueprints, not to act on one — read the uri for that.',
+    ),
+    uri: z.string().describe(
+      'Read this with get_document for the full blueprint.',
+    ),
+  })).describe(
+    'Matching blueprints, ordered by stage then id. Empty only when a stage ' +
+    'filter matched nothing; an unfiltered call that finds nothing is ' +
+    'reported as an error instead, since that means the catalog failed to load.',
+  ),
 };
 
 /** First non-empty paragraph after the H1, collapsed to one line and capped.
@@ -48,7 +67,10 @@ export function registerListQeBlueprints(server: McpServer, content: Content): v
     : z.string();
 
   const inputShape = {
-    stage: stageSchema.optional().describe('Restrict to one STLC stage.'),
+    stage: stageSchema.optional().describe(
+      'Restrict results to a single STLC stage. Omit to return the whole ' +
+      'catalog, which is small enough to scan in one call.',
+    ),
   };
 
   server.registerTool(
@@ -56,12 +78,22 @@ export function registerListQeBlueprints(server: McpServer, content: Content): v
     {
       title: 'List QE blueprints',
       description:
-        'List the agentic-qe Quality Engineering blueprints, organized by STLC ' +
-        'stage (analyze, design, build, execute, report, operate). Each entry ' +
-        'carries a uri you can read for the full blueprint.',
+        'Browse the agentic-qe Quality Engineering blueprint catalog, ' +
+        'organized by STLC stage. Each blueprint describes how to build one ' +
+        'piece of QE capability (test-coverage analysis, flaky-test debugging, ' +
+        'and so on); use this to find the blueprint that fits a QE task, then ' +
+        'read its uri for the instructions. Returns titles and one-line ' +
+        'summaries only — it is a catalog index, not the blueprint content. ' +
+        'The stage argument enumerates the valid stages. Read-only and ' +
+        'idempotent.',
       inputSchema: inputShape,
       outputSchema: outputShape,
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        idempotentHint: true,
+        destructiveHint: false,
+      },
     },
     async ({ stage }) => {
       const blueprints = content.markdownDocs().flatMap(doc => {

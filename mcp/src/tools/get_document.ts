@@ -24,8 +24,25 @@ const inputShape = {
 };
 
 const outputShape = {
-  uri: z.string(), title: z.string(), text: z.string(),
-  truncated: z.boolean(), total_chars: z.number(),
+  uri: z.string().describe('The requested URI, echoed back unchanged.'),
+  title: z.string().describe(
+    "The document's first markdown heading, or its path within the content " +
+    'bundle when it has no heading.',
+  ),
+  text: z.string().describe(
+    'The document body — complete, or cut to max_chars code points when ' +
+    'truncated is true.',
+  ),
+  truncated: z.boolean().describe(
+    'true when the body was cut because it exceeded max_chars. There is no ' +
+    'offset or paging parameter: re-request with a larger max_chars to get ' +
+    'the rest.',
+  ),
+  total_chars: z.number().describe(
+    'Length of the complete, untruncated body in Unicode code points — the ' +
+    'same unit max_chars is measured in, so total_chars > max_chars is ' +
+    'precisely the condition that sets truncated.',
+  ),
 };
 
 export function registerGetDocument(server: McpServer, content: Content): void {
@@ -34,11 +51,23 @@ export function registerGetDocument(server: McpServer, content: Content): void {
     {
       title: 'Get an agentic-os document',
       description:
-        'Fetch one agentic-os methodology document by its agentic-os:// URI. ' +
-        'Long documents are truncated; the truncated flag says so.',
+        'Fetch the full text of one agentic-os methodology document, named by ' +
+        'its exact agentic-os:// URI. Use it to read a document you have ' +
+        'already located — normally via search_methodology, whose every result ' +
+        'carries the URI to pass here. It resolves exact URIs only and cannot ' +
+        'search, so a guessed URI returns an error rather than a near match. ' +
+        'Read-only and idempotent: nothing is ever written, and the same URI ' +
+        'returns the same document. A body longer than max_chars comes back ' +
+        'cut at a code-point boundary with truncated set and total_chars ' +
+        'giving the full length.',
       inputSchema: inputShape,
       outputSchema: outputShape,
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        idempotentHint: true,
+        destructiveHint: false,
+      },
     },
     async ({ uri, max_chars }) => {
       const path = uriToPath(uri);
