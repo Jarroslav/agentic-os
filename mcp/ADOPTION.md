@@ -68,6 +68,9 @@ getting *listed*; it is false for getting *scored*, which is why one now exists.
   Verified end-to-end from a clean clone: the image builds, and a container
   answers `initialize` / `tools/list` / `prompts/list` / `resources/list` with
   all 7 tools, 6 prompts, and 31 resources.
+  **Glama does not use this file** (see the form values below) — it is here for
+  self-hosting, for directories that do consume a Dockerfile, and because
+  `docker run --rm -i` is a genuinely useful way to try the server.
 - **`/.dockerignore`** — note it deliberately does *not* exclude `.git`, per
   the point above; it does exclude `.claude/worktrees`, which would otherwise
   send a second full checkout as build context.
@@ -83,23 +86,68 @@ getting *listed*; it is false for getting *scored*, which is why one now exists.
   is *60% mean + 40% minimum* across tools — one thin description caps the
   whole grade, so the weakest tool is the one worth fixing first.
 
-**Only you can do these** — they need your Glama login, and no API exists for
-them:
+### Glama's build spec is a form, not your Dockerfile
+
+This is the part that is easy to get wrong. **Admin → Dockerfile** does not ask
+for a path to a Dockerfile in the repo. It *generates* one from a form and shows
+a live preview. The generated file already does the clone for you:
+
+```dockerfile
+FROM debian:trixie-slim
+# … installs ca-certificates, curl, git, Node (via NodeSource), mcp-proxy, uv/python
+WORKDIR /app
+RUN git clone https://github.com/Jarroslav/agentic-os . && git checkout <sha>
+CMD ["mcp-proxy", "--", …your start command…]
+```
+
+Because it clones with `git`, into `/app`, with the repo root as the working
+directory, every constraint that makes our own `Dockerfile` fiddly is already
+satisfied — a real `.git`, the `git` binary, `plugins/**`, and both legal files.
+Only two fields need our values:
+
+| Field | Value |
+| --- | --- |
+| Base image | `debian:trixie-slim` — leave the default |
+| Node.js version | `26` — leave the default (verified working; `engines` only requires >= 20) |
+| Python version | leave the default; the build never invokes python |
+| **Build steps** | `["cd mcp && npm ci && npm run build"]` |
+| **Start command** | `node mcp/dist/index.js` |
+
+Build steps are a JSON array. Keep the whole thing as **one** element joined by
+`&&`: each element runs as its own layer, so a bare `cd mcp` in one step would
+not carry into the next.
+
+Verified before deploying, against a local replica of the generated image
+(debian:trixie-slim + Node 26 + a real `git clone` of the merge commit): the
+build prints `bundled 326 files`, the start command serves 7 tools / 6 prompts /
+31 resources, and it still does so wrapped as
+`mcp-proxy --port 8080 -- node mcp/dist/index.js`, which is how Glama actually
+runs it. Worth doing, because a failed Glama build makes a server
+*undiscoverable* rather than merely unscored.
+
+### Only you can do these
+
+They need your Glama login, and their API is read-only:
 
 1. **Claim the server**, if it is not already claimed.
-2. **Dockerfile admin page** → point the build spec at `/Dockerfile` with the
-   repo root as context → **Deploy**.
-3. Once the build test passes → **Make Release**, enter a version (match the
-   npm version, `0.1.1`), publish. This is what unlocks Tool Definition
-   Quality and Server Coherence.
-4. **Profile completion** — fill in the remaining profile fields.
-5. **License** shows `F` even though the repo is Apache-2.0 and GitHub's API
-   reports `apache-2.0` correctly, with `LICENSE` present at both the repo root
-   and in `mcp/`. That is a stale scan, not a missing file: **trigger a rescan**
-   from the server admin page.
-6. **Related servers** — add a few from the admin page.
-7. **Recent usage** — zero by design until people call it; their **Try in
+2. **Admin → Dockerfile** → fill in the two fields above → **Deploy**.
+3. Once the build test passes → **Make Release**, version `0.1.1` to match npm.
+   This is what unlocks Tool Definition Quality and Server Coherence — and
+   therefore the whole score.
+4. **Admin → Profile** → **Categories** (up to 3; name and description are
+   already filled). This is the rest of "profile completion".
+5. **Related Servers** tab → **Suggest Server**. The algorithmic "Related
+   Servers" list populates itself; the checklist row wants *user-submitted*
+   ones.
+6. **Recent usage** — zero by design until people call it; their **Try in
    Browser** feature seeds the first data point.
+
+Two rows resolve without you: **License** now reads `Apache-2.0` in their API
+even while the checklist still showed `F` (a stale scan, never a missing file —
+`LICENSE` sits at both the repo root and in `mcp/`, and GitHub's API agrees),
+and **glama.json** is detected on their next repo sync (`detectionFlags`
+reported `glama_json: false` for a while after the file merged, which is sync
+lag, not a rejected file).
 
 ## 2. mcp.so
 
