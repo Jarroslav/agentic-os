@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-25T17:29:38Z",
+ "attested_at": "2026-07-25T20:00:42Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -143,7 +143,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "5ea63283d329de39f4b79a1b82dc43d4d0e2b5ebb5c74739d195264cf5dddc29",
+   "sha256": "a5b7d08c98e6104507996486d5005b9a7be7a766c219c0cae5c26629c5a435e6",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -383,19 +383,25 @@
    "max_run": 0
   },
   "plugins/agentic-os/.claude-plugin/plugin.json": {
-   "sha256": "1f3d09d155598dc67c3a21b547c6c4d7ccdddf933abb3e41906ec12b123b5f7b",
+   "sha256": "fc1b2c05cf383d4f091f843da863f57cc60f224dfc22e7af1c68eb35708b3606",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/.codex-plugin/plugin.json": {
+   "sha256": "f8d7a87149ca1d5753b13049c006d85b8110457b57ae8fee914d214d2b605694",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.cursor-plugin/plugin.json": {
-   "sha256": "241d5bde86b34b5d1f105e022682ce6599665cdaad4a5650c74782f1e47b18a0",
+   "sha256": "cb29489f59c253b53b9fe1dd64265ff49b9a67f01ba10ab6197052a2167d6c90",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "973f5ccc95a386a1f2962e1276ea6538d21bf27b186889a1e584dd56c301f03f",
+   "sha256": "75b01bbb1997ac62528cbe9ed65e10b8116debaf1767aa04fa20eacecae402b6",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -538,6 +544,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "plugins/agentic-os/scripts/detect-adoption.py": {
+   "sha256": "e19aba3428ba1dd1149f8583155d60c0714dbb9c4b7b8491af8e11ec4d7789b8",
+   "line": 0.1333,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "plugins/agentic-os/skills/agentic-doctor/README.md": {
    "sha256": "41a49c0f5f5370fb014f19cbb4b263b75c65cd79f7466280f78a82941bcde462",
    "line": 0.0,
@@ -545,7 +557,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-doctor/SKILL.md": {
-   "sha256": "c59d94bb4215ab17e8796b2ddded11c197c8f3de098f4e894738f01d2727c9ed",
+   "sha256": "6894aeaa6ca0ca83792678354c74596f31972a2b1fa37af1ec3de199fad29b78",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -563,7 +575,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-init/SKILL.md": {
-   "sha256": "0a892ea2caa7c58a5479960acef2bdbf266df31cf088c13acf0b270e1817d3c2",
+   "sha256": "f1a83f12db3d11127f476d9f28906f48c83fb43ee12dc57487faf7e6e80bdd8f",
    "line": 0.0016,
    "shingle": 0.0,
    "max_run": 0
@@ -581,7 +593,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-upgrade/SKILL.md": {
-   "sha256": "73722d0385041c1f77f4f4dcddee3d1a818e4ee63ce3d3c69ec2cfd80692a600",
+   "sha256": "405ca7b6143ae3dc7d14d4228c1a2850f03c6ff6dd8c8676696c5c97d700297e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -593,7 +605,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/VARIABLES.md": {
-   "sha256": "04c16a6619326851b4fb5a94782f730d7a424770aa38f310c9876755815d201c",
+   "sha256": "c79efee18fe2a5cfeebd8e12bd1ba52ccba22ca83fcc8377889abddc362406e3",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2135,7 +2147,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/repo-guides/references/templates/guides/standards/git-workflow.md.template": {
-   "sha256": "651e98b233c3e66f05b5f1e19feba17296bc0bc4b5fdcdde00a68269cd8375fc",
+   "sha256": "e55ab870189973bfd17aa4cadf5c86f5771597b7535caa5b0fd9a0b698ce0086",
    "line": 0.0959,
    "shingle": 0.0141,
    "max_run": 3
@@ -2195,9 +2207,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-autonomous/SKILL.md": {
-   "sha256": "7c35b5c558ceff7eec3a33614992c06a515519709e3d499655ccd972dd7a2b15",
-   "line": 0.1045,
-   "shingle": 0.0308,
+   "sha256": "e8dea7aeb2a7a112efa5d2705c471db511517f1ce252dc49c6d1dc823273f8d3",
+   "line": 0.0946,
+   "shingle": 0.0278,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/sdlc-autonomous/evals/evals.json": {
@@ -2213,7 +2225,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-doctor/SKILL.md": {
-   "sha256": "c554c6658fb488635d2bdb2995652c4e247b97b32b98cd73d5024b44fda56a3b",
+   "sha256": "1d57b50dc166b67561e0263374a678b742f97eae884b1a9d23cb6e0ef33f609d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2231,7 +2243,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-light/SKILL.md": {
-   "sha256": "2e7e75b60dc46f8fdb8074b824e5ee71b3b7e8f7ae2e9e8668be642469e1c93a",
+   "sha256": "1d90eb73bb8e1356ebccc6df95fe833e47213ee53362d14b45a253f94ed9b2ca",
    "line": 0.0549,
    "shingle": 0.0043,
    "max_run": 3
@@ -2249,7 +2261,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-pipeline/SKILL.md": {
-   "sha256": "b4628da6b4537bb1f046f1f936992c8e8c24faabd3d0494b4f5220ac3d2c922c",
+   "sha256": "72f0ad3612930a7db57558331017a1ee7fd1c733c9058a0e553e501b52f2ee58",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2267,8 +2279,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-start/SKILL.md": {
-   "sha256": "abf26f03b0a91be399f7b64a9e02aae2d8c4d63c21339cc3d3cc97fd61e8ed11",
-   "line": 0.0213,
+   "sha256": "ce86e0651569a87e469555e1de393ee3b45c977da231b33852e9bfc0f8562bb0",
+   "line": 0.0185,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2285,8 +2297,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-status/SKILL.md": {
-   "sha256": "71c70a75025a6cfe2233d081b2db27f695fdd45b4b2e8fb23e0ed4e2423756fd",
-   "line": 0.0118,
+   "sha256": "c0873464726e2fbada5a8069d46d8450a691afc43bd21ac8ae83adc110538313",
+   "line": 0.0113,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2303,9 +2315,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-task/SKILL.md": {
-   "sha256": "0b1bd34ddfe411f1ef703ae5bacd19b915d4aa58ec000eeb1862013d60eeac3f",
-   "line": 0.0538,
-   "shingle": 0.0217,
+   "sha256": "0864d69cb03aae7826684e29b295e3aec592414db06432d1958ec2df711150ef",
+   "line": 0.0518,
+   "shingle": 0.0209,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/sdlc-task/evals/evals.json": {
@@ -2404,6 +2416,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "tests/lib/check-mature-adoption.py": {
+   "sha256": "ef7f3f9f57f87f82fc9d76a604a89a1417e1b10085b368c98dfed7151fc82b6f",
+   "line": 0.1786,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "tests/lib/check-neutrality.py": {
    "sha256": "0b629bbf5df87714df2614a08ab0ca19057dc102d950a36a63a5112cdd628dcf",
    "line": 0.0538,
@@ -2471,7 +2489,7 @@
    "max_run": 0
   },
   "tests/run-matrix.sh": {
-   "sha256": "1db2e79d2d15c5d0e4df61f2491f70384010de89a335ac127ed7d0a1c8878839",
+   "sha256": "c240fce90dc4f1a0a203f18a6a8a801d9820a87c0e6e799ca7f95fe0e3cfd8ed",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

@@ -95,7 +95,9 @@ a security boundary:
 | `{{PROJECT_NAME}}` | Human name of the target project | git repo dir name |
 | `{{STACK_SUMMARY}}` | One-paragraph detected stack description | stack-fact record (`stack_discovery.stack_summary`) |
 | `{{DEFAULT_BRANCH}}` | Integration branch agents sync/PR against | detected (`main`/`dev`) |
-| `{{AGENTS_CANONICAL_DIR}}` | Canonical agent-contract directory | `.agentic/agents/` |
+| `{{AGENTS_CANONICAL_DIR}}` | Canonical agent-contract directory | the adopted fleet's own directory (e.g. `.agents/agents/`) when one was adopted; `.agentic/agents/` for a fresh scaffold |
+| `{{SKILLS_CANONICAL_DIR}}` | Canonical project-skill directory, where the repo has one | the adopted `.agents/skills/`; empty for a fresh scaffold |
+| `{{ORCHESTRATION_STATE_DIR}}` | Runtime pipeline state directory | the adopted `.agents/state/`; otherwise `.agentic/state/` |
 | `{{SCORECARD_PATH}}` | Instruction-quality scorecard JSON | `docs/audits/instruction-scorecard.json` |
 | `{{SCORE_THRESHOLD}}` | Default instruction-quality gate threshold (per-agent overrides recorded in scorecard) | `95` |
 | `{{GATE_COMMANDS}}` | Quality-gate commands (lint/typecheck/test), newline list | stack-fact record (`variable_defaults.GATE_COMMANDS`) |

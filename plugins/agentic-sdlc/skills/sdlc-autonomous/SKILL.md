@@ -3,7 +3,7 @@ name: sdlc-autonomous
 description: Start an autonomous ("factory mode") SDLC run from a task description, external work-item reference, story path, or greenfield idea, on hosts that support skills but not custom slash commands. Trigger on "run autonomously", "factory mode", "ship this without asking", or a request for the legacy `sdlc:autonomous` command. Parses free-form intent into a structured payload and hands off to sdlc-pipeline — carries no orchestration logic of its own.
 version: 0.1.0
 license: Apache-2.0
-discoverable: false
+discoverable: true
 author: agentic-os
 ---
 
@@ -32,6 +32,17 @@ whatever human-in-the-loop entry point exists alongside it in the same skill fam
 - Does not resolve judgment gates directly — every gate routes through `decision-router`.
 - Does not generate missing guide files, bypass the branch-guard, or auto-stash / hard-reset /
   force-push a dirty working tree absent explicit project policy allowing it.
+
+## When the project owns implementation
+
+Read `.agentic/agentic-sdlc/config.json` before delegating. A configured project orchestrator stays the sole
+coordinator of its fleet even here — unattended mode changes who answers the
+gates, not who owns the work. Hand it one bounded implementation request, consume
+only summaries and serialized gate results, and stop at every human gate the
+project declares.
+
+Running unattended never relaxes a restriction: commit, push, migration, release
+and production limits apply exactly as they do with someone watching.
 
 ## Inputs
 

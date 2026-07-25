@@ -12,6 +12,21 @@ verdict) and the temporary probe contract Check 3 creates and deletes. You
 never fix anything — you diagnose, report, and write the verdict. `TARGET` =
 the current repo root (`git rev-parse --show-toplevel`).
 
+Resolve the canonical agent, skill and state directories from
+`journal.adoption` rather than assuming `.agentic/` — an adopted fleet keeps its
+own layout. Files recorded as `origin: "adopted-existing"` belong to the user:
+a missing one is a warning, and hash drift is information, not a fault. Finding
+contracts in **both** `.agents/agents/` and `.agentic/agents/` is a failure —
+that is the competing-fleet state the installer refuses to create, so seeing it
+here means something else made it.
+
+On Codex, additionally verify that `agentic-os`, `agentic-sdlc` and the required
+`superpowers` version are enabled; that plugin hooks are enabled; that journaled
+Codex TOML agents parse and point at canonical contracts; that journaled rules
+exist; and that hook commands resolve from `git rev-parse --show-toplevel`.
+Never read authentication values — their presence is checkable without their
+contents.
+
 Precondition: `TARGET/.agentic/agentic-os/install.json` exists (the install
 journal written by `/agentic-init`). Missing ⇒ report "not installed — run
 /agentic-init" and write a failed `doctor.json` with only that finding.
