@@ -8,6 +8,16 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+### Changed
+- **Served content refreshed for `agentic-sdlc` 0.2.0.** The bundled
+  `dist/content/` now carries the rebuilt `sdlc.html`, the replaced complexity
+  calibration examples, and the updated QA artifact formats — so
+  `agentic-os://file/...` reads return different text than 0.1.1 for those paths.
+  See `plugins/agentic-sdlc/CHANGELOG.md`. Content count is 325 files.
+- The server's reported version is no longer hardcoded out of step with
+  `package.json` — `mcp/tests/contract.test.ts` already asserted they agree, and
+  it caught this on the bump.
+
 ### Added
 - **Packaging for publication (Phase 3).** `LICENSE` and `NOTICE` now ship
   in the npm tarball (copied from the repo root at build time), and the

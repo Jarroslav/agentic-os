@@ -1,6 +1,6 @@
 {
   "name": "agentic-os-mcp",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MCP server serving the agentic-os governance, SDLC, and QE methodology. Read-only.",
   "mcpName": "io.github.Jarroslav/agentic-os",
   "license": "Apache-2.0",
