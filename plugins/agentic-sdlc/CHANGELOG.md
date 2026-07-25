@@ -4,6 +4,41 @@ Notable changes to the `agentic-sdlc` plugin, as distributed here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this plugin
 uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
+## [0.2.0]
+
+### Changed
+
+- **`sdlc.html` rebuilt from `references/architecture.md`.** The page was stale
+  in ways that were invisible until clicked: its inventory cited seven files that
+  do not exist (five `commands/*.md`, `agents/knowledge-enrichment.md`, and
+  `skills/repo-guides/references/knowledge-craft.md`), so the source viewer was
+  broken for most nodes, and its version badge disagreed with the manifest. It is
+  now generated from the architecture contract and the tree, covers the twelve
+  phase skills that were previously missing, and every path it points at is
+  checked by `tests/lib/check-html-refs.py`. The six diagrams are laid out from
+  node and edge lists rather than hand-placed coordinates, and the two rival CSS
+  token vocabularies are now one — together roughly 1,800 fewer lines.
+- **Complexity calibration examples replaced.** The previous set contained a band
+  mismatch (an example scoring 13/36 → `S` filed under the M band and claiming an
+  M outcome). The new examples are drawn from this repo's own work, sum correctly,
+  land in their own bands, and include two deliberate sizing misses with notes on
+  why — a wrong prediction recorded honestly calibrates better than a tidy one.
+- **The complexity red-flag and band tables have one home.** `sizing-analyst`
+  restated both in different words from the guide; it now reads the guide's copy,
+  which removes a drift risk rather than a duplication nuisance.
+- **QA artifact formats tightened.** `qa-checklist.md` and `qa-test-review.md`
+  have clearer section names and column sets (blocking versus deferred is now the
+  section, not a redundant column), and `qa-planner` was updated with them.
+- **Report formats clarified** across `qa-gates` (the gate-plan runner list is no
+  longer a pipe-delimited string inside a JSON value; `SKIPPED` rows now require a
+  reason), `codebase-scout`, `repo-audit-guides` and `repo-guides` (one audit
+  report spine instead of the same one restated across six files).
+- **Vocabulary made consistent.** Leftover "factory" phrasing is gone;
+  `references/architecture.md` says "the package" and now everything else does too.
+- `evals/plugin-eval-benchmark.json` no longer describes a runner this repo does
+  not ship — it declares the check and leaves the harness to supply its own
+  sandbox and workspace settings.
+
 ## [0.1.0] — initial public release
 
 First public version.

@@ -37,12 +37,21 @@ jobs:
       - name: Run-artifact schema check
         run: python3 tests/lib/check-schemas.py
 
-      # Originality check — self-tests the detector here; the tree scan runs
-      # only where a maintainer has built the local, git-ignored fingerprint
-      # store (absent on CI runners, so it skips with an ok note).
+      - name: Shipped HTML references resolve
+        run: |
+          python3 tests/lib/check-html-refs.py --self-test
+          python3 tests/lib/check-html-refs.py
+
+      # Originality check. The corpus and its fingerprint store are local to a
+      # maintainer's machine and never committed, so a runner cannot repeat the
+      # scan — it enforces the recorded result instead. --verify-attestation
+      # needs no store and fails if any tracked text file drifted from the tree
+      # that was last scanned clean, which is what makes this a real gate rather
+      # than a no-op. The bare scan still runs, and still skips on a runner.
       - name: Originality check
         run: |
           python3 tests/lib/check-provenance.py --self-test
+          python3 tests/lib/check-provenance.py --verify-attestation
           python3 tests/lib/check-provenance.py
 
   mcp:

@@ -162,11 +162,11 @@ Emit exactly this JSON object and nothing else:
 
 ```json
 {
-  "decision": "<approve | request-changes | abort>",
-  "rationale": "<1-3 sentences citing the rule that drove the decision>",
-  "follow_ups": ["<optional itemized issues>"],
-  "confidence": "<high | medium | low>",
-  "risk_flags": ["<optional: security, breaking-change>"]
+  "decision": "approve | request-changes | abort",
+  "rationale": "<why, in a sentence or three, naming the rule you applied>",
+  "follow_ups": ["<anything the next phase has to pick up>"],
+  "confidence": "high | medium | low",
+  "risk_flags": ["security", "breaking-change"]
 }
 ```
 

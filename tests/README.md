@@ -19,28 +19,64 @@ cover both plugins, so they live outside the agentic-os-scoped matrix):
 python3 tests/lib/check-manifests.py       # manifests parse, per-plugin version sync, canonical author/owner
 python3 tests/lib/check-skill-contract.py  # every skill ships SKILL.md + README.md + evals/evals.json in shape
 python3 tests/lib/check-neutrality.py      # no PII / org names ship (hashed denylist + shape patterns)
-python3 tests/lib/check-provenance.py      # originality policy: no tracked file substantially overlaps an external corpus
+python3 tests/lib/check-html-refs.py       # every source path a shipped HTML page cites resolves
+python3 tests/lib/check-provenance.py --verify-attestation  # originality policy: the tree still matches its recorded measurements
 ```
 
 ## Originality check
 
 `check-provenance.py` enforces the repo's originality policy: no tracked file may
-substantially overlap an external text corpus the maintainer checks against. It
-measures each tracked file's line/shingle *containment* plus exact-copy detection,
-failing above `gate_threshold` and warning in the `[author_target, gate_threshold)`
-band (the bar for freshly authored content).
+substantially overlap an external text corpus the maintainer checks against.
+Three measures per file:
 
-It is a **local maintainer tool**: the fingerprint store it reads
-(`tests/lib/provenance-fingerprints.json`) holds only salted one-way hashes, is
-built locally from corpus directories, and is **git-ignored — never committed**.
-Where no store is present (CI runners, fresh clones) the tree scan skips with an
-ok note; `--self-test` always runs and needs no store.
+| Measure | Catches | Fails at |
+|---|---|---|
+| exact-copy | byte-identical file | always |
+| containment (line, shingle) | diffuse reuse across a file | `gate_threshold` (warns from `author_target`) |
+| max_run | the longest verbatim passage | `max_run_gate` (warns from `max_run_target`) |
+
+`max_run` exists because containment is a whole-file average: a long lifted
+passage inside an otherwise original file averages away to nothing. A file can
+sit at 16% containment and still carry a wholly copied template.
+
+Two files are out of scope by design, because overlap in them means nothing:
+`LICENSE` (the Apache-2.0 text is *supposed* to match everyone else's) and
+`package-lock.json` (two lockfiles resolving the same packages are supposed to
+agree). Corpus-side, `--build` skips vendored dependency trees for the same
+reason — a project that vendors the same library is not a copy of the corpus.
+
+### The store, the salt, and the attestation
+
+The fingerprint store (`tests/lib/provenance-fingerprints.json`) holds only
+salted one-way hashes, is built locally from corpus directories, and is
+**git-ignored — never committed**. The salt is not in it: it lives in
+`PROVENANCE_SALT` or a git-ignored `tests/lib/.provenance-salt`, generated on
+first `--build`. Keep it — a store read under the wrong salt would match nothing,
+so the check refuses to run rather than report a comfortable 0%.
+
+That leaves CI unable to repeat the scan, since it has neither corpus nor store.
+So the maintainer records the result and CI holds the tree to it —
+`tests/lib/originality-attestation.json`, the same shape as
+`mcp/content-index.json`: a committed claim plus a cheap check that it still
+holds. `--attest` writes it and **refuses on a tree that is not clean**;
+`--verify-attestation` needs no store and fails if any tracked file changed,
+went missing from the record, or was attested at or above a threshold. Changing
+any tracked text file therefore means re-running the scan locally or turning CI
+red.
 
 ```bash
-python3 tests/lib/check-provenance.py --build <corpus dirs...>   # build the local store
-python3 tests/lib/check-provenance.py --self-test                # detectors fire on synthetic data
-python3 tests/lib/check-provenance.py --file <paths...>          # strict per-file check for new content
+python3 tests/lib/check-provenance.py --build <corpus dirs...>  # build the local store (all dirs in ONE invocation)
+python3 tests/lib/check-provenance.py --self-test               # detectors fire on synthetic data
+python3 tests/lib/check-provenance.py --report-only             # full scan, never blocking
+python3 tests/lib/check-provenance.py --file <paths...>         # strict per-file check for new content
+python3 tests/lib/check-provenance.py --require-store           # scan, but fail rather than skip with no store
+python3 tests/lib/check-provenance.py --attest                  # record a clean tree (pre-release)
+python3 tests/lib/check-provenance.py --verify-attestation      # what CI runs; needs no store
 ```
+
+Pass every corpus directory in one `--build`: a rebuild replaces the store, so
+building from a subset would quietly weaken every later scan. The check refuses
+to shrink the corpus without `--force`.
 
 ## What is automated vs manual
 

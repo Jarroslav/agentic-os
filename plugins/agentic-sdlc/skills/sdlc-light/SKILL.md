@@ -65,9 +65,9 @@ Full schema, including the fields Stage 10 and sync mode add:
   "slug": "<slug>",
   "branch": "<current branch>",
   "phase": "main | maintenance",
-  "started_at": "<ISO>",
-  "completed_at": "<ISO, set at Stage 10>",
-  "last_sync_commit": "<HEAD sha at the moment of the last sync>"
+  "started_at": "<when Stage 1 began, ISO>",
+  "completed_at": "<written at Stage 10, ISO>",
+  "last_sync_commit": "<the HEAD sha the last sync reconciled against>"
 }
 ```
 
@@ -282,11 +282,11 @@ Print a summary — no automatic merge, PR, or branch-discard action. This is th
 between this skill and `mr-creator`:
 
 ```
-Task <slug> ready on branch <branch>.
-Technical analysis: <task-dir>/technical-analysis.md
-Plan: <task-dir>/plan.md
-QA report: <task-dir>/qa-report.md
-Invoke `mr-creator` (or your preferred PR tool) when ready.
+<slug> is ready on <branch>. What it left behind:
+  <task-dir>/technical-analysis.md — what the codebase said
+  <task-dir>/plan.md              — what was intended
+  <task-dir>/qa-report.md         — what the gates found
+Open the MR with `mr-creator`, or whatever you normally use.
 ```
 
 Update `.state.json`: set `completed_at`, keep `phase: "main"` unless the user starts sync mode

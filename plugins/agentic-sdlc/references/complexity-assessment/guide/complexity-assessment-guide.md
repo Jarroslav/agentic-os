@@ -123,45 +123,52 @@ Offer whichever fits the ticket's shape — more than one if several apply:
 
 ## Required Output
 
-Two fixed formats, used at different points in the flow. The calling skill parses these fields, so headers and placeholders are not negotiable.
+Two formats: one you fill in while scoring, one the caller reads. Keep the
+dimension rows in the canonical order — Component Scope, Requirements Clarity,
+Technical Risk, File Change Estimate, Dependencies, Affected Layers — whichever
+dimension turned out to matter most.
 
-**Intake skeleton** — fill this in as you score, one dimension at a time:
-
-```
-## Complexity Analysis: [TICKET-ID]
-### Component Scope: [XS|S|M|L|XL|XXL] ([score])
-### Requirements Clarity: [XS|S|M|L|XL|XXL] ([score])
-### Technical Risk: [XS|S|M|L|XL|XXL] ([score])
-### File Change Estimate: [XS|S|M|L|XL|XXL] ([score])
-### Dependencies: [XS|S|M|L|XL|XXL] ([score])
-### Affected Layers: [XS|S|M|L|XL|XXL] ([score])
-### Total Score: [sum]/36
-### Size: [XS | S | M | L | XL | XXL]
-```
-
-Under each dimension heading, use whichever of these sub-fields apply to it:
-
-`Affected:`, `Layers:`, `Status:`, `Gaps:`, `Risk factors:`, `Mitigation:`, `Modified:`, `New:`, `Affected directories:`, `New packages:`, `Version changes:`, `Layers changed:`, `Schema/migration:`, `Cross-system:`
-
-**Final report skeleton** — this is what the user and the routing logic actually consume:
+**Scoring worksheet** — one row per dimension, filled as you go. The evidence
+column is the point of it: a score with nothing beside it cannot be argued with
+later, which means it cannot be corrected either.
 
 ```
-## Implementation Analysis: PROJ-XXXXX
-### Size: [XS | S | M | L | XL | XXL]  ([total]/36)
-### Dimension Scores:
-| Dimension            | Score | Label |
-### Key Reasoning:
-### Affected Components:
-### Risk Factors:
-### Routing:
+## Sizing: [TICKET-ID]
+
+| Dimension             | Label | Score | Evidence |
+|-----------------------|-------|-------|----------|
+| Component Scope       |       |       |          |
+| Requirements Clarity  |       |       |          |
+| Technical Risk        |       |       |          |
+| File Change Estimate  |       |       |          |
+| Dependencies          |       |       |          |
+| Affected Layers       |       |       |          |
+| **Total**             |       | /36   |          |
+
+**Size:** [XS | S | M | L | XL | XXL]
+**Flags applied:** [condition → dimension, …, or "none"]
 ```
 
-The dimension table's row order is fixed — Component Scope, Requirements Clarity, Technical Risk, File Change Estimate, Dependencies, Affected Layers, in that order — regardless of which dimension ended up mattering most for this ticket.
+Evidence is specific or it is absent — measured file counts, the layer names you
+enumerated, the existing pattern you found and where, the acceptance criteria
+that were missing. "Standard change" is not evidence.
 
-The `Routing:` field is filled from exactly this set:
+**Verdict** — what the user and the routing logic consume:
 
 ```
-[superpowers:writing-plans | superpowers:brainstorming | SPLIT REQUIRED — see splitting recommendation]
+## Sizing verdict: [TICKET-ID]
+
+**[XS | S | M | L | XL | XXL]** — [total]/36 → [route]
+
+**What drove it:** [the one or two dimensions that set the size]
+**Where it lands:** [components and layers touched]
+**What could go wrong:** [risk factors, or "nothing beyond the usual"]
+```
+
+`[route]` is exactly one of:
+
+```
+superpowers:writing-plans | superpowers:brainstorming | SPLIT REQUIRED — see splitting recommendation
 ```
 
 ## Worked Examples

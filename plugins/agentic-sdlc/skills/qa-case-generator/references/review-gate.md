@@ -26,14 +26,15 @@ Read both before presenting anything. The summary is derived from the cases file
 Compute counts from the cases file, then print exactly this block. Field placeholders are filled from the run; every literal line and label is fixed.
 
 ```
-📋 Test Case Summary for <TICKET_ID>
-Total: <count> test cases
-- P1: <p1_count>, P2: <p2_count>, P3: <p3_count>
-- UI: <ui_count>, API: <api_count>
-Location: docs/superpowers/qa-tasks/<date>-<slug>/manual/test_cases.md
-Sample P1 Test: <title>
-Sample P2 Test: <title>
-Sample P3 Test: <title>
+📋 <count> test cases for <TICKET_ID>
+   by priority — P1 <p1_count> · P2 <p2_count> · P3 <p3_count>
+   by kind     — UI <ui_count> · API <api_count>
+   written to  — docs/superpowers/qa-tasks/<date>-<slug>/manual/test_cases.md
+
+   one of each, to show the shape:
+   P1 · <title>
+   P2 · <title>
+   P3 · <title>
 ```
 
 What the reviewer needs to judge scope at a glance:
@@ -114,9 +115,7 @@ Past 3 rework cycles, warn the reviewer that repeated churn usually signals the 
 On exit (approve or abandon), print this machine-scannable block:
 
 ```
-✅ Phase 6: User Review
-   - Status: <approved|abandoned>
-   - Rework cycles: <count>
+✅ Phase 6 closed — <approved|abandoned> after <count> rework cycle(s)
 ```
 
 `<count>` is the value of `regeneration_count` at exit. `Status` is only ever `approved` or `abandoned` — rework is transient and never a terminal state.

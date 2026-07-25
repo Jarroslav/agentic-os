@@ -147,18 +147,18 @@ Supporting enums:
 Emit exactly these top-level sections, in this order:
 
 ```
-# Knowledge Audit Report
-## Executive Summary
-## Documentation Map
-## Documentation Analysis
-## Assistant Setup Analysis
-## Agentic Infrastructure Analysis
-## Conflict And Overlap Analysis
-## Foundation Readiness And Next Steps
-## Evidence Appendix
+# Repo Knowledge Audit
+## What we found
+## Where the docs live
+## How usable the docs are
+## Assistant instruction files
+## Agents, skills and hooks
+## Where they disagree
+## Ready to plant?
+## Evidence
 ```
 
-### Executive Summary
+### What we found
 
 3-6 bullets covering: repo type; whether the docs are usable for foundation; which assistant setup is authoritative; the highest-risk conflicts or stale surfaces; and the recommended overall foundation action.
 
@@ -166,37 +166,37 @@ Emit exactly these top-level sections, in this order:
 
 Use these headers verbatim.
 
-- **Documentation Map**
+- **Where the docs live**
 
   `| Path or group | Purpose | Freshness signal | Foundation use |`
 
-- **Documentation Analysis**
+- **How usable the docs are**
 
   `| Topic | Current source | What is reliable | Gaps or stale areas | Foundation action |`
 
-- **Assistant Setup Analysis**
+- **Assistant instruction files**
 
   `| Surface | Role observed | Authority | Problems | Foundation action |`
 
-- **Agentic Infrastructure Analysis**
+- **Agents, skills and hooks**
 
   `| Asset group | Inventory | What it does | Alignment with docs | Foundation action |`
 
-- **Conflict And Overlap Analysis**
+- **Where they disagree**
 
   `| Conflict or overlap | Evidence | Impact on foundation | Required decision |`
 
-- **Foundation Readiness And Next Steps**
+- **Ready to plant?**
 
   `| Area | Finding | Foundation action | Next step |`
 
-- **Evidence Appendix**
+- **Evidence**
 
   `| Claim | Evidence | Confidence |`
 
 The **Foundation action** column uses the full enum `preserve|incorporate|merge|replace|skip|ask user|halt`. The Conflict table's **Required decision** column uses the subset `preserve|incorporate|merge|replace|ask user|halt` (no `skip`).
 
-### Agentic Infrastructure Analysis — flag list
+### Agents, skills and hooks — flag list
 
 Flag any of these:
 
@@ -205,7 +205,7 @@ Flag any of these:
 - assets duplicating or competing with agentic-sdlc;
 - hooks or settings able to write, install, publish, push, create PRs, or run destructive commands.
 
-### Conflict And Overlap Analysis — priority list
+### Where they disagree — priority list
 
 Rank conflicts by:
 

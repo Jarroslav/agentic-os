@@ -63,6 +63,18 @@ add, edit, or remove a file under `plugins/**`, you must also run
   `npm run check:drift`): `mcp/content-index.json` is a build-time snapshot
   of every git-tracked file under `plugins/`, and it must match exactly — see
   "The `mcp/` content index" above.
+- **Shipped HTML pages point at files that exist**
+  (`tests/lib/check-html-refs.py`): `plugins/agentic-sdlc/sdlc.html` names a
+  source file per inventory entry and fetches it on click, so a rename leaves a
+  dead link that nothing else would notice. Every cited path is resolved here.
+- **The originality attestation still holds**
+  (`tests/lib/check-provenance.py --verify-attestation`): every tracked text
+  file's hash must match `tests/lib/originality-attestation.json`, the recorded
+  result of the maintainer's last corpus scan. CI has no corpus, so it enforces
+  the record rather than repeating the scan — which means **a PR that edits
+  tracked text goes red until a maintainer re-attests**. See
+  [tests/README.md](tests/README.md) § Originality check; the re-attest step is
+  under "Releasing" below.
 
 ## Releasing
 
@@ -73,7 +85,19 @@ Each plugin versions independently, so releases are cut and tagged per plugin:
    `.codex-plugin/plugin.json` where present) — CI fails on drift.
 2. Move the plugin's `CHANGELOG.md` `[Unreleased]` entries under the new
    version heading.
-3. Merge via PR as usual, then tag the merge commit and push the tag:
+3. Refresh the originality attestation from a maintainer machine that has the
+   local fingerprint store, and commit it:
+
+   ```bash
+   python3 tests/lib/check-provenance.py --require-store   # full scan against the corpus
+   python3 tests/lib/check-provenance.py --attest          # refuses unless the tree is clean
+   git add tests/lib/originality-attestation.json
+   ```
+
+   `--attest` is the only way `--verify-attestation` can pass in CI, and it
+   cannot be produced from a tree that has findings — so this step is where a
+   release either confirms the tree is clean or stops.
+4. Merge via PR as usual, then tag the merge commit and push the tag:
 
    ```bash
    git tag -a agentic-os-v0.1.0 -m "agentic-os 0.1.0"   # agentic-sdlc-v<X.Y.Z> for the SDLC plugin

@@ -9,9 +9,11 @@ docs/superpowers/
 .claude/
 .serena/
 
-# Local maintainer artifact for the originality check (tests/lib/check-provenance.py)
-# — built locally, never committed.
+# Local maintainer artifacts for the originality check (tests/lib/check-provenance.py)
+# — built locally, never committed. The salt is what keeps the fingerprint store
+# unreadable; losing it means rebuilding the store from the corpus.
 tests/lib/provenance-fingerprints.json
+tests/lib/.provenance-salt
 
 # Build rationale, audit trails, and repo-administration notes live in a
 # separate private repo, never here.

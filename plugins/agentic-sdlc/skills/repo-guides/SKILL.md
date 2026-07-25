@@ -7,7 +7,7 @@ description: >-
   says "repo guides", "set up repo guides", "generate the guides", "bootstrap
   this repo for AI", "agentic init", "create AGENTS.md", or "wire the AI
   entrypoint". On a brownfield repo, run repo-audit-guides first and feed its
-  "# Knowledge Audit Report" in here. Writes tracked files (blast radius R2) —
+  "# Repo Knowledge Audit" in here. Writes tracked files (blast radius R2) —
   no writes happen until the user approves the plan.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Agent, Skill
@@ -28,13 +28,13 @@ R2 — you write tracked repo files (the guide tree and the entrypoint) plus one
 - User is bootstrapping a repo for AI-assisted work and asks for repo guides / an entrypoint.
 - Trigger phrases: "repo guides", "set up repo guides", "agentic init", "create AGENTS.md", "wire the AI entrypoint".
 
-Run the **repo-audit-guides** skill (R0, read-only) FIRST on any brownfield repo. It emits the `# Knowledge Audit Report` this skill consumes. On a truly empty/greenfield repo you may proceed without an audit, but the halt conditions below still apply.
+Run the **repo-audit-guides** skill (R0, read-only) FIRST on any brownfield repo. It emits the `# Repo Knowledge Audit` this skill consumes. On a truly empty/greenfield repo you may proceed without an audit, but the halt conditions below still apply.
 
 ## Inputs
 
 | Input | Source | Required |
 |---|---|---|
-| Audit report | repo-audit-guides output, marker `# Knowledge Audit Report` | brownfield: yes |
+| Audit report | repo-audit-guides output, marker `# Repo Knowledge Audit` | brownfield: yes |
 | Repo signals | manifests, `git remote -v`, `git log --oneline -10`, `.pre-commit-config.yaml`, CI files, `Makefile`, `pyproject.toml`, `package.json`, `tox.ini`, `setup.cfg` | detected, not asked |
 | User decisions | plan approval, per-file entrypoint diffs, gate/adapter confirmations | interactive |
 
@@ -42,7 +42,7 @@ Run the **repo-audit-guides** skill (R0, read-only) FIRST on any brownfield repo
 
 ## Audit contract (consumed)
 
-The report carries marker `# Knowledge Audit Report` and these sections: `Documentation Map`, `Documentation Analysis`, `Assistant Setup Analysis`, `Agentic Infrastructure Analysis`, `Conflict And Overlap Analysis`, `Foundation Readiness And Next Steps`, `Evidence Appendix`. Per-item verdict vocabulary: `preserve` / `incorporate` / `merge` / `replace` / `skip` / `ask` / `halt`.
+The report carries marker `# Repo Knowledge Audit` and these sections: `Where the docs live`, `How usable the docs are`, `Assistant instruction files`, `Agents, skills and hooks`, `Where they disagree`, `Ready to plant?`, `Evidence`. Per-item verdict vocabulary: `preserve` / `incorporate` / `merge` / `replace` / `skip` / `ask` / `halt`.
 
 ## Operating flow
 
@@ -190,7 +190,7 @@ Offer the next step (yes/no/other). Point the user at `sdlc-start` or `product-o
 
 ## Cross-references
 
-- **Consumes:** repo-audit-guides audit report (`# Knowledge Audit Report`).
+- **Consumes:** repo-audit-guides audit report (`# Repo Knowledge Audit`).
 - **Feeds:** `sdlc-start` and `product-owner` (handoff via `next_step`); `requirements-intake` and `product-owner` read `## Ticket Adapter`; MR/PR skills read `## MR Adapter`; the ticket-sync Stop/SubagentStop hook reads `integration/ticket-flow.md`; every agentic-sdlc skill reads the guide tree.
 - **Ongoing sync:** the **guide-sync** agent keeps the guide tree current on post-merge runs — this skill is one-time setup, harvester is continuous upkeep. `testing/` upkeep belongs to **qa-foundation**.
 - **Kept separate:** the agentic-os `/agentic-init` skill at `plugins/agentic-os/skills/agentic-init/` is a sibling — do NOT modify it or its templates.

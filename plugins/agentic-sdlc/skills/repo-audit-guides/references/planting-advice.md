@@ -8,7 +8,7 @@ Map every audit finding to exactly one action from a fixed seven-value vocabular
 
 Emit recommendations inside the report section headed exactly:
 
-`## Foundation Readiness And Next Steps`
+`## Ready to plant?`
 
 Use this table shape, columns verbatim:
 

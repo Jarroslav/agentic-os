@@ -87,14 +87,14 @@ field names:
 ```json
 {
   "schema": 1,
-  "checked_at": "<ISO now>",
+  "checked_at": "<when this ran, ISO>",
   "passed": true,
   "checks": {
-    "superpowers": { "present": true, "version": "<x.y.z>" },
-    "node": { "version": "<vX.Y.Z>", "ok": true },
-    "git": { "version": "<X.Y.Z>", "ok": true }
+    "superpowers": { "present": true, "version": "<as reported>" },
+    "node": { "version": "<as reported>", "ok": true },
+    "git": { "version": "<as reported>", "ok": true }
   },
-  "fingerprint": "<hash>"
+  "fingerprint": "<hash of the inputs above, so a stale result is detectable>"
 }
 ```
 

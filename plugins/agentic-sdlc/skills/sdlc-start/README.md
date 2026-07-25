@@ -1,27 +1,41 @@
 # SDLC Start (HITL)
 
-Starts a human-in-the-loop agentic-sdlc run. Every judgment gate — spec approval, plan approval, code review, QA drift — prompts you for a decision before the pipeline proceeds.
+Opens an agentic-sdlc run that keeps you in the decision seat. Wherever the
+pipeline reaches a judgment it cannot make on evidence alone — is this spec
+right, is this plan right, does this review pass, has QA drifted — it stops and
+asks you before going on.
 
-`sdlc-start` is launcher-only: it normalizes the request and hands it to `sdlc-pipeline`. It must not create run directories, write `meta.json`, `requirements.md`, `plan.md`, ledgers, or run any phase logic itself. If `sdlc-pipeline` cannot be invoked, startup is blocked rather than emulated manually.
+The skill itself is only a doorway. It reads what you asked for, normalizes it,
+and hands it to `sdlc-pipeline`; the run directory, the ledgers and every phase
+document belong to the pipeline from that point on. If the host cannot invoke
+`sdlc-pipeline`, this skill reports that and stops — it will not improvise the
+pipeline by hand.
 
 ## Use It For
 
-- Implementing a ticket with full control over spec, plan, and review checkpoints.
-- Starting an SDLC run for a Jira ticket, story file, or free-form task description.
-- Building a feature with guided approvals at each phase boundary.
-- Greenfield project setup with interactive checkpoints.
+- Work you want to steer: you review the spec and the plan before code appears.
+- Turning a tracker item, a story file, or a paragraph of prose into a real run.
+- Changes where a wrong assumption is expensive and worth catching at a gate.
+- Standing up something new from scratch, checkpoint by checkpoint.
 
 ## How To Ask
 
 Examples:
 
-- "Start SDLC for PROJ-123."
-- "Implement this feature with SDLC."
-- "Begin SDLC workflow for the login timeout fix."
-- "Use sdlc-start with --greenfield 'simple REST API in Go'."
+- "Take PROJ-812 through SDLC."
+- "Run this through SDLC with me approving the plan."
+- "Start an SDLC run for the session-expiry bug."
+- "Use sdlc-start with --greenfield 'small Go service that signs webhooks'."
+
+## What It Produces
+
+Nothing directly — that is the point. The pipeline it delegates to produces the
+run directory and its artifacts, beginning at Phase 0.
 
 ## What It Needs
 
-- `.agentic/guides/` files from `repo-guides` (project.md, git-workflow.md, quality-gates.md).
-- superpowers plugin >= 5.0.7.
-- A feature branch or base branch to create one from.
+- A repo-guides baseline under `.agentic/guides/` — at minimum `project.md`,
+  `git-workflow.md` and `quality-gates.md`. Run `repo-guides` first if it is
+  missing; the pipeline will halt and tell you so anyway.
+- The superpowers plugin, 5.0.7 or newer.
+- Either a feature branch to work on, or a base branch to cut one from.

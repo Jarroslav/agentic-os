@@ -47,15 +47,15 @@ through to route 3.
 ### Required report sections (exact headings, verbatim)
 
 ```
-# Knowledge Audit Report
-## Executive Summary
-## Documentation Map
-## Documentation Analysis
-## Assistant Setup Analysis
-## Agentic Infrastructure Analysis
-## Conflict And Overlap Analysis
-## Foundation Readiness And Next Steps
-## Evidence Appendix
+# Repo Knowledge Audit
+## What we found
+## Where the docs live
+## How usable the docs are
+## Assistant instruction files
+## Agents, skills and hooks
+## Where they disagree
+## Ready to plant?
+## Evidence
 ```
 
 ### Evidence-quality flags and their posture
@@ -258,10 +258,12 @@ Call mcp__<server-id>__get_issue with issue_key=<ticket-id>
 
 ```
 **Status**: configured
-**Adapter**: Invoke the `<skill-name>` skill via the Skill tool.
-**Lookup**: Invoke the `<skill-name>` skill with the ticket key and a request for summary, description, acceptance criteria, and links.
-**Create**: Invoke the `<skill-name>` skill with the complete ticket payload or approved story file as the argument.
-**Output**: Ticket key and URL returned by the skill.
+**Adapter**: `<skill-name>`, reached through the Skill tool.
+**Lookup**: pass the ticket key; ask for the summary, the description, the
+acceptance criteria and any links.
+**Create**: pass either the finished ticket payload or the path to an approved
+story file.
+**Output**: the ticket key, plus its URL.
 ```
 
 > Skill-based adapters never expose the wrapped binary, the assistant ID, or CLI flags.

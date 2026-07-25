@@ -165,14 +165,14 @@ Decide `result` this way:
 Append to `<run_dir>/qa-report.md`:
 
 ```markdown
-## Feature Verification
+## Did it actually work
 
-**Tool**: playwright
-**Required**: yes (UI surface changed)
 **Status**: PASSED | BLOCKED | FAILED
+**Driven with**: playwright
+**Why it ran**: a UI surface changed
 
-| Feature | Result | Test command | Console errors | Network failures |
-|---------|--------|--------------|----------------|------------------|
+| Feature | Result | Driven by | Console | Network |
+|---------|--------|-----------|---------|---------|
 | checkout-summary | PASS | npx playwright test checkout.spec.ts | 0 | 0 |
 | account-settings | PASS | npx playwright test dynamic-tests/account-settings.spec.ts | 0 | 0 |
 ```

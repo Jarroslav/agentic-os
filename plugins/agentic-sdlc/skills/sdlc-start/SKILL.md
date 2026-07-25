@@ -10,61 +10,82 @@ authors:
 
 # sdlc-start
 
-Skill entry point for the human-in-the-loop agentic-sdlc flow, standing in for the old `sdlc:start` command on hosts such as Codex that lack command support.
+The doorway into the human-in-the-loop agentic-sdlc flow. On hosts like Codex
+that have skills but no commands, this stands in for the retired `sdlc:start`
+command.
 
-## Entrypoint Purity Contract
+## Stay a doorway
 
-`sdlc-start` only launches the flow — it MUST NOT create, modify, or repair repository files, run directories, run ledgers, or phase artifacts.
+A doorway that starts doing the work is no longer a doorway, and a run whose
+artifacts were half-written before Phase 0 cannot be reasoned about. So this
+skill reads intent and delegates; it does not touch the repository.
 
-This skill must never:
+Specifically, nothing here may:
 
-- Create `docs/superpowers/runs/<run-id>/` or any task/run directory.
-- Write `meta.json`, `requirements.md`, `complexity.json`, `design.md`, `plan.md`, `events.jsonl`, `decisions.jsonl`, `work-item.md`, or work-item ledgers.
-- Run phase logic inline — that covers requirements intake, complexity scoring, brainstorming, planning, branch guards, implementation, QA, or status repair.
-- Emulate `sdlc-pipeline` when direct skill invocation isn't available.
+- Make `docs/superpowers/runs/<run-id>/`, or any other run or task directory.
+- Write `meta.json`, `requirements.md`, `complexity.json`, `design.md`,
+  `plan.md`, `events.jsonl`, `decisions.jsonl`, `work-item.md`, or any ledger.
+- Do a phase's work early — no intake, no sizing, no brainstorming, no
+  planning, no branch guard, no building, no QA, no status repair.
+- Improvise `sdlc-pipeline` because the host would not invoke it.
 
-If the host can't invoke `sdlc-pipeline`, stop and report that SDLC startup is blocked rather than approximating the pipeline by hand. Artifact ownership only begins once `sdlc-pipeline` Phase 0 takes over.
+That last one is the tempting failure. If `sdlc-pipeline` cannot be reached,
+say startup is blocked and stop there. A hand-rolled approximation looks
+helpful and leaves behind artifacts nothing downstream can trust. Ownership of
+every artifact starts inside `sdlc-pipeline` Phase 0, and not one step sooner.
 
 ## Inputs
 
-- `raw_input` — task description, external work-item reference, story path, or greenfield idea
-- `mode_flag` — optional `--greenfield`
-- `escalate_on` — optional risk flags; default `["security", "breaking-change"]`
+- `raw_input` — whatever the user is asking for: prose, a tracker reference, or
+  a path to a story file
+- `mode_flag` — `--greenfield` when starting from nothing, otherwise unset
+- `escalate_on` — risk flags that force a human decision; defaults to
+  `["security", "breaking-change"]`
 
 ## Usage Examples
 
 ```text
-Use the sdlc-start skill for "add SAML SSO provider with admin onboarding flow"
-Use the sdlc-start skill for PROJ-12345
-Use the sdlc-start skill with --greenfield "tiny note-taking CLI in Python"
+Use the sdlc-start skill for "rate-limit the public search endpoint"
+Use the sdlc-start skill for PROJ-812
+Use the sdlc-start skill with --greenfield "small Go service that signs webhooks"
 ```
 
 ## Steps
 
-1. Treat the user's task text as `raw_input`.
-2. When the user includes `--greenfield`, set `mode_flag = "--greenfield"` and treat whatever text remains as `raw_input`.
-3. Invoke the `sdlc-pipeline` skill with:
+1. Take the user's own words as `raw_input` — normalize whitespace, not meaning.
+2. If `--greenfield` appears, set `mode_flag` to it and treat the rest as
+   `raw_input`.
+3. Call the `sdlc-pipeline` skill:
 
    ```json
    {
      "mode": "hitl",
-     "raw_input": "<as captured>",
-     "mode_flag": "<--greenfield or none>",
+     "raw_input": "<the user's request, verbatim>",
+     "mode_flag": "<--greenfield, or omitted>",
      "escalate_on": ["security", "breaking-change"]
    }
    ```
 
-4. From there, the pipeline takes over starting at Phase 0. Every judgment gate goes through `decision-router` in HITL mode and prompts the user for approval.
-5. Once delegated, this skill performs no further SDLC phase work — any artifact creation or mutation from this point belongs to `sdlc-pipeline` or a downstream phase skill.
+4. Hand over. The pipeline picks up at Phase 0, and because the mode is `hitl`,
+   every judgment gate reaches the user through `decision-router` instead of
+   being decided for them.
+5. Do nothing further. Any later artifact belongs to `sdlc-pipeline` or to one
+   of the phase skills it calls.
 
 ## Preconditions
 
-Full SDLC runs need repo-guides output already in place. If any required `.agentic/guides/` files are missing, `sdlc-pipeline` halts and points the user to the `repo-guides` skill.
+A full run reads a repo-guides baseline. When `.agentic/guides/` is missing
+files, `sdlc-pipeline` halts and points at the `repo-guides` skill — this skill
+does not pre-check that.
 
-Before reaching any implementation-capable phase, the delegated `sdlc-pipeline` run must clear the branch guard: current branch, configured base branch, `git status --porcelain`, upstream state, target branch existence, dirty-state resolution, and latest-base handling.
+Before the pipeline reaches a phase that can write code, it must clear the
+branch guard: current branch, configured base, `git status --porcelain`,
+upstream state, whether the target branch exists, how to resolve a dirty tree,
+and whether the base is current.
 
 ## Notes
 
-- Checking `superpowers` itself isn't this skill's job — `sdlc-pipeline` Phase 0 handles that.
-- There's no core workflow logic living here; it only normalizes user intent and hands off to `sdlc-pipeline`.
-- A compliant `sdlc-start` response writes no files of its own — it either passes normalized inputs to `sdlc-pipeline` or reports that delegation is blocked.
+- Verifying `superpowers` is Phase 0's job, not this skill's.
+- There is no workflow logic here to maintain. Read intent, delegate, stop.
+- The test of a correct response: it wrote nothing. Either the normalized inputs
+  reached `sdlc-pipeline`, or the reply explains that delegation is blocked.

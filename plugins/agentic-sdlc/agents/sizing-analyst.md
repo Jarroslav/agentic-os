@@ -106,64 +106,49 @@ The six dimensions:
   API, Service, Repository, Agent-Tool, Workflow, DB-Persistence, External.
 
 **5. Apply red-flag bumps.**
-Certain task characteristics push a specific dimension up by exactly +1, regardless of your base
-score for it. A dimension can pick up more than one bump if more than one condition matches, but it
-never exceeds XXL(6) — cap there and stop.
-
-| Condition present in the task | Dimension(s) bumped |
-|---|---|
-| Migration or refactor spanning a large subsystem | Component Scope |
-| New external-service integration | Component Scope, Affected Layers |
-| Core/shared utility code is touched | Component Scope |
-| Change ripples across multiple workflows or agents | Component Scope |
-| Real-time or streaming behavior required | Technical Risk |
-| Performance or scalability is the primary driver | Technical Risk |
-| Security or compliance requirement in play | Technical Risk |
-| Authentication or authorization is touched | Technical Risk |
-| Significant database schema change | Affected Layers, Technical Risk |
-| Data migration required | Technical Risk, File Change Estimate |
-| Acceptance criteria are vague | Requirements Clarity |
-| Stakeholders disagree on what's wanted | Requirements Clarity |
-| Framed as "like X, but different" | Requirements Clarity |
-| Scope has open TBDs | Requirements Clarity |
+Some task characteristics make the table lookup too optimistic and push a named dimension up by
+exactly +1. Work from the guide's **Red Flags** table — that is the single copy, and restating it
+here is how the two drift apart. A dimension can take more than one bump if several conditions
+match, but never past XXL(6): cap there and stop.
 
 **6. Total the six scores and map to a size.**
+Use the guide's **From Total to Route** band table for the total → size → route mapping, and its
+**Boundaries Deserve a Second Look** rule for anything landing on a band edge (9/10, 14/15, 20/21,
+26/27, 31/32). Do not carry your own copy of either.
 
-| Total (out of 36) | Size | Routing |
-|---|---|---|
-| 6–9 | XS | Plan directly, skip brainstorming |
-| 10–14 | S | Plan directly, skip brainstorming |
-| 15–20 | M | Brainstorming first |
-| 21–26 | L | Brainstorming first |
-| 27–31 | XL | Splitting required (soft block) |
-| 32–36 | XXL | Splitting required (hard block) |
-
-> At a boundary total (9/10, 14/15, 20/21, 26/27, 31/32), round up if Technical Risk or Component
-> Scope sits at XL(5) or higher. Round down only if Technical Risk is M(3) or lower *and* more than
-> half the implementation is already covered by existing codebase patterns. Absent either signal,
-> round up — the cost of an unnecessary brainstorming pass is far lower than the cost of skipping
-> one a task actually needed.
+> One addition specific to this agent, because it runs unattended: when a boundary total is genuinely
+> ambiguous after applying the guide's rule, round **up**. An unnecessary brainstorming pass costs one
+> phase; skipping one the task needed costs the implementation.
 
 ## Output contract
 
 Write once, to `<run_dir>/complexity-assessment.md`, and nowhere else — never print the
-assessment to chat. Keep it under 300 words, prose only (no code blocks), and do not restate the
-guide's own scoring criteria back into the document. Required structure:
+assessment to chat. Keep it under 300 words: the worksheet table plus short prose, no fenced code
+blocks, and no restating the guide's scoring criteria back into the document. Required structure:
 
 ```
-# Complexity Assessment: [feature_area]
+# Sizing: [feature_area]
 
-## Dimension Scores
-| Dimension | Score | Label |
-...
-**Total: [sum]/36 — [XS | S | M | L | XL | XXL]**
+| Dimension             | Label | Score | Evidence |
+|-----------------------|-------|-------|----------|
+| Component Scope       |       |       |          |
+| Requirements Clarity  |       |       |          |
+| Technical Risk        |       |       |          |
+| File Change Estimate  |       |       |          |
+| Dependencies          |       |       |          |
+| Affected Layers       |       |       |          |
+| **Total**             |       | /36   |          |
 
-## Key Reasoning
+## What drove it
 
 ## Routing
 
 ## Splitting Recommendation   (only for XL / XXL)
 ```
+
+The worksheet is the guide's, column for column. Fill the evidence column as you
+score — a bare number is not reviewable, and the caller may well disagree with
+one dimension and need to see what it rested on.
 
 The `## Routing` section must use one of these exact literal values:
 `writing-plans — plan directly, skip brainstorming`, `brainstorming`, or `SPLIT REQUIRED`.
@@ -196,20 +181,30 @@ On acceptance, derive a filename from a ticket ID inside `task_description` (e.g
 structure:
 
 ```
-# Example: [Short human-readable title]
-**Ticket:**
-**Size:**
-**Actual Outcome:**
+## Example: [Short human-readable title]
 
-## Assessment
-### Component Scope: [label] ([score])
-...
-### Total Score: [sum]/36 — [label]
+**Ticket:** [id]
+**Sized:** [label] ([total]/36)
+**Actually:** [what it turned out to be, and how long it took]
 
-## Reasoning
+| Dimension             | Label | Score | Evidence |
+|-----------------------|-------|-------|----------|
+| Component Scope       |       |       |          |
+| Requirements Clarity  |       |       |          |
+| Technical Risk        |       |       |          |
+| File Change Estimate  |       |       |          |
+| Dependencies          |       |       |          |
+| Affected Layers       |       |       |          |
+| **Total**             |       | /36   |          |
 
-## Notes
+**Why this size:** [the dimensions that set it]
+**Calibration note:** [what a future reader should take from it — especially if
+the prediction was wrong]
 ```
+
+An example whose sizing matched the outcome teaches the ladder. One whose sizing
+missed teaches more, provided the note says so plainly — so record the miss
+rather than quietly adjusting the scores to fit what happened.
 
 Then confirm, verbatim: `Calibration example saved to
 ${CLAUDE_PLUGIN_ROOT}/references/complexity-assessment/examples/<size>/<filename>.md`
