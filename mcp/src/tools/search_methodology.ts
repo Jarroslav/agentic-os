@@ -6,17 +6,46 @@ import { pathToUri } from '../resources.js';
 const PLUGINS = ['agentic-os', 'agentic-sdlc', 'agentic-qe'] as const;
 
 const inputShape = {
-  query: z.string().min(1).describe('Words to search for, e.g. "write scope enforcement".'),
-  plugin: z.enum(PLUGINS).optional().describe('Restrict results to one plugin.'),
+  query: z.string().min(1).describe(
+    'Search terms, e.g. "write scope enforcement". Every term must appear in ' +
+    'a document for it to match, so two or three distinctive words find more ' +
+    'than a full sentence does. Runs of fewer than two alphanumeric ' +
+    'characters are ignored, and punctuation is not searchable.',
+  ),
+  plugin: z.enum(PLUGINS).optional().describe(
+    'Restrict results to one plugin: agentic-os (governance), agentic-sdlc ' +
+    '(the SDLC pipeline), or agentic-qe (QE blueprints). Omit to search all ' +
+    'three, which is usually right unless you already know the area.',
+  ),
   limit: z.number().int().min(1).max(25).default(8)
-    .describe('Maximum results to return.'),
+    .describe('Maximum number of results, best-scoring first (1-25).'),
 };
 
 const outputShape = {
   results: z.array(z.object({
-    uri: z.string(), title: z.string(), plugin: z.string(),
-    score: z.number(), snippet: z.string(),
-  })),
+    uri: z.string().describe(
+      'Pass this to get_document to read the document in full.',
+    ),
+    title: z.string().describe(
+      "The document's first markdown heading, or its bundle path if it has none.",
+    ),
+    plugin: z.string().describe(
+      'Which plugin owns the document: agentic-os, agentic-sdlc, or agentic-qe.',
+    ),
+    score: z.number().describe(
+      'Relevance: summed term frequency plus a boost for terms matching the ' +
+      'title. Meaningful only for ranking within one response — it is not a ' +
+      'fixed scale, so do not compare it across queries or threshold on it.',
+    ),
+    snippet: z.string().describe(
+      'A short extract of the document around its first match, for judging ' +
+      'relevance. Truncated and not valid markdown — never treat it as the ' +
+      "document's content; fetch the uri for that.",
+    ),
+  })).describe(
+    'Matching documents, best first. Empty when nothing matched — a normal ' +
+    'result, not an error; broaden the query or drop the plugin filter.',
+  ),
 };
 
 const tokenize = (s: string): string[] =>
@@ -102,12 +131,23 @@ export function registerSearchMethodology(server: McpServer, content: Content): 
     {
       title: 'Search agentic-os methodology',
       description:
-        'Search the agentic-os governance, agentic-sdlc pipeline, and agentic-qe ' +
-        'blueprint documentation. Use this first to locate the right document, ' +
-        'then fetch it with get_document.',
+        'Full-text search over the agentic-os governance, agentic-sdlc ' +
+        'pipeline, and agentic-qe blueprint documentation. Use it first ' +
+        'whenever you do not already hold a document URI, then pass a result ' +
+        'uri to get_document for the full text. Matching is AND, not OR — ' +
+        'every term must appear — and terms match at word starts, so "gate" ' +
+        'finds "gates" and "gating" but "ate" finds neither. It searches ' +
+        'markdown only: role presets are JSON and never appear here, so use ' +
+        'list_presets for those. Read-only and idempotent; searches the ' +
+        "server's own bundled corpus, never the network or your repository.",
       inputSchema: inputShape,
       outputSchema: outputShape,
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        idempotentHint: true,
+        destructiveHint: false,
+      },
     },
     async ({ query, plugin, limit }) => {
       const terms = tokenize(query).map(wordStartRegExp);

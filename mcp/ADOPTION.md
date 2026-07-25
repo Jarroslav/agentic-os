@@ -28,7 +28,7 @@ because each later one is easier once the earlier ones exist:
 
 ---
 
-## 1. Glama — done
+## 1. Glama — listed; scoring needs a release
 
 **Listed:** <https://glama.ai/mcp/servers/Jarroslav/agentic-os> (submitted and
 approved 2026-07-23). Glama clones and continuously syncs the repo from here on,
@@ -43,13 +43,63 @@ Notes for anyone repeating this, or listing a future server:
 - Submissions are **human-reviewed** before becoming publicly visible; the
   listing URL 404s until approval. Check your Glama account for the status.
 - The listing slug has **no `@`**: `/mcp/servers/Jarroslav/agentic-os`.
-- No `Dockerfile` was needed. Glama's build step wants one, either in the repo
-  or inferred, and it inferred this Node package fine despite the server living
-  in a `mcp/` subdirectory of a monorepo. If a future listing's build does fail,
-  a minimal `Dockerfile` in `mcp/` is the fix — but do not add one
-  speculatively.
 - The score badge is live and is on `mcp/README.md`:
   `https://glama.ai/mcp/servers/Jarroslav/agentic-os/badges/score.svg`
+
+### Being listed is not being scored
+
+Getting approved does **not** produce a quality score. Glama's overall score is
+**70% Tool Definition Quality + 30% Server Coherence**, and *both* are computed
+by actually building the server and introspecting it over stdio. Until a **Glama
+release** exists, both are unscored, the listing's Schema tab reads "No tools /
+No prompts / No resources", and the badge shows a placeholder grade — even
+though the same server publishes 7 tools, 6 prompts, and 31 resources to every
+other host.
+
+The earlier note here claimed no `Dockerfile` was needed. That was true only of
+getting *listed*; it is false for getting *scored*, which is why one now exists.
+
+**In-repo, done:**
+
+- **`/Dockerfile`** — a two-stage build of the server. It must run with the
+  **repository root** as build context, not `mcp/`: `build-content.mjs` needs
+  `plugins/**`, the root `LICENSE` and `NOTICE`, and a real `.git` directory
+  plus the `git` binary (it enumerates bundled content with `git ls-files`).
+  Verified end-to-end from a clean clone: the image builds, and a container
+  answers `initialize` / `tools/list` / `prompts/list` / `resources/list` with
+  all 7 tools, 6 prompts, and 31 resources.
+- **`/.dockerignore`** — note it deliberately does *not* exclude `.git`, per
+  the point above; it does exclude `.claude/worktrees`, which would otherwise
+  send a second full checkout as build context.
+- **`/glama.json`** — `{"$schema": …, "maintainers": ["Jarroslav"]}`, the one
+  required field of <https://glama.ai/mcp/schemas/server.json>. Glama detects
+  it within minutes of the push.
+- **Tool definitions hardened against the six TDQS dimensions** (purpose
+  clarity, usage guidelines, behavioural transparency, parameter semantics,
+  conciseness, contextual completeness). Every tool now states when to use it
+  and what it does *not* do, carries `idempotentHint`/`destructiveHint`
+  alongside `readOnlyHint`, and has a `description` on **every** input *and*
+  output field. This matters disproportionately because the server-level score
+  is *60% mean + 40% minimum* across tools — one thin description caps the
+  whole grade, so the weakest tool is the one worth fixing first.
+
+**Only you can do these** — they need your Glama login, and no API exists for
+them:
+
+1. **Claim the server**, if it is not already claimed.
+2. **Dockerfile admin page** → point the build spec at `/Dockerfile` with the
+   repo root as context → **Deploy**.
+3. Once the build test passes → **Make Release**, enter a version (match the
+   npm version, `0.1.1`), publish. This is what unlocks Tool Definition
+   Quality and Server Coherence.
+4. **Profile completion** — fill in the remaining profile fields.
+5. **License** shows `F` even though the repo is Apache-2.0 and GitHub's API
+   reports `apache-2.0` correctly, with `LICENSE` present at both the repo root
+   and in `mcp/`. That is a stale scan, not a missing file: **trigger a rescan**
+   from the server admin page.
+6. **Related servers** — add a few from the admin page.
+7. **Recent usage** — zero by design until people call it; their **Try in
+   Browser** feature seeds the first data point.
 
 ## 2. mcp.so
 

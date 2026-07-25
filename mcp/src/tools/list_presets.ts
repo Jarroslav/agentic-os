@@ -6,15 +6,44 @@ import { PRESET_PATH } from '../paths.js';
 
 const outputShape = {
   presets: z.array(z.object({
-    name: z.string(),
-    description: z.string(),
-    uri: z.string(),
-    hitl_default: z.string(),
-    orchestration: z.string(),
-    template_count: z.number(),
-    generated_count: z.number(),
-    sdlc_skills: z.array(z.string()),
-  })),
+    name: z.string().describe(
+      'The preset\'s own declared name. This is the identifier to pass to ' +
+      "plan_install's roles argument.",
+    ),
+    description: z.string().describe(
+      'One-line statement of the role this preset equips, from the preset file.',
+    ),
+    uri: z.string().describe(
+      'Read this with get_document for the preset\'s full JSON, including the ' +
+      'template and capability lists this summary only counts.',
+    ),
+    hitl_default: z.string().describe(
+      'Default human-in-the-loop strictness: "strict", "gated-autonomous", or ' +
+      '"autonomous". Composing roles takes the strictest of the set, so ' +
+      'adding a role can only tighten this, never loosen it.',
+    ),
+    orchestration: z.string().describe(
+      'The orchestration style this role installs by default. Composing roles ' +
+      'installs every style in the union, not just one.',
+    ),
+    template_count: z.number().describe(
+      'How many managed template files an install of this role scaffolds. A ' +
+      'size indicator only — call plan_install for the actual file list.',
+    ),
+    generated_count: z.number().describe(
+      'How many stack-specific agent contracts this role can generate. These ' +
+      'are candidates filtered against the target stack at install time, so ' +
+      'fewer than this may actually be written.',
+    ),
+    sdlc_skills: z.array(z.string()).describe(
+      'agentic-sdlc pipeline skills this role enables. Empty for roles that ' +
+      'do not take part in the SDLC flow.',
+    ),
+  })).describe(
+    'Every role preset in the bundle, ordered by role name. Never empty in a ' +
+    'healthy install — an empty list means the preset directory failed to ' +
+    'load and is returned as an error instead.',
+  ),
 };
 
 /** The preset JSON's own shape. Parsed defensively: a preset that gains a key
@@ -35,11 +64,21 @@ export function registerListPresets(server: McpServer, content: Content): void {
     {
       title: 'List agentic-os role presets',
       description:
-        'List the agentic-os role presets, each with its HITL default, ' +
-        'orchestration mode, and SDLC skills. Read a preset in full via its uri.',
+        'List the agentic-os role presets — the named role bundles ' +
+        '(developer, qa, architect, devops, and so on) that decide which ' +
+        'governance files an install scaffolds and how much human approval it ' +
+        'demands. Use it to discover the valid role names before calling ' +
+        'plan_install, or to compare what roles differ on; each entry carries ' +
+        'a uri you can read for the preset in full. Takes no arguments and ' +
+        'always returns every preset. Read-only and idempotent.',
       inputSchema: {},
       outputSchema: outputShape,
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        idempotentHint: true,
+        destructiveHint: false,
+      },
     },
     async () => {
       // Derived from the build-time index rather than a hardcoded list, so a

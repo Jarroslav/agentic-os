@@ -301,7 +301,17 @@ export function registerRunDoctor(server: McpServer): void {
         'the result back in.',
       inputSchema: inputShape,
       outputSchema: outputShape,
-      annotations: { readOnlyHint: true, openWorldHint: false },
+      // readOnlyHint/destructiveHint describe what THIS tool does: inspect
+      // files and return a verdict. They do not describe what happens if the
+      // host chooses to execute the commands in host_must_run, two sets of
+      // which write and then delete a probe file — the tool description and
+      // each entry's `why` field carry that, since an annotation cannot.
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        idempotentHint: true,
+        destructiveHint: false,
+      },
     },
     async ({ target_path }) => {
       let target: Target;

@@ -1,0 +1,35 @@
+# The Docker build context is the repository root — see the Dockerfile header
+# for why it cannot be scoped to mcp/.
+#
+# .git is deliberately absent from this file. mcp/scripts/build-content.mjs
+# enumerates the content it bundles with `git ls-files`, so excluding .git
+# would break the build, not just shrink the context.
+
+# Dependency trees and build output are regenerated inside the image from
+# package-lock.json and plugins/, so shipping the host's copies would only
+# risk a stale or platform-wrong artifact leaking in.
+**/node_modules
+mcp/dist
+
+# Generated at build time by build-content.mjs's copyRootLegalFile() from the
+# root LICENSE/NOTICE, and git-ignored for that reason. The root originals
+# are copied in by the Dockerfile; these would be overwritten anyway.
+mcp/LICENSE
+mcp/NOTICE
+
+# Local tooling debris and caches. `git ls-files` already ignores untracked
+# files when indexing content, so none of this could reach the bundle — but
+# keeping it out of the context makes the build measurably faster.
+**/__pycache__
+**/.pytest_cache
+**/.venv
+**/.DS_Store
+**/*.pyc
+
+# Agent scratch space, including nested git worktrees that would otherwise
+# send an entire second checkout of this repo as build context.
+.claude/worktrees
+
+# Packaged bundles and archives — build products, never build inputs.
+*.mcpb
+*.tgz
