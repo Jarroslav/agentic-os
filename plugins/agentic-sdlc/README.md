@@ -305,9 +305,10 @@ Run/task-dir files worth knowing by name: `meta.json`, `requirements.md`, `compl
   Phase-0 memory load.
 - `sdlc-status` currently covers heavy-pipeline runs only — task/light-flow runs aren't listed
   or resumable through it yet.
-- No per-run HTML report generation yet — `sdlc.html` is a static, hand-maintained reference
-  covering the architecture, both flows, the gate state machine, the TDD evidence cycle, and
-  resume-safety; it is not generated per run.
+- No per-run HTML report generation yet — `sdlc.html` is a static, hand-maintained map of the
+  package: the six primitive kinds, the full inventory with a source viewer per entry, the ten
+  steps of a heavy run, how each gate clears, and six diagrams laid out from the same node list
+  the inventory uses. It describes the package, not any particular run.
 - Git worktrees must never be created for this plugin's branch flows — one working tree, one
   run.
 
