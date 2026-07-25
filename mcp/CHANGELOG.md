@@ -8,6 +8,19 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.1]
+
+### Changed
+- **Served content refreshed.** `dist/content/` now matches the plugins as they
+  stand: `agentic-os` 0.2.0 (adoption of an existing `.agents` fleet, native
+  Codex packaging), the `agentic-sdlc` project-orchestration boundary, and the
+  `agentic-qe` eval-runner report field naming. 327 files indexed.
+
+  0.2.0 shipped before those landed, so `agentic-os://file/...` reads against it
+  return the earlier text for the affected paths. Prefer 0.2.1.
+
+## [0.2.0]
+
 ### Changed
 - **Served content refreshed for `agentic-sdlc` 0.2.0.** The bundled
   `dist/content/` now carries the rebuilt `sdlc.html`, the replaced complexity
