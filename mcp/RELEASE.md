@@ -108,11 +108,24 @@ workflow's own GitHub Actions OIDC token — no PAT, no additional secret.
    you ever reach the tag.
 2. **Move `mcp/CHANGELOG.md`'s `[Unreleased]` entries under the new version
    heading**, dated, following Keep a Changelog.
-3. **Open a PR, get it through the `gate` and `mcp` CI checks and review, and
+3. **If `plugins/**` changed since the last release, refresh the originality
+   attestation** — the server bundles that content into `dist/content/`, so a
+   release publishes it:
+
+   ```bash
+   cd .. && python3 tests/lib/check-provenance.py --require-store
+   python3 tests/lib/check-provenance.py --attest
+   git add tests/lib/originality-attestation.json && cd mcp
+   ```
+
+   Needs a maintainer machine with the local fingerprint store; see
+   `CONTRIBUTING.md` § Releasing and `tests/README.md` § Originality check.
+   `release.yml` re-runs the repo gate, which includes `--verify-attestation`.
+4. **Open a PR, get it through the `gate` and `mcp` CI checks and review, and
    merge to `main`** — the normal workflow described in `CONTRIBUTING.md`.
    Do this *before* tagging: the tag must point at a commit that has already
    passed CI once as a PR, not at unreviewed work.
-4. **Tag the merge commit and push the tag:**
+5. **Tag the merge commit and push the tag:**
 
    ```bash
    git checkout main && git pull
@@ -129,7 +142,7 @@ workflow's own GitHub Actions OIDC token — no PAT, no additional secret.
    the version to propagate on `registry.npmjs.org`, then — only if all of
    that succeeded — publishes `server.json` to the MCP Registry, builds the
    `.mcpb` bundle, and attaches it to a GitHub release for the tag.
-5. **Watch the `release` workflow run to completion** in the Actions tab.
+6. **Watch the `release` workflow run to completion** in the Actions tab.
 
    **If it fails partway through, read this before doing anything by hand.**
    Once "Publish to npm" has gone green, npm is done — irreversibly (see
