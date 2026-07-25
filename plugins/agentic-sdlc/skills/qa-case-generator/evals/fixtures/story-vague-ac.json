@@ -1,0 +1,23 @@
+{
+  "ticket_id": "PROJ-231",
+  "ticket_url": "https://jira.example.com/browse/PROJ-231",
+  "title": "Make the dashboard feel snappier",
+  "description": "Users keep saying the reporting dashboard is sluggish. We should tune it up so it feels responsive and modern. Nice to have this before the next demo.",
+  "acceptance_criteria": [
+    "AC1: The dashboard should be fast.",
+    "AC2: It should look better than it does now."
+  ],
+  "priority": "High",
+  "issue_type": "Task",
+  "labels": ["dashboard", "performance"],
+  "comments": [
+    {
+      "author": "rita.okoro@example.com",
+      "created_at": "2026-05-19T09:12:00Z",
+      "body": "No numbers attached yet — can we get a target load time from the product side before QA touches this?"
+    }
+  ],
+  "subtasks": [],
+  "linked_items": [],
+  "attachments": []
+}

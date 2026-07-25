@@ -1,0 +1,229 @@
+<!--
+GENERATION INSTRUCTIONS:
+Fill every [bracketed] slot from the host repo. Detect, never invent. Where a fact
+is absent, write N/A — do not guess. Follow these steps in order:
+
+  1. Identify the test framework from dependency manifests and config files
+     (package.json, pyproject.toml, Gemfile, jest.config.*, vitest.config.*, pytest.ini).
+  2. Walk the test directory tree; record the root dir and the file/function naming pattern.
+  3. Pull fixture and factory patterns from setup files (conftest.py, setup.ts, factories/).
+  4. Read a handful of existing tests; capture how they mock and where mocks are declared.
+  5. Locate the test-database configuration (separate DB, transactions, in-memory, or mocked).
+  6. Extract run commands verbatim from package.json scripts, Makefile, or task runner config.
+  7. Drop any section whose feature the repo does not use (no async -> no async section, etc.).
+
+Every code block MUST carry a "// Source: [file:lines]" marker so each snippet is traceable.
+Conditional sections are marked "(if present)" — omit them entirely when detection fails.
+
+Output: concise, no more than 300 lines
+-->
+
+---
+
+# Testing Patterns — [Project Name]
+
+> Quick-lookup reference for writing and running tests that match this repo's existing
+> conventions. Everything below was detected from real project files — mirror it, do not
+> reinvent it.
+
+| Field | Value |
+|---|---|
+| Framework | [Detect: Jest \| Pytest \| Mocha \| Vitest \| RSpec \| etc.] |
+| Coverage tool | [Detect: coverage.py \| nyc \| c8 \| etc.] |
+| Test root | [Detect: `tests/` \| `__tests__/` \| `spec/`] |
+| Config file | [jest.config / .coveragerc / nyc config] |
+
+## Layout
+
+```
+[detected pattern]   # test directory tree — unit / integration / e2e subdirs (integration + e2e listed only if present)
+```
+
+## Naming
+
+| Kind | Convention | Example |
+|---|---|---|
+| Test file | [detected pattern] | [actual example] |
+| Test function | [detected pattern] | [actual example] |
+| Fixture file | [detected pattern] | [actual example] |
+
+## Running Tests
+
+> Copy commands exactly. Use `N/A` for any row this repo has no script for — never fabricate one.
+
+| Goal | Command |
+|---|---|
+| All tests | [exact command] |
+| Unit only | [command or N/A] |
+| Integration only | [command or N/A] |
+| Single file | [exact command] |
+| Single test | [exact command] |
+| Watch mode | [command or N/A] |
+| With coverage | [exact command] |
+| Verbose / debug | [command or N/A] |
+
+## Anatomy of a Unit Test
+
+> Show one real, representative test. Annotate the arrange / act / assert boundaries.
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+## Fixtures
+
+Definition:
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+Usage:
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+| Fixture | Purpose | Location |
+|---|---|---|
+| [detected pattern] | [detected pattern] | [file:line] |
+| [detected pattern] | [detected pattern] | [file:line] |
+| [detected pattern] | [detected pattern] | [file:line] |
+
+## Mocking
+
+Syntax used here:
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+Scope policy — what to mock at each layer:
+
+| Layer | Unit | Integration |
+|---|---|---|
+| External APIs | Always | Usually |
+| Database | Usually | Never — use a test DB |
+| Other services | Yes | Depends |
+| File system | Yes | Depends |
+| Time / date | Only when needed | Only when needed |
+
+Mocks already in this codebase:
+
+| Target | How mocked | Location |
+|---|---|---|
+| [detected pattern] | [detected pattern] | [file:line] |
+| [detected pattern] | [detected pattern] | [file:line] |
+| [detected pattern] | [detected pattern] | [file:line] |
+
+## Test Database
+
+- Strategy: [separate DB / transactions / in-memory / mocked]
+- Isolation: [detected pattern] <!-- how each test starts clean: rollback per test, truncate, fresh schema -->
+- Seeding: [detected pattern] <!-- where seed data comes from and when it loads -->
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+## API Testing (if present)
+
+> Include this section only for web apps that expose HTTP endpoints.
+
+Client setup:
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+Example request:
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+## Async Tests (if present)
+
+> Include only if the codebase has async code under test.
+
+- Pattern: [async/await | done callback | returns promise]
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+## Parameterized / Table-Driven Tests (if present)
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+## Coverage
+
+| Setting | Value |
+|---|---|
+| Threshold | [detected pattern] |
+| Include paths | [detected pattern] |
+| Exclude paths | [detected pattern] |
+
+Report:
+
+```
+[exact command]
+```
+
+## Environment & Global Hooks
+
+- Env file: [.env.test]
+- Test env vars: [detected pattern]
+- Global setup / teardown: [detected pattern] <!-- e.g. conftest.py, setup.ts -->
+
+| Hook | Symbol | Used for |
+|---|---|---|
+| Per-test reset | [beforeEach/setUp] | [detected pattern] |
+| Resource cleanup | [afterAll/teardown] | [detected pattern] |
+| Skip a test | [test.skip/xtest] | [detected pattern] |
+| Focus one test | [test.only/fit] | [detected pattern] |
+
+## Adding a New Test
+
+1. Create the file at the path the naming convention dictates.
+2. Import the shared test utilities and helpers this repo uses.
+3. Set up the fixtures the case needs.
+4. Follow the file and function naming pattern above.
+5. Run the single-test command to confirm it passes before expanding.
+
+Starter:
+
+```[lang]
+// Source: [file:lines]
+[actual example]
+```
+
+## Troubleshooting
+
+| Symptom | Likely cause / fix |
+|---|---|
+| Tests interfere across runs | Check isolation; add cleanup in teardown |
+| Async test times out | Raise the timeout, or confirm you awaited the call |
+| Mock has no effect | Verify the mock path matches the import path |
+| DB state leaks between tests | Check that the transaction rolls back |
+
+## Quick Reference
+
+| What | Where |
+|---|---|
+| Test config | [detected pattern] |
+| Fixtures | [detected pattern] |
+| Factories | [detected pattern] |
+| Test utilities | [detected pattern] |
+| Coverage config | [detected pattern] |

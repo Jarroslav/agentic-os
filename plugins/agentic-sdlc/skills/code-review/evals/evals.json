@@ -1,0 +1,125 @@
+{
+  "skill_name": "code-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review the diff on my current branch against the merge base before I open an MR.",
+      "expected_output": "The wrapper resolves the branch-vs-merge-base scope, materializes the tracked diff to <run_dir>/code-review.diff with the package-lock exclusion applied, invokes code-review-orchestrator via the Skill tool inline with gate_id=code-review.final plus a diff ArtifactRef and a writable run_dir, reads <run_dir>/code-review-final.json back, and presents the returned decision, confidence, and rationale. It does not append untracked files in the branch scope and it edits no source.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "diff-materialized-at-canonical-path",
+          "description": "The branch-vs-merge-base diff is written to the literal path <run_dir>/code-review.diff before any downstream call, with the package-lock exclusion applied."
+        },
+        {
+          "name": "orchestrator-skill-inline-final-gate",
+          "description": "code-review-orchestrator is invoked via the Skill tool inline (never as an Agent subagent), receiving gate_id=code-review.final, a diff ArtifactRef pointing at the readable diff, and a writable run_dir."
+        },
+        {
+          "name": "verdict-round-tripped-from-final-json",
+          "description": "The verdict is read back from <run_dir>/code-review-final.json rather than expected inline, and its decision, confidence, and rationale are presented."
+        },
+        {
+          "name": "branch-scope-no-untracked-vacuum",
+          "description": "Untracked files are not enumerated or appended in the branch-vs-merge-base scope."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Here's the PR: https://git.example.com/acme/checkout/-/merge_requests/482 — look it over before I approve.",
+      "expected_output": "No local git scope is named, so the wrapper does not silently default: it presents the scope choices (branch-vs-merge-base, staged, working tree, explicit range/paths) and waits. Once a range is fixed it materializes the diff to <run_dir>/code-review.diff, invokes code-review-orchestrator inline with gate_id=code-review.final, reads <run_dir>/code-review-final.json, and presents decision, confidence, and rationale. It never applies fixes or edits source from the PR.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "url-target-no-silent-scope-default",
+          "description": "A PR URL with no local scope makes the wrapper present scope options and wait; it never picks a scope on its own."
+        },
+        {
+          "name": "explicit-range-pick-collects-value",
+          "description": "If the user selects the Explicit range option, the wrapper follows up to collect the actual range before materializing the diff."
+        },
+        {
+          "name": "pr-review-present-only",
+          "description": "The wrapper only presents the returned verdict; it applies no suggested fix and modifies no source file."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Security review the auth changes: git diff main...HEAD -- src/auth",
+      "expected_output": "The path-only portion does not skip scope resolution: the wrapper resolves the main...HEAD range and applies src/auth as a -- <paths> filter, materializes the filtered diff to <run_dir>/code-review.diff, and invokes code-review-orchestrator inline with gate_id=code-review.final so the orchestrator can fan out its review-lens subagents. The returned request-changes verdict carries risk_flags=[security]; the wrapper surfaces the security flag across the business_review and standards_review lenses, renders the critical finding's id, file:line, problem, impact, and recommendation, and presents decision, confidence, and rationale without editing source.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "path-arg-becomes-filter-not-scope-skip",
+          "description": "The src/auth path is applied as a -- <paths> filter on the resolved range rather than skipping scope resolution or running as a standalone diff."
+        },
+        {
+          "name": "security-flag-surfaced-across-lenses",
+          "description": "risk_flags=[security] from the verdict is surfaced alongside both the business_review and standards_review lens output, not confined to one lens."
+        },
+        {
+          "name": "inline-invocation-enables-lens-fanout",
+          "description": "code-review-orchestrator is invoked inline via the Skill tool precisely so it can fan out its own review-lens subagents, not flattened into a single Agent call."
+        },
+        {
+          "name": "critical-finding-fields-rendered",
+          "description": "The critical security finding is rendered with its id, file:line, problem, impact, and recommendation."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Review my working tree and tell me what came back.",
+      "expected_output": "For the working-tree scope the wrapper materializes the tracked diff AND appends untracked files even when the tracked diff is non-empty. Untracked enumeration uses git status --porcelain=v1 -z --untracked-files=all parsed on the NUL separator, expands new directories to every nested file, honors any path filter, and excludes run_dir so the freshly written code-review.diff is not counted. Untracked content is emitted via git diff --no-index /dev/null <file>, treating exit code 1 as normal output and running no git add. The returned request-changes verdict groups findings critical-before-major and renders each finding's id, file:line, problem, impact, and recommendation.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "working-tree-appends-untracked-unconditionally",
+          "description": "Untracked files are appended in the working-tree scope even when the tracked diff is non-empty; inclusion is not gated on an empty tracked diff."
+        },
+        {
+          "name": "untracked-enum-nul-safe-recursive",
+          "description": "Untracked enumeration parses git status --porcelain=v1 -z --untracked-files=all on NUL so spaced/unicode names survive, and expands new dirs to every nested file rather than a collapsed '?? dir/' entry."
+        },
+        {
+          "name": "untracked-scan-excludes-run-dir",
+          "description": "The untracked scan excludes run_dir so the freshly materialized code-review.diff is never counted as a user change."
+        },
+        {
+          "name": "read-only-untracked-no-git-add",
+          "description": "Untracked files are emitted via git diff --no-index /dev/null <file> with exit code 1 treated as normal output; no git add or git add -N runs."
+        },
+        {
+          "name": "severity-grouped-finding-fields",
+          "description": "request-changes findings are grouped critical-before-major, each rendering id, file:line, problem, impact, and recommendation."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The review result looks empty — did it reject my change or did it fail?",
+      "expected_output": "The wrapper distinguishes two look-alike states. A safe-fail verdict is valid, intentional JSON with decision=request-changes, confidence=low, and ALL of risk_flags, business_review, standards_review, and findings empty: it is reported as 'review could not run' with the likely reason and remedy, NOT as a real rejection. A missing, truncated, or unparseable verdict file — or valid JSON missing a render-critical key (decision, confidence, rationale, risk_flags, business_review, standards_review, findings) or with a wrong type — is reported as 'review did not complete', the wrapper stops, and it improvises nothing. In no-spec mode, confidence=low is expected and explained as not a code-defect signal.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "safe-fail-not-a-rejection",
+          "description": "request-changes + confidence=low + all four arrays empty is reported as 'review could not run' with likely reason and remedy, never as a genuine rejection."
+        },
+        {
+          "name": "incomplete-verdict-stops-no-improvise",
+          "description": "A missing/truncated/unparseable verdict, or valid JSON missing a render-critical key or with a wrong type, is reported as 'review did not complete' and the wrapper stops without inventing a verdict."
+        },
+        {
+          "name": "safe-fail-distinct-from-incomplete",
+          "description": "The intentional safe-fail JSON (present-but-empty arrays) is distinguished from an absent/invalid verdict file, not conflated with it."
+        },
+        {
+          "name": "no-spec-low-confidence-explained",
+          "description": "In no-spec mode, confidence=low is treated as expected and explained as not a code-defect signal."
+        }
+      ]
+    }
+  ]
+}

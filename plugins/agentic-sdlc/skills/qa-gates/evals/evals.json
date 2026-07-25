@@ -1,0 +1,57 @@
+{
+  "skill_name": "qa-gates",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run the quality gates on this frontend service. It's a Node project whose package.json exposes lint, build, test, and test:ui scripts, and there's a pnpm-lock.yaml checked in at the root.",
+      "expected_output": "Detects pnpm from the pnpm-lock.yaml lockfile, builds a gate plan covering lint, build, unit, affected, and the conditional UI gate (triggered by the test:ui script), executes the gates in sequence, and writes the outcome to qa-report.md.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "lockfile-resolves-pnpm",
+          "description": "Presence of pnpm-lock.yaml selects pnpm as the runner rather than any other Node package manager."
+        },
+        {
+          "name": "report-artifact-emitted",
+          "description": "A qa-report.md file is produced summarizing the outcome of every gate."
+        },
+        {
+          "name": "ui-gate-gated-on-script",
+          "description": "The conditional UI gate is added to the plan because a test:ui script exists in package.json."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This repo ships both a package.json and a Cargo.toml at the root. Run the gates and tell me which toolchain you ended up using.",
+      "expected_output": "Selects the first matching runner per the documented detection precedence unless a quality-gates guide overrides that choice, runs the gate sequence, and marks any referenced-but-missing scripts as skipped rather than failing them.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "precedence-picks-single-runner",
+          "description": "With multiple manifests present, exactly one runner is chosen by the documented precedence, and a quality-gates guide is honored when it overrides that selection."
+        },
+        {
+          "name": "absent-script-marked-skipped",
+          "description": "A gate whose script is referenced but not defined is reported as skipped, never as a failed gate."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Run qa-gates here. Heads up: there is no package.json, no Cargo.toml, no pyproject.toml, no go.mod, and no quality-gates guide anywhere in this checkout.",
+      "expected_output": "Reports the runner as unknown without assuming npm, and asks the user exactly once to supply lint, build, and test commands or to grant permission to skip the gates.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "no-silent-npm-default",
+          "description": "With no manifest, lockfile, or quality-gates guide, the runner is reported as unknown and npm is not silently assumed."
+        },
+        {
+          "name": "single-clarification-prompt",
+          "description": "The user is prompted a single time for lint/build/test commands or for permission to skip, rather than the skill proceeding blindly."
+        }
+      ]
+    }
+  ]
+}

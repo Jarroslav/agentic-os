@@ -1,0 +1,124 @@
+{
+  "skill_name": "qa-case-generator",
+  "version": "1.0.0",
+  "evals": [
+    {
+      "id": 1,
+      "name": "well-formed-ac-happy-path",
+      "description": "Testable multi-AC story with no comments flows straight through the intake and AC-quality gates and yields a manual suite sized by the coverage formula.",
+      "prompt": "Draft the manual test cases for PROJ-204 (bulk archive of invoices). The acceptance criteria are already solid — just generate the suite.",
+      "files": ["fixtures/story-clear-ac.json"],
+      "expected_output": "Passes phase-2 without a HALT because every AC is testable. Emits docs/superpowers/qa-tasks/<date>-<slug>/manual/test_cases.md plus meta.json, ticket-analysis.md and events.jsonl. Base = 3 x 5 AC = 15; no risk keyword matches so risk_multiplier stays 1.0; the zero-comments simplicity reducer applies x0.9, landing the count inside the clamp(3,25) window. Cases route to the Manual type (UI list-view flow) and are numbered PROJ-204_TC_001 onward.",
+      "assertions": [
+        {
+          "name": "no-intake-halt",
+          "description": "The run clears the ac-quality-gate rather than halting, since all five criteria are verifiable."
+        },
+        {
+          "name": "manual-routing",
+          "description": "Cases are classified as Manual because the story describes a multi-step UI interaction, not an endpoint contract."
+        },
+        {
+          "name": "case-id-format",
+          "description": "Generated case identifiers follow the PROJ-204_TC_00N pattern in sequence."
+        },
+        {
+          "name": "count-within-clamp",
+          "description": "The final case count respects clamp(min=3, max=25) and reflects the 3-per-AC base with the zero-comments x0.9 reducer applied."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "non-testable-ac-halts",
+      "description": "A story whose criteria are subjective drops confidence below the phase-2 threshold and stops before any cases are written.",
+      "prompt": "Generate QA cases for PROJ-231, the ticket about making the dashboard snappier.",
+      "files": ["fixtures/story-vague-ac.json"],
+      "expected_output": "The AC-quality check scores acceptance-criteria confidence under 50% because 'should be fast' and 'look better' are not measurable. The skill HALTs at phase 2, writes the reason to events.jsonl, and produces no test_cases.md. It reports back that a target load time and a concrete visual definition are missing before authoring can proceed.",
+      "assertions": [
+        {
+          "name": "confidence-halt",
+          "description": "Acceptance-criteria confidence falls below the 50% bar and the run halts at the phase-2 gate instead of generating cases."
+        },
+        {
+          "name": "no-suite-emitted",
+          "description": "No manual/test_cases.md file is produced for a halted run."
+        },
+        {
+          "name": "actionable-gap-report",
+          "description": "The output names the missing information (a measurable performance target and a concrete UI expectation) needed to unblock."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "null-ac-derived-from-description",
+      "description": "When the acceptance_criteria field is null, criteria are reconstructed from the description bullets rather than invented.",
+      "prompt": "PROJ-278 has an empty acceptance criteria field but the behaviour is listed as bullets in the description. Produce the manual cases.",
+      "files": ["fixtures/story-missing-ac.json"],
+      "expected_output": "The skill detects acceptance_criteria: null, derives the criteria from the five description bullets (save a view, ordered tabs, instant apply, owner-only rename/delete, fallback to default on delete), and does not fabricate rules absent from the ticket. Cases route Manual and are grounded strictly in the derived bullets; base = 3 x 5 derived criteria before multipliers, clamped to the 3..25 range.",
+      "assertions": [
+        {
+          "name": "derivation-not-invention",
+          "description": "Every generated case traces to a bullet already present in the description; no new behavioural rules appear."
+        },
+        {
+          "name": "five-derived-criteria",
+          "description": "Exactly five criteria are lifted from the description bullets and used as the base for the coverage count."
+        },
+        {
+          "name": "no-null-passthrough-crash",
+          "description": "A null acceptance_criteria value is handled gracefully and does not skip case generation."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "endpoint-story-routes-api",
+      "description": "A backend-only story with request/response specs is routed to the API case type, not Manual.",
+      "prompt": "Build the test cases for the reservations REST API story, PROJ-263. It's backend only.",
+      "files": ["fixtures/story-api-only.json"],
+      "expected_output": "Because the ACs describe HTTP verbs, status codes, and auth rather than screens, the run routes cases to the API type. Coverage spans the CRUD verbs (GET list, GET by id, POST, PUT, DELETE soft-delete via status=cancelled), the 404 for an unknown id, the 400 for a malformed body, the 201 Created with a Location header on create, and a 401 for a missing or invalid Bearer token. The auth keyword raises the count via the +50% risk multiplier before the clamp.",
+      "assertions": [
+        {
+          "name": "api-routing",
+          "description": "Cases are classified as API because the story specifies endpoints and response contracts instead of UI flows."
+        },
+        {
+          "name": "status-code-coverage",
+          "description": "The suite exercises the 201, 400, 401 and 404 paths named in the acceptance criteria."
+        },
+        {
+          "name": "auth-risk-uplift",
+          "description": "The Bearer-token auth requirement triggers the security risk multiplier, increasing the pre-clamp case count."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "payment-story-max-risk",
+      "description": "A PCI-scoped refund story pulls full ticket context and its risk uplift drives the count to the clamp ceiling.",
+      "prompt": "Generate the full manual QA suite for PROJ-299, the card refund flow. It's PCI in scope.",
+      "files": ["fixtures/story-high-risk.json"],
+      "expected_output": "Phase 3 fetches the complete context — comments, subtasks, the blocking link, and the attachment. Seven testable ACs give base = 21; the payment/security keywords apply the +50% risk multiplier (21 x 1.5 = 31.5), which exceeds the ceiling, so clamp(min=3, max=25) pins the final count at 25. The suite includes negative and security cases: over-refund rejection, idempotent double-submit, gateway decline leaving balance untouched, permission-hidden actions, and no PAN in display or logs. Cases route Manual and are numbered PROJ-299_TC_001 onward.",
+      "assertions": [
+        {
+          "name": "clamp-ceiling",
+          "description": "The risk-inflated raw count (21 x 1.5) is capped at 25 by clamp(min=3, max=25)."
+        },
+        {
+          "name": "payment-risk-multiplier",
+          "description": "The payment and security labels apply the +50% risk uplift to the base coverage count."
+        },
+        {
+          "name": "full-context-fetch",
+          "description": "The run reads the story's comments, subtasks, blocking link, and attachment rather than the ticket body alone."
+        },
+        {
+          "name": "security-negative-cases",
+          "description": "The suite contains explicit negative and security cases, including PAN masking and audit-log completeness."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+.DS_Store
+*.pyc
+__pycache__/
+.agentic/
+docs/superpowers/
+
+# Local dev-session tooling artifacts (e.g. a pre-commit review-gate stamp) —
+# never part of the shipped product.
+.claude/
+.serena/
+
+# Local maintainer artifacts for the originality check (tests/lib/check-provenance.py)
+# — built locally, never committed. The salt is what keeps the fingerprint store
+# unreadable; losing it means rebuilding the store from the corpus.
+tests/lib/provenance-fingerprints.json
+tests/lib/.provenance-salt
+
+# Build rationale, audit trails, and repo-administration notes live in a
+# separate private repo, never here.
+docs/DESIGN.md
+docs/PLAN.md
+docs/GITHUB-SETUP.md
+docs/positioning-review.md
+docs/audits/
+docs/workstreams/
+NOTES*.md
+*.internal.md
+mcp/dist/
+node_modules/
+
+# Copied from the repo root at build time (mcp/scripts/build-content.mjs) so
+# the npm tarball carries Apache-2.0's required LICENSE + NOTICE — one source
+# of truth at the root, not duplicated in git.
+mcp/LICENSE
+mcp/NOTICE
+
+# .mcpb bundle is a release artifact built by `npm run build:mcpb`, never
+# committed.
+mcp/*.mcpb

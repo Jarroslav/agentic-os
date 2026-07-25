@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store, max-age=0">
+<title>agentic-sdlc — pipeline map</title>
+<style>
+/* One token set, two themes. The names are ours, and both palettes define the
+   same names, so nothing downstream needs to know which theme is live. */
+:root {
+  --paper:#f6f7fa; --card:#fff; --card-sunk:#f8fafc;
+  --text:#101828; --text-dim:#5b6577; --rule:#dbe1ea; --rule-soft:#eaeef4;
+  --accent:#2f5fd0; --accent-wash:#eef3fe;
+  --teal:#0e7c8a; --teal-wash:#e7f8fa;
+  --plum:#7541c8; --plum-wash:#f4f0fe;
+  --amber:#a56a00; --amber-wash:#fdf5e3;
+  --moss:#1f7a4d; --moss-wash:#e8f7ef;
+  --rose:#bb3355; --rose-wash:#fdeef2;
+  --stone:#5b6577; --stone-wash:#f1f3f7;
+  --lift:0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.05);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+:root[data-theme="dark"] {
+  --paper:#0d1117; --card:#151b24; --card-sunk:#1b222c;
+  --text:#e7ecf3; --text-dim:#97a3b6; --rule:#2a323e; --rule-soft:#1f2731;
+  --accent:#7aa2f7; --accent-wash:#1a2338;
+  --teal:#4ec9d4; --teal-wash:#122a2e;
+  --plum:#b48ef5; --plum-wash:#221a33;
+  --amber:#e0a94a; --amber-wash:#2c2413;
+  --moss:#5fc98d; --moss-wash:#12291d;
+  --rose:#f2799a; --rose-wash:#2e1520;
+  --stone:#97a3b6; --stone-wash:#1c232d;
+  --lift:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--text);
+  font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+code,kbd{font-family:var(--mono);font-size:.88em}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+header{position:sticky;top:0;z-index:20;background:var(--paper);
+  border-bottom:1px solid var(--rule)}
+.bar{display:flex;align-items:center;gap:14px;padding:12px 0;flex-wrap:wrap}
+.mark{display:flex;align-items:center;gap:9px;font-weight:640;letter-spacing:-.01em}
+.mark .glyph{width:26px;height:26px;border-radius:7px;background:var(--accent);color:#fff;
+  display:grid;place-items:center;font-size:11px;font-weight:700;font-family:var(--mono)}
+.badge{font:600 11px/1 var(--mono);padding:5px 7px;border-radius:5px;
+  background:var(--accent-wash);color:var(--accent);border:1px solid var(--rule)}
+nav.tabs{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+nav.tabs button{font:inherit;font-size:13.5px;font-weight:520;padding:7px 12px;border-radius:7px;
+  border:1px solid transparent;background:none;color:var(--text-dim);cursor:pointer}
+nav.tabs button:hover{background:var(--card-sunk);color:var(--text)}
+nav.tabs button[aria-selected="true"]{background:var(--card);color:var(--text);
+  border-color:var(--rule);box-shadow:var(--lift)}
+.icon-btn{font:inherit;background:var(--card);border:1px solid var(--rule);color:var(--text-dim);
+  border-radius:7px;padding:6px 10px;cursor:pointer}
+.icon-btn:hover{color:var(--text)}
+
+.hero{padding:34px 0 22px}
+.hero h1{margin:0 0 8px;font-size:29px;line-height:1.2;letter-spacing:-.02em;max-width:24ch}
+.hero p{margin:0;max-width:72ch;color:var(--text-dim)}
+.panel{padding:8px 0 56px}
+.panel[hidden]{display:none}
+h2{font-size:19px;letter-spacing:-.01em;margin:30px 0 4px}
+h2:first-child{margin-top:8px}
+h3{font-size:15px;margin:20px 0 2px}
+.lede{color:var(--text-dim);margin:0 0 16px;max-width:74ch}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:11px;padding:16px 18px;
+  box-shadow:var(--lift)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:11px;background:var(--card);
+  box-shadow:var(--lift)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);
+  background:var(--card-sunk);font-weight:640;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td code{color:var(--accent)}
+
+.pill{display:inline-block;font:600 11px/1 var(--mono);padding:4px 7px;border-radius:20px;
+  border:1px solid transparent;white-space:nowrap}
+.k-entry{background:var(--accent-wash);color:var(--accent)}
+.k-orch{background:var(--plum-wash);color:var(--plum)}
+.k-agent{background:var(--teal-wash);color:var(--teal)}
+.k-gate{background:var(--amber-wash);color:var(--amber)}
+.k-artifact{background:var(--moss-wash);color:var(--moss)}
+.k-tool{background:var(--stone-wash);color:var(--stone)}
+.k-hook{background:var(--rose-wash);color:var(--rose)}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 0}
+.chip{font:600 12.5px/1 var(--mono);padding:7px 10px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--rule);background:var(--card);color:var(--text)}
+.chip:hover,.chip:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+
+.pickers{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.pickers button{font:inherit;font-size:13px;padding:7px 11px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--rule);background:var(--card);color:var(--text-dim)}
+.pickers button[aria-pressed="true"]{background:var(--accent-wash);color:var(--accent);
+  border-color:var(--accent)}
+figure{margin:0}
+figcaption{color:var(--text-dim);font-size:13.5px;margin:0 0 12px;max-width:74ch}
+.canvas{overflow-x:auto}
+svg.flow{display:block;min-width:620px;width:100%;height:auto}
+svg.flow text{font-family:ui-sans-serif,system-ui,sans-serif}
+svg.flow .lbl{font-size:12.5px;font-weight:600}
+svg.flow .sub{font-size:10.5px;fill:var(--text-dim);font-family:var(--mono)}
+svg.flow .edge{stroke:var(--rule);stroke-width:1.6;fill:none}
+svg.flow .edge-lbl{font-size:10px;fill:var(--text-dim);font-family:var(--mono)}
+svg.flow g.node{cursor:pointer}
+svg.flow g.node:hover rect{stroke-width:2.4}
+svg.flow g.node:focus-visible{outline:none}
+svg.flow g.node:focus-visible rect{stroke-width:2.4}
+
+.scrim{position:fixed;inset:0;background:rgba(8,12,20,.42);z-index:40}
+.scrim[hidden]{display:none}
+aside.drawer{position:fixed;top:0;right:0;bottom:0;width:min(620px,100%);z-index:41;
+  background:var(--card);border-left:1px solid var(--rule);overflow-y:auto;
+  box-shadow:-12px 0 40px rgba(16,24,40,.16)}
+aside.drawer[hidden]{display:none}
+.drawer-top{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--rule);
+  padding:14px 18px;display:flex;gap:12px;align-items:flex-start}
+.drawer-top h3{margin:0;font-family:var(--mono);font-size:15px}
+.drawer-body{padding:16px 18px 40px}
+.drawer-body dt{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text-dim);margin-top:14px}
+.drawer-body dd{margin:3px 0 0}
+.src{display:block;width:100%;text-align:left;font:inherit;font-family:var(--mono);font-size:12px;
+  padding:8px 10px;margin-top:6px;border:1px solid var(--rule);border-radius:7px;
+  background:var(--card-sunk);color:var(--accent);cursor:pointer;word-break:break-all}
+.src:hover{border-color:var(--accent)}
+pre.viewer{margin:12px 0 0;padding:12px;max-height:58vh;overflow:auto;background:var(--card-sunk);
+  border:1px solid var(--rule);border-radius:9px;font-family:var(--mono);font-size:12px;
+  line-height:1.55;white-space:pre-wrap}
+.note{color:var(--text-dim);font-size:13px;margin:10px 0 0}
+footer{border-top:1px solid var(--rule);padding:22px 0 40px;color:var(--text-dim);font-size:13px}
+@media (max-width:720px){nav.tabs{width:100%;margin-left:0}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <span class="mark"><span class="glyph">as</span> agentic-sdlc</span>
+    <span class="badge" id="verBadge"></span>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="map" aria-selected="true">The map</button>
+      <button role="tab" data-tab="flow" aria-selected="false">A run, step by step</button>
+      <button role="tab" data-tab="diagrams" aria-selected="false">Diagrams</button>
+      <button role="tab" data-tab="safety" aria-selected="false">Gates &amp; reach</button>
+      <button role="tab" data-tab="index" aria-selected="false">Everything shipped</button>
+    </nav>
+    <button class="icon-btn" id="themeBtn" type="button" title="Switch theme"
+      aria-label="Switch theme">&#9686;</button>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <h1>One engine, two ways in, a gate wherever judgment is needed</h1>
+  <p>Every moving part here is one of six kinds of thing, and its kind is what caps how far it can
+  reach. This page is that structure drawn out — click any name to see what it is and read its
+  source. Both the inventory and the diagrams are built from the same list, which comes from
+  <code>references/architecture.md</code>, so the picture cannot quietly drift from the contract.</p>
+</div>
+
+<main class="wrap">
+
+<section class="panel" id="tab-map" role="tabpanel">
+  <h2>Six kinds of thing</h2>
+  <p class="lede">Choose a primitive's kind by what it is responsible for, and let the kind cap its
+  reach. When two kinds both seem to fit, that is the signal to split the piece in half rather than
+  to pick one.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Kind</th><th>Responsible for</th><th>Reach</th></tr></thead>
+    <tbody id="kindsBody"></tbody>
+  </table></div>
+
+  <h2>Where the boundary sits</h2>
+  <div class="grid">
+    <div class="card"><strong>The package ships behaviour.</strong>
+      <p class="note"><code>plugins/agentic-sdlc</code> is the entire boundary. There is no companion
+      package, and nothing in here depends on one.</p></div>
+    <div class="card"><strong>The repo supplies context.</strong>
+      <p class="note">Host knowledge lives in <code>.agentic/guides/</code> — adapters, standards,
+      project facts. No ticket tracker and no MR platform is compiled in.</p></div>
+    <div class="card"><strong>Small work skips the engine.</strong>
+      <p class="note"><code>sdlc-task</code> and <code>sdlc-light</code> carry a lightweight inline
+      path: no sizing, no per-task subagents, no evidence files.</p></div>
+  </div>
+
+  <h2>The named inventory</h2>
+  <p class="lede">Click any name for its role, its reach, and the file it lives in.</p>
+  <div id="inventory"></div>
+</section>
+
+<section class="panel" id="tab-flow" role="tabpanel" hidden>
+  <h2>How a heavy run flows</h2>
+  <p class="lede">Ten steps, intent to harvest. An interactive run and an unattended one differ in
+  exactly one respect — how a gate resolves — so this is a description of both.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>#</th><th>Step</th><th>What happens</th><th>Who does it</th></tr></thead>
+    <tbody id="flowBody"></tbody>
+  </table></div>
+  <h2>Two roads in</h2>
+  <div class="grid">
+    <div class="card"><strong><code>sdlc-start</code> — interactive</strong>
+      <p class="note">Stops and prompts at each gate, then delegates to
+      <code>sdlc-pipeline</code>.</p></div>
+    <div class="card"><strong><code>sdlc-autonomous</code> — unattended</strong>
+      <p class="note">Resolves gates without prompting, then delegates to the same
+      <code>sdlc-pipeline</code>. Never opens an MR or PR by itself.</p></div>
+  </div>
+</section>
+
+<section class="panel" id="tab-diagrams" role="tabpanel" hidden>
+  <h2>Diagrams</h2>
+  <p class="lede">Each one is laid out from a list of nodes and edges rather than positioned by hand,
+  which is what keeps it honest: a box can only appear here if it exists in the inventory. Click any
+  node to open it.</p>
+  <div class="pickers" id="pickers"></div>
+  <figure><figcaption id="figCap"></figcaption>
+    <div class="canvas" id="canvas"></div></figure>
+</section>
+
+<section class="panel" id="tab-safety" role="tabpanel" hidden>
+  <h2>Judgment gates</h2>
+  <p class="lede">A gate clears by exactly one of three means, and the mode decides which are
+  permitted. Every resolution is appended to <code>decisions.jsonl</code> and
+  <code>events.jsonl</code> together with the context that produced it, so a decision can be read
+  back later rather than guessed at.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Gate id</th><th>Fires when</th><th>Interactive</th><th>Unattended</th></tr></thead>
+    <tbody id="gatesBody"></tbody>
+  </table></div>
+
+  <h2>How far each thing reaches</h2>
+  <p class="lede">Every kind has a ceiling. Anything at R3 — pushing, opening an MR or PR, any other
+  effect outside the repo — sits behind a gate, and is never a silent step inside a phase.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Tag</th><th>Means</th></tr></thead><tbody id="radiusBody"></tbody>
+  </table></div>
+
+  <h2>Model tiers</h2>
+  <p class="lede">Effort is sized to the decision: <code>economy</code> for routine checks,
+  <code>standard</code> for ordinary review, <code>premium</code> kept back for the hard calls.
+  Concrete model ids never ship in this package — whoever runs it supplies those.</p>
+
+  <h2>Shipped, and deliberately not</h2>
+  <div class="grid">
+    <div class="card"><strong>No per-run HTML report.</strong>
+      <p class="note">A report builder is a later idea. This page is static and hand-maintained, not
+      generated per run.</p></div>
+    <div class="card"><strong>No second package.</strong>
+      <p class="note">Nothing here creates or depends on a companion package.</p></div>
+    <div class="card"><strong>No unattended MR.</strong>
+      <p class="note">An autonomous run does the work and stops before opening anything.</p></div>
+  </div>
+</section>
+
+<section class="panel" id="tab-index" role="tabpanel" hidden>
+  <h2>Everything shipped</h2>
+  <p class="lede">Every skill, agent and hook in the package — including the ones the architecture
+  contract does not name, because they are phase machinery rather than interface. Ordered by kind,
+  then by name.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Name</th><th>Kind</th><th>Reach</th><th>Role</th></tr></thead>
+    <tbody id="indexBody"></tbody>
+  </table></div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  Contract: <code>references/architecture.md</code> &middot;
+  Shared QA references: <code>references/qa-authoring/</code> &middot;
+  Coupled to <code>superpowers:brainstorming</code>, <code>writing-plans</code>,
+  <code>test-driven-development</code>, <code>subagent-driven-development</code>.
+</footer>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Detail">
+  <div class="drawer-top">
+    <div><h3 id="dTitle"></h3><div id="dKind" style="margin-top:6px"></div></div>
+    <button class="icon-btn" id="dClose" type="button" style="margin-left:auto">Close</button>
+  </div>
+  <div class="drawer-body" id="dBody"></div>
+</aside>
+
+<script>
+"use strict";
+const VERSION = "0.2.0";   /* keep in step with .claude-plugin/plugin.json */
+
+/* ------------------------------------------------------------------ *
+ * The inventory. Derived from references/architecture.md plus what is
+ * actually on disk. Everything on this page renders from here, so a
+ * missing or renamed piece shows up once rather than in six places.
+ * ------------------------------------------------------------------ */
+const KINDS = [
+  ["entry", "Entry-point skill",
+   "Read intent, then dispatch — invoke an orchestrator or report on state. Holds no phase state of its own.", "R0–R1"],
+  ["orch", "Orchestrator / support skill",
+   "Own a durable multi-phase workflow: write artifacts, drive gates, hand off.", "R2"],
+  ["agent", "Agent",
+   "Run in a separate context and return one bounded result. Never free-form narration.", "R0"],
+  ["gate", "Gate",
+   "A judgment checkpoint, cleared by a check, a human, or a stand-in.", "—"],
+  ["artifact", "Artifact",
+   "A file one phase writes and a later phase reads.", "R1–R2"],
+  ["tool", "Tool", "A concrete IO or external action.", "up to R3"],
+];
+const KIND_LABEL = {entry:"entry point", orch:"orchestrator", agent:"agent", gate:"gate",
+                    artifact:"artifact", tool:"tool", hook:"hook"};
+
+const N = [
+  {id:"sdlc-start", kind:"entry", group:"Entry-point skills", reach:"R1",
+   role:"Interactive, human-in-the-loop full run. Delegates to sdlc-pipeline.",
+   src:["skills/sdlc-start/SKILL.md"]},
+  {id:"sdlc-autonomous", kind:"entry", group:"Entry-point skills", reach:"R1",
+   role:"Hands-off full run. Delegates to sdlc-pipeline.",
+   src:["skills/sdlc-autonomous/SKILL.md"]},
+  {id:"sdlc-task", kind:"entry", group:"Entry-point skills", reach:"R2",
+   role:"Lightweight inline path for small, user-classified tasks. Runs directly, with no full orchestrator behind it.",
+   src:["skills/sdlc-task/SKILL.md"]},
+  {id:"sdlc-light", kind:"entry", group:"Entry-point skills", reach:"R2",
+   role:"A second lightweight entry beside sdlc-task, for work that should bypass the heavy pipeline.",
+   src:["skills/sdlc-light/SKILL.md"]},
+  {id:"sdlc-status", kind:"entry", group:"Entry-point skills", reach:"R0",
+   role:"Inspect or resume the runtime state of a run.",
+   src:["skills/sdlc-status/SKILL.md"]},
+  {id:"sdlc-doctor", kind:"entry", group:"Entry-point skills", reach:"R0",
+   role:"Check the environment and the package's own setup.",
+   src:["skills/sdlc-doctor/SKILL.md"]},
+
+  {id:"sdlc-pipeline", kind:"orch", group:"Orchestrator and support skills", reach:"R2",
+   role:"The one full-run orchestrator. Both full entry points delegate here, which is why they cannot diverge.",
+   src:["skills/sdlc-pipeline/SKILL.md"]},
+  {id:"decision-router", kind:"orch", group:"Orchestrator and support skills", reach:"R2",
+   role:"Resolves every judgment gate and records each verdict to the audit ledgers.",
+   src:["skills/decision-router/SKILL.md", "references/gate-catalog.md"]},
+  {id:"qa-gates", kind:"orch", group:"Orchestrator and support skills", reach:"R2",
+   role:"Runs the host project's own quality gates in sequence and returns a structured report.",
+   src:["skills/qa-gates/SKILL.md"]},
+  {id:"mr-creator", kind:"orch", group:"Orchestrator and support skills", reach:"R3",
+   role:"Commits with ticket references, pushes, and opens the MR or PR. Adapter-driven.",
+   src:["skills/mr-creator/SKILL.md", "references/mr-adapters.md"]},
+  {id:"mr-watch", kind:"orch", group:"Orchestrator and support skills", reach:"R3",
+   role:"Watches an open MR or PR and deals with whatever is blocking the merge.",
+   src:["skills/mr-watch/SKILL.md"]},
+
+  {id:"sizing-analyst", kind:"agent", group:"Agents", reach:"R0",
+   role:"Returns a normalized routing score for how heavy this run ought to be.",
+   src:["agents/sizing-analyst.md",
+        "references/complexity-assessment/guide/complexity-assessment-guide.md"]},
+  {id:"codebase-scout", kind:"agent", group:"Agents", reach:"R0",
+   role:"Returns scoped technical analysis of the change and the code around it.",
+   src:["agents/codebase-scout.md"]},
+  {id:"lead-proxy", kind:"agent", group:"Agents", reach:"R0",
+   role:"Returns the code-review verdict that clears code-review.final.",
+   src:["agents/lead-proxy.md"]},
+  {id:"story-proxy", kind:"agent", group:"Agents", reach:"R0",
+   role:"Stands in for requirement and plan sign-off when nobody is watching.",
+   src:["agents/story-proxy.md"]},
+  {id:"guide-sync", kind:"agent", group:"Agents", reach:"R2",
+   role:"Refreshes the host guides after a branch changes something structural.",
+   src:["agents/guide-sync.md"]},
+
+  {id:"repo-guides", kind:"orch", group:"Knowledge skills", reach:"R2",
+   role:"Generates the initial host-project guides into .agentic/guides/.",
+   src:["skills/repo-guides/SKILL.md"]},
+  {id:"repo-audit-guides", kind:"orch", group:"Knowledge skills", reach:"R0",
+   role:"Audits the repo's docs, structure and assistant setup before any guides are planted.",
+   src:["skills/repo-audit-guides/SKILL.md"]},
+  {id:"role-memory", kind:"orch", group:"Knowledge skills", reach:"R2",
+   role:"Per-role durable memory, loaded once at the start of a run.",
+   src:["skills/role-memory/SKILL.md"]},
+
+  {id:"requirements-intake", kind:"orch", group:"Phase skills", reach:"R1",
+   role:"Normalizes prose, a ticket reference, or a greenfield idea into requirements.md.",
+   src:["skills/requirements-intake/SKILL.md"]},
+  {id:"complexity-scoring", kind:"orch", group:"Phase skills", reach:"R1",
+   role:"Dispatches sizing-analyst only when the heuristics cannot decide, then normalizes the result.",
+   src:["skills/complexity-scoring/SKILL.md"]},
+  {id:"product-owner", kind:"orch", group:"Phase skills", reach:"R2",
+   role:"Turns a rough ask into a story with acceptance criteria you can test against.",
+   src:["skills/product-owner/SKILL.md"]},
+  {id:"code-review", kind:"orch", group:"Phase skills", reach:"R0",
+   role:"Reviews an implementation diff against the story, the spec, and the project's standards.",
+   src:["skills/code-review/SKILL.md"]},
+  {id:"code-review-orchestrator", kind:"orch", group:"Phase skills", reach:"R1",
+   role:"Runs the final review across its lenses and reconciles their verdicts into one.",
+   src:["skills/code-review-orchestrator/SKILL.md",
+        "skills/code-review-orchestrator/references/verdict-schema.md"]},
+  {id:"qa-planner", kind:"orch", group:"Phase skills", reach:"R2",
+   role:"Plans QA before implementation, judges the tests afterwards, refreshes the health record.",
+   src:["skills/qa-planner/SKILL.md", "references/qa-artifacts.md"]},
+  {id:"qa-foundation", kind:"orch", group:"Phase skills", reach:"R2",
+   role:"Builds the QA knowledge foundation the planner reasons from.",
+   src:["skills/qa-foundation/SKILL.md"]},
+  {id:"qa-case-generator", kind:"orch", group:"Phase skills", reach:"R2",
+   role:"Writes manual test cases from a work item.",
+   src:["skills/qa-case-generator/SKILL.md"]},
+  {id:"qa-e2e-generator", kind:"orch", group:"Phase skills", reach:"R2",
+   role:"Generates end-to-end coverage for a change.",
+   src:["skills/qa-e2e-generator/SKILL.md"]},
+  {id:"feature-verification", kind:"orch", group:"Phase skills", reach:"R1",
+   role:"Confirms a user-visible change actually works, browser included.",
+   src:["skills/feature-verification/SKILL.md"]},
+  {id:"test-heal", kind:"orch", group:"Phase skills", reach:"R2",
+   role:"Diagnoses failing tests and repairs them.",
+   src:["skills/test-heal/SKILL.md"]},
+  {id:"release-manager", kind:"orch", group:"Phase skills", reach:"R2",
+   role:"Prepares a release: versions, changelog, tag.",
+   src:["skills/release-manager/SKILL.md"]},
+
+  {id:"plan.approved", kind:"gate", group:"Gates", reach:"—",
+   role:"A plan is ready and needs sign-off before implementation starts.",
+   interactive:"the user answers", unattended:"a deterministic check, else story-proxy",
+   src:["references/gate-catalog.md"]},
+  {id:"code-review.final", kind:"gate", group:"Gates", reach:"—",
+   role:"Implementation is complete and needs a final review verdict.",
+   interactive:"the user answers", unattended:"lead-proxy returns the verdict",
+   src:["references/gate-catalog.md"]},
+  {id:"feature.verification", kind:"gate", group:"Gates", reach:"—",
+   role:"A user-visible change needs functional confirmation before it can be delivered.",
+   interactive:"the user answers", unattended:"functional verification decides",
+   src:["references/gate-catalog.md"]},
+
+  {id:"requirements.md", kind:"artifact", group:"Artifacts", reach:"R1",
+   role:"What the run is for, normalized from whatever form the request arrived in.",
+   src:["skills/requirements-intake/SKILL.md"]},
+  {id:"plan.md", kind:"artifact", group:"Artifacts", reach:"R1",
+   role:"How the work will be done, written down before it is done.",
+   src:["references/lifecycle-artifacts.md"]},
+  {id:"qa-report.md", kind:"artifact", group:"Artifacts", reach:"R1",
+   role:"What the gates found when they actually ran.",
+   src:["skills/qa-gates/SKILL.md"]},
+
+  {id:"sdlc-stage-guard", kind:"hook", group:"Hooks", reach:"R1",
+   role:"A mechanical guardrail on stage order. Carries no judgment and never clears a gate.",
+   src:["hooks/sdlc-stage-guard"]},
+  {id:"ticket-sync", kind:"hook", group:"Hooks", reach:"R1",
+   role:"Surfaces run notices against the ticket. Deterministic, fires on lifecycle events.",
+   src:["hooks/ticket-sync"]},
+
+  {id:"git", kind:"tool", group:"Tools", reach:"R3",
+   role:"Branching, committing, pushing."},
+  {id:"glab / gh", kind:"tool", group:"Tools", reach:"R3",
+   role:"MR and PR creation. Which one gets used resolves from .agentic/guides/ and is never hardcoded."},
+  {id:"ticket adapter", kind:"tool", group:"Tools", reach:"R3",
+   role:"Reads and writes work items. The backend behind it resolves from .agentic/guides/.",
+   src:["references/work-item-adapters.md", "references/ticket-flow.md"]},
+  {id:"browser verification", kind:"tool", group:"Tools", reach:"R1",
+   role:"Drives a real browser to confirm a user-visible change behaves.",
+   src:["skills/feature-verification/SKILL.md"]},
+];
+const BY_ID = Object.fromEntries(N.map(n => [n.id, n]));
+const GROUPS = ["Entry-point skills", "Orchestrator and support skills", "Agents",
+                "Knowledge skills", "Phase skills", "Gates", "Artifacts", "Hooks", "Tools"];
+
+const RUN = [
+  ["Intake", "An entry-point skill reads the intent and hands off. Role memory loads once here, so earlier context carries in.", "entry point + role-memory"],
+  ["Requirements", "Prose, a ticket reference resolved through the adapter, or a greenfield idea becomes requirements.md.", "requirements-intake"],
+  ["Routing", "A score decides the depth: light work goes straight to planning, heavier work brainstorms first. The plan lands in plan.md.", "sizing-analyst"],
+  ["plan.approved", "The gate clears — the user in interactive mode, a check or a stand-in when unattended.", "decision-router"],
+  ["Implementation", "Test-first, fanning out to parallel subagents where the tasks are genuinely independent. Evidence is captured per task.", "superpowers TDD"],
+  ["code-review.final", "Model-heavy review waits until the implementation is actually finished, then one verdict clears the gate.", "lead-proxy"],
+  ["QA", "The host runner's lint, build and tests run in sequence, and the outcome is written to qa-report.md.", "qa-gates"],
+  ["feature.verification", "Anything user-visible is functionally confirmed, browser included, before delivery is possible.", "feature-verification"],
+  ["Delivery", "On request only: commit, push, open the MR or PR, then watch it. An unattended run stops short of this.", "mr-creator + mr-watch"],
+  ["Harvest", "After a structural change, the host guides are brought back up to date.", "guide-sync"],
+];
+
+const RADIUS = [
+  ["R0", "Reads only. Nothing on disk changes."],
+  ["R1", "Writes run artifacts — scoped to this run, and nothing outside it depends on them."],
+  ["R2", "Writes repo files that outlive the run."],
+  ["R3", "Effects outside the repo. Always behind a gate."],
+];
+
+const DIAGRAMS = [
+  {id:"roads", name:"Two roads in",
+   cap:"Both full-run entry points reach the same orchestrator, which is what stops them drifting apart. The lightweight entries deliberately never touch it.",
+   nodes:[{id:"sdlc-start", col:0, row:0}, {id:"sdlc-autonomous", col:0, row:1},
+          {id:"sdlc-task", col:0, row:2.2}, {id:"sdlc-light", col:0, row:3.2},
+          {id:"sdlc-pipeline", col:1, row:0.5}, {id:"decision-router", col:2, row:0.5},
+          {id:"qa-gates", col:1, row:2.7}],
+   edges:[["sdlc-start", "sdlc-pipeline", "prompts"],
+          ["sdlc-autonomous", "sdlc-pipeline", "unattended"],
+          ["sdlc-pipeline", "decision-router", "every gate"],
+          ["sdlc-task", "qa-gates", "inline"], ["sdlc-light", "qa-gates", "inline"]]},
+  {id:"pipeline", name:"The heavy run",
+   cap:"Intake through to harvest. Gates sit between phases, never inside one — that is what makes them auditable.",
+   nodes:[{id:"requirements-intake", col:0, row:0}, {id:"sizing-analyst", col:1, row:0},
+          {id:"plan.approved", col:2, row:0}, {id:"code-review.final", col:3, row:0},
+          {id:"qa-gates", col:0, row:1.5}, {id:"feature.verification", col:1, row:1.5},
+          {id:"mr-creator", col:2, row:1.5}, {id:"guide-sync", col:3, row:1.5}],
+   edges:[["requirements-intake", "sizing-analyst"], ["sizing-analyst", "plan.approved"],
+          ["plan.approved", "code-review.final", "implement"],
+          ["code-review.final", "qa-gates"], ["qa-gates", "feature.verification"],
+          ["feature.verification", "mr-creator", "on request"],
+          ["mr-creator", "guide-sync"]]},
+  {id:"gates", name:"How a gate clears",
+   cap:"Three means, and the mode decides which are permitted. Whichever it was gets written down.",
+   nodes:[{id:"plan.approved", col:0, row:0}, {id:"code-review.final", col:0, row:1},
+          {id:"feature.verification", col:0, row:2},
+          {id:"decision-router", col:1, row:1},
+          {id:"story-proxy", col:2, row:0}, {id:"lead-proxy", col:2, row:1},
+          {id:"sdlc-status", col:2, row:2}],
+   edges:[["plan.approved", "decision-router"], ["code-review.final", "decision-router"],
+          ["feature.verification", "decision-router"],
+          ["decision-router", "story-proxy", "unattended"],
+          ["decision-router", "lead-proxy", "verdict"],
+          ["decision-router", "sdlc-status", "ledgers"]]},
+  {id:"qa", name:"The QA chain",
+   cap:"Planned before the code exists, judged after it does, then recorded so the next run starts better informed than this one did.",
+   nodes:[{id:"qa-foundation", col:0, row:0}, {id:"qa-planner", col:1, row:0},
+          {id:"qa-gates", col:2, row:0}, {id:"feature-verification", col:3, row:0},
+          {id:"qa-case-generator", col:1, row:1.4}, {id:"qa-e2e-generator", col:2, row:1.4},
+          {id:"test-heal", col:3, row:1.4}],
+   edges:[["qa-foundation", "qa-planner", "strategy"], ["qa-planner", "qa-gates", "checklist"],
+          ["qa-gates", "feature-verification"], ["qa-planner", "qa-case-generator"],
+          ["qa-planner", "qa-e2e-generator"], ["qa-gates", "test-heal", "on failure"]]},
+  {id:"knowledge", name:"Guides in, guides out",
+   cap:"Audited first, generated once, kept current afterwards — all of it inside .agentic/guides/.",
+   nodes:[{id:"repo-audit-guides", col:0, row:0}, {id:"repo-guides", col:1, row:0},
+          {id:"sdlc-pipeline", col:2, row:0}, {id:"guide-sync", col:3, row:0},
+          {id:"role-memory", col:2, row:1.4}],
+   edges:[["repo-audit-guides", "repo-guides", "safe to plant?"],
+          ["repo-guides", "sdlc-pipeline", "guides read"],
+          ["sdlc-pipeline", "guide-sync", "structural change"],
+          ["guide-sync", "repo-guides", "refreshes"],
+          ["sdlc-pipeline", "role-memory", "loaded once"]]},
+  {id:"delivery", name:"Getting it out",
+   cap:"Every step on this diagram reaches outside the repo, which is exactly why every step is behind a gate.",
+   nodes:[{id:"code-review.final", col:0, row:0}, {id:"mr-creator", col:1, row:0},
+          {id:"mr-watch", col:2, row:0}, {id:"release-manager", col:3, row:0},
+          {id:"ticket adapter", col:1, row:1.4}, {id:"git", col:2, row:1.4}],
+   edges:[["code-review.final", "mr-creator", "approved"],
+          ["mr-creator", "mr-watch", "watch it land"],
+          ["mr-watch", "release-manager", "merged"],
+          ["mr-creator", "ticket adapter", "reference"],
+          ["mr-creator", "git", "commit + push"]]},
+];
+
+/* ------------------------------------------------------------------ *
+ * Layout. Nodes carry a column and a row; the geometry is computed
+ * from those, so no coordinate is ever written by hand.
+ * ------------------------------------------------------------------ */
+const BOX_W = 170, BOX_H = 50, GAP_X = 76, GAP_Y = 32, PAD = 18;
+const PALETTE = {entry:["--accent-wash", "--accent"], orch:["--plum-wash", "--plum"],
+                 agent:["--teal-wash", "--teal"], gate:["--amber-wash", "--amber"],
+                 artifact:["--moss-wash", "--moss"], tool:["--stone-wash", "--stone"],
+                 hook:["--rose-wash", "--rose"]};
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[c]));
+}
+function fit(s) { return s.length > 23 ? s.slice(0, 22) + "…" : s; }
+
+function drawFlow(d) {
+  const at = new Map(d.nodes.map(n =>
+    [n.id, {x: PAD + n.col * (BOX_W + GAP_X), y: PAD + n.row * (BOX_H + GAP_Y)}]));
+  const w = PAD * 2 + Math.max(...d.nodes.map(n => n.col)) * (BOX_W + GAP_X) + BOX_W;
+  const h = PAD * 2 + Math.max(...d.nodes.map(n => n.row)) * (BOX_H + GAP_Y) + BOX_H;
+  const out = [`<defs><marker id="arw" viewBox="0 0 9 9" refX="8" refY="4.5" markerWidth="6"
+    markerHeight="6" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--rule)"/></marker></defs>`];
+
+  for (const [from, to, label] of d.edges) {
+    const a = at.get(from), b = at.get(to);
+    if (!a || !b) continue;
+    // Leave the right edge when the target is to the right; otherwise leave the
+    // bottom. Either way the curve is a cubic between the two anchor points.
+    const sideways = b.x !== a.x;
+    const x1 = sideways ? a.x + BOX_W : a.x + BOX_W / 2;
+    const y1 = sideways ? a.y + BOX_H / 2 : a.y + BOX_H;
+    const x2 = sideways ? b.x : b.x + BOX_W / 2;
+    const y2 = sideways ? b.y + BOX_H / 2 : b.y;
+    const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2;
+    const path = sideways
+      ? `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`
+      : `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
+    out.push(`<path class="edge" d="${path}" marker-end="url(#arw)"/>`);
+    if (label) {
+      out.push(`<text class="edge-lbl" x="${midX}" y="${midY - 6}"
+        text-anchor="middle">${esc(label)}</text>`);
+    }
+  }
+  for (const n of d.nodes) {
+    const meta = BY_ID[n.id] || {kind:"tool", reach:""};
+    const [wash, ink] = PALETTE[meta.kind] || ["--card-sunk", "--rule"];
+    const p = at.get(n.id);
+    const tag = meta.reach && meta.reach !== "—"
+      ? `${KIND_LABEL[meta.kind]} · ${meta.reach}` : KIND_LABEL[meta.kind] || "";
+    out.push(`<g class="node" tabindex="0" role="button" data-node="${esc(n.id)}"
+        aria-label="${esc(n.id)}">
+      <rect x="${p.x}" y="${p.y}" width="${BOX_W}" height="${BOX_H}" rx="9"
+        fill="var(${wash})" stroke="var(${ink})" stroke-width="1.4"/>
+      <text class="lbl" x="${p.x + BOX_W / 2}" y="${p.y + 21}" text-anchor="middle"
+        fill="var(${ink})">${esc(fit(n.id))}</text>
+      <text class="sub" x="${p.x + BOX_W / 2}" y="${p.y + 37}"
+        text-anchor="middle">${esc(tag)}</text>
+    </g>`);
+  }
+  return `<svg class="flow" viewBox="0 0 ${w} ${h}" role="img"
+    aria-label="${esc(d.name)}">${out.join("")}</svg>`;
+}
+
+/* ---- render the static sections ---- */
+document.getElementById("verBadge").textContent = "v" + VERSION;
+
+document.getElementById("kindsBody").innerHTML = KINDS.map(([k, name, resp, reach]) =>
+  `<tr><td><span class="pill k-${k}">${esc(name)}</span></td><td>${esc(resp)}</td>
+   <td><code>${esc(reach)}</code></td></tr>`).join("");
+
+document.getElementById("inventory").innerHTML = GROUPS.map(g => {
+  const items = N.filter(n => n.group === g);
+  if (!items.length) return "";
+  return `<h3>${esc(g)}</h3><div class="chips">${items.map(n =>
+    `<button class="chip" type="button" data-node="${esc(n.id)}">${esc(n.id)}</button>`
+  ).join("")}</div>`;
+}).join("");
+
+document.getElementById("flowBody").innerHTML = RUN.map(([step, what, who], i) =>
+  `<tr><td><code>${i + 1}</code></td><td><strong>${esc(step)}</strong></td>
+   <td>${esc(what)}</td><td><code>${esc(who)}</code></td></tr>`).join("");
+
+document.getElementById("gatesBody").innerHTML = N.filter(n => n.kind === "gate").map(n =>
+  `<tr><td><code>${esc(n.id)}</code></td><td>${esc(n.role)}</td>
+   <td>${esc(n.interactive || "")}</td><td>${esc(n.unattended || "")}</td></tr>`).join("");
+
+document.getElementById("radiusBody").innerHTML = RADIUS.map(([t, m]) =>
+  `<tr><td><code>${esc(t)}</code></td><td>${esc(m)}</td></tr>`).join("");
+
+const KIND_ORDER = ["entry", "orch", "agent", "gate", "artifact", "hook", "tool"];
+document.getElementById("indexBody").innerHTML = [...N].sort((a, b) =>
+    KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || a.id.localeCompare(b.id))
+  .map(n => `<tr>
+    <td><button class="chip" type="button" data-node="${esc(n.id)}">${esc(n.id)}</button></td>
+    <td><span class="pill k-${n.kind}">${esc(KIND_LABEL[n.kind])}</span></td>
+    <td><code>${esc(n.reach)}</code></td><td>${esc(n.role)}</td></tr>`).join("");
+
+/* ---- diagrams ---- */
+const pickers = document.getElementById("pickers");
+pickers.innerHTML = DIAGRAMS.map((d, i) =>
+  `<button type="button" data-diagram="${esc(d.id)}"
+    aria-pressed="${i === 0}">${esc(d.name)}</button>`).join("");
+
+function showDiagram(id) {
+  const d = DIAGRAMS.find(x => x.id === id) || DIAGRAMS[0];
+  document.getElementById("figCap").textContent = d.cap;
+  document.getElementById("canvas").innerHTML = drawFlow(d);
+  pickers.querySelectorAll("button").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.diagram === d.id)));
+  wireNodes();
+}
+
+/* ---- detail drawer ---- */
+const drawer = document.getElementById("drawer");
+const scrim = document.getElementById("scrim");
+
+function openNode(id) {
+  const n = BY_ID[id];
+  if (!n) return;
+  document.getElementById("dTitle").textContent = n.id;
+  document.getElementById("dKind").innerHTML =
+    `<span class="pill k-${n.kind}">${esc(KIND_LABEL[n.kind])}</span>
+     <span class="pill k-tool">reach ${esc(n.reach)}</span>`;
+  let html = `<p>${esc(n.role)}</p>`;
+  if (n.interactive) {
+    html += `<dl><dt>Interactive</dt><dd>${esc(n.interactive)}</dd>
+      <dt>Unattended</dt><dd>${esc(n.unattended)}</dd></dl>`;
+  }
+  if (n.src && n.src.length) {
+    html += `<dl><dt>Source</dt><dd>${n.src.map(p =>
+      `<button class="src" type="button" data-src="${esc(p)}">${esc(p)}</button>`).join("")}
+      </dd></dl><div id="dViewer"></div>`;
+  } else {
+    html += `<p class="note">An external tool — there is nothing in this package to open.</p>`;
+  }
+  document.getElementById("dBody").innerHTML = html;
+  document.querySelectorAll("#dBody .src").forEach(b =>
+    b.addEventListener("click", () => loadSource(b.dataset.src)));
+  drawer.hidden = false;
+  scrim.hidden = false;
+  document.getElementById("dClose").focus();
+}
+function closeNode() { drawer.hidden = true; scrim.hidden = true; }
+
+async function loadSource(path) {
+  const box = document.getElementById("dViewer");
+  box.innerHTML = `<p class="note">Reading ${esc(path)}…</p>`;
+  try {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    box.innerHTML = `<pre class="viewer">${esc(await res.text())}</pre>`;
+  } catch (err) {
+    box.innerHTML = `<p class="note">Could not read <code>${esc(path)}</code> from here
+      (${esc(err.message)}). Browsers block reads when this page is opened over
+      <code>file://</code> — serve the plugin directory over HTTP, or just open the file in your
+      editor.</p>`;
+  }
+}
+
+function wireNodes() {
+  document.querySelectorAll("[data-node]").forEach(el => {
+    if (el.dataset.wired) return;
+    el.dataset.wired = "1";
+    el.addEventListener("click", () => openNode(el.dataset.node));
+    el.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openNode(el.dataset.node); }
+    });
+  });
+}
+
+/* ---- wiring ---- */
+document.querySelectorAll('nav.tabs [role="tab"]').forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll('nav.tabs [role="tab"]').forEach(t =>
+      t.setAttribute("aria-selected", String(t === tab)));
+    document.querySelectorAll("main .panel").forEach(p => {
+      p.hidden = p.id !== "tab-" + tab.dataset.tab;
+    });
+  });
+});
+pickers.addEventListener("click", e => {
+  const b = e.target.closest("[data-diagram]");
+  if (b) showDiagram(b.dataset.diagram);
+});
+document.getElementById("dClose").addEventListener("click", closeNode);
+scrim.addEventListener("click", closeNode);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeNode(); });
+document.getElementById("themeBtn").addEventListener("click", () => {
+  document.documentElement.dataset.theme =
+    document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+});
+if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+  document.documentElement.dataset.theme = "dark";
+}
+showDiagram(DIAGRAMS[0].id);
+wireNodes();
+</script>
+</body>
+</html>

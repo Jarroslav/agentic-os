@@ -1,0 +1,17 @@
+{
+  "skill_name": "sdlc-doctor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Force a fresh doctor check on this repo — I just installed superpowers and want the node and git detection re-verified too, not whatever got cached from last time.",
+      "expected_output": "The skill re-runs the environment check against superpowers, node, and git in full, then overwrites .agentic/agentic-sdlc/doctor.json with the new results directly. It performs the check itself rather than pointing the user at a slash command as a substitute.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "healthcheck-snapshot",
+          "description": "Pass only if the response confirms .agentic/agentic-sdlc/doctor.json was rewritten with the fresh superpowers/node/git check results, and the response does not suggest running an unsupported slash command in place of performing the check."
+        }
+      ]
+    }
+  ]
+}

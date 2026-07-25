@@ -1,0 +1,10 @@
+.agentic/
+.claude/
+.githooks/
+.gitignore
+AGENTS.md
+CLAUDE.md
+PATTERNS.md
+docs/
+f.txt
+scripts/

@@ -1,0 +1,55 @@
+# {{PROJECT_NAME}} — Agent Contracts
+
+> The canonical conventions for every agent in this repo's fleet. Orchestrators read
+> this file first. Pair with `PATTERNS.md` (rules index) and the routing matrix in
+> `.agentic/guides/agent-registry.md`.
+
+**Canonical source.** Each agent's full contract lives in
+`{{AGENTS_CANONICAL_DIR}}<name>.md` (frontmatter declares `write_scope`; body is the
+instruction set). `.claude/agents/<name>.md` and `.claude/commands/<name>.md` are thin
+pointers that bootstrap into the canonical contract — the contract body is never
+duplicated, only referenced. Keep pointer layers in sync with the canonical directory.
+
+**Routing.** Which asset owns which intent is defined once, in
+[`.agentic/guides/agent-registry.md`](.agentic/guides/agent-registry.md) — this file
+links to it and never restates it. To find "who handles X", consult the registry (or
+ask the `dispatcher` agent, which outputs exactly one owning path).
+
+## Fleet invariants
+
+1. **Write scope is absolute.** An agent that writes outside the `write_scope` in its
+   contract frontmatter is a bug; treat it as you would a security breach. Enforced at
+   PreToolUse by `.claude/hooks/write_scope_guard.py` when an orchestrator has set the
+   active-agent lock (`.agentic/state/active-agent.json`).
+2. **Orchestrator-only spawning.** Peer agents never spawn each other; only
+   orchestrating commands (and the human) spawn subagents. This keeps every spawn
+   auditable and every write attributable.
+3. **Gate agents are read-only** and must emit a literal `PASS` token for the
+   pipeline to advance. No PASS, no progress — a gate that "mostly passed" failed.
+4. **Output contract.** Every agent ends its final message with
+   `## Summary / ## Why / ## Blocking / ## Non-blocking / ## Escalate to human`.
+   `.claude/hooks/subagent_gate.py` parses it fail-closed: a missing contract is
+   treated as Blocking; a non-empty `## Escalate to human` requires the parent to ask
+   the human before proceeding.
+5. **Instruction-quality gate.** Spawning an agent whose contract (or a guide it
+   cites, or the core index files) is stale/ungraded/below threshold is blocked at
+   SubagentStart by `.claude/hooks/instruction_gate.py`. The repair path is the
+   `instruction-auditor` (itself exempt — gating the auditor would deadlock).
+6. **Blind review before commit.** No commit ships unreviewed — see the managed
+   governance block in `CLAUDE.md`.
+7. **Escalation over improvisation.** Anything listed in
+   `.agentic/guides/policy/escalation-policy.md` (human-gated commands, guarded write
+   paths, `escalate_on` risk flags) stops the pipeline and goes to the human with
+   concrete options.
+
+## Reports
+
+Inline reports: one section per finding, code refs as `file:line`. No executive
+summaries, no conclusions, no emoji. Terseness is a feature — the human reads every
+report.
+
+## Context management (orchestrators)
+
+Compact at ~80% context; `.claude/hooks/precompact_checkpoint.py` snapshots pipeline
+state to `.claude/checkpoints/last-compaction.md` on PreCompact so a resumed session
+can pick up mid-pipeline.

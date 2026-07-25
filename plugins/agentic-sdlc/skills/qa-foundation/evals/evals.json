@@ -1,0 +1,49 @@
+{
+  "skill_name": "qa-foundation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Set up QA foundation.",
+      "expected_output": "Discovers test files, coverage reports, CI gates, and QA documentation in the current repo; asks about external test repos, test case management (Jira/Zephyr, TestRail, ADO), and QA doc storage; then writes qa-strategy.md and qa-health.md under .agentic/guides/testing/.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "discovers-first",
+          "description": "The response inspects the repo's test infrastructure before asking about external tooling."
+        },
+        {
+          "name": "writes-both-guides",
+          "description": "Both qa-strategy.md and qa-health.md are produced under .agentic/guides/testing/."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "qa init — this repo has no test case management system and no external QA docs.",
+      "expected_output": "Completes with repo-local discovery only: records that no external adapters are configured, and still writes both guides so qa-planner has a foundation to read on every feature run.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "optional-integrations",
+          "description": "Absent external systems are recorded as not configured rather than blocking the run."
+        },
+        {
+          "name": "guides-still-written",
+          "description": "qa-strategy.md and qa-health.md are written even with no external integrations."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Refresh the QA foundation — our test setup changed since the last run.",
+      "expected_output": "Re-runs discovery and overwrites both guides; re-running is documented as safe and idempotent for these two files.",
+      "files": [".agentic/guides/testing/qa-strategy.md", ".agentic/guides/testing/qa-health.md"],
+      "assertions": [
+        {
+          "name": "safe-rerun",
+          "description": "The existing guides are overwritten with refreshed content, not duplicated or appended to."
+        }
+      ]
+    }
+  ]
+}

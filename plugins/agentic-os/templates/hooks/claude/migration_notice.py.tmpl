@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+# Claude Code PostToolUse(Write|Edit) hook — migration drift reminder.
+#
+# Advisory only (always exit 0): when a file under the migrations directory is
+# written or edited, remind the agent to run the schema-drift check before
+# committing. Installed only when the target repo has a migrations directory.
+#
+# stdin:  PostToolUse event {"tool_input": {"file_path": "..."}}
+# stdout: the reminder (surfaced to the agent as hook output).
+
+from __future__ import annotations
+
+import json
+import sys
+
+MIGRATIONS_DIR = "{{MIGRATIONS_DIR}}"
+MIGRATION_DIFF_COMMAND = "{{MIGRATION_DIFF_COMMAND}}"
+
+
+def main() -> None:
+    try:
+        event = json.loads(sys.stdin.read() or "{}")
+    except json.JSONDecodeError:
+        sys.exit(0)
+
+    # `or ""` — an explicit `"file_path": null` yields None, not the default, and
+    # a bare `in` against None raises TypeError, exiting 1. Same guard as
+    # instruction_stale_notice.py. This covers the field, not the container: a
+    # non-dict `tool_input` still tracebacks, as it does in every sibling hook.
+    file_path = event.get("tool_input", {}).get("file_path", "") or ""
+    if MIGRATIONS_DIR and MIGRATIONS_DIR in file_path:
+        print(
+            f"[hook] Migration touched. Run: {MIGRATION_DIFF_COMMAND} — "
+            "confirm no schema drift before committing."
+        )
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

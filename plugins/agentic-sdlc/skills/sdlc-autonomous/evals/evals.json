@@ -1,0 +1,17 @@
+{
+  "skill_name": "sdlc-autonomous",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run the SDLC pipeline autonomously to swap out our current logging dependency for a structured logger across the service. Don't wait on me for approvals — just take it end to end.",
+      "expected_output": "Delegates the work rather than implementing it directly: invokes the sdlc-pipeline orchestrator with mode=autonomous, leaving escalation flags at their default (no override supplied). States plainly that this is a hand-off, not a plan to touch the logging code itself in this turn. Explains that in autonomous mode, the pipeline's judgment gates (e.g. spec.approved, plan.approved, qa.drift, code-review.final, requirements.ambiguous) are resolved by stand-in subagents rather than by prompting the user, and that a human is only pulled in if a gate's escalation rule forces it.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unattended-posture",
+          "description": "Passes only if the response (a) invokes the sdlc-pipeline skill/orchestrator, (b) does so with mode=autonomous and default escalation flags (no override), and (c) explains that stand-in subagents — not human-in-the-loop review — resolve the pipeline's judgment gates in this mode."
+        }
+      ]
+    }
+  ]
+}

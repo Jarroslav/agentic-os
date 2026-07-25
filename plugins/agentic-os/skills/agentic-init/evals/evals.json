@@ -1,0 +1,77 @@
+{
+  "skill_name": "agentic-init",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/agentic-init --defaults",
+      "expected_output": "Runs preflight (git root, python3, plugin root), skips all six interview screens taking every detected default, registers dependency plugins, scaffolds the preset union with journaled sha256 per file, generates and audits stack agents where capabilities apply, runs the doctor, and reports what was installed without committing anything.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "no-interview",
+          "description": "The response takes every default without asking the six interview screens."
+        },
+        {
+          "name": "journaled-scaffold",
+          "description": "Every file written is recorded in .agentic/agentic-os/install.json with sha256, template ID, and owner."
+        },
+        {
+          "name": "no-commit",
+          "description": "The response never runs git add or git commit in the target repo."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/agentic-init --presets developer,qa",
+      "expected_output": "Pre-selects the developer and qa presets on Screen 1, unions their templates/generated/sdlc_skills sets so each ID is scaffolded exactly once, resolves default HITL strictest-wins (qa's strict wins over developer's gated-autonomous), and installs both orchestration styles with the default taken from the first preset listed.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "set-union",
+          "description": "Shared template IDs across the two presets are scaffolded exactly once."
+        },
+        {
+          "name": "strictest-hitl",
+          "description": "The pre-filled HITL default is strict, because qa's strict outranks developer's gated-autonomous."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Resume the agentic-os install; the previous run was interrupted after the scaffold phase.",
+      "expected_output": "Reads the journal, sees phase: scaffold with recorded answers, skips preflight/interview/dependencies, scaffolds only IDs not already journaled, then continues with generation and doctor verification.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "resumes-from-journal",
+          "description": "The response resumes from the journaled phase instead of restarting the interview."
+        },
+        {
+          "name": "idempotent",
+          "description": "Already-journaled files are not rewritten."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Install agentic-os into this repo. It already has its own CLAUDE.md, .claude/settings.json, and a pre-commit git hook.",
+      "expected_output": "Handles the mature repo non-destructively: CLAUDE.md gets a managed marker block with user content untouched, settings are deep-merged and shown as a diff first, name collisions default to skip (journaled owner: user), and the existing git hook is chained as pre-commit.local, never replaced.",
+      "files": ["CLAUDE.md", ".claude/settings.json", ".git/hooks/pre-commit"],
+      "assertions": [
+        {
+          "name": "managed-block",
+          "description": "Existing CLAUDE.md content outside the managed marker block is left untouched."
+        },
+        {
+          "name": "settings-merge-diff",
+          "description": "The settings deep-merge is shown as a diff before being applied."
+        },
+        {
+          "name": "chained-hook",
+          "description": "The pre-existing git hook is preserved and chained, not overwritten."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "pm-delivery",
+  "description": "Delivery management: ticket/MR adapters, PR pipeline gate, MR monitoring glue, status conventions \u2014 dispatcher-routed, no code-writing agents.",
+  "templates": [
+    "hooks/subagent-gate",
+    "hooks/session-bootstrap",
+    "hooks/precompact-checkpoint",
+    "hooks/settings-fragment",
+    "hooks/session-learnings-notice",
+    "hooks/context-monitor",
+    "hooks/prompt-scan-guard",
+    "hooks/guarded-write-paths",
+    "hooks/human-gated-commands",
+    "governance/claude-section",
+    "governance/agents",
+    "governance/agent-registry",
+    "policy/ai-policy",
+    "policy/escalation-policy",
+    "policy/safety-policy",
+    "guides/git-workflow",
+    "guides/quality-gates",
+    "guides/working-with-agents",
+    "agents/dispatcher",
+    "agents/pr-pipeline-gate",
+    "commands/dispatch",
+    "sdlc/config",
+    "sdlc/project"
+  ],
+  "generated": [],
+  "default_hitl": "gated-autonomous",
+  "default_orchestration": "dispatcher",
+  "sdlc_skills": [
+    "mr-creator",
+    "mr-watch",
+    "sdlc-status",
+    "requirements-intake"
+  ]
+}

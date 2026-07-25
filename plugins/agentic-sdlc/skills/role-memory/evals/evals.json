@@ -1,0 +1,53 @@
+{
+  "skill_name": "role-memory",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Log this - I swapped the staging DB over to a read replica for the load test and forgot to flip it back afterward. Jot it down so we don't trip on it again.",
+      "expected_output": "Files the note as episodic history rather than a durable fact: appends a fresh line to today's dated file inside `.agents/memory/<role>/daily`, creating that day's file first if none exists yet, and leaves any earlier entries from today in place.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "appends-daily-log",
+          "description": "The note lands in today's dated file under `.agents/memory/<role>/daily` as an added entry, with any prior same-day lines left intact."
+        },
+        {
+          "name": "creates-todays-file-if-absent",
+          "description": "When the current day has no log file yet, one is created before the entry is written."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Catch me up - give me the rundown of whatever you noted in yesterday's log.",
+      "expected_output": "Opens the prior day's file under `.agents/memory/<role>/daily`, reads the real entries, and returns a short recap grounded in what is actually written. If no file exists for that date, it plainly states nothing was recorded that day instead of inventing activity.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "reads-daily-log",
+          "description": "The reply is grounded in the actual contents of the requested date's file inside `.agents/memory/<role>/daily`, then summarized."
+        },
+        {
+          "name": "graceful-missing-log",
+          "description": "A missing file for that date yields an honest 'nothing recorded' answer rather than a fabricated summary."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Keep this permanently: I want ADRs held under 400 words - push back on anything longer during review. That's a standing preference, not a one-off.",
+      "expected_output": "Treats it as a keep-forever fact: writes one curated markdown entry inside `.agents/memory/<role>/` with the required frontmatter, classifies it as a reference-type entry (a standing convention rather than project-specific work), and adds a single linking line to `MEMORY.md`, skipping the index write if that same fact is already listed.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "writes-curated-entry",
+          "description": "A single durable entry appears under `.agents/memory/<role>/` carrying the required frontmatter and a fitting type (project or reference)."
+        },
+        {
+          "name": "updates-index",
+          "description": "`MEMORY.md` gains one pointer to the new entry with no duplicated line when the fact was already indexed."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+<!--
+GENERATION INSTRUCTIONS:
+1. Scan the host repo for routes, controllers/handlers, and middleware; document only patterns that actually appear in the code — never invent one.
+2. Cite the real originating file and line range for every code sample, using the `// Source: [actual_file:lines]` comment on the fence's first line.
+3. Keep each pattern to a single example of 5-15 lines; drop a section entirely if the codebase has no matching pattern.
+4. Choose the canonical endpoint to be one that demonstrates both authentication and validation when such an endpoint exists.
+5. The generated guide must be no more than 300 lines — trim prose before you trim real examples.
+
+Placeholders below are square-bracket directives. `[find: ...]` = detect and fill; `[extract: ...]` = paste a real snippet verbatim; `[detected_language]` = the fence language tag (ts, py, go, ...); `[file:line]` = a real citation. Delete every bracket before shipping.
+-->
+
+# API Patterns — [find: project name]
+
+**Project**: [find: name from package.json / project config]
+**Stack**: [find: framework + language + auth library]
+**Base URL**: [find: from config or environment]
+
+> This guide is extracted, not authored. It mirrors how this repo already builds endpoints so new work matches the existing grain.
+
+## Where things live
+
+| Purpose | Path |
+|---|---|
+| Routes / endpoint definitions | [find] |
+| Controllers / request handlers | [find] |
+| Middleware | [find] |
+| Validation schemas | [find] |
+| Models / types | [find] |
+
+## Canonical endpoint
+
+One representative endpoint, preferred to be one carrying both a guard and a validator.
+
+```[detected_language]
+// Source: [actual_file:lines]
+[extract: the full route -> handler for one real endpoint]
+```
+
+**To add a new endpoint, replicate in this order:**
+
+1. Declare the route — [file:line]
+2. Add the handler — [file:line]
+3. Attach a validator, if the route takes a body — [file:line]
+
+## Request validation
+
+**Library**: [find: Zod | Joi | Yup | Pydantic | class-validator | custom]
+
+```[detected_language]
+// Source: [actual_file:lines]
+[extract: one schema definition]
+```
+
+How it attaches to a route (middleware call or decorator):
+
+```[detected_language]
+// Source: [actual_file:lines]
+[extract: the attachment line — validator(schema) middleware or @Validate decorator]
+```
+
+## Authentication
+
+**Method**: [find: JWT | Session | API Key | OAuth]
+
+Guard implementation:
+
+```[detected_language]
+// Source: [actual_file:lines]
+[extract: the guard / auth middleware body]
+```
+
+Route-protection syntax as written in this repo:
+
+```[detected_language]
+// Source: [actual_file:lines]
+[extract: exact line that applies the guard to a route]
+```
+
+Reading the authenticated user inside a handler: [find: e.g. req.user / ctx.user / self.request.user]
+
+## Response shapes
+
+Success envelope:
+
+```json
+[extract: one real success response body]
+```
+
+Error envelope:
+
+```json
+[extract: one real error response body]
+```
+
+Shared response helpers (if any): [find: path to helper util, else omit this line]
+
+## Status code matrix
+
+Sourced from the real POST / GET / PUT-PATCH / DELETE handlers.
+
+| Operation | Success | Common errors |
+|---|---|---|
+| Create | [find] | [find] |
+| Read | [find] | [find] |
+| Update | [find] | [find] |
+| Delete | [find] | [find] |
+
+## Error handling
+
+Pattern: [find: centralized error middleware | throw-and-catch]
+
+```[detected_language]
+// Source: [actual_file:lines]
+[extract: the central handler, or the throw site]
+```
+
+Exact throw syntax used here: [find: e.g. throw new ApiError(404, "not found") / raise HTTPException(...)]
+
+## Pagination
+
+Applies only if pagination exists in the repo.
+
+```[detected_language]
+// Source: [actual_file:lines]
+[extract: the pagination implementation]
+```
+
+- Query parameters: [find: actual param names]
+- Defaults: page = [find], limit = [find]
+
+## Naming and style conventions
+
+| Aspect | This repo's convention |
+|---|---|
+| Route path case | [find: kebab / camel / snake] |
+| Controller method naming | [find] |
+| Async style | [find: async-await / promise chains / try-catch wrapper] |
+| ID parameter format | [find: id / :id / uuid] |
+
+## Anti-patterns
+
+Drawn from inconsistencies or deprecated code actually found in the repo.
+
+| Avoid | Use instead | Reason |
+|---|---|---|
+| [find] | [find] | [find] |
+| [find] | [find] | [find] |
+| [find] | [find] | [find] |
+
+## Quick reference
+
+| Task | Syntax | Example |
+|---|---|---|
+| Define a route | [find] | [file:line] |
+| Add validation | [find] | [file:line] |
+| Protect a route | [find] | [file:line] |
+| Return success | [find] | [file:line] |
+| Throw an error | [find] | [file:line] |

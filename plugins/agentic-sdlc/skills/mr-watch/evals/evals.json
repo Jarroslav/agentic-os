@@ -1,0 +1,53 @@
+{
+  "skill_name": "mr-watch",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "CI just went red on MR !84. Watch it, fix whatever broke, and re-push until the pipeline is green.",
+      "expected_output": "Parses the MR reference !84, detects the platform from repo context, and confirms CLI auth. Enters the monitor loop, reads MR state, and finds a failing CI run. Fetches the failure detail and classifies it (for example a lint or type error). Applies a minimal targeted change to only the offending code, commits with a ticket prefix inferred from recent git history, and pushes. Resumes monitoring the same MR without exiting, waiting for the re-triggered pipeline result.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "red-ci-triage",
+          "description": "Detects the failed CI run, fetches the failure detail, and classifies the failure category (lint / style / type) rather than guessing blindly."
+        },
+        {
+          "name": "targeted-patch-repush",
+          "description": "Applies a minimal fix scoped to the failing check only, commits with a ticket prefix derived from recent commit history (not hardcoded), pushes, and re-enters the watch loop instead of stopping."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A reviewer left a change request on MR !61. Keep watching it and handle their feedback so it can merge.",
+      "expected_output": "Parses the MR reference !61 and enters the monitor loop. Detects an unresolved discussion carrying a reviewer change request. Makes the minimal edit that satisfies the requested change, commits with a history-derived ticket prefix, and pushes. Continues looping over MR state, CI status, and outstanding discussions until the MR reaches a terminal state, rather than declaring victory after a single push.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "reviewer-change-request",
+          "description": "Identifies the unresolved reviewer discussion requesting changes and responds with a scoped code change, not an unrelated rewrite."
+        },
+        {
+          "name": "watch-until-terminal",
+          "description": "Keeps looping over MR state, CI, and discussions after pushing the fix; only stops on merged / closed / user-stop / safety limit."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "MR !77 has a merge conflict. Rebase it, resolve the conflict, and confirm once it actually merges.",
+      "expected_output": "Parses the MR reference !77 and enters the monitor loop. Detects that the branch needs a rebase and has a merge conflict. Rebases, resolves the conflicting hunks, commits with a ticket prefix inferred from recent git history, and pushes. Continues monitoring until the platform reports the MR as merged, then prints a summary and exits the loop without sleeping or re-entering another watch cycle.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "conflict-rebase-resolve",
+          "description": "Detects the rebase-needed / conflict condition, rebases, and resolves the conflicting changes before pushing."
+        },
+        {
+          "name": "merge-confirmed-clean-exit",
+          "description": "Once the MR is reported merged, emits a summary and exits immediately; does not sleep or start a fresh monitor loop after the terminal state."
+        }
+      ]
+    }
+  ]
+}

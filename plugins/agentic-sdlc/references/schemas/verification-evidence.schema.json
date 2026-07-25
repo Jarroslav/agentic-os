@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "feature-verification evidence (verification-evidence.json / evidence/verification/<feature-id>.json)",
+  "type": "object",
+  "required": [
+    "schema",
+    "applies",
+    "result"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "applies": {
+      "type": "boolean"
+    },
+    "result": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCONCLUSIVE",
+        "BLOCKED"
+      ]
+    },
+    "feature_id": {
+      "type": "string"
+    },
+    "tool": {
+      "enum": [
+        "playwright",
+        "cypress",
+        "storybook-test",
+        "custom"
+      ]
+    },
+    "coverage_source": {
+      "enum": [
+        "existing-test",
+        "generated-test",
+        "manual-command"
+      ]
+    },
+    "test_command": {
+      "type": "string"
+    },
+    "generated_test_path": {
+      "type": "string"
+    },
+    "app_url": {
+      "type": "string"
+    },
+    "browser_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "assertions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "screenshot_path": {
+      "type": "string"
+    },
+    "console_errors": {
+      "type": "array"
+    },
+    "network_failures": {
+      "type": "array"
+    },
+    "captured_at": {
+      "type": "string"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reason": {
+      "type": "string"
+    },
+    "remediation": {
+      "type": "string"
+    }
+  }
+}

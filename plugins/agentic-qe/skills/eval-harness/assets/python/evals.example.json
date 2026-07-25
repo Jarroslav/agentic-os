@@ -1,0 +1,66 @@
+{
+  "skill_name": "my-skill",
+  "contracts": {
+    "required_paths": [
+      "SKILL.md",
+      "assets/checklist.md"
+    ],
+    "skill_md_includes": [
+      "## Usage"
+    ],
+    "skill_md_matches": [
+      "blast\\s+radius"
+    ],
+    "scripts": {
+      "scripts/report.py": {
+        "compile": true,
+        "includes": [
+          "def main"
+        ],
+        "matches": [
+          "argparse"
+        ],
+        "smoke": {
+          "argv": ["--help"],
+          "exit": [0],
+          "output_includes": ["usage"]
+        }
+      }
+    }
+  },
+  "context_files": [
+    "references/runtime-notes.md"
+  ],
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Draft a smoke-test plan for the checkout flow described in the notes.",
+      "expected_output": "An ordered plan naming each checkout scenario from the notes. Human-readable guide only — not graded.",
+      "files": [
+        "references/checkout-flow.md"
+      ],
+      "assertions": [
+        {
+          "name": "covers-all-scenarios",
+          "description": "The answer addresses every checkout scenario named in the reference notes."
+        },
+        {
+          "name": "no-invented-facts",
+          "description": "The answer introduces no scenarios, fields, or systems absent from the reference notes (grounding)."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The notes mention no mobile client. Plan mobile checkout coverage anyway.",
+      "expected_output": "Uses the documented fallback instead of inventing mobile behavior. Not graded.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "uses-documented-fallback",
+          "description": "The answer applies the fallback the skill documentation prescribes and says so, rather than fabricating unsupported coverage."
+        }
+      ]
+    }
+  ]
+}

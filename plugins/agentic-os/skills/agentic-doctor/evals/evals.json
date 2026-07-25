@@ -1,0 +1,53 @@
+{
+  "skill_name": "agentic-doctor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/agentic-doctor",
+      "expected_output": "Reads the install journal, runs all eight checks (manifest, hook compile+import, canned-event dry-runs, HITL smoke, settings registration, git hook + dependencies, scorecard, agent-registry integrity) even after failures, writes .agentic/agentic-os/doctor.json, and reports a PASS/FAIL headline with a one-line remedy per failed check.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "all-checks-run",
+          "description": "All eight checks execute; an early failure does not short-circuit the report."
+        },
+        {
+          "name": "verdict-written",
+          "description": "doctor.json is written with per-check passed/detail, failures, and pending_restart."
+        },
+        {
+          "name": "read-only",
+          "description": "Nothing is fixed or modified besides doctor.json and the temporary Check-3 probe file, which is deleted."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run doctor. One managed hook in .claude/hooks/ contains an unrendered {{PLACEHOLDER}} and raises NameError when imported.",
+      "expected_output": "Check 2 fails the hook: py_compile may pass, but the import probe catches the NameError (and 2c catches the literal {{), so the doctor reports py_compile as failed with the offending hook named, and the overall verdict is FAIL.",
+      "files": [".agentic/agentic-os/install.json", ".claude/hooks/"],
+      "assertions": [
+        {
+          "name": "import-not-just-compile",
+          "description": "The hook is loaded as a module (guard checked first, never executed as __main__), so the NameError is caught even though py_compile succeeds."
+        },
+        {
+          "name": "fails-loudly",
+          "description": "The verdict is FAIL and names the broken hook; the doctor does not attempt to repair it."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Verify the agentic-os install. There is no .agentic/agentic-os/install.json in this repo.",
+      "expected_output": "Reports 'not installed — run /agentic-init' and writes a failed doctor.json containing only that finding, without running the other checks against a non-existent scaffold.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "missing-journal-handled",
+          "description": "The response states the repo is not installed and points at /agentic-init instead of failing with a traceback."
+        }
+      ]
+    }
+  ]
+}

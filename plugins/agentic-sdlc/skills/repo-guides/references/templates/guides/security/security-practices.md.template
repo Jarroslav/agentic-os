@@ -1,0 +1,276 @@
+---
+
+# Security Practices — [PROJECT_NAME]
+
+<!-- GENERATION INSTRUCTIONS:
+Populate this guide by reading the target repo — never invent facts. Fill every [bracket]
+with a detected value; delete any section whose pattern is absent (except file-upload, which
+is conditional by design). Every code block cites its origin with `// Source: [file:lines]`;
+every table row cites `[file:line]`. Code fences carry the project language in place of [lang].
+
+Scan order:
+  1. Locate the auth middleware / route guard. Trace the request path and reproduce it as the
+     flow diagram, then extract the one-line syntax a developer copies to protect a new route.
+  2. Find role / permission checks. Record the model (RBAC | ABAC | Simple roles | Custom) and
+     one row per role with what it grants and where it is declared.
+  3. Find validation schemas at API boundaries (request bodies, params, query, headers).
+  4. Detect security middleware: helmet-style headers, CORS, rate limiting, CSRF.
+  5. Find how secrets load (process env, a secrets manager, a vault, a config module).
+  6. Enumerate security-sensitive operations (login, role change, data export) and their guards.
+  7. Keep it tight. Output: concise, no more than 300 lines.
+
+Metadata (fill inline below):
+  Auth method: [JWT | Session | OAuth2 | API Key | None]
+  Auth library: [detected — e.g. passport | jose | next-auth]
+-->
+
+**Auth method:** [JWT | Session | OAuth2 | API Key | None] &nbsp;·&nbsp; **Auth library:** [passport | jose | next-auth | ...]
+
+> This guide records the security patterns already present in this repository so new code
+> matches them. It is not a policy or a threat model — mirror what exists, cite where it lives.
+
+---
+
+## Authentication
+
+<!-- Reproduce the real request path through the auth layer. The failure branch must land on
+     401. Fill the facts table from the token/session config and give the exact protect-route
+     line for this stack. -->
+
+```
+request ─▶ [auth middleware] ─▶ [token/session validation] ─▶ user context
+                                        │
+                                        └─ invalid / missing ─▶ 401 Unauthorized
+```
+
+| Fact       | Value                                        | Source        |
+|------------|----------------------------------------------|---------------|
+| Token type | [Bearer JWT / opaque session / API key]      | [file:line]   |
+| Storage    | [Bearer header / cookie / query]             | [file:line]   |
+| Expiration | [e.g. 15m access / 7d refresh]               | [file:line]   |
+| Refresh    | [refresh-token flow / sliding session / none]| [file:line]   |
+
+Protect a new route:
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_PROTECT_ROUTE_SNIPPET]
+```
+
+---
+
+## Authorization
+
+<!-- State the model, then one row per role. Extract both the enforcement call site and the
+     underlying permission-check helper. -->
+
+**Model:** [RBAC | ABAC | Simple roles | Custom]
+
+| Role     | Allows                     | Defined at   |
+|----------|----------------------------|--------------|
+| [role]   | [permitted actions/scopes] | [file:line]  |
+| [role]   | [permitted actions/scopes] | [file:line]  |
+
+Enforcement:
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_ENFORCEMENT_SNIPPET]
+```
+
+Permission check:
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_PERMISSION_CHECK_SNIPPET]
+```
+
+---
+
+## Input Validation
+
+<!-- Detect the validation library and where it runs. Show one real schema. If sanitization is
+     handled by the library, say so instead of inventing a separate step. -->
+
+**Library:** [Zod | Joi | class-validator | Pydantic] &nbsp;·&nbsp; **Applied at:** [Middleware | Decorator | Controller]
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_SCHEMA_EXAMPLE]
+```
+
+**Sanitization:** [pattern, or: handled by the validation library]
+
+Rules:
+- ✅ Validate at the [detected boundary] before the value reaches business logic.
+- ✅ Reuse schemas from [validation path]; do not re-declare shapes ad hoc.
+- ❌ Never trust query params, body, headers, or path params without a schema.
+
+---
+
+## Secrets Management
+
+<!-- Extract the loader. The table lists the secrets this repo actually reads; keep the
+     placeholder names below. Show how a module reads a resolved value. -->
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_SECRETS_LOADER]
+```
+
+| Variable            | Purpose                    | Required | Source       |
+|---------------------|----------------------------|----------|--------------|
+| [SECRET_KEY/JWT_SECRET] | token signing / crypto | yes      | [file:line]  |
+| [DATABASE_URL]      | database connection        | yes      | [file:line]  |
+| [API_KEY_*]         | external-service access    | varies   | [file:line]  |
+
+Access:
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_CONFIG_ACCESS_SNIPPET]
+```
+
+Rules:
+- ✅ Load from env / secrets manager / vault.
+- ✅ Read through the config module, never `process.env` scattered inline.
+- ❌ Never hardcode a secret in source.
+- ❌ Never commit `.env` files.
+- ❌ Never log a secret value.
+
+---
+
+## Security Middleware
+
+<!-- One row per protection actually wired up. Drop rows for anything absent. Express limits as
+     "[X requests per Y time window]". -->
+
+| Protection       | Implementation                     | Source       |
+|------------------|------------------------------------|--------------|
+| Security headers | [helmet / manual / none]           | [file:line]  |
+| CORS             | [allowed origins]                  | [file:line]  |
+| Rate limiting    | [X requests per Y time window]     | [file:line]  |
+| CSRF             | [token / same-site cookie / none]  | [file:line]  |
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_HEADERS_CONFIG]
+```
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_CORS_CONFIG]
+```
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_RATE_LIMIT_CONFIG]
+```
+
+---
+
+## SQL Injection
+
+<!-- Record how queries are built. Pair a safe example with the anti-pattern it prevents. If no
+     unsafe example exists in the repo, use a generic one for contrast. -->
+
+**Protection:** [ORM | query builder | parameterized queries]
+
+```[lang]
+// Source: [file:lines]
+[SAFE_QUERY_EXAMPLE]
+```
+
+```[lang]
+// ❌ NEVER — string-concatenated query
+[NEVER_DO_ANTIPATTERN]
+```
+
+---
+
+## Cross-Site Scripting (XSS)
+
+<!-- Record the escaping strategy and whether a CSP is configured. -->
+
+**Protection:** [framework auto-escaping | manual escaping | CSP] &nbsp;·&nbsp; **CSP:** [configured / not configured]
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_XSS_PROTECTION_SNIPPET]
+```
+
+---
+
+## File Uploads
+
+<!-- Emit this section only if the repo handles uploads. The sanitization row may resolve to
+     "delegated to the validation library". -->
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_UPLOAD_HANDLER]
+```
+
+| Control              | Value                          | Source       |
+|----------------------|--------------------------------|--------------|
+| Type validation      | [allowed MIME types / ext]     | [file:line]  |
+| Size limit           | [e.g. 5 MB]                    | [file:line]  |
+| Storage location     | [outside webroot? yes/no]      | [file:line]  |
+| Filename sanitization| [pattern / delegated to lib]   | [file:line]  |
+
+---
+
+## Audit Logging
+
+<!-- One row per security event the repo emits. Extract a representative log call. -->
+
+| Event                | Level    | Source       |
+|----------------------|----------|--------------|
+| Login success        | [info]   | [file:line]  |
+| Login failure        | [warn]   | [file:line]  |
+| Permission denied    | [warn]   | [file:line]  |
+| Sensitive-data access| [info]   | [file:line]  |
+
+```[lang]
+// Source: [file:lines]
+[EXTRACTED_AUDIT_LOG_EXAMPLE]
+```
+
+---
+
+## Dependency Security
+
+<!-- Record the scanner(s) wired into this project. -->
+
+| Tool             | Command              | Frequency      |
+|------------------|----------------------|----------------|
+| [npm audit / safety / snyk / dependabot] | [command] | [CI / manual] |
+
+---
+
+## Anti-Patterns
+
+<!-- Two rows are fixed. Add up to three more from real risks you spot in the codebase. -->
+
+| NEVER                                | INSTEAD                          | Risk           |
+|--------------------------------------|----------------------------------|----------------|
+| Log user passwords or tokens         | Log the user ID only             | Data exposure  |
+| Return stack traces to clients       | Return a generic error message   | Info leakage   |
+| [detected anti-pattern]              | [safe alternative]               | [risk]         |
+| [detected anti-pattern]              | [safe alternative]               | [risk]         |
+| [detected anti-pattern]              | [safe alternative]               | [risk]         |
+
+---
+
+## Quick Reference
+
+| Need              | Location    | Pattern                         |
+|-------------------|-------------|---------------------------------|
+| Auth middleware   | [file:line] | [how to apply it]               |
+| Permission check  | [file:line] | [how to call it]                |
+| Input validation  | [file:line] | [schema + boundary]             |
+| Secrets config    | [file:line] | [config module accessor]        |
+| Security headers  | [file:line] | [middleware registration]       |
+| Audit logging     | [file:line] | [logger call for an event]      |
+
+---

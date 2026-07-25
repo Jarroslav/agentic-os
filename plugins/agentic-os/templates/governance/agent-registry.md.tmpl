@@ -1,0 +1,60 @@
+# Agent Registry — {{PROJECT_NAME}}
+
+<!-- Scaffolded by agentic-os to .agentic/guides/agent-registry.md.
+     THE single routing matrix: intent → exactly one owning asset.
+     AGENTS.md links here and never restates this table.
+     Installed role presets: {{ROLE_PRESETS_ACTIVE}} — the installer removes rows
+     whose preset is not installed. -->
+
+Canonical **agent** contracts live in `{{AGENTS_CANONICAL_DIR}}`; their
+harness-specific files (`.claude/agents/`, `.claude/commands/<agent>.md`) are thin
+pointers. The two **orchestration commands** (`pipeline-orchestrator`, `dispatch`)
+are the exception: they are commands, not agents — their canonical body lives
+directly in `.claude/commands/`.
+
+## Orchestration matrix (intent → owner)
+
+One owning asset per intent. Never fork the workflow: do not run a parallel
+flow for the same task; pick the owner and cite anything else as reference.
+
+| Trigger / intent | Owning asset | Human gate / escalation notes |
+| --- | --- | --- |
+| Route an ambiguous request to its owner | `{{AGENTS_CANONICAL_DIR}}dispatcher.md` | Read-only; outputs the owner path only. |
+| Review staged changes before commit | `{{AGENTS_CANONICAL_DIR}}blind-code-reviewer.md` | Mandatory before every commit (pre-commit review gate); blocks on non-empty `## Blocking`. |
+| Security posture / secrets / auth surfaces | `{{AGENTS_CANONICAL_DIR}}security-reviewer.md` | Must report `PASS` before merge; findings route per escalation-policy. |
+| Grade governance/instruction files | `{{AGENTS_CANONICAL_DIR}}instruction-auditor.md` | Scores below {{SCORE_THRESHOLD}} block the graded agent's spawn. |
+| MR/PR merge readiness | `{{AGENTS_CANONICAL_DIR}}pr-pipeline-gate.md` | Read-only; merging itself follows the autonomy matrix in `.agentic/guides/policy/ai-policy.md`. |
+| Staged multi-agent feature flow | `.claude/commands/pipeline-orchestrator.md` | Judgment gates via decision-router; `escalate_on` flags stop the pipeline. |
+| One-step-at-a-time routing (strict HITL) | `.claude/commands/dispatch.md` | Each step user-invoked; agents never chain autonomously. |
+| Draft test cases from a story/bug (QA preset) | `{{AGENTS_CANONICAL_DIR}}test-case-generator.md` | Draft-only; upload to {{TICKET_ADAPTER}} is human-approved. |
+| Automate approved test-case IDs (QA preset) | `{{AGENTS_CANONICAL_DIR}}test-automation-author.md` | Real-ID gate + existing-coverage gate; test execution per autonomy matrix. |
+| Sync automation ↔ ticket steps after maintenance (QA preset) | `{{AGENTS_CANONICAL_DIR}}test-case-syncer.md` | Every {{TICKET_ADAPTER}} step update is a per-case human-approved write. |
+| Triage a red/flaky test (QA preset) | `{{AGENTS_CANONICAL_DIR}}test-failure-triage.md` | Read-only; fixes follow `.agentic/guides/standards/flaky-protocol.md`. |
+| Create tickets/bugs in {{TICKET_ADAPTER}} (QA preset) | `{{AGENTS_CANONICAL_DIR}}work-item-creator.md` | Every external write listed and human-confirmed before execution. |
+| <!-- generated-agent-rows --> | | |
+
+Stack-specific writer/gate agents generated at install time (schema, API,
+component, i18n, migration-validator, …) get `owner: generated` rows
+directly below the row above (the one whose first cell is the
+`<!-- generated-agent-rows -->` marker) — a real, mostly-empty table row, not
+a standalone comment line, specifically so appended rows stay part of the
+same contiguous GFM table block instead of rendering as orphaned paragraph
+text (a bare comment line between table rows breaks table continuity on
+GitHub and most Markdown renderers regardless of blank-line spacing). Rows
+appended by the installer orchestrator once generation finishes for all
+applicable slots in a pass (never by an individual generator subagent — they
+run in parallel and would race on this shared file). One row per applicable
+writer/gate slot; `stack-guides` never gets one, it isn't dispatchable.
+Regenerating a slot replaces its existing row rather than duplicating it. A
+fresh install with no `generated` set (a `qa`-only or `pm-delivery`-only
+union, or a repo with zero applicable capabilities) leaves the marker row as
+the last row in the table — that's a complete, valid state, not a
+placeholder waiting to be filled.
+
+## Orchestration rules
+
+- **One owner per intent.** If two rows seem to match, the more specific intent wins; if still ambiguous, ask the dispatcher.
+- **Gates are read-only.** Reviewer/auditor/gate agents report; the parent (or a writer agent) owns the fix.
+- **Escalation is layered**, not improvised: hard hook denial → `## Blocking` → `## Non-blocking` → `## Escalate to human` — see `.agentic/guides/policy/escalation-policy.md`.
+- **Multi-step work** goes through the orchestration style your HITL mode prescribes: `strict` installs default to `dispatch`; `gated-autonomous`/`autonomous` default to `pipeline-orchestrator`.
+- Binding process rules live in `.agentic/guides/` (policies under `policy/`, standards under `standards/`) — owned there, referenced everywhere else.

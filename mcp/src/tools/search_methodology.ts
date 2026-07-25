@@ -1,0 +1,174 @@
+import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { Content, Doc } from '../content.js';
+import { pathToUri } from '../resources.js';
+
+const PLUGINS = ['agentic-os', 'agentic-sdlc', 'agentic-qe'] as const;
+
+const inputShape = {
+  query: z.string().min(1).describe(
+    'Search terms, e.g. "write scope enforcement". Every term must appear in ' +
+    'a document for it to match, so two or three distinctive words find more ' +
+    'than a full sentence does. Runs of fewer than two alphanumeric ' +
+    'characters are ignored, and punctuation is not searchable.',
+  ),
+  plugin: z.enum(PLUGINS).optional().describe(
+    'Restrict results to one plugin: agentic-os (governance), agentic-sdlc ' +
+    '(the SDLC pipeline), or agentic-qe (QE blueprints). Omit to search all ' +
+    'three, which is usually right unless you already know the area.',
+  ),
+  limit: z.number().int().min(1).max(25).default(8)
+    .describe('Maximum number of results, best-scoring first (1-25).'),
+};
+
+const outputShape = {
+  results: z.array(z.object({
+    uri: z.string().describe(
+      'Pass this to get_document to read the document in full.',
+    ),
+    title: z.string().describe(
+      "The document's first markdown heading, or its bundle path if it has none.",
+    ),
+    plugin: z.string().describe(
+      'Which plugin owns the document: agentic-os, agentic-sdlc, or agentic-qe.',
+    ),
+    score: z.number().describe(
+      'Relevance: summed term frequency plus a boost for terms matching the ' +
+      'title. Meaningful only for ranking within one response — it is not a ' +
+      'fixed scale, so do not compare it across queries or threshold on it.',
+    ),
+    snippet: z.string().describe(
+      'A short extract of the document around its first match, for judging ' +
+      'relevance. Truncated and not valid markdown — never treat it as the ' +
+      "document's content; fetch the uri for that.",
+    ),
+  })).describe(
+    'Matching documents, best first. Empty when nothing matched — a normal ' +
+    'result, not an error; broaden the query or drop the plugin filter.',
+  ),
+};
+
+const tokenize = (s: string): string[] =>
+  s.toLowerCase().match(/[a-z0-9]{2,}/g) ?? [];
+
+function pluginOf(path: string): string {
+  return /^plugins\/([^/]+)\//.exec(path)?.[1] ?? '';
+}
+
+/** Escape a string for literal use inside a RegExp. `tokenize()` currently
+ *  only ever emits `[a-z0-9]+` runs, so nothing here needs escaping today —
+ *  but building a regex from a value without escaping it is a latent
+ *  injection risk the moment tokenize's rules change, so escape anyway. */
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** A word-START match: `\b` anchors the term to the beginning of a word so
+ *  "ai" doesn't match inside "again"/"maintain"/"domain", while "gate" still
+ *  matches "gates"/"gating" (no trailing `\b`, which would require a full
+ *  word and break that suffix case). */
+function wordStartRegExp(term: string): RegExp {
+  return new RegExp('\\b' + escapeRegExp(term), 'g');
+}
+
+/** Term-frequency scoring with a title boost. Deliberately dependency-free:
+ *  the corpus is ~200 small files, so an index is not worth the weight. */
+function score(doc: Doc, terms: RegExp[]): number {
+  const body = doc.text.toLowerCase();
+  const title = doc.title.toLowerCase();
+  let total = 0;
+  for (const term of terms) {
+    term.lastIndex = 0;
+    let hits = 0;
+    while (term.exec(body) !== null) hits++;
+    if (hits === 0) return 0;          // every term must appear — AND, not OR
+    term.lastIndex = 0;
+    total += Math.log1p(hits) + (term.test(title) ? 3 : 0);
+  }
+  return total;
+}
+
+/** Nudge a UTF-16 slice boundary so it never splits a surrogate pair.
+ *  Sibling problem to `truncateCodePoints()` in mcp/src/text.ts — that one
+ *  caps a prefix by code point; this one nudges both edges of a sliding
+ *  window — so it is not unified with it (see that file's callers for the
+ *  prefix-truncation case).
+ *  `forStart` says which side of the window this boundary is: a start
+ *  boundary landing on a pair's low half moves forward past it, an end
+ *  boundary landing just after a pair's high half moves back before it —
+ *  either way the split character is fully excluded rather than risk
+ *  emitting an unpaired surrogate. A targeted check (rather than
+ *  `Array.from()`-ing the whole document, as get_document.ts does) is used
+ *  here because snippet() runs once per search result — up to `limit` times
+ *  per query — and only needs to inspect the handful of code units right at
+ *  the window edge, not materialize the full document as code points. */
+function safeBoundary(text: string, index: number, forStart: boolean): number {
+  if (index <= 0 || index >= text.length) return index;
+  const before = text.charCodeAt(index - 1);
+  const at = text.charCodeAt(index);
+  const splitsPair = before >= 0xD800 && before <= 0xDBFF && at >= 0xDC00 && at <= 0xDFFF;
+  if (!splitsPair) return index;
+  return forStart ? index + 1 : index - 1;
+}
+
+function snippet(doc: Doc, term: RegExp): string {
+  const body = doc.text.toLowerCase();
+  term.lastIndex = 0;
+  const m = term.exec(body);
+  if (!m) {
+    const end = safeBoundary(doc.text, Math.min(200, doc.text.length), false);
+    return doc.text.slice(0, end).trim();
+  }
+  const at = m.index;
+  const start = safeBoundary(doc.text, Math.max(0, at - 80), true);
+  const end = safeBoundary(doc.text, Math.min(doc.text.length, at + 160), false);
+  return doc.text.slice(start, end).replace(/\s+/g, ' ').trim();
+}
+
+export function registerSearchMethodology(server: McpServer, content: Content): void {
+  server.registerTool(
+    'search_methodology',
+    {
+      title: 'Search agentic-os methodology',
+      description:
+        'Full-text search over the agentic-os governance, agentic-sdlc ' +
+        'pipeline, and agentic-qe blueprint documentation. Use it first ' +
+        'whenever you do not already hold a document URI, then pass a result ' +
+        'uri to get_document for the full text. Matching is AND, not OR — ' +
+        'every term must appear — and terms match at word starts, so "gate" ' +
+        'finds "gates" and "gating" but "ate" finds neither. It searches ' +
+        'markdown only: role presets are JSON and never appear here, so use ' +
+        'list_presets for those. Read-only and idempotent; searches the ' +
+        "server's own bundled corpus, never the network or your repository.",
+      inputSchema: inputShape,
+      outputSchema: outputShape,
+      annotations: {
+        readOnlyHint: true,
+        openWorldHint: false,
+        idempotentHint: true,
+        destructiveHint: false,
+      },
+    },
+    async ({ query, plugin, limit }) => {
+      const terms = tokenize(query).map(wordStartRegExp);
+      const results = terms.length === 0 ? [] : content.markdownDocs()
+        .filter(d => !plugin || pluginOf(d.path) === plugin)
+        .map(d => ({ doc: d, score: score(d, terms) }))
+        .filter(r => r.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit)
+        .map(r => ({
+          uri: pathToUri(r.doc.path),
+          title: r.doc.title,
+          plugin: pluginOf(r.doc.path),
+          score: Number(r.score.toFixed(3)),
+          snippet: snippet(r.doc, terms[0]!),
+        }));
+
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({ results }, null, 2) }],
+        structuredContent: { results },
+      };
+    },
+  );
+}

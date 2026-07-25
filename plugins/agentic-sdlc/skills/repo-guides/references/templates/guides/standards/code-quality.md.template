@@ -1,0 +1,140 @@
+---
+<!--
+GENERATOR INSTRUCTIONS — repo-guides skill. Strip this comment from the instantiated guide.
+Every [ ] below is a detection slot. Fill it from real config and real code. Invent nothing (grounding):
+if a fact cannot be observed, write N/A rather than a guess.
+
+Procedure:
+  1. Parse the linter config for its active rule set.
+  2. Extract the formatter settings.
+  3. Scan the codebase for the conventions that actually recur (not the aspirational ones).
+  4. Determine type-check strictness.
+  5. Locate the pre-commit / CI quality gates.
+  6. Pull real ✅ / ❌ examples straight from the tree; cite each with [file:lines].
+  7. Cap the instantiated guide at no more than 250 lines.
+
+Detection sources:
+  commands   <- package.json | Makefile | pyproject.toml
+  type config <- tsconfig.json | mypy.ini | pyproject.toml
+Output path: guides/standards/code-quality.md (run guides root, e.g. .agentic/guides/).
+Sibling standard: standards/git-workflow.md.
+-->
+
+# Code Quality Standard — [project name]
+
+| Facet | Tool + config |
+|-------|---------------|
+| Linter | [Detect tool + config file] |
+| Formatter | [Detect tool + config file] |
+| Type checker | [Detect tool + config file] |
+
+> Type checker slot is `N/A` when the project ships no static type layer.
+
+## Commands
+
+> One primary command is the mandatory pre-commit check — mark it, and route every other row through it.
+
+| Action | Command | Description |
+|--------|---------|-------------|
+| Check all | `[check command]` | Mandatory pre-commit gate — must pass before any commit |
+| Lint | `[lint command]` | [Extract from config] |
+| Lint fix | `[lint fix command]` | Auto-repair the fixable subset |
+| Format | `[format command]` | Rewrite to formatter output |
+| Type check | `[type check command]` | [Extract from config] |
+
+## Enforced rules
+
+Linter rules — source: `[config file]`.
+
+| Rule | Setting | Rationale |
+|------|---------|-----------|
+| [rule-name] | [error/warn/value] | [why this is enforced here] |
+| [rule-name] | [error/warn/value] | [why this is enforced here] |
+
+Formatter settings.
+
+| Setting | Value |
+|---------|-------|
+| Line length | [max value] |
+| Indentation | [value] |
+| Quotes | [single/double] |
+| Trailing comma | [yes/no/es5] |
+| Semicolons | [yes/no] |
+
+## Naming
+
+| Element | Rule | ✅ Correct | ❌ Wrong |
+|---------|------|-----------|---------|
+| Variables | [camelCase/snake_case] | `userName` | `user_name` / `UserName` |
+| Functions | [camelCase/snake_case] | `getUserById` | `GetUserById` |
+| Classes | [PascalCase] | `UserService` | `userService` |
+| Constants | [UPPER_SNAKE] | `MAX_RETRIES` | `maxRetries` |
+| Files | [kebab/snake/pascal] | `[correct example]` | `[wrong example]` |
+| Boolean vars | [is/has/should prefix] | `isActive` | `active` |
+
+## Type safety
+
+Strictness: [strict / moderate / basic / none] — source: `[config file]`.
+
+| Rule | Required |
+|------|----------|
+| Function parameters typed | [yes/no] |
+| Return types typed | [yes/no] |
+| Variable annotations | [inferred OK / explicit required] |
+| `any` / `unknown` usage | [forbidden / discouraged / allowed] |
+
+```[lang]
+// ✅ Correct - Source: [file:lines]
+[typed example]
+
+// ❌ Wrong
+[untyped example]
+```
+
+## Complexity limits
+
+> Read these from the linter config when it sets them; otherwise fix them from the observed codebase convention.
+
+| Metric | Limit | Enforced By |
+|--------|-------|-------------|
+| Function length | [max lines] | [config file / convention] |
+| File length | [max lines] | [config file / convention] |
+| Cyclomatic complexity | [max value] | [config file / convention] |
+| Nesting depth | [max levels] | [config file / convention] |
+| Parameters per function | [max count] | [config file / convention] |
+
+## Import organization
+
+Group in this order, sorted alphabetically within each group, one import per line unless a grouped style is detected. Wildcard and unused imports are always disallowed.
+
+```[lang]
+// Source: [file:lines]
+// 1. built-in / standard library
+[std imports]
+
+// 2. external / third-party
+[external imports]
+
+// 3. internal / local
+[internal imports]
+```
+
+## Documentation
+
+> Public surface is documented; private / internal is optional. Complex logic earns an inline comment.
+
+| Element | Required | Format |
+|---------|----------|--------|
+| Public functions | Yes | [docstring/JSDoc style] |
+| Public classes | Yes | [docstring/JSDoc style] |
+| Complex logic | Yes (inline) | [inline comment] |
+| Private / internal | Optional | [—] |
+
+## Common violations
+
+> Key each row by the linter's error code; the fix is the concrete correction. CI logs are a fair evidence source.
+
+| Violation | Fix |
+|-----------|-----|
+| `[linter-error-code]` | [correction] |
+| `[linter-error-code]` |

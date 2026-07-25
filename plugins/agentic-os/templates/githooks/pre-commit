@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# agentic-os:pre-commit — blind-code-review gate, runtime-independent enforcement layer.
+#
+# Git runs this on every `git commit`, so "blind review before commit" holds even
+# for commits made outside the agent harness (e.g. a manual terminal commit). It
+# blocks the commit unless the exact staged diff has been reviewed and approved.
+#
+# Bypass a merge / mechanical / trivial commit:  SKIP_REVIEW=1 git commit …
+#
+# Chaining: a pre-existing pre-commit hook is preserved by the installer as
+# pre-commit.local next to this one and runs after the gate passes.
+#
+# Source of truth (tracked): .githooks/pre-commit
+# Install / refresh:         bash scripts/install-git-hooks.sh
+ROOT="$(git rev-parse --show-toplevel)"
+python3 "$ROOT/.claude/hooks/precommit_review_gate.py" precommit || exit $?
+
+# Chain the repo's original pre-commit hook, if the installer preserved one.
+SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -x "$SELF_DIR/pre-commit.local" ]; then
+  exec "$SELF_DIR/pre-commit.local" "$@"
+fi
+exit 0

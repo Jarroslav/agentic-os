@@ -1,0 +1,93 @@
+{
+  "skill_name": "sdlc-light",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add a loading spinner to the dashboard header while the summary widgets are fetching.",
+      "expected_output": "Dispatch codebase-scout to locate the dashboard header component and its data-fetch lifecycle. Research returns a clarity verdict of clear — no requirements.ambiguous gate trip, so no clarifying question is asked. Do not dispatch sizing-analyst and do not invoke superpowers:brainstorming; sdlc-light has no complexity-scoring step and no ideation phase. Skip spec.md entirely — author docs/superpowers/tasks/add-dashboard-spinner/plan.md directly from the research findings, listing the component touch points, the loading-state prop, and the fallback markup. Route the plan through the plan.approved judgment gate, then implement inline test-driven (spinner render test first, then the component change) inside the current session — no per-task subagent is spun up. Close with an inline code-review pass gated by code-review.final before handing off to qa-gates.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "skips-sizing-scoring",
+          "description": "Transcript shows no dispatch of sizing-analyst and no complexity score is computed or reported anywhere in the run."
+        },
+        {
+          "name": "skips-ideation",
+          "description": "superpowers:brainstorming is never invoked; the skill moves from research straight to planning without an ideation phase."
+        },
+        {
+          "name": "skips-design-doc-artifact",
+          "description": "No spec.md is created or referenced under docs/superpowers/tasks/ for this task; the skill authors plan.md as the sole planning artifact."
+        },
+        {
+          "name": "blueprint-persisted",
+          "description": "A plan.md file is written under docs/superpowers/tasks/<slug>/ before any implementation edit occurs, and it is derived from the research findings, not boilerplate."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Add a config key for the retry timeout on the outbound webhook client — right now it's a hardcoded 5 seconds.",
+      "expected_output": "Dispatch codebase-scout against the webhook client module; research confirms a single hardcoded constant with one call site and no ambiguity about the target field or config surface. Because the task reads as unambiguous, skip clarifying questions entirely and move straight to authoring docs/superpowers/tasks/webhook-retry-timeout-config/plan.md — no requirements.ambiguous gate trip, no round of questions batched or otherwise. Implement inline: write the failing test asserting the new config key overrides the default timeout, then add the key and wire the call site to read it, all within the current session. Do not create a dedicated per-task subagent for this work — sdlc-light keeps single-file-scope changes inline. Finish with an inline code-review pass and qa-gates before considering the task complete.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "lucidity-unambiguous-track",
+          "description": "Research output is judged unambiguous and the run proceeds directly to plan-writing with zero clarifying questions asked to the user."
+        },
+        {
+          "name": "embedded-test-first",
+          "description": "The retry-timeout config change is implemented test-first inside the current session; no per-task subagent or external dispatch is used for the implementation step."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Update the user display name field so it accepts up to 120 characters instead of 40.",
+      "expected_output": "Dispatch codebase-scout to find where display-name length is validated. Research surfaces genuine ambiguity: the constraint appears in both the profile self-edit form and the admin user-edit endpoint, and the two are not obviously meant to move together. The requirements.ambiguous gate fires, and sdlc-light asks exactly one targeted clarifying question — e.g. whether the limit change applies to the profile form only, the admin endpoint only, or both — rather than raising every open question it noticed. Wait for the single answer before writing docs/superpowers/tasks/display-name-length/plan.md; do not send a second follow-up question in the same turn or bundle multiple questions into one message.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "lucidity-query-raised",
+          "description": "Research surfaces real ambiguity about which surface(s) the change applies to, and the skill asks a clarifying question before writing plan.md."
+        },
+        {
+          "name": "single-query-at-a-turn",
+          "description": "Exactly one clarifying question is posed in a single message; no batching of multiple questions and no second question fired before the first is answered."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Refactor the auth token refresh flow — under load, two concurrent requests both trigger a refresh and one clobbers the other's token.",
+      "expected_output": "Detect the risk keyword 'auth' in the request and emit a single one-line nudge pointing at sdlc-start or sdlc-autonomous as a heavier, more scrutinized path for this kind of change, given the security-adjacent surface. The nudge does not block execution: sdlc-light still dispatches codebase-scout against the token refresh module, gets a clarity verdict, writes docs/superpowers/tasks/auth-refresh-race-fix/plan.md describing the concurrency guard (e.g. an in-flight refresh lock), and proceeds to inline test-driven implementation — a test that fires two concurrent refreshes and asserts only one network call is made — followed by inline code review. At no point does the skill refuse the task or halt waiting for the user to pick the heavier path.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "hazard-signal-word-prompt",
+          "description": "A single-line nudge referencing the detected risk keyword ('auth') and naming sdlc-start or sdlc-autonomous as the escalation option appears once, before or alongside planning."
+        },
+        {
+          "name": "skips-decline",
+          "description": "The skill does not decline the task, does not stop and wait for explicit confirmation to proceed, and continues through planning and inline implementation on the light path."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Fix the validation error copy on the signup form — it currently just says 'invalid input' instead of naming which field is wrong.",
+      "expected_output": "Before touching any file, run the working-tree pre-flight check via `git status --porcelain`. The check returns non-empty output — there are uncommitted changes unrelated to this task already sitting in the tree. Stop before any edit and present an explicit human-in-the-loop menu rather than silently proceeding: stash the existing changes, commit them first, hard reset (with an explicit confirmation step given its destructive blast radius), proceed anyway with a warning that the diff will be mixed, or abort the task. Only after the user picks one of these does the skill continue — dispatching codebase-scout, writing docs/superpowers/tasks/signup-validation-copy/plan.md, and proceeding to the inline copy fix.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unclean-ref-safeguard",
+          "description": "The skill runs a working-tree cleanliness check (via git status --porcelain or equivalent) before any file edit and detects the dirty state."
+        },
+        {
+          "name": "human-gated-unclean-options",
+          "description": "On detecting a dirty tree, the skill presents an explicit human choice among stash, commit first, hard reset (with confirmation), proceed with warning, or abort — and does not continue silently without that choice."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "skill_name": "release-manager",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run a release audit for v4.11.0 against this repo. We cut tags as v4.10.0, v4.10.3, and v4.11.0. The tracker wiring already lives in .agentic/guides/project.md (Jira, project key ORCA), so don't ask me to fill it in again.",
+      "expected_output": "The skill reads the adapter details out of `.agentic/guides/project.md`, resolving the tracker as Jira with project key ORCA without re-prompting. For the range start it presents two candidates — the prior minor base tag v4.10.0 and the newest patch tag v4.10.3 — and defaults to the base tag v4.10.0 rather than just taking the tag directly before v4.11.0 in descending order. It walks the non-merge commits between that base and v4.11.0 via `git log`, pulls tickets by fix version, and emits a reconciliation report containing `tickets-without-commits`, `commits-without-tickets`, and a matched commit-to-ticket table.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "pulls-config-from-guides",
+          "description": "Tracker type and project key are taken straight from `.agentic/guides/project.md`; the user is never asked to supply them a second time."
+        },
+        {
+          "name": "finds-prior-tag",
+          "description": "Two range-start options are offered — the previous minor base tag and the latest patch tag — with the base tag selected by default instead of blindly grabbing the immediately preceding tag in descending order."
+        },
+        {
+          "name": "tabulates-commit-gaps",
+          "description": "The output includes all three groupings: a `tickets-without-commits` list, a `commits-without-tickets` list, and a matched table pairing commits with tickets."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This repo has never been tagged. Reconcile the commits that make up release 0.1.0 against our tracker and call out anything without coverage.",
+      "expected_output": "Finding no tags at all, the skill falls back to the repository's first commit as the range base and still produces the full gap analysis on both the commit and the ticket sides. The report header carries the note 'no previous tag found' so the empty-tag situation is surfaced explicitly rather than failing silently.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "falls-back-to-root-commit",
+          "description": "When zero tags exist, the range base falls back to the repository's initial commit."
+        },
+        {
+          "name": "flags-absent-baseline-tag",
+          "description": "The report header records 'no previous tag found', and the run still emits commit and ticket gap analysis instead of aborting."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Validate release v2.5.0 for me. One caveat: there is no ticket integration configured in this project, neither gh nor glab is installed, and the remote is a plain git remote.",
+      "expected_output": "Because `.agentic/guides/project.md` has no `Ticket Adapter` section and neither `gh` nor `glab` is available on a plain git remote, the skill skips ticket retrieval entirely, leaves the ticket set empty, and records in the report header that ticket lookup was skipped. It still analyzes the commit side, listing commits that carry no ticket reference straight from `git log`.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "omits-ticket-stage-when-unconfigured",
+          "description": "With no `Ticket Adapter` section and neither `gh` nor `glab` on a plain git remote, ticket fetching is bypassed, the ticket list is left empty, and the header notes that ticket lookup was skipped."
+        },
+        {
+          "name": "still-surfaces-untracked-commits",
+          "description": "Even with the ticket phase skipped, commits that carry no ticket reference are still enumerated from `git log`."
+        }
+      ]
+    }
+  ]
+}

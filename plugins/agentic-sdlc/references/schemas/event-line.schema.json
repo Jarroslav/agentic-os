@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "events.jsonl line (run event ledger, schema 1)",
+  "type": "object",
+  "required": [
+    "schema",
+    "ts",
+    "event",
+    "run_id",
+    "actor",
+    "summary"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "ts": {
+      "type": "string"
+    },
+    "event": {
+      "type": "string",
+      "pattern": "^[a-z_][a-z0-9_.-]*$"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "phase": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "actor": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "data": {
+      "type": "object"
+    }
+  }
+}

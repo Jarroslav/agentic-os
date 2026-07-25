@@ -1,0 +1,235 @@
+---
+<!--
+GENERATION — perform these steps, then delete this comment:
+  1. Scan linter/formatter configs: .eslintrc, .prettierrc, pyproject.toml, .pylintrc.
+  2. Extract naming conventions from real source files. Never invent an example.
+  3. Find error-handling patterns under services/ and controllers/.
+  4. Locate logger usage and its config.
+  5. Check pre-commit hooks (.pre-commit-config.yaml, husky, lint-staged) and CI.
+  6. Replace every [bracket] marker with a detected fact; write N/A when absent.
+  Provenance is mandatory — tag each snippet: // Source: [file:lines]
+  Output ceiling: no more than 300 lines.
+-->
+
+# Development Practices — [Detect]
+
+- **Project:** [Detect] — **Language:** [Detect] — **Framework:** [Detect]
+- **Linter:** [Extract from config] — **Formatter:** [Extract from config]
+---
+
+> Scope is day-to-day coding conventions only — not testing, architecture, or API
+> reference. Every tool below is detected from the repo, never mandated.
+
+## Code Style
+
+<!-- detect: naming from real identifiers, file layout from the tree, import blocks from one representative module -->
+
+### Naming
+
+| Element   | Convention | Example  |
+|-----------|------------|----------|
+| Files     | [Detect]   | [Detect] |
+| Classes   | [Detect]   | [Detect] |
+| Functions | [Detect]   | [Detect] |
+| Variables | [Detect]   | [Detect] |
+| Constants | [Detect]   | [Detect] |
+| Private   | [Detect]   | [Detect] |
+
+> Convention pool: kebab-case / snake_case / PascalCase, camelCase, UPPER_SNAKE_CASE,
+> `_prefix` / `#private`. Fill each row from what the code actually does.
+
+### File Organization
+
+[Detect] — how modules are grouped (by feature, by layer, or by type) and where each
+kind of file lives.
+
+### Import Order
+
+1. Standard library
+2. Third-party
+3. Internal / local
+
+```[lang]
+[Detect — paste a real import block]
+// Source: [file:lines]
+```
+
+## Quality Commands
+
+| Action     | Command           | Auto-fix |
+|------------|-------------------|----------|
+| Lint       | `[exact command]` | [Detect] |
+| Format     | `[exact command]` | [Detect] |
+| Type check | `[exact command]` | [Detect] |
+| All checks | `[exact command]` | [Detect] |
+
+### Config Files
+
+<!-- detect: type-checker config = tsconfig.json or mypy.ini -->
+
+| Tool         | Config File |
+|--------------|-------------|
+| Linter       | [path]      |
+| Formatter    | [path]      |
+| Type checker | [path]      |
+
+## Pre-commit Hooks
+
+<!-- detect: .pre-commit-config.yaml, or husky + lint-staged wired in package.json -->
+
+[Detect] — list each hook and what it runs on commit. If no hook framework is present,
+write N/A.
+
+## Error Handling
+
+Throw a specific exception class from `[path]` (the project's exceptions module). Let the
+central error handler / middleware translate it into a response.
+
+| Exception         | Raise When            | Source      |
+|-------------------|-----------------------|-------------|
+| ValidationError   | bad input             | [file:line] |
+| NotFoundError     | resource missing      | [file:line] |
+| UnauthorizedError | authentication failed | [file:line] |
+| ForbiddenError    | permission denied     | [file:line] |
+| ConflictError     | state conflict        | [file:line] |
+
+### Canonical Pattern
+
+```[lang]
+[Detect — paste the real throw-and-handle pattern]
+// Source: [file:lines]
+```
+
+> Never catch-and-ignore. A swallowed error is a silent failure.
+
+## Logging
+
+### Setup
+
+Import the project logger from `[path]`. Do not construct ad-hoc loggers.
+
+```[lang]
+[Detect — logger init]
+// Source: [file:lines]
+```
+
+### Levels
+
+| Level | Use For                          |
+|-------|----------------------------------|
+| debug | development troubleshooting      |
+| info  | significant operations           |
+| warn  | recoverable issues, deprecations |
+| error | failures needing attention       |
+
+### Usage
+
+Attach context ids to every log: `{ userId, requestId, [relevant ids] }`.
+
+```[lang]
+[Detect — a real log call carrying context]
+// Source: [file:lines]
+```
+
+### Rules
+
+- Always pass context ids via the detected logger.
+- Never log secrets, passwords, or tokens.
+- Never log heavily inside loops or hot paths.
+
+## Async Patterns
+
+Predominant style: [Detect] — one of `async/await | Promises | Callbacks | Sync | Mixed`.
+
+```[lang]
+[Detect — representative async call]
+// Source: [file:lines]
+```
+
+### Async Error Handling
+
+[Detect] — how async failures are caught and surfaced (awaited try, `.catch`, error
+boundary).
+
+```[lang]
+[Detect — async error handling]
+// Source: [file:lines]
+```
+
+## Configuration & Environment
+
+Load config through `[path]`. Read settings from the loader — never scatter raw env
+access across the code.
+
+### Required Variables
+
+<!-- detect: .env.example, a config schema, or the loader's required keys -->
+
+| Variable   | Purpose  |
+|------------|----------|
+| [VAR_NAME] | [Detect] |
+| [VAR_NAME] | [Detect] |
+
+## Dependencies
+
+- Package manager: [Detect]
+- Lock file: [path] (`package-lock.json` / `poetry.lock`)
+- Add / update / remove: `[exact command]`
+
+> The lock file is always committed. A dependency change is not done until the lock file
+> is regenerated and staged.
+
+## Git Workflow
+
+<!-- infer in priority order: CONTRIBUTING.md, then .github/, then commit history -->
+
+### Branch Names
+
+`[feature/bugfix/hotfix]/[ticket-id]-[short-description]`
+
+Examples: `feature/ABC-123-add-user-auth`, `bugfix/fix-login-redirect`
+
+### Commit Messages
+
+`[type]([scope]): [description]`
+
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`. Body optional.
+
+### PR Checklist
+
+- [ ] Lint passes
+- [ ] Tests pass
+- [ ] [Detect — extra gates from CI or contribution docs]
+
+> Downstream commit/MR tooling reads git conventions from the git-workflow standards
+> guide; keep this section consistent with it.
+
+## Recurring Patterns
+
+<!-- detect: idioms that repeat across the codebase -->
+
+| Pattern                        | When to Use | Example     |
+|--------------------------------|-------------|-------------|
+| [Detect — helper/utility]       | [Detect]    | [file:line] |
+| [Detect — decorator/middleware] | [Detect]    | [file:line] |
+| [Detect — factory/builder]      | [Detect]    | [file:line] |
+
+## Anti-patterns
+
+<!-- source: enabled linter rules, or patterns flagged in past reviews -->
+
+| Avoid    | Instead  | Reason   |
+|----------|----------|----------|
+| [Detect] | [Detect] | [Detect] |
+| [Detect] | [Detect] | [Detect] |
+
+## Quick Reference
+
+| Look For          | Path   |
+|-------------------|--------|
+| Linter config     | [path] |
+| Formatter config  | [path] |
+| Exception classes | [path] |
+| Logger setup      | [path] |
+| Config loader     | [path] |
+| Utilities         | [path] |

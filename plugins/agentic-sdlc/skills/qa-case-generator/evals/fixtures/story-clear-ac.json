@@ -1,0 +1,20 @@
+{
+  "ticket_id": "PROJ-204",
+  "ticket_url": "https://jira.example.com/browse/PROJ-204",
+  "title": "Bulk archive selected invoices from the billing list",
+  "description": "Finance operators need a way to archive several invoices at once instead of opening each row. Add a multi-select column to the billing list, a sticky action bar that appears when at least one row is checked, and an Archive action that moves the chosen invoices to the Archived tab. Archived invoices stay searchable but drop out of the default Open view.",
+  "acceptance_criteria": [
+    "AC1: A checkbox appears in the leftmost column of every invoice row and a select-all checkbox appears in the column header.",
+    "AC2: When one or more rows are selected, a sticky action bar surfaces at the bottom of the list showing the selected count and an Archive button.",
+    "AC3: Clicking Archive moves every selected invoice to the Archived tab and clears the selection.",
+    "AC4: Archived invoices no longer appear under the default Open filter but remain returnable through global search.",
+    "AC5: If no rows are selected the action bar stays hidden and the Archive button is not reachable."
+  ],
+  "priority": "Medium",
+  "issue_type": "Story",
+  "labels": ["billing", "list-view", "bulk-actions"],
+  "comments": [],
+  "subtasks": [],
+  "linked_items": [],
+  "attachments": []
+}

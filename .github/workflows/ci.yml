@@ -1,0 +1,94 @@
+name: ci
+
+# Gates every pull request into main. Branch protection requires this check to
+# pass before merge, so a red run blocks the PR.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+
+      - name: Hook unit tests (t0)
+        run: |
+          bash tests/t0/run.sh
+          bash tests/t0/run-output-contract.sh
+
+      - name: Acceptance matrix (T1–T8)
+        run: bash tests/run-matrix.sh
+
+      - name: Validate JSON manifests & presets
+        run: python3 tests/lib/check-manifests.py
+
+      - name: Skill contract check
+        run: python3 tests/lib/check-skill-contract.py
+
+      - name: Neutrality & PII scan
+        run: |
+          python3 tests/lib/check-neutrality.py --self-test
+          python3 tests/lib/check-neutrality.py
+
+      - name: Run-artifact schema check
+        run: python3 tests/lib/check-schemas.py
+
+      - name: Shipped HTML references resolve
+        run: |
+          python3 tests/lib/check-html-refs.py --self-test
+          python3 tests/lib/check-html-refs.py
+
+      # Originality check. The corpus and its fingerprint store are local to a
+      # maintainer's machine and never committed, so a runner cannot repeat the
+      # scan — it enforces the recorded result instead. --verify-attestation
+      # needs no store and fails if any tracked text file drifted from the tree
+      # that was last scanned clean, which is what makes this a real gate rather
+      # than a no-op. The bare scan still runs, and still skips on a runner.
+      - name: Originality check
+        run: |
+          python3 tests/lib/check-provenance.py --self-test
+          python3 tests/lib/check-provenance.py --verify-attestation
+          python3 tests/lib/check-provenance.py
+
+  mcp:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install
+        working-directory: mcp
+        run: npm ci
+
+      # Runs before the build: catches a plugin edit whose author forgot to
+      # regenerate the index, which is the drift failure we actually fear.
+      - name: Content drift check
+        working-directory: mcp
+        run: npm run check:drift
+
+      - name: Build
+        working-directory: mcp
+        run: npm run build
+
+      - name: Contract, content, and read-only tests
+        working-directory: mcp
+        run: npm test
+
+      # Version pinned deliberately so an upstream release cannot turn an unrelated PR red.
+      # Should be bumped intentionally when upgrading the Inspector CLI.
+      - name: Inspector CLI smoke
+        working-directory: mcp
+        run: |
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method tools/list
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method resources/list
+          npx --yes @modelcontextprotocol/inspector@1.0.0 --cli node dist/index.js --method prompts/list

@@ -1,0 +1,165 @@
+{
+  "skill_name": "code-review-orchestrator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Resolve gate_id=code-review.final for a diff that adds a small utility function with full unit coverage. A spec is attached and every one of its three criteria is implemented and demonstrated by the diff. Produce the verdict.",
+      "expected_output": "decision approve, business_review lists all three criteria as pass, standards_review clean, confidence high, findings empty, finding_status omitted (this is a final round).",
+      "files": [],
+      "assertions": [
+        {
+          "name": "clean-diff-approves",
+          "description": "decision is approve and confidence is high when the lenses and the spec audit both come back clean."
+        },
+        {
+          "name": "emits-canonical-fields",
+          "description": "The persisted object contains decision, rationale, confidence, risk_flags, business_review, standards_review, and findings — the frozen verdict shape."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Resolve gate_id=code-review.final. The diff builds a SQL query by concatenating a raw user-supplied search term into the statement string. The attached spec requires results to be paginated at 50 items per page; the diff returns the full result set unpaginated. Produce the verdict.",
+      "expected_output": "decision request-changes, a critical finding for the injection risk carrying risk_flags including security, and business_review marking the pagination criterion fail — both problems recorded, not just one.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "sqli-and-missed-criterion-blocks",
+          "description": "decision is request-changes; a critical security finding is present for the string-built query, and business_review shows the pagination criterion as fail."
+        },
+        {
+          "name": "stable-finding-identifiers",
+          "description": "Each finding carries a stable id (e.g. RV-001 style) that a later check round can reference in finding_status."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Resolve gate_id=code-review.check. prior_verdict is supplied with two findings: RV-001 (the SQL injection) and RV-002 (missing pagination), both triaged as patch. The fix-up diff parameterizes the query and adds a page-size-50 limit; evidence shows the relevant tests now pass. Produce the verdict.",
+      "expected_output": "A verdict whose finding_status marks RV-001 and RV-002 resolved, whose business_review/standards_review are carried forward from prior_verdict rather than recomputed, that does not re-run the full lens fan-out, and that approves.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "both-fixes-confirmed-approves",
+          "description": "finding_status marks both RV-001 and RV-002 resolved and the round approves once evidence backs the fix."
+        },
+        {
+          "name": "no-fresh-lens-fanout-on-check",
+          "description": "The check round reuses prior_verdict's business_review/standards_review instead of re-deriving them, and does not invent findings unrelated to the fix-up diff."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Resolve gate_id=code-review.final for a diff with no story or spec artifact attached at all. The blind and edge-case lenses find nothing blocking. Produce the verdict.",
+      "expected_output": "business_review stays empty because there is nothing to audit, the acceptance lens is not dispatched, confidence is low so decision-router escalates the round, and any real blind/edge-case findings are still reported rather than discarded.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "no-spec-round-degrades-gracefully",
+          "description": "business_review is empty and the rationale states no spec/story was available, rather than inventing acceptance criteria."
+        },
+        {
+          "name": "missing-spec-forces-escalation",
+          "description": "confidence is low specifically because acceptance could not run, which is how a no-spec round reaches a human via decision-router."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Resolve gate_id=code-review.check with a fix-up diff provided, but prior_verdict is entirely absent from the inputs — there is no prior code-review.final round to check against. Produce the verdict.",
+      "expected_output": "The full canonical safe-fail object: decision request-changes, confidence low, risk_flags/business_review/standards_review/findings/finding_status all empty, and a rationale naming the missing prior verdict.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "absent-prior-verdict-forces-safe-fail",
+          "description": "Without prior_verdict a check round cannot be resolved as approve; decision is request-changes and the rationale explains why."
+        },
+        {
+          "name": "safe-fail-empty-arrays",
+          "description": "Every array field in the safe-fail object is empty rather than partially populated or omitted."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Resolve gate_id=code-review.final where all three lens subagents fail — the blind lens times out, the edge-case lens returns malformed output, and the acceptance lens errors before completing. Produce the verdict.",
+      "expected_output": "A safe-fail verdict: request-changes, confidence low, all review arrays empty, and a rationale stating the review could not be completed — never an approve derived from the absence of findings.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "all-lenses-down-forces-safe-fail",
+          "description": "When no lens produces usable output the verdict is request-changes, never approve — an unreviewed diff is not treated as a clean one."
+        },
+        {
+          "name": "rationale-names-the-outage",
+          "description": "The rationale explains that the lenses could not run rather than silently returning an empty-findings approve."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Resolve gate_id=code-review.final. The three lenses report nothing blocking, and a spec is attached whose criteria all pass. However .agentic/guides/standards/code-quality.md defines a hard cap on cyclomatic complexity per function, and one changed function in the diff exceeds it. Produce the verdict.",
+      "expected_output": "decision request-changes: standards_review records the complexity cap as fail, and the same violation is also emitted as a finding so the decision logic actually counts it — a standards-only record with no matching finding would not block correctly.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "blocking-guide-violation-without-lens-hits",
+          "description": "decision is request-changes purely from a documented standards violation, even when all three lenses and the spec audit are clean."
+        },
+        {
+          "name": "violation-recorded-twice-consistently",
+          "description": "The complexity-cap breach appears in both standards_review (status fail) and findings[], not just one of the two."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Resolve gate_id=code-review.final with run_dir=docs/superpowers/tasks/2026-08-03-checkout-fix/ and a valid non-empty diff. The lenses complete and a verdict is produced. Persist it and hand control back — do not present it to the user as a chat message.",
+      "expected_output": "The verdict JSON is written to docs/superpowers/tasks/2026-08-03-checkout-fix/code-review-final.json. Nothing is echoed to the user as a standalone message, and the orchestrator's turn ends by returning control to decision-router rather than stopping after producing the verdict.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "verdict-file-written-not-echoed",
+          "description": "The verdict lands at <run_dir>/code-review-final.json (or code-review-check.json on a check round) and is not printed as a standalone user-facing message."
+        },
+        {
+          "name": "handoff-continues-the-flow",
+          "description": "Producing and persisting the verdict does not end the turn on its own — control returns to decision-router so the pipeline can record, escalate, or ask."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Resolve gate_id=code-review.check. prior_verdict is usable and every one of its findings is resolved by the fix-up diff. But the fix-up diff also adds an entirely new code path that writes to a shared cache without a lock, which a narrow confirmation pass cannot conclusively rule safe or unsafe. Produce the verdict.",
+      "expected_output": "decision request-changes with confidence low: an unconfirmed new risk is never waved through just because the original findings are resolved, and the rationale names the unconfirmed concurrency concern.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unconfirmed-new-risk-blocks-check",
+          "description": "decision is request-changes because a newly introduced risk could not be confirmed safe, even though every original finding is resolved."
+        },
+        {
+          "name": "rationale-names-new-concern",
+          "description": "The rationale specifically calls out the unconfirmed new risk rather than silently approving on the strength of the resolved findings alone."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Resolve gate_id=code-review.final for a diff spanning several thousand changed lines across dozens of files — well beyond what a single review pass can examine hunk-by-hunk. The lenses complete but flag that coverage was partial. Produce the verdict.",
+      "expected_output": "confidence low because coverage was incomplete, not because a defect was found; any findings the lenses did surface are still reported, and the rationale notes the diff's size limited how thoroughly it could be reviewed.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "oversized-diff-lowers-confidence",
+          "description": "confidence is low purely due to partial review coverage on an oversized diff, independent of whether any finding was raised."
+        },
+        {
+          "name": "partial-coverage-keeps-findings",
+          "description": "Findings the lenses did surface on the reviewed portion are still included rather than discarded because coverage was incomplete."
+        }
+      ]
+    }
+  ]
+}

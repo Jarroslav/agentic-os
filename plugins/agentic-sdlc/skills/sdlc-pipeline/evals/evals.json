@@ -1,0 +1,209 @@
+{
+  "skill_name": "sdlc-pipeline",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Start a fresh HITL SDLC run for adding a password-reset flow to the login module. Don't skip anything, I want the full process.",
+      "expected_output": "Pipeline launches through the sdlc-start entry point in hitl mode and executes the numbered phases in strict order, never jumping straight to implementation. Every judgment gate encountered along the way (spec.approved, plan.approved, and any others reached) is routed through decision-router rather than decided locally.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "entire-stage-sequence",
+          "description": "Response confirms phases execute in numbered order with no phase skipped and no direct jump to implementation."
+        },
+        {
+          "name": "invokes-verdict-dispatcher",
+          "description": "Response shows every judgment gate reached is delegated to decision-router rather than resolved by the pipeline itself."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "My run at docs/superpowers/runs/20260516-1015-login got killed mid-phase. meta.json still lists phase 6 as \"running\". Pick it back up.",
+      "expected_output": "Pipeline detects the running phase 6 in meta.json and re-executes it idempotently, overwriting the phase's deterministic outputs rather than appending duplicates. Phase 7 is not started until phase 6 reports completion.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "restart-active-stage",
+          "description": "Response identifies phase 6 as the interrupted phase from meta.json and re-runs it rather than resuming mid-phase or skipping to phase 7."
+        },
+        {
+          "name": "repeat-safe-artifacts",
+          "description": "Response confirms deterministic outputs from the re-executed phase are overwritten cleanly, not duplicated or appended."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Kick off sdlc-start for the checkout-timeout fix. Heads up, I've already got some uncommitted edits sitting on the feature branch.",
+      "expected_output": "Pipeline halts before the implementation phase and runs `git status --porcelain` to confirm and report the dirty working tree. It presents explicit choices to the user: stash, hard reset, proceed dirty, or abort, and waits for a decision before continuing.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unclean-ref-safeguard",
+          "description": "Response stops before implementation and reports the dirty tree using git status --porcelain rather than proceeding silently."
+        },
+        {
+          "name": "stated-ref-options",
+          "description": "Response offers exactly the stash / hard reset / proceed dirty / abort options and does not pick one automatically."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Run the SDLC pipeline on my feature/notif-batching branch — it's been open a couple weeks so main has probably moved on.",
+      "expected_output": "Before entering the implementation phase, the pipeline checks whether the base branch has moved ahead of the feature branch. Finding the feature branch behind, it asks the user whether to fast-forward or otherwise reconcile before continuing, rather than implementing on a stale base.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "trunk-ref-validated",
+          "description": "Response verifies base-branch freshness relative to the feature branch before implementation begins."
+        },
+        {
+          "name": "quick-advance-pick",
+          "description": "Response asks the user to fast-forward or reconcile the stale branch rather than continuing on an outdated base."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Continue my hitl run through the spec and plan approval gates for the reporting-export feature.",
+      "expected_output": "At both the spec.approved and plan.approved gates, the pipeline calls decision-router, which prompts the user directly and waits for an answer. Because the run is in hitl mode, no autonomous fast-path or deterministic auto-approval is used for either gate.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "human-gated-checkpoints-prompt-operator",
+          "description": "Response shows the user is asked directly at both spec.approved and plan.approved via decision-router."
+        },
+        {
+          "name": "skips-human-gated-quick-track",
+          "description": "Response confirms no autonomous fast-path or deterministic stand-in is used for either gate while in hitl mode."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Start a new run for the audit-log export task. Just so you know, main itself has some uncommitted local changes I never cleaned up.",
+      "expected_output": "The branch guard runs before any feature branch is created, inspecting the base branch and its upstream. Finding main dirty, it reports the state and offers stash, commit-first, hard-reset-with-explicit-confirmation, proceed-with-warning, or abort — waiting for the user to choose before creating the feature branch.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unclean-trunk-safeguard",
+          "description": "Response runs the branch guard against the dirty base branch before creating any feature branch."
+        },
+        {
+          "name": "human-gated-unclean-options",
+          "description": "Response offers stash, commit-first, hard-reset-with-explicit-confirmation, proceed-with-warning, and abort as the available options."
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Resume work on feature/rate-limit-headers — I know that branch already exists and I've made some local edits and a couple of commits on it that might not be pushed.",
+      "expected_output": "Pipeline inspects whether the target feature branch exists, its unique local commits, uncommitted local changes, and its ahead/behind/diverged status against the upstream. It reports findings and offers stash, commit-first, reconcile-or-recreate, proceed-with-warning, or abort, without silently reusing, overwriting, or recreating the branch.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unclean-prior-topic-ref",
+          "description": "Response inspects branch existence, unique commits, local changes, and ahead/behind/diverged status before continuing."
+        },
+        {
+          "name": "destination-ref-verdict",
+          "description": "Response offers stash / commit-first / reconcile-or-recreate / proceed-with-warning / abort and never silently reuses, overwrites, or recreates the branch."
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Continue the pipeline on feature/search-typeahead — that branch already exists, it's clean, and I pulled the latest main into it yesterday.",
+      "expected_output": "Pipeline confirms the existing feature branch is clean and current with its base, records the branch-guard decision, and reuses the branch as-is without recreating it or asking for cleanup choices.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "clean-prior-topic-ref",
+          "description": "Response confirms the branch is clean and reuses it directly rather than recreating or stashing."
+        },
+        {
+          "name": "newest-trunk-verified",
+          "description": "Response confirms the branch is current with its base and records the branch-guard decision before proceeding."
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Fire off sdlc-autonomous on the cache-invalidation task. My working tree happens to be dirty right now and I haven't set up any auto-stash policy.",
+      "expected_output": "Autonomous mode detects the dirty tree with no auto-stash policy configured and halts before the implementation phase. It records that autonomous safety blocked the run and does not perform a hard reset, does not commit the user's changes, and does not proceed with the dirty tree.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "unattended-unclean-halts",
+          "description": "Response halts the autonomous run before implementation and records that safety guardrails blocked it."
+        },
+        {
+          "name": "skips-irreversible-unattended-step",
+          "description": "Response confirms no hard reset, no auto-commit of user changes, and no proceed-dirty action was taken."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Here's a free-form ask, no ticket attached: \"add a CSV export button to the billing dashboard.\" Get it ready for development.",
+      "expected_output": "Requirements intake creates a local work item from the free-form text. Once the branch guard succeeds, the pipeline emits prepare_for_development. If the external adapter receipt succeeds, the local work item's external metadata, state, assignee, and history are updated; if the adapter is missing or fails, the pipeline only logs a warning and appends local history, without blocking progress.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "stage-delivery-post-ref-safeguard",
+          "description": "Response emits prepare_for_development only after the local work item is resolved and the branch guard has succeeded."
+        },
+        {
+          "name": "delivery-record-revises-job-unit",
+          "description": "Response describes a successful adapter receipt updating the work item's external metadata, state, assignee, and history."
+        },
+        {
+          "name": "delivery-connector-caution-proceeds",
+          "description": "Response describes a missing or failing adapter producing only a warning and local history entry, never blocking the pipeline."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Resume docs/superpowers/runs/20260516-1015-login. Heads up: meta.json claims phase 7 finished, but I noticed work-item-events.jsonl has newer entries than work-item.md, and I'm not sure phase 7 actually completed cleanly.",
+      "expected_output": "Pipeline checks events.jsonl and finds a phase.started entry for phase 7 with no later terminal event, contradicting meta.json's claim of completion. It trusts events.jsonl, repairs meta.json before resuming phase 7 rather than skipping ahead, and reconciles the canonical work-item.md from the newer work-item-events.jsonl ledger by appending reconciliation events and history — without truncating either JSONL ledger.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "restart-from-log-entries",
+          "description": "Response trusts events.jsonl's phase.started-with-no-terminal-event over the stale meta.json completion claim."
+        },
+        {
+          "name": "metadata-fixup-ahead-of-restart",
+          "description": "Response repairs meta.json before resuming phase 7 and does not skip ahead to a later phase."
+        },
+        {
+          "name": "job-unit-sync",
+          "description": "Response reconciles work-item.md from work-item-events.jsonl by appending reconciliation events and history, without truncating either ledger."
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "QA gates and feature verification both came back clean for the invoicing-retry feature, but our lifecycle adapter integration is down right now. Wrap this up.",
+      "expected_output": "Pipeline emits record_delivery_audit followed by complete_or_handoff at their respective points despite the unavailable lifecycle adapter. The missing adapter is treated as a non-blocking warning: local history is appended, work_item.adapter_warning is set, external sync is marked pending, and the pipeline continues through to handoff.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "handoff-trace-aim",
+          "description": "Response confirms record_delivery_audit is emitted once QA gates and feature verification are handoff-ready."
+        },
+        {
+          "name": "transfer-aim",
+          "description": "Response confirms complete_or_handoff is emitted after record_delivery_audit."
+        },
+        {
+          "name": "absent-handoff-connector-non-halting",
+          "description": "Response treats the unavailable lifecycle adapter as a non-blocking warning, appends local history, sets work_item.adapter_warning, marks external sync pending, and continues to handoff."
+        }
+      ]
+    }
+  ]
+}

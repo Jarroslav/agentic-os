@@ -1,0 +1,109 @@
+# AI Autonomy Policy — {{PROJECT_NAME}}
+
+<!-- Scaffolded by agentic-os to .agentic/guides/policy/ai-policy.md (human-owned after install).
+     Single source of truth for what AI agents may do autonomously in this repository.
+     Agent contracts and skills reference this file by path; they must not restate it. -->
+
+This file is the **policy of record** for AI-agent autonomy in this repository.
+It applies to every AI agent operating against this repo — interactive sessions,
+subagents, pipelines, and any future tool. When the policy changes, update this
+file only; contracts that reference it inherit the change.
+
+Stack context: {{STACK_SUMMARY}}
+
+## HITL mode
+
+Active mode: **`{{HITL_MODE}}`** (set at install; change it here, consciously).
+
+| Mode | Meaning |
+| --- | --- |
+| `strict` | Every step is user-gated. Agents recommend; humans execute anything in the "gated" column below. |
+| `gated-autonomous` | Pipelines run on their own; judgment gates, the escalation ladder, and `escalate_on` flags stop them. |
+| `autonomous` | agentic-sdlc autonomous mode with stand-in resolvers; the escalation rule in `escalation-policy.md` still forces human decisions. |
+
+## Autonomy matrix
+
+What agents may do without a per-action human approval, by capability and mode.
+**allowed** = do it; **gated** = propose the exact action and wait for explicit
+approval; **never** = do not do it in this mode at all.
+
+| Capability | `strict` | `gated-autonomous` | `autonomous` |
+| --- | --- | --- | --- |
+| Read repo files (except secret patterns — see `safety-policy.md`) | allowed | allowed | allowed |
+| Edit files inside the agent's declared `write_scope` | allowed | allowed | allowed |
+| Run local quality gates (see *Quality gates* below) | allowed | allowed | allowed |
+| Execute the test suite | never (recommend the exact command; a human or CI runs it) | allowed | allowed |
+| `git commit` (review-gated — see below) | gated | allowed | allowed |
+| `git push` to a topic branch | gated | allowed | allowed |
+| Push to `{{DEFAULT_BRANCH}}` / production deploy | never | never | never |
+| Create/update tickets or work items via {{TICKET_ADAPTER}} | gated (echo the full payload, then wait) | gated | gated |
+| Open/update MRs via {{MR_ADAPTER}} | gated | allowed | allowed |
+| Drive a browser against unauthenticated pages | allowed | allowed | allowed |
+| Drive a browser against an authenticated session, or mutate data through it | gated (per action) | gated (per action) | gated (per action) |
+
+Human-gated **commands** (always blocked pending human action, regardless of mode)
+are listed in `escalation-policy.md` — one list, not two.
+
+### Per-repository overrides
+
+Set at install (interview Screen 3) for this repo, these **tighten** the active
+mode's row above for a specific capability — never loosen it. An agent reads the
+override where one exists and the matrix row otherwise.
+
+{{AUTONOMY_OVERRIDES}}
+
+## Size ceiling
+
+Lightweight AI-assisted changes stay **≤ {{MAX_LOC}} lines of code and ≤ {{MAX_FILES}} files**
+per change. Compute from the diff (`git diff --shortstat`); ignore lockfile and
+generated-asset line churn for LOC, but always count files.
+
+Breach ⇒ **escalate**: the change does not proceed until a human explicitly
+approves the larger scope or the change is split. Reviewers list a breach under
+`## Blocking` with the measured numbers.
+
+## Environment write boundaries
+
+| Environment | Allowed operations | Notes |
+| --- | --- | --- |
+| Local / ephemeral | Full CRUD | Test setup/teardown data is expected here. |
+| **{{STAGING_ENV_NAME}}** | Full CRUD for test data with idempotent cleanup | Create what you assert on; tear it down; never depend on data another suite left behind. |
+| Production | **Read-only** | No writes, no test execution, no schema changes, no secret rotation — by agents or by code they author for automated paths. |
+
+Test-CRUD clarification: writing setup/teardown code that creates, updates, and
+deletes test data on {{STAGING_ENV_NAME}} is explicitly permitted and expected —
+that is what test automation is for. The read-only boundary targets production.
+
+## Always forbidden (all modes)
+
+- Removing or disabling existing logs, metrics, or health indicators — or writing code that does.
+- Deleting or disabling tests, or introducing skipped/focused-test markers, except a runtime-conditional guard with an inline lint-suppression and a one-line reason.
+- Reading or rotating secrets and credentials (deny patterns in `safety-policy.md`).
+- Running under a privileged identity. Agents draft what a privileged human then runs through normal review.
+
+## Enforcement layers
+
+Soft layers tell the model what not to do; hard layers fail closed and do not
+depend on the model cooperating.
+
+| Layer | Mechanism | Style |
+| --- | --- | --- |
+| This policy + agent contracts | referenced from every contract | soft |
+| Secret read denial | settings deny rules (patterns pinned in `safety-policy.md`) | hard |
+| Pre-commit review stamp | `.claude/hooks/precommit_review_gate.py` + `.githooks/pre-commit` | hard (exit 2) |
+| Output-contract gate | `.claude/hooks/subagent_gate.py` (fail-closed) | hard (exit 2) |
+| Write-scope guard | `.claude/hooks/write_scope_guard.py` per agent contract | hard (exit 2) |
+| Instruction-quality gate | `.claude/hooks/instruction_gate.py` vs {{SCORECARD_PATH}} | hard (exit 2) |
+
+## Quality gates
+
+The local gate commands for this repository (run before staging any change):
+
+```
+{{GATE_COMMANDS}}
+```
+
+## Related policy
+
+- `.agentic/guides/policy/escalation-policy.md` — escalation ladder, `escalate_on` flags, human-gated commands.
+- `.agentic/guides/policy/safety-policy.md` — secrets, MCP/browser safety, git/remote actions.
