@@ -12,7 +12,7 @@ description: >-
   explicit yes.
 version: 0.1.0
 license: Apache-2.0
-discoverable: false
+discoverable: true
 author: agentic-os
 ---
 
@@ -59,6 +59,17 @@ Blast-radius shape of this skill's own actions:
 | List runs, render catalog, compute status line | R0 | Read-only, no writes. |
 | Correct `meta.json` phase fields, append `status.repaired` / `work_item.reconciled`, mirror JSONL ledgers, add a Markdown history row | R1 | Confined to run artifacts under `docs/superpowers/runs/` and `docs/superpowers/work-items/`. |
 | Hand off a confirmed resume to `sdlc-pipeline` | R2/R3 (downstream) | This skill doesn't perform the repo writes or external side effects itself — it only issues the confirmed handoff. The resumed phase may touch tracked files (R2) or trigger external sync (R3); that's why the resume prompt is a hard gate. |
+
+## Reading a project's own pipeline state
+
+When `.agentic/agentic-sdlc/config.json` names a neutral state file, read it alongside this package's run
+ledger. For whatever the project's pipeline is currently running, that file is
+the authority: active pipeline, current role, which roles may come next,
+serialized gate results, changed files and blockers all come from there rather
+than from anything inferred here.
+
+Status stays read-only unless the user explicitly asks to resume — and a resume
+re-enters the project's orchestrator, never one of its fleet workers.
 
 ## Inputs
 

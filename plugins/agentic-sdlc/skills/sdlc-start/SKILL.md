@@ -3,7 +3,7 @@ name: sdlc-start
 description: Starts a human-in-the-loop agentic-sdlc run from a task description, an external work-item reference, or a greenfield idea. Triggers include "start sdlc", "implement this with sdlc", "begin SDLC workflow", or a request for the legacy sdlc:start command on a skills-based host.
 version: 0.1.0
 license: Apache-2.0
-discoverable: false
+discoverable: true
 authors:
   - agentic-os
 ---
@@ -33,6 +33,15 @@ That last one is the tempting failure. If `sdlc-pipeline` cannot be reached,
 say startup is blocked and stop there. A hand-rolled approximation looks
 helpful and leaves behind artifacts nothing downstream can trust. Ownership of
 every artifact starts inside `sdlc-pipeline` Phase 0, and not one step sooner.
+
+## When the project owns implementation
+
+Read `.agentic/agentic-sdlc/config.json` before delegating. If it names project orchestrators, pass their
+routing contract through to `sdlc-pipeline`: this package still owns intake,
+planning, QA and the delivery handoff, while implementation is delegated once to
+the orchestrator the project selected. Fleet workers are never called directly —
+going around the project's own orchestrator is how two pipelines end up believing
+they own the same change.
 
 ## Inputs
 

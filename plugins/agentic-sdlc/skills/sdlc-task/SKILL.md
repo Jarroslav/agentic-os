@@ -14,7 +14,7 @@ description: >
   work with no spec (use sdlc-light).
 version: 0.1.0
 license: Apache-2.0
-discoverable: false
+discoverable: true
 author: agentic-os
 ---
 
@@ -38,6 +38,15 @@ Everything runs inline, in the current conversation, on the current feature bran
 | Ticket-sized, low-touch automation, audit trail | `sdlc-autonomous` |
 | Pre-classified XS/S/M, minimum ceremony | **`sdlc-task`** (this skill) |
 | Simple/clear, research-first, no spec | `sdlc-light` |
+
+## When the project owns implementation
+
+Before any implementation, read `.agentic/agentic-sdlc/config.json` if it is there. Where it declares project
+orchestrators, this skill owns intake, research, spec, plan, review and QA —
+and nothing that writes code. Route the code-writing to the selected project
+orchestrator and consume only its summary and gate results. Do not invoke the
+project's fleet workers yourself, and do not open a competing orchestration state
+file; the project's own is authoritative for the work it is running.
 
 ## Non-goals
 

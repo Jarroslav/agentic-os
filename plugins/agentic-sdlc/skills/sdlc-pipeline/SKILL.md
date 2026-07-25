@@ -33,6 +33,20 @@ yourself beyond honoring the run state you are handed.
   writing-plans, test-driven-development, subagent-driven-development) — call them, don't inline
   their behavior.
 
+## Where this pipeline stops and the project's own begins
+
+Some repositories already run their own delivery pipelines. When `.agentic/agentic-sdlc/config.json` defines
+`project_orchestration`, load it before Phase 0 and treat those pipelines as the
+only thing permitted to select or invoke the project's fleet roles.
+
+This pipeline keeps intake, analysis, planning, QA, documentation, status and
+delivery handoff. For implementation it invokes exactly **one** selected project
+pipeline and retains only that pipeline's summary and serialized gate results —
+not its internal reasoning, not its worker output. Use the configured neutral
+state file rather than opening a second one, and never spawn project workers
+directly. Two orchestrators writing the same run is the failure this boundary
+exists to prevent.
+
 ## Inputs
 
 | Field | Source | Notes |

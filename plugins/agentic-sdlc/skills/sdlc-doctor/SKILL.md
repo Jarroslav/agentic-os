@@ -2,7 +2,7 @@
 name: sdlc-doctor
 version: 0.1.0
 license: Apache-2.0
-discoverable: false
+discoverable: true
 authors:
   - agentic-os
 description: >-
