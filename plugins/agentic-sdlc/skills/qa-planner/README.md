@@ -1,21 +1,28 @@
 # QA Planner
 
-Per-feature QA planning and review. Operates in three modes invoked automatically by the pipeline — generating a checklist before implementation, reviewing written tests for quality, and updating the health snapshot after QA gates pass.
+The pipeline's QA brain, in three passes: what this change must get right,
+whether the tests that arrived actually check it, and what the repo now knows
+about its own coverage. Each pass is a mode, and the pipeline picks the mode —
+you never have to.
 
 ## Use It For
 
-- Generating a `qa-checklist.md` scoped to the feature being built, covering affected modules, risk flags, and known coverage gaps.
-- Reviewing new and changed tests against the checklist to catch missing scenarios or weak assertions.
-- Keeping `qa-health.md` current after each feature run.
+- Deciding, before code exists, which scenarios a change is not allowed to break
+  — narrowed to the modules and risks this change actually touches.
+- Reading the tests that came back and saying whether they would catch the thing
+  they claim to catch.
+- Keeping the coverage record honest run after run, instead of letting it drift
+  into fiction.
 
 ## How To Ask
 
-This skill is invoked automatically:
+You don't. Something else calls it:
 
 - `sdlc-pipeline` Phase 6 (`--checklist`), Phase 8 (`--review-tests`), Phase 11 (`--update`)
 - `sdlc-task` Stage 5 (`--checklist`), Stage 7 (`--review-tests`), Stage 10 (`--update`)
 
-It is not intended for direct user invocation. If you need to set up the QA foundation first, run the `qa-foundation` skill.
+If the QA foundation isn't in place yet, that's the `qa-foundation` skill's job —
+run it first and this one will have something to reason from.
 
 ## What It Produces
 
@@ -25,8 +32,13 @@ It is not intended for direct user invocation. If you need to set up the QA foun
 | `qa-test-review.md` | `--review-tests` | `<run-dir>/qa-test-review.md` |
 | Updated `qa-health.md` | `--update` | `.agentic/guides/testing/qa-health.md` |
 
+Both documents follow `references/qa-artifacts.md`.
+
 ## What It Needs
 
-- `.agentic/guides/testing/qa-strategy.md` and `.agentic/guides/testing/qa-health.md` must exist. Run the `qa-foundation` skill to generate them.
-- `<run-dir>/requirements.md` must exist for `--checklist` mode.
-- `<run-dir>/qa-checklist.md` must exist for `--review-tests` mode.
+- The QA foundation: `.agentic/guides/testing/qa-strategy.md` and
+  `.agentic/guides/testing/qa-health.md`. Without them the skill halts rather
+  than inventing a strategy — run `qa-foundation` to produce them.
+- `--checklist` reads `<run-dir>/requirements.md`.
+- `--review-tests` reads the `<run-dir>/qa-checklist.md` written by the first
+  mode, so the two run in order or not at all.
