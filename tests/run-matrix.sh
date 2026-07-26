@@ -56,7 +56,7 @@ PY
 python3 "$ROOT/tests/lib/check-registry.py" "$FRESH" && ok "agent-registry table intact" || bad "agent-registry table intact"
 # PATTERNS.md generated-guide append point is a real table row (same invariant, shared gfm.py)
 python3 "$ROOT/tests/lib/check-patterns.py" "$FRESH" && ok "PATTERNS.md guide-row marker intact" || bad "PATTERNS.md guide-row marker intact"
-# ai-policy carries the Screen-3 autonomy-override block (answers land somewhere,
+# ai-policy carries the autonomy-override block (answers land somewhere,
 # not discarded); --defaults renders the "no overrides" note.
 python3 - "$FRESH" <<'PY' && ok "ai-policy autonomy-override block rendered" || bad "ai-policy autonomy-override block rendered"
 import sys, pathlib
@@ -166,6 +166,36 @@ assert "foreign hook body preserved" "grep -q 'TEAM-PRECOMMIT-RAN' '$MAT/.git/ho
 echo "== T3 role matrix (static) =="
 python3 "$ROOT/tests/lib/check-presets.py" "$PLUGIN" && ok "preset matrix + ID resolution" || bad "preset matrix + ID resolution"
 python3 "$ROOT/tests/lib/check-discovery-priors.py" "$PLUGIN" && ok "Tier-1 marker-prior table" || bad "Tier-1 marker-prior table"
+
+echo "== T3b explicit roles, additive union, and MCP states =="
+ROLE_WORK="$WORK/role-composition"
+for role_target in ba-po mixed mcp unavailable; do bash "$ROOT/tests/fixtures/make-fresh.sh" "$ROLE_WORK/$role_target" >/dev/null; done
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$ROLE_WORK/ba-po" \
+  --presets ba-po --mcp-state without-mcp >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$ROLE_WORK/mixed" \
+  --presets ba-po --mcp-state without-mcp >/dev/null
+echo "user-owned dispatcher" > "$ROLE_WORK/mixed/.agentic/agents/dispatcher.md"
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$ROLE_WORK/mixed" \
+  --presets ba-po,developer --mcp-state without-mcp --reinstall >/dev/null 2>&1
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$ROLE_WORK/mcp" \
+  --presets ba-po --mcp-state configured >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$ROLE_WORK/unavailable" \
+  --presets ba-po --mcp-state unavailable >/dev/null
+python3 "$ROOT/tests/lib/check-role-composition.py" "$ROLE_WORK/ba-po" \
+  "$ROLE_WORK/mixed" "$ROLE_WORK/mcp" "$ROLE_WORK/unavailable" && ok "role composition + MCP paths" || bad "role composition + MCP paths"
+
+echo "== T3c ba-po operating model =="
+python3 "$ROOT/tests/lib/check-ba-po-operating-model.py" "$ROLE_WORK/ba-po" \
+  "$PLUGIN/presets/evals/ba-po.json" && ok "ba-po guide + eval scenarios" || bad "ba-po guide + eval scenarios"
+DEV_ONLY="$WORK/developer-only"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$DEV_ONLY" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$DEV_ONLY" \
+  --presets developer --mcp-state without-mcp >/dev/null
+if test ! -e "$DEV_ONLY/.agentic/guides/standards/ba-po-operating-model.md"; then
+  ok "ba-po guide isolated from developer-only install"
+else
+  bad "ba-po guide isolated from developer-only install"
+fi
 
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.

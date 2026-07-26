@@ -30,16 +30,19 @@ a preset can therefore never fork an asset.
 
 `/agentic-init` takes the selected presets and:
 
-1. **Unions the sets** — `templates`, `generated`, and `sdlc_skills`
+1. **Requires an explicit selection** — the installer never silently chooses a
+   role. The user passes `/agentic-init --presets ba-po` or selects one or more
+   roles in Screen 1.
+2. **Unions the sets** — `templates`, `generated`, and `sdlc_skills`
    are set-unioned; each resulting ID is scaffolded/generated exactly once.
-2. **Strictest HITL wins** — `default_hitl` resolves by
+3. **Strictest HITL wins** — `default_hitl` resolves by
    `strict > gated-autonomous > autonomous`; the interview shows the result
    pre-filled and the human can still override it.
-3. **Orchestration** — every style in the union installs (a dev+qa team gets
+4. **Orchestration** — every style in the union installs (a dev+qa team gets
    both `commands/pipeline-orchestrator` and `commands/dispatch`). The
    *default* style pre-filled in the interview comes from the first preset
    the user listed; `strict` HITL forces the `dispatcher` default.
-4. **Generated slots** run only where the discovered stack-fact record says
+5. **Generated slots** run only where the discovered stack-fact record says
    the capability applies (e.g. `gen/i18n-agent` is skipped when no i18n
    library is detected, `gen/migration-validator` is skipped when persistence
    isn't migration-managed) — see `skills/agentic-init/SKILL.md` § Phase 5
@@ -56,6 +59,10 @@ the mature-repo handling described in the README's
 [What gets scaffolded](../../../README.md#what-gets-scaffolded) section and
 `skills/agentic-init/SKILL.md` Phase 4). `{{ROLE_PRESETS_ACTIVE}}` records
 the installed set in the scaffolded governance docs.
+
+Role changes are additive in the current lifecycle. Removing a role is not
+automatic because its files may have been edited by the user; removal requires
+an explicit future migration flow.
 
 ## Validation
 

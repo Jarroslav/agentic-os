@@ -3,8 +3,8 @@
 #
 # 1. Validates Cursor plugin packaging in the agentic-os repo.
 # 2. Creates (or recreates) a fresh fixture repo under git/test/.
-# 3. Runs the deterministic scaffold (refinstall.py) — the same Phase 4
-#    output /agentic-init --defaults would produce after skills load in Cursor.
+# 3. Runs the deterministic scaffold (refinstall.py) for the explicit ba-po
+#    role — the same Phase 4 output /agentic-init --presets ba-po would produce.
 # 4. Asserts the scaffold matches the T1 fresh-install invariants.
 #
 # Usage:
@@ -31,10 +31,15 @@ bash "$ROOT/tests/fixtures/make-fresh.sh" "$TARGET" >/dev/null
 ok "fixture created"
 
 echo "== Scaffold (agentic-init Phase 4 reference) =="
-python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$TARGET" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$TARGET" \
+  --presets ba-po --mcp-state without-mcp >/dev/null
 ok "refinstall completed"
-( cd "$TARGET" && bash scripts/install-git-hooks.sh >/dev/null )
-ok "git hooks installed"
+if test -f "$TARGET/scripts/install-git-hooks.sh"; then
+  ( cd "$TARGET" && bash scripts/install-git-hooks.sh >/dev/null )
+  ok "git hooks installed"
+else
+  ok "git hooks not installed for ba-po-only role"
+fi
 
 echo "== Post-install assertions =="
 assert "hooks py_compile" "python3 -m py_compile '$TARGET'/.claude/hooks/*.py"
@@ -42,7 +47,10 @@ assert "settings valid JSON" "python3 -c 'import json;json.load(open(\"$TARGET/.
 assert "agentic layer present" "test -d '$TARGET/.agentic/agents'"
 assert "scorecard present" "test -f '$TARGET/docs/audits/instruction-scorecard.json'"
 assert "no unresolved placeholders" "! grep -rlF '{{' '$TARGET/.claude' '$TARGET/.agentic' '$TARGET/AGENTS.md' '$TARGET/PATTERNS.md' '$TARGET/CLAUDE.md' 2>/dev/null | grep -q ."
-assert "unreviewed commit blocked" "out=\$(cd '$TARGET' && echo smoke >> .gitignore && git add .gitignore && git commit -m 'should block' 2>&1 || true) && echo \"\$out\" | grep -qi 'review'"
+assert "ba-po dispatcher present" "test -f '$TARGET/.agentic/agents/dispatcher.md'"
+assert "ba-po operating guide present" "test -f '$TARGET/.agentic/guides/standards/ba-po-operating-model.md'"
+assert "ba-po has no developer agents" "! test -e '$TARGET/.agentic/agents/security-reviewer.md' && ! test -e '$TARGET/.agentic/agents/blind-code-reviewer.md'"
+assert "MCP fallback guide present" "grep -q 'without MCP' '$TARGET/.agentic/guides/standards/mcp-onboarding.md'"
 
 python3 "$ROOT/tests/lib/check-registry.py" "$TARGET" && ok "agent-registry intact" || bad "agent-registry intact"
 python3 "$ROOT/tests/lib/check-hooks-import.py" "$TARGET" && ok "hooks import cleanly" || bad "hooks import cleanly"
@@ -61,7 +69,7 @@ cat > "$RESULT_FILE" <<EOF
 1. Cursor → Settings → Plugins → Add marketplace → \`$ROOT\` (local clone) or \`https://github.com/Jarroslav/agentic-os.git\`
 2. Install **agentic-os** and **agentic-sdlc** from the \`agentic-os\` marketplace
 3. Restart the session
-4. Open this repo in Cursor and run \`/agentic-init --defaults\`
+4. Open this repo in Cursor and run \`/agentic-init --presets ba-po\`
 
 This automated run validated packaging + deterministic scaffold only.
 EOF
