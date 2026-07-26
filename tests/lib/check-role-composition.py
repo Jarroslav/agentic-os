@@ -54,9 +54,14 @@ def main() -> None:
         fail("additive role re-run did not record the complete preset union")
     for path in (".agentic/agents/dispatcher.md", ".agentic/agents/security-reviewer.md"):
         require(files, path)
+    dispatcher = (mixed / ".agentic/agents/dispatcher.md").read_text()
+    if dispatcher != "user-owned dispatcher\n":
+        fail("additive role re-run overwrote the user-edited dispatcher")
     registry = (mixed / ".agentic/guides/agent-registry.md").read_text()
     if registry.count("dispatcher.md") != 1:
         fail("shared dispatcher asset was duplicated")
+    if "harness-specific files" not in registry or "contracts live in `.agentic/agents/`" not in registry:
+        fail("role-specific registry pruning damaged shared explanatory prose")
 
     journal, files = load(mcp_state)
     if journal["answers"]["mcp_state"] != "configured":

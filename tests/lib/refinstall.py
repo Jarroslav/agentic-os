@@ -403,6 +403,11 @@ registry_path = TARGET / ".agentic/guides/agent-registry.md"
 if registry_path.exists():
     registry_lines = []
     for line in registry_path.read_text().splitlines(True):
+        # Only remove orchestration matrix rows. Prose may mention an
+        # unselected asset while still describing the shared architecture.
+        if not line.lstrip().startswith("|"):
+            registry_lines.append(line)
+            continue
         assets = re.findall(r"`([^`]+)`", line)
         missing_selected_asset = False
         for asset in assets:
