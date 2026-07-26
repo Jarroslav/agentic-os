@@ -111,6 +111,7 @@ SCALARS = {
     "STAGING_ENV_NAME": "staging",
     "TEST_FRAMEWORK": "playwright",
     "TICKET_ADAPTER": "none" if "ba-po" in PRESET_NAMES else "GitHub",
+    "TICKET_ADAPTER_STATUS": "not configured" if "ba-po" in PRESET_NAMES else "configured",
     "TICKET_PREFIX": "" if "ba-po" in PRESET_NAMES else "GH",
 }
 

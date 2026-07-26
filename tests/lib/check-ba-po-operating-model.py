@@ -51,6 +51,26 @@ def main() -> None:
     ids = {case.get("id") for case in cases}
     if ids != set(range(1, 11)):
         fail(f"ba-po eval ids must be exactly 1..10, got {sorted(ids)}")
+    by_id = {case["id"]: case for case in cases}
+    for case_id, expected_status in ((5, "succeeded"), (6, "failed")):
+        receipt = by_id[case_id].get("adapter_receipt")
+        if not isinstance(receipt, dict) or receipt.get("schema") != 1:
+            fail(f"eval {case_id} is missing a structured normalized receipt")
+        if receipt.get("status") != expected_status:
+            fail(f"eval {case_id} has wrong receipt status")
+        for field in ("work_item", "actions", "state", "assignee", "audit_url", "warnings"):
+            if field not in receipt:
+                fail(f"eval {case_id} receipt missing {field}")
+    if by_id[5].get("read_back", {}).get("acceptance_criteria") is None:
+        fail("successful adapter eval is missing read-back verification data")
+    if by_id[6].get("read_back") is not None:
+        fail("failed adapter eval must not claim a successful read-back")
+    lookup = by_id[4].get("lookup_receipt")
+    if not isinstance(lookup, dict) or lookup.get("status") != "succeeded":
+        fail("external-ticket eval is missing a successful lookup receipt")
+    for field in ("external_id", "title", "body", "acceptance_criteria"):
+        if field not in lookup:
+            fail(f"external-ticket lookup receipt missing {field}")
     print("ba-po operating model: guide and ten integration scenarios pass")
 
 

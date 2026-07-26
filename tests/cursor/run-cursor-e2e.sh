@@ -51,6 +51,7 @@ assert "ba-po dispatcher present" "test -f '$TARGET/.agentic/agents/dispatcher.m
 assert "ba-po operating guide present" "test -f '$TARGET/.agentic/guides/standards/ba-po-operating-model.md'"
 assert "ba-po has no developer agents" "! test -e '$TARGET/.agentic/agents/security-reviewer.md' && ! test -e '$TARGET/.agentic/agents/blind-code-reviewer.md'"
 assert "MCP fallback guide present" "grep -q 'without MCP' '$TARGET/.agentic/guides/standards/mcp-onboarding.md'"
+assert "no-adapter status is honest" "grep -A2 -q '\*\*Status\*\*: not configured' '$TARGET/.agentic/guides/project.md'"
 
 python3 "$ROOT/tests/lib/check-registry.py" "$TARGET" && ok "agent-registry intact" || bad "agent-registry intact"
 python3 "$ROOT/tests/lib/check-hooks-import.py" "$TARGET" && ok "hooks import cleanly" || bad "hooks import cleanly"
