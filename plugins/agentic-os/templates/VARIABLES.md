@@ -114,6 +114,7 @@ a security boundary:
 | `{{ESCALATE_ON}}` | Risk flags that force human escalation, comma list | `security,breaking-change,migration,spend` |
 | `{{ROLE_PRESETS_ACTIVE}}` | Installed role presets, comma list | from interview |
 | `{{TICKET_ADAPTER}}` | Work-item system + access method (ADO / Linear MCP / Jira / GitHub / GitLab / none) | interview |
+| `{{TICKET_ADAPTER_STATUS}}` | `configured` only when a ticket adapter is selected; otherwise `not configured` | derived from `{{TICKET_ADAPTER}}` |
 | `{{TICKET_PREFIX}}` | Work-item reference prefix in commits/titles | interview |
 | `{{MR_ADAPTER}}` | MR/PR mechanism (`gh` / `glab` / MCP / none) | detected |
 | `{{TEST_FRAMEWORK}}` | E2E/test framework for QA preset (playwright / cypress / other) | stack-fact record (`variable_defaults.TEST_FRAMEWORK`) |

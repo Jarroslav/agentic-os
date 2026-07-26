@@ -291,6 +291,9 @@ to the adapter and readiness summary.
 GitHub / GitLab / none), `{{TICKET_PREFIX}}`, `{{MR_ADAPTER}}` (`gh` / `glab`
 / MCP / none — pre-fill `gh` when `gh auth status` succeeds and the remote is
 GitHub).
+Derive `{{TICKET_ADAPTER_STATUS}}` as `configured` only when
+`{{TICKET_ADAPTER}}` is not `none`; otherwise render `not configured` and make
+the local-work-item fallback visible.
 
 Derived values (no screen): `{{PROJECT_NAME}}` = repo dir name (confirm on
 screen 5), `{{STACK_SUMMARY}}` = `journal.stack_discovery.stack_summary`,
