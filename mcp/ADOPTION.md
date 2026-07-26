@@ -103,7 +103,7 @@ CMD ["mcp-proxy", "--", …your start command…]
 Because it clones with `git`, into `/app`, with the repo root as the working
 directory, every constraint that makes our own `Dockerfile` fiddly is already
 satisfied — a real `.git`, the `git` binary, `plugins/**`, and both legal files.
-Only two fields need our values:
+Only two fields need our values; the rest keep their defaults:
 
 | Field | Value |
 | --- | --- |
@@ -111,29 +111,47 @@ Only two fields need our values:
 | Node.js version | `26` — leave the default (verified working; `engines` only requires >= 20) |
 | Python version | leave the default; the build never invokes python |
 | **Build steps** | `["cd mcp && npm ci && npm run build"]` |
-| **Start command** | `node mcp/dist/index.js` |
+| **CMD arguments** | `["node", "mcp/dist/index.js"]` |
+| Environment variables JSON schema | leave the empty default — this server reads no environment variables |
+| Placeholder parameters | leave `{}` — the server starts with no parameters, so there is nothing to fake |
+| Pinned commit SHA | leave empty to track the latest commit |
 
-Build steps are a JSON array. Keep the whole thing as **one** element joined by
-`&&`: each element runs as its own layer, so a bare `cd mcp` in one step would
-not carry into the next.
+Both are **JSON arrays**, which is the easy thing to get wrong:
+
+- **CMD arguments** is required — an empty `[]` shows *"At least one command
+  argument is required"* and blocks the build. Glama prepends
+  `mcp-proxy --` itself, so supply only the server's own argv.
+- **Build steps** should stay as **one** element joined by `&&`. Each element
+  runs as its own layer, so a bare `cd mcp` in one step would not carry into the
+  next.
+
+Then use **Build** first to run the build test, and only once it is green,
+**Build & Release** — entering the version that matches npm.
 
 Verified before deploying, against a local replica of the generated image
-(debian:trixie-slim + Node 26 + a real `git clone` of the merge commit): the
-build prints `bundled 326 files`, the start command serves 7 tools / 6 prompts /
-31 resources, and it still does so wrapped as
+(debian:trixie-slim + Node 26 + a real `git clone` at the head commit): the
+build prints `bundled 327 files`, the CMD serves 7 tools / 6 prompts / 31
+resources, and it still does so wrapped as
 `mcp-proxy --port 8080 -- node mcp/dist/index.js`, which is how Glama actually
 runs it. Worth doing, because a failed Glama build makes a server
 *undiscoverable* rather than merely unscored.
+
+One harmless line in the build log: `npm warn allow-scripts esbuild@… (postinstall…)`.
+That is npm 11 on Node 26 declining to run a dev dependency's install script.
+`npm run build` only shells out to `tsc`, so it changes nothing — the build
+completes and the server runs. Not worth chasing.
 
 ### Only you can do these
 
 They need your Glama login, and their API is read-only:
 
 1. **Claim the server**, if it is not already claimed.
-2. **Admin → Dockerfile** → fill in the two fields above → **Deploy**.
-3. Once the build test passes → **Make Release**, version `0.1.1` to match npm.
-   This is what unlocks Tool Definition Quality and Server Coherence — and
-   therefore the whole score.
+2. **Admin → Dockerfile** → fill in the two fields above → **Build**.
+3. Once the build test passes → **Build & Release**, entering the version that
+   matches the current npm `latest` (`npm view agentic-os-mcp version` — do not
+   copy a version out of this file, which is exactly how the wrong one gets
+   used). This is what unlocks Tool Definition Quality and Server Coherence —
+   and therefore the whole score.
 4. **Admin → Profile** → **Categories** (up to 3; name and description are
    already filled). This is the rest of "profile completion".
 5. **Related Servers** tab → **Suggest Server**. The algorithmic "Related
