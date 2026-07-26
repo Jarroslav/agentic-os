@@ -18,6 +18,8 @@
     "policy/escalation-policy",
     "policy/safety-policy",
     "guides/git-workflow",
+    "guides/ba-po-operating-model",
+    "guides/mcp-onboarding",
     "guides/working-with-agents",
     "agents/dispatcher",
     "commands/dispatch",
