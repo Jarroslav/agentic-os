@@ -121,6 +121,7 @@ a security boundary:
 | `{{TICKET_ADAPTER_STATUS}}` | `configured` only when a ticket adapter is selected; otherwise `not configured` | derived from `{{TICKET_ADAPTER}}` |
 | `{{TICKET_PREFIX}}` | Work-item reference prefix in commits/titles | interview |
 | `{{MR_ADAPTER}}` | MR/PR mechanism (`gh` / `glab` / MCP / none) | detected |
+| `{{MR_ADAPTER_STATUS}}` | `configured` only when an MR adapter is detected or selected; otherwise `not configured` | derived from `{{MR_ADAPTER}}` |
 | `{{TEST_FRAMEWORK}}` | E2E/test framework for QA preset (playwright / cypress / other) | stack-fact record (`variable_defaults.TEST_FRAMEWORK`) |
 
 `guides/mcp-onboarding` is the shared host-specific MCP guidance for business

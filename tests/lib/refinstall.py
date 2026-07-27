@@ -102,6 +102,10 @@ SCALARS = {
     "MIGRATIONS_DIR": "supabase/migrations/",
     "MIGRATION_DIFF_COMMAND": "npx supabase db diff",
     "MR_ADAPTER": "gh",
+    # Mirrors the installer's derivation: `configured` iff MR_ADAPTER is not
+    # `none`. This fixture always detects `gh`, so the `not configured` branch is
+    # exercised on the ticket adapter below rather than here.
+    "MR_ADAPTER_STATUS": "configured",
     "OUTPUT_CONTRACT_SECTIONS": "Summary,Why,Blocking,Non-blocking,Escalate to human",
     "PROJECT_NAME": TARGET.name,
     "ROLE_PRESETS_ACTIVE": ",".join(PRESET_NAMES),
