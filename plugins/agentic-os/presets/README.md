@@ -71,3 +71,5 @@ the full key set, and references only template/gen IDs registered in
 `templates/VARIABLES.md`. Run it after any preset edit. CI covers the same
 ground (plus union-safety, orphan detection, and `sdlc_skills` resolution)
 via `tests/lib/check-presets.py`, run as T3 of `tests/run-matrix.sh`.
+
+<!-- ci probe: verifying the changelog gate fires. not for merge. -->
