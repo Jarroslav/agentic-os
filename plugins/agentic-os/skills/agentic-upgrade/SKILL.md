@@ -1,6 +1,6 @@
 ---
 name: agentic-upgrade
-description: Upgrade a repo's scaffolded agentic-os layer to the currently installed plugin version — per-file three-way reconciliation via the install journal's recorded sha256 (unchanged managed files overwritten, user-modified files diffed and prompted, managed blocks replaced wholesale, generated agents offered regeneration plus re-audit — never a silent overwrite), then doctor re-run and journal stamp bump. Use when the user says "/agentic-upgrade", "upgrade agentic-os", "update the scaffolded agents/hooks", or after updating the agentic-os plugin.
+description: Upgrade a repo's scaffolded agentic-os layer to the currently installed plugin version — per-file three-way reconciliation via the install journal's recorded sha256 (unchanged managed files overwritten, user-modified files diffed and prompted, managed blocks replaced wholesale, generated agents offered regeneration plus re-audit — never a silent overwrite), then doctor re-run and journal stamp bump. Use when the user says "/agentic-upgrade", "upgrade agentic-os", "update the scaffolded agents/hooks", or after updating the agentic-os plugin. Not for: first-time installs (agentic-init) or verification without changes (agentic-doctor).
 version: 0.1.0
 license: Apache-2.0
 ---

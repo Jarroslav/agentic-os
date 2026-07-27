@@ -3,6 +3,9 @@
 > Canonical hard rules live under [`.agentic/guides/`](.agentic/guides/) — one guide per
 > domain. This file is the stable index; agents read it first and follow the links.
 > Rules are never restated here or inside agent contracts — referenced by link only.
+> The one exception: generated contracts may inline a rule digest wrapped in
+> `agentic-os:rules` markers naming the source guide (see
+> [`working-with-agents.md`](.agentic/guides/standards/working-with-agents.md) § Rule provenance markers).
 >
 > Deviating from any rule requires the owner's explicit say-so in chat — never silently.
 
@@ -13,6 +16,7 @@
 | Quality gate commands (run/pass/fail/skip per gate) | [`.agentic/guides/standards/quality-gates.md`](.agentic/guides/standards/quality-gates.md) |
 | Working with agents (vertical slices, prototype-vs-contract, challenge prompting) | [`.agentic/guides/standards/working-with-agents.md`](.agentic/guides/standards/working-with-agents.md) |
 | Instruction quality grading (evidence-accuracy rubric) | [`.agentic/guides/standards/instruction-quality-rubric.md`](.agentic/guides/standards/instruction-quality-rubric.md) |
+| Evidence integrity (no self-citation, owned classifications, shortfall marking) | [`.agentic/guides/standards/evidence-integrity.md`](.agentic/guides/standards/evidence-integrity.md) |
 | QA / test strategy | [`.agentic/guides/standards/qa-strategy-stub.md`](.agentic/guides/standards/qa-strategy-stub.md) *(replaced by `.agentic/guides/testing/qa-strategy.md` after `/sdlc:qa-init`)* |
 {{QA_GUIDE_ROWS}}| HITL policy (autonomy matrix, escalation ladder, safety) | [`.agentic/guides/policy/`](.agentic/guides/policy/) |
 | Agent routing (intent → owning asset) | [`.agentic/guides/agent-registry.md`](.agentic/guides/agent-registry.md) |

@@ -1,6 +1,6 @@
 ---
 name: test-automation-author
-description: Convert approved test-case work items into {{TEST_FRAMEWORK}} automation following the repo's existing conventions. Enforces the real-ID gate (work items must exist in {{TICKET_ADAPTER}}) and the existing-coverage gate before writing any code. Writes test code only — never tracker writes, never commits.
+description: Convert approved test-case work items into {{TEST_FRAMEWORK}} automation following the repo's existing conventions. Enforces the real-ID gate (work items must exist in {{TICKET_ADAPTER}}) and the existing-coverage gate before writing any code. Writes test code only — never tracker writes, never commits. Not for: drafting test cases (test-case-generator), repairing failing tests (test-failure-triage), or running the suite.
 readonly: false
 write_scope:
   # common test roots; edit to match this repo's layout — the write-scope guard
@@ -90,6 +90,8 @@ treated as Blocking. Use `None` when a section is empty.
 ## Summary
 
 First line: `PASS — <n> cases automated, <m> files written/extended` or `FAIL — <reason>`.
+`PASS` iff every supplied case ID appears in the mapping table with a written
+spec — count of unmapped IDs = 0, recomputed from the table, and both gates ran.
 
 ## Why
 

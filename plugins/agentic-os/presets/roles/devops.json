@@ -25,6 +25,7 @@
     "guides/git-workflow",
     "guides/quality-gates",
     "guides/working-with-agents",
+    "guides/evidence-integrity",
     "agents/dispatcher",
     "agents/pr-pipeline-gate",
     "agents/security-reviewer",

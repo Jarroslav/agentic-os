@@ -30,6 +30,7 @@
     "guides/quality-gates",
     "guides/instruction-quality-rubric",
     "guides/working-with-agents",
+    "guides/evidence-integrity",
     "guides/qa-strategy-stub",
     "guides/test-design-pattern",
     "guides/flaky-protocol",

@@ -38,6 +38,11 @@ jobs:
       - name: Skill contract check
         run: python3 tests/lib/check-skill-contract.py
 
+      - name: Rule-provenance marker check
+        run: |
+          python3 tests/lib/check-rule-markers.py --self-test
+          python3 tests/lib/check-rule-markers.py
+
       # A plugin's shipped content may not change without a changelog entry —
       # users install what is on main and the changelog is the only place they
       # learn what moved. The self-test runs everywhere; the diff itself needs a

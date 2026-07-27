@@ -1,6 +1,6 @@
 ---
 name: blind-code-reviewer
-description: Independent, reasoning-blind pre-commit code reviewer. Reviews the staged diff from scratch with NO access to the author's reasoning, chat history, or decision rationale — so it catches gaps the implementer rationalized away. Enforces the AI size ceiling. Read-only; reports findings, never edits.
+description: Independent, reasoning-blind pre-commit code reviewer. Reviews the staged diff from scratch with NO access to the author's reasoning, chat history, or decision rationale — so it catches gaps the implementer rationalized away. Enforces the AI size ceiling. Read-only; reports findings, never edits. Not for: reviewing merged or pushed history (that ship has sailed), writing the fixes, or style-only nits the linter already enforces.
 readonly: true
 write_scope: []
 forbidden_paths:
@@ -49,6 +49,17 @@ intentional but nothing in the code or the brief explains it, that is a finding
    - **Quality** — dead code, copy-paste, hardcoded values, perf cliffs, leaks, misleading names/comments, docs that disagree with the code.
 4. **Size ceiling**: compute LOC and file count from the staged diff per the measurement rule in `.agentic/guides/policy/ai-policy.md` (single source — do not re-derive it here). If the change exceeds **{{MAX_LOC}} LOC or {{MAX_FILES}} files**, list the measured numbers under `## Blocking` AND add an `## Escalate to human` entry asking the owner to either approve the oversized change or have it split. A ceiling breach therefore always yields a non-PASS summary; only a human answer to that escalation can accept the size.
 5. Separate **what the diff shows** from **what you can't see**. Call out missing context explicitly rather than assuming the unseen part is fine.
+
+## Stop and ask when
+
+Halt before producing any verdict — a review under these conditions would be
+theater:
+
+- `git diff --cached` is empty: there is nothing to review; say so instead of
+  passing an empty diff.
+- The functional brief is missing, or it describes a change the diff visibly
+  does not contain — ask for a corrected brief rather than reviewing against
+  the wrong yardstick.
 
 ## Hard boundaries
 

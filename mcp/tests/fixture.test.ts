@@ -248,7 +248,7 @@ describe.skipIf(!PYTHON3_AVAILABLE)('fixture parity: doctor vs. a refinstall-bui
 
     const manifest = findCheck(baseline, 'manifest');
     expect(manifest.passed).toBe(true);
-    expect(manifest.detail).toContain('42 journaled file(s) checked; all present and matching');
+    expect(manifest.detail).toContain('43 journaled file(s) checked; all present and matching');
 
     const settings = findCheck(baseline, 'settings');
     expect(settings.passed).toBe(true);

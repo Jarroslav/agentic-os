@@ -49,3 +49,27 @@ When blocked on a judgment call the policy files reserve for humans
 (`.agentic/guides/policy/escalation-policy.md`), stop and present the decision with
 concrete options — not a status report that buries the question. The agent output
 contract's `## Escalate to human` section exists exactly for this.
+
+## 5. Rule provenance markers
+
+The default is link-only: agent contracts reference guides by path and never
+restate their rules. Generated contracts are the sanctioned exception — they
+inline a *digest* of guide rules so the agent doesn't re-read every guide per
+run. Every inlined digest must declare its source of truth with a marker pair:
+
+```markdown
+<!-- agentic-os:rules source=".agentic/guides/standards/code-quality.md" topic="verification-evidence" -->
+…the inlined rule digest…
+<!-- /agentic-os:rules -->
+```
+
+- `source` — repo-relative path of the guide the digest came from. That guide
+  wins on any conflict; editors change the guide first, then refresh the block.
+- `topic` — a lowercase-hyphen slug naming the rule cluster (e.g.
+  `persistence-hard-rules`), so drift reports can name what drifted.
+- One source per block; blocks never nest. Rules evidenced only by repo files
+  (not a guide) stay unwrapped — there is nothing for them to drift from.
+- After editing a guide, any block naming it as `source` is stale until
+  refreshed. The guide-sync agent reports such drift ("inlined-rule drift");
+  fixing a generated contract is `/agentic-upgrade` regeneration or a human
+  edit — never a silent rewrite by a sync agent.

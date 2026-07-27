@@ -1,6 +1,6 @@
 ---
 name: eval-harness
-description: Scaffold a two-layer eval framework — deterministic contract checks plus optional LLM-judge behavioral cases — for every Claude Code skill (and agent file) in a repository. Invoke when the user asks to add evals, regression guards, or skill tests, to wire eval automation into hooks/CI, or to extend an existing evals.json setup. Not for writing ordinary unit tests or for merely running an eval suite that already exists.
+description: Scaffold a two-layer eval framework — deterministic contract checks plus optional LLM-judge behavioral cases — for every Claude Code skill (and agent file) in a repository. Invoke when the user asks to add evals, regression guards, or skill tests, to wire eval automation into hooks/CI, or to extend an existing evals.json setup. Not for: writing ordinary unit tests or merely running an eval suite that already exists.
 ---
 
 # Eval Harness

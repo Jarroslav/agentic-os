@@ -30,6 +30,7 @@
     "guides/quality-gates",
     "guides/instruction-quality-rubric",
     "guides/working-with-agents",
+    "guides/evidence-integrity",
     "agents/blind-code-reviewer",
     "agents/instruction-auditor",
     "commands/pipeline-orchestrator",

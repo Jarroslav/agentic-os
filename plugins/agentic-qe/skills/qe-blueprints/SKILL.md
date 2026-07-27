@@ -1,6 +1,6 @@
 ---
 name: qe-blueprints
-description: Invoke when the user wants to start, scaffold, bootstrap, or implement a quality-engineering blueprint or an agentic test-automation setup — interviews the user, matches intent to one of 28 bundled QE blueprints, and generates a fill-in-ready agent framework (context file, agent stubs, skill stubs) for Claude Code, Cursor, or GitHub Copilot.
+description: Invoke when the user wants to start, scaffold, bootstrap, or implement a quality-engineering blueprint or an agentic test-automation setup — interviews the user, matches intent to one of 28 bundled QE blueprints, and generates a fill-in-ready agent framework (context file, agent stubs, skill stubs) for Claude Code, Cursor, or GitHub Copilot. Not for: running an SDLC pipeline, adding evals to existing skills (eval-harness), or writing the test code itself.
 ---
 
 # QE Blueprint Scaffolder

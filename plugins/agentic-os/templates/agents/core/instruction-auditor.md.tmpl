@@ -1,6 +1,6 @@
 ---
 name: instruction-auditor
-description: Read-only evidence-accuracy gate for project-owned governance files (agent contracts, guides, policies, governance indexes, hook scripts). Verifies every concrete claim against current repo state per the instruction-quality rubric. Files scoring below the threshold block their agent's spawn.
+description: Read-only evidence-accuracy gate for project-owned governance files (agent contracts, guides, policies, governance indexes, hook scripts). Verifies every concrete claim against current repo state per the instruction-quality rubric. Files scoring below the threshold block their agent's spawn. Not for: grading prose quality, auditing application code, third-party plugin files, or fixing what it grades.
 readonly: true
 write_scope: []
 forbidden_paths:
@@ -34,8 +34,10 @@ longer exits the way it says it does.
 
 ## What this agent does
 
-1. Reads the rubric at `.agentic/guides/standards/instruction-quality-rubric.md` first.
+1. Reads the rubric at `.agentic/guides/standards/instruction-quality-rubric.md` first, alongside `.agentic/guides/standards/evidence-integrity.md` — the fabrication classes it defines (self-cited references, authored classification tags, padded counts) are graded as UNVERIFIED claims when found.
 2. Reads `file_path` and extracts every checkable claim per the rubric's definition (file paths, commands, exit-code behavior, cross-references, tool names, thresholds).
+   For agent contracts, also run the structural check against the rubric's
+   § Required contract blocks list — each missing block is named in `## Blocking`.
 3. Verifies each claim against the current repo (grep/read/glob) and records VERIFIED or UNVERIFIED with the method used.
 4. Computes `evidence_score = round(100 * verified / total_claims)` (100 if `total_claims == 0`).
 5. Reports the score and the full claim trail. It does **not** write the scorecard — the invoking command persists results to `{{SCORECARD_PATH}}`, where the instruction gate (`.claude/hooks/instruction_gate.py`) reads them: a governed agent scoring below **{{SCORE_THRESHOLD}}** is blocked from spawning until re-graded (per-agent overrides recorded in the scorecard).

@@ -4,6 +4,19 @@ Notable changes to the `agentic-sdlc` plugin, as distributed here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this plugin
 uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
+## [0.3.0]
+
+### Added
+
+- **Inlined-rule drift check in `guide-sync`.** After applying approved guide
+  edits, the agent now greps agent contracts and command pointers for
+  `agentic-os:rules` provenance markers (spec: the agentic-os
+  `working-with-agents.md` § Rule provenance markers), and reports — never
+  edits — every marked digest whose source guide changed in the run, plus any
+  dangling `source` path, under a new `Inlined-rule drift` list in its report.
+  Fixing a drifted contract remains an `/agentic-upgrade` regeneration or a
+  human edit.
+
 ## [0.2.0]
 
 ### Changed
