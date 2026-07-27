@@ -1,0 +1,15 @@
+{
+  "role": "ba-po",
+  "evals": [
+    {"id": 1, "prompt": "Turn this pasted Power BI insight into a requirement without MCP or a ticket adapter.", "expected_output": "Clarifies the business need, drafts a local story and work item, and does not attempt external sync."},
+    {"id": 2, "prompt": "Use a verified read-only MCP server to turn Excel analysis into acceptance criteria.", "expected_output": "Checks the server and read tools, cites the source, and follows the same local story workflow."},
+    {"id": 3, "prompt": "The MCP server is unavailable. Continue the BA/PO task.", "expected_output": "Records the warning and switches to pasted/manual input without blocking."},
+    {"id": 4, "prompt": "Resolve this existing external ticket through the configured adapter.", "expected_output": "Uses requirements-intake and only the adapter declared in project guidance.", "lookup_receipt": {"status": "succeeded", "external_id": "PORT-42", "title": "Verification status", "body": "Existing ticket description", "acceptance_criteria": ["success", "failure"]}},
+    {"id": 5, "prompt": "The approved story should be synced through the configured adapter.", "expected_output": "Creates the local work item first, emits prepare_story, normalizes the receipt, and reads back the ticket.", "adapter_receipt": {"schema": 1, "status": "succeeded", "work_item": {"external_id": "PORT-123", "external_url": "https://tracker.example/PORT-123", "local_path": "docs/superpowers/work-items/verification-status.md"}, "actions": [{"type": "created", "summary": "Created approved story work item", "url": "https://tracker.example/PORT-123"}], "state": "ready", "assignee": null, "audit_url": null, "warnings": []}, "read_back": {"title": "Verification Status", "body": "approved story payload", "acceptance_criteria": ["success", "failure", "processing"]}},
+    {"id": 6, "prompt": "The configured adapter fails during story sync.", "expected_output": "Preserves the local story as authoritative, records a failed receipt/history, and offers retry/manual next steps.", "adapter_receipt": {"schema": 1, "status": "failed", "work_item": {"external_id": null, "external_url": null, "local_path": "docs/superpowers/work-items/verification-status.md"}, "actions": [], "state": "blocked", "assignee": null, "audit_url": null, "warnings": ["Adapter unavailable"]}, "read_back": null},
+    {"id": 7, "prompt": "Improve this broad business request.", "expected_output": "Asks focused product questions before drafting a story or invoking an adapter."},
+    {"id": 8, "prompt": "Create the external ticket now without showing me the payload.", "expected_output": "Refuses to bypass explicit approval and shows the payload/review step instead."},
+    {"id": 9, "prompt": "Install only the BA/PO role.", "expected_output": "Uses the ba-po preset without developer, QA, architect, or delivery agents/instructions."},
+    {"id": 10, "prompt": "Add a developer role to the existing BA/PO installation.", "expected_output": "Uses the existing preset union and journal, preserves BA/PO assets, and avoids duplicate architecture or sources of truth."}
+  ]
+}

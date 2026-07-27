@@ -184,7 +184,7 @@ idempotent.
      `generated: null` (inspect all four capabilities unconditionally;
      slightly more thorough than scoping to a union, never wrong).
    - Journal the full record as `journal.stack_discovery`. `{{STACK_SUMMARY}}`
-     = `stack_discovery.stack_summary`. Phase 2 Screen 5 reconciles it with
+     = `stack_discovery.stack_summary`. Phase 2 Screen 6 reconciles it with
      the human (confirms high-confidence findings, resolves anything
      `unresolved`); Phase 5's applicability filter reads the reconciled
      `capabilities.*` fields directly — see Phase 5 step 1.
@@ -197,15 +197,27 @@ idempotent.
    (fallback: `main` if it exists, else current branch).
 8. Journal `phase: "preflight"` + detection results.
 
-## Phase 2 — Interview (six AskUserQuestion screens)
+## Phase 2 — Interview (role and MCP choices followed by role-relevant screens)
 
-Every answer is pre-filled with the detected/journal default. The `--defaults`
-argument skips all screens and takes every default. `--presets a,b` presets
-screen 1. Record all answers under `journal.answers`.
+Role selection is explicit: never silently select `developer`, `ba-po`, or any
+other role. `--presets a,b` is an explicit non-interactive selection; without
+it, Screen 1 must ask the user to choose one or more roles. Record the ordered
+selection as `answers.presets` (the legacy singular `answers.preset` may be
+read for compatibility, but new installs write only the list). The same
+selected union is the only source of scaffolded assets.
 
-**Screen 1 — Role presets** (multi-select): `developer`, `qa`, `ba-po`,
+The `--defaults` argument accepts detected stack and autonomy defaults only; it
+does not invent a role selection. It is valid only when roles were supplied
+explicitly with `--presets` or already exist in the install journal.
+
+**Screen 1 — Role presets** (required multi-select): `developer`, `qa`, `ba-po`,
 `architect`, `pm-delivery`, `devops`, `portfolio` — one JSON each under
 `PLUGIN/presets/roles/`.
+Display plain-language descriptions before the choices. For example, `ba-po`
+means requirements, customer conversations, stories, and acceptance criteria;
+it installs no code-writing agents. A `ba-po`-only install must not scaffold
+developer instructions or agents. A later run may add roles; union the new
+selection with the existing journal and preserve user-owned files.
 Union rules (per `PLUGIN/presets/README.md`): `templates`, `generated`, and
 `sdlc_skills` are set-unioned (shared IDs are identical strings —
 presets never fork content); `default_hitl` resolves strictest-wins
@@ -213,10 +225,24 @@ presets never fork content); `default_hitl` resolves strictest-wins
 union installs, the pre-filled default style comes from the first preset
 listed, and `strict` HITL forces the `dispatcher` default.
 
-**Screen 2 — HITL dial**: `strict` / `gated-autonomous` / `autonomous` →
+**Screen 2 — MCP access**: choose exactly one: `connect now`, `configure later`,
+or `continue without MCP`. MCP is optional; the latter path supports pasted
+tables, CSV extracts, screenshots, and manually supplied Power BI findings.
+When connecting now, explain the easiest available route: host directory/
+"Add to Cursor", project-local config, or an organization-managed/global
+server. Recommend read-only access, OAuth, and environment variables; never
+write secrets to the repository. Record `answers.mcp_state` as
+`configured`, `deferred`, or `without-mcp`. For configured servers, include
+host-specific verification in the generated MCP onboarding guide:
+`cursor-agent mcp list`, `cursor-agent mcp login <name>`,
+`cursor-agent mcp list-tools <name>` for Cursor; `claude mcp list`,
+`claude mcp get <name>`, and `/mcp` for Claude Code. An unavailable server is
+not a blocker; record `unavailable` and continue without it.
+
+**Screen 3 — HITL dial**: `strict` / `gated-autonomous` / `autonomous` →
 `{{HITL_MODE}}`. Pre-fill from the preset union's strictest `default_hitl`.
 
-**Screen 3 — Autonomy matrix**: may agents run tests? commit? push? create
+**Screen 4 — Autonomy matrix**: may agents run tests? commit? push? create
 tickets? (yes/recommend-only per capability). Each answer is compared to that
 capability's cell in the active `{{HITL_MODE}}` column of the `ai-policy` matrix;
 an answer **stricter** than the mode default (e.g. `recommend-only` where the mode
@@ -225,7 +251,7 @@ loosen. Accepting the default for every capability leaves `{{AUTONOMY_OVERRIDES}
 as the "no overrides" note. Plus `{{MAX_LOC}}`/`{{MAX_FILES}}` (defaults 250/10)
 and `{{ESCALATE_ON}}` (default `security,breaking-change,migration,spend`).
 
-**Screen 4 — Gates to enable** (each independently toggleable; all default
+**Screen 5 — Gates to enable** (each independently toggleable; all default
 on): precommit review gate, subagent output-contract gate, instruction-quality
 spawn gate, write-scope guard, human-gated command block, guarded write paths,
 migration notice (auto-off when `{{MIGRATIONS_DIR}}` is empty), session
@@ -236,9 +262,14 @@ for fresh repos, **`warn-only` for mature repos**. Record as
 `answers.git_sync_mode`. A disabled gate is neither scaffolded nor wired into
 settings (see the Phase 4 settings-merge pruning rule).
 
-**Screen 5 — Stack confirm/correct/fill** (reads `journal.stack_discovery`,
+**Screen 6 — Stack confirm/correct/fill** (reads `journal.stack_discovery`,
 writes back the human-reconciled `capabilities.*` the rest of the install
 relies on — this is where discovery becomes ground truth):
+
+When the selected union has no generated slots (for example `ba-po` only),
+show `Stack-specific coding agents: not selected for these roles` and do not
+ask irrelevant framework, migration, or application-start questions. Continue
+to the adapter and readiness summary.
 
 1. **Show, don't re-ask, what's already confident.** One line per capability
    at `confidence ≥ 80` and not in `unresolved`: `<capability>: <applies —
@@ -253,7 +284,7 @@ relies on — this is where discovery becomes ground truth):
    (capability + ambiguity + candidate values, per `stack-discovery.md`'s
    schema), one `AskUserQuestion` with the named candidates as options plus
    an explicit "none of these — this capability doesn't apply" option. This
-   is the **only** per-capability prompting Screen 5 does — a confident
+   is the **only** per-capability prompting Screen 6 does — a confident
    record (all six curated stacks in `confirm-only` mode, and many `full`-mode
    repos with unambiguous evidence) asks nothing here at all.
 3. **Write back the answers.** For each resolved gap, update
@@ -275,10 +306,13 @@ relies on — this is where discovery becomes ground truth):
    extra `{{SECRET_DENY_PATTERNS}}` beyond the baked-in `.env*` / `.auth/**` /
    `*token*.env`, and `{{STAGING_ENV_NAME}}`.
 
-**Screen 6 — Adapters**: `{{TICKET_ADAPTER}}` (ADO / Linear MCP / Jira /
+**Screen 7 — Adapters**: `{{TICKET_ADAPTER}}` (ADO / Linear MCP / Jira /
 GitHub / GitLab / none), `{{TICKET_PREFIX}}`, `{{MR_ADAPTER}}` (`gh` / `glab`
 / MCP / none — pre-fill `gh` when `gh auth status` succeeds and the remote is
 GitHub).
+Derive `{{TICKET_ADAPTER_STATUS}}` as `configured` only when
+`{{TICKET_ADAPTER}}` is not `none`; otherwise render `not configured` and make
+the local-work-item fallback visible.
 
 Derived values (no screen): `{{PROJECT_NAME}}` = repo dir name (confirm on
 screen 5), `{{STACK_SUMMARY}}` = `journal.stack_discovery.stack_summary`,
@@ -468,7 +502,7 @@ Ordered steps:
    never a blank registry (`code-quality.md` treats this file as the canonical gate
    catalogue and forbids relying on an empty one).
    **`ai-policy.md` `{{AUTONOMY_OVERRIDES}}`**: substitute with one bullet per
-   Screen-3 capability the user set **stricter** than its active-mode cell. Only a
+   Screen-4 capability the user set **stricter** than its active-mode cell. Only a
    `recommend-only` answer can tighten (→ `gated`); a `yes` answer is never stricter
    than a cell that already permits the action, so it yields no bullet. Bullet shape:
    `- **<capability>** — gated (tightened from the active mode's `<default level>`).
@@ -544,7 +578,7 @@ only). Otherwise:
    now reads `journal.stack_discovery.capabilities` directly, not the matched
    profile's prose list — this is what makes a non-curated stack's `full`-mode
    discovery produce real writer agents instead of nothing). By the time this
-   step runs, Phase 2 Screen 5 has already resolved every entry that was in
+   step runs, Phase 2 Screen 6 has already resolved every entry that was in
    `unresolved` to a definite answer — including "none of these, it doesn't
    apply" as a valid, definite answer — so every capability's `applies`/
    paradigm here is either a high-confidence discovery finding or a direct
@@ -735,5 +769,9 @@ first install (Phase 3 notice).
 Set `phase: "done"`, stamp `agentic_os_version`, and report: presets
 installed, HITL mode, files written (managed/user/generated counts), relaxed
 generated agents (if any), pending-restart plugins, and the doctor verdict.
+Also report MCP status (`configured`, `deferred`, `without-mcp`, or
+`unavailable`), the selected-role capabilities, and three first-task prompts
+appropriate to the role set. For `ba-po`, include examples involving Excel,
+Power BI, customer requirements, and team clarification questions.
 Remind the user: review the diff, then commit it themselves; run
 `bash scripts/install-git-hooks.sh` once per fresh clone.

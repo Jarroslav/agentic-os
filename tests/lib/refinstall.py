@@ -11,7 +11,9 @@ Phase 5 (generation) and Phase 3 side effects outside the target.
 If a step here is impossible to derive from the SKILL.md spec, that is a harness
 finding — this file is the executable proof that the spec is followable.
 
-Usage: refinstall.py <PLUGIN_ROOT> <TARGET_REPO> [--reinstall]
+Usage: refinstall.py <PLUGIN_ROOT> <TARGET_REPO> [--presets ba-po,developer]
+                         [--mcp-state without-mcp|configured|unavailable]
+                         [--reinstall]
 """
 from __future__ import annotations
 
@@ -30,21 +32,43 @@ from render_rule import esc
 
 PLUGIN = Path(sys.argv[1]).resolve()
 TARGET = Path(sys.argv[2]).resolve()
+
+
+def option(name: str, default: str | None = None) -> str | None:
+    for i, arg in enumerate(sys.argv[3:], start=3):
+        if arg == name and i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+        if arg.startswith(name + "="):
+            return arg.split("=", 1)[1]
+    return default
+
+
+PRESET_NAMES = [p for p in (option("--presets", "developer") or "").split(",") if p]
+if not PRESET_NAMES:
+    raise SystemExit("refinstall: --presets requires at least one role")
+available_presets = {
+    p.stem: json.loads(p.read_text())
+    for p in (PLUGIN / "presets/roles").glob("*.json")
+}
+unknown_presets = sorted(set(PRESET_NAMES) - set(available_presets))
+if unknown_presets:
+    raise SystemExit("refinstall: unknown preset(s): " + ", ".join(unknown_presets))
+MCP_STATE = option("--mcp-state", "without-mcp")
+if MCP_STATE not in {"without-mcp", "configured", "unavailable"}:
+    raise SystemExit("refinstall: --mcp-state must be without-mcp, configured, or unavailable")
 REINSTALL = "--reinstall" in sys.argv[3:]
 TPL = PLUGIN / "templates"
 
 VERSION = json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text())["version"]
 
-# The developer preset's template union. Which IDs are *installed* is read from
-# the preset rather than restated here: a hardcoded copy silently diverges the
-# moment a preset gains or loses an ID, which is exactly how
-# `hooks/migration-notice` stayed orphaned (registered in VARIABLES.md and the
-# SKILL.md Phase 4 map, listed in no preset) while this executor installed it
-# anyway and the matrix stayed green. The (src, dest, id) rows below still
-# restate the id -> filename mapping; only membership is preset-driven.
-PRESET_TEMPLATE_IDS = set(
-    json.loads((PLUGIN / "presets/roles/developer.json").read_text())["templates"]
-)
+# The selected role union is the only install source of truth. The mapping below
+# only maps an already-selected ID to its destination; it never selects assets.
+PRESET_TEMPLATE_IDS = {
+    tid for name in PRESET_NAMES for tid in available_presets[name]["templates"]
+}
+PRESET_GENERATED_IDS = {
+    gid for name in PRESET_NAMES for gid in available_presets[name]["generated"]
+}
 
 # SKILL.md Phase 4 step 1, first installer-side conditional: these two are
 # scaffolded whenever `hooks/settings-fragment` is in the union EVEN IF no preset
@@ -80,14 +104,15 @@ SCALARS = {
     "MR_ADAPTER": "gh",
     "OUTPUT_CONTRACT_SECTIONS": "Summary,Why,Blocking,Non-blocking,Escalate to human",
     "PROJECT_NAME": TARGET.name,
-    "ROLE_PRESETS_ACTIVE": "developer",
+    "ROLE_PRESETS_ACTIVE": ",".join(PRESET_NAMES),
     "SCORECARD_PATH": "docs/audits/instruction-scorecard.json",
     "SCORE_THRESHOLD": "95",
     "STACK_SUMMARY": "Next.js + Supabase web app.",
     "STAGING_ENV_NAME": "staging",
     "TEST_FRAMEWORK": "playwright",
-    "TICKET_ADAPTER": "GitHub",
-    "TICKET_PREFIX": "GH",
+    "TICKET_ADAPTER": "none" if "ba-po" in PRESET_NAMES else "GitHub",
+    "TICKET_ADAPTER_STATUS": "not configured" if "ba-po" in PRESET_NAMES else "configured",
+    "TICKET_PREFIX": "" if "ba-po" in PRESET_NAMES else "GH",
 }
 
 # None of the scalar answers above contains a quote, backslash, or newline, so for
@@ -173,7 +198,7 @@ def render(text: str, is_json: bool, escape: bool) -> str:
     # what it installs. Only in markdown templates, so never escaped.
     text = text.replace("{{GATE_ENTRIES}}", gate_entries())
     text = text.replace("{{QA_GUIDE_ROWS}}", QA_GUIDE_ROWS)
-    # --defaults accepts each capability's mode default, so no Screen-3 tightening.
+    # --defaults accepts each capability's mode default, so no autonomy tightening.
     text = text.replace("{{AUTONOMY_OVERRIDES}}", AUTONOMY_OVERRIDES)
     for var in NEWLINE_VARS:
         text = text.replace("{{%s}}" % var, q("\n".join(LISTS[var])))
@@ -192,7 +217,8 @@ def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-JOURNAL = {"agentic_os_version": VERSION, "answers": {"preset": "developer", "defaults": True},
+JOURNAL = {"agentic_os_version": VERSION, "answers": {"presets": PRESET_NAMES,
+           "mcp_state": MCP_STATE, "defaults": True},
            "phase": "scaffold", "files": {}, "follow_ups": []}
 
 
@@ -247,6 +273,7 @@ HOOKS = [
     ("migration_notice.py.tmpl", "migration_notice.py", "hooks/migration-notice"),
     ("lint_on_save.py.tmpl", "lint_on_save.py", "hooks/lint-on-save"),
 ]
+AGENTIC_HOOK_NAMES = {dest for _, dest, _ in HOOKS}
 settings_in_union = "hooks/settings-fragment" in PRESET_TEMPLATE_IDS
 for src, dest, tid in HOOKS:
     forced = tid in ALWAYS_WITH_SETTINGS and settings_in_union
@@ -281,14 +308,61 @@ def deep_merge(base, frag):
 
 
 deep_merge(settings, frag)
+
+
+def prune_missing_hook_commands(node):
+    """Drop hook entries whose scripts were not selected by the role union."""
+    if isinstance(node, dict):
+        if "matcher" in node and isinstance(node.get("hooks"), list):
+            node["hooks"] = [
+                hook for hook in node["hooks"]
+                if not (".claude/hooks/" in hook.get("command", "")
+                        and hook["command"].split(".claude/hooks/", 1)[1].split()[0]
+                        in AGENTIC_HOOK_NAMES
+                        and not (TARGET / (".claude/" + hook["command"].split(
+                            ".claude/", 1)[1].split()[0])).exists())
+            ]
+            return
+        for key in list(node):
+            if key == "hooks" and isinstance(node[key], list):
+                if node[key] and all(isinstance(entry, dict) and "matcher" in entry
+                                     for entry in node[key]):
+                    kept_groups = []
+                    for group in node[key]:
+                        commands = group.get("hooks", [])
+                        group["hooks"] = [
+                            hook for hook in commands
+                            if not (".claude/hooks/" in hook.get("command", "")
+                                    and hook["command"].split(".claude/hooks/", 1)[1].split()[0]
+                                    in AGENTIC_HOOK_NAMES
+                                    and not (TARGET / (".claude/" + hook["command"].split(
+                                        ".claude/", 1)[1].split()[0])).exists())
+                        ]
+                        if group["hooks"]:
+                            kept_groups.append(group)
+                    node[key] = kept_groups
+                    for group in node[key]:
+                        prune_missing_hook_commands(group)
+                else:
+                    for item in node[key]:
+                        prune_missing_hook_commands(item)
+            else:
+                prune_missing_hook_commands(node[key])
+    elif isinstance(node, list):
+        for item in node:
+            prune_missing_hook_commands(item)
+
+
+prune_missing_hook_commands(settings)
 settings_path.parent.mkdir(parents=True, exist_ok=True)
 settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 JOURNAL["files"][".claude/settings.json"] = {
     "sha256": sha(settings_path), "template": "hooks/settings-fragment", "owner": "managed"}
 
 # --- Phase 4 step 3: git hooks (chaining installer) ---------------------------
-copy_tpl("githooks/pre-commit", ".githooks/pre-commit", "githooks/pre-commit")
-copy_tpl("scripts/install-git-hooks.sh", "scripts/install-git-hooks.sh", "scripts/install-git-hooks")
+if "githooks/pre-commit" in PRESET_TEMPLATE_IDS:
+    copy_tpl("githooks/pre-commit", ".githooks/pre-commit", "githooks/pre-commit")
+    copy_tpl("scripts/install-git-hooks.sh", "scripts/install-git-hooks.sh", "scripts/install-git-hooks")
 
 # Local hook/session state must never be committed to the host repo: the review
 # stamp would make a fresh clone believe a diff was already approved, and the
@@ -323,12 +397,51 @@ copy_tpl("governance/PATTERNS.md.tmpl", "PATTERNS.md", "governance/patterns")
 copy_tpl("governance/agent-registry.md.tmpl", ".agentic/guides/agent-registry.md",
          "governance/agent-registry")
 
+# The registry template is shared, but only selected role-owned rows may remain.
+# This is reconciliation within the existing canonical matrix, not a second
+# registry. Preserve the generated-agent marker and explanatory prose.
+registry_path = TARGET / ".agentic/guides/agent-registry.md"
+if registry_path.exists():
+    registry_lines = []
+    for line in registry_path.read_text().splitlines(True):
+        # Only remove orchestration matrix rows. Prose may mention an
+        # unselected asset while still describing the shared architecture.
+        if not line.lstrip().startswith("|"):
+            registry_lines.append(line)
+            continue
+        assets = re.findall(r"`([^`]+)`", line)
+        missing_selected_asset = False
+        for asset in assets:
+            if asset.startswith(".agentic/agents/"):
+                name = asset.rsplit("/", 1)[-1].removesuffix(".md")
+                missing_selected_asset |= "agents/" + name not in PRESET_TEMPLATE_IDS
+            elif asset.startswith(".claude/commands/"):
+                name = asset.rsplit("/", 1)[-1].removesuffix(".md")
+                missing_selected_asset |= "commands/" + name not in PRESET_TEMPLATE_IDS
+        if missing_selected_asset:
+            continue
+        registry_lines.append(line)
+    registry_path.write_text("".join(registry_lines))
+    JOURNAL["files"][".agentic/guides/agent-registry.md"]["sha256"] = sha(registry_path)
+
 # --- Phase 4 step 5: policies, guides, sdlc -----------------------------------
 for name in ("ai-policy", "escalation-policy", "safety-policy"):
     copy_tpl("policy/%s.md.tmpl" % name, ".agentic/guides/policy/%s.md" % name, "policy/" + name)
-GUIDES = ["git-workflow", "code-quality", "quality-gates", "instruction-quality-rubric",
-          "working-with-agents", "qa-strategy-stub"]
-for g in GUIDES:
+GUIDE_IDS = {
+    "git-workflow": "guides/git-workflow",
+    "ba-po-operating-model": "guides/ba-po-operating-model",
+    "code-quality": "guides/code-quality",
+    "quality-gates": "guides/quality-gates",
+    "instruction-quality-rubric": "guides/instruction-quality-rubric",
+    "working-with-agents": "guides/working-with-agents",
+    "qa-strategy-stub": "guides/qa-strategy-stub",
+    "test-design-pattern": "guides/test-design-pattern",
+    "flaky-protocol": "guides/flaky-protocol",
+    "mcp-onboarding": "guides/mcp-onboarding",
+}
+for g, tid in GUIDE_IDS.items():
+    if tid not in PRESET_TEMPLATE_IDS:
+        continue
     dest = ".agentic/guides/standards/%s.md" % g
     # Prefer a `.tmpl` source when one exists (quality-gates renders GATE_ENTRIES);
     # the rest are copied verbatim. Dest is always the bare `.md`.
@@ -343,11 +456,37 @@ for g in GUIDES:
 copy_tpl("sdlc/config.json.tmpl", ".agentic/agentic-sdlc/config.json", "sdlc/config")
 copy_tpl("sdlc/project.md.tmpl", ".agentic/guides/project.md", "sdlc/project")
 
+# MCP setup is a guide in the same canonical standards directory, not a second
+# onboarding layer. Keep its state visible in the generated project context so
+# the readiness summary can distinguish connected, deferred, and unavailable.
+project_path = TARGET / ".agentic/guides/project.md"
+if project_path.exists():
+    project_body = project_path.read_text()
+    project_body += "\n\n## MCP readiness\n\n"
+    project_body += {
+        "without-mcp": "MCP status: without MCP. Continue with pasted tables, CSV extracts, screenshots, or Power BI findings.",
+        "configured": "MCP status: configured. Verify with `cursor-agent mcp list` or `claude mcp list` before using connected business data.",
+        "unavailable": "MCP status: unavailable. Continue without MCP and retry setup later; do not block requirements work.",
+    }[MCP_STATE]
+    project_body += ("\n\nFirst Portfolio tasks:\n\n"
+                     "- Turn this Power BI insight into a customer-ready requirement.\n"
+                     "- Convert this Excel analysis into acceptance criteria.\n"
+                     "- Prepare clarification questions for the customer and delivery team.\n")
+    project_path.write_text(project_body + "\n")
+    JOURNAL["files"][".agentic/guides/project.md"]["sha256"] = sha(project_path)
+
 # --- Phase 4 step 7: core agents + pointers -----------------------------------
-CORE_AGENTS = [("blind-code-reviewer", False), ("security-reviewer", True),
-               ("instruction-auditor", True)]  # (name, readonly)
+CORE_AGENTS = [("dispatcher", True), ("blind-code-reviewer", False),
+               ("security-reviewer", True), ("instruction-auditor", True),
+               ("pr-pipeline-gate", True), ("test-case-generator", False),
+               ("test-automation-author", False), ("test-case-syncer", False),
+               ("test-failure-triage", True), ("work-item-creator", False)]
 for name, ro in CORE_AGENTS:
-    copy_tpl("agents/core/%s.md.tmpl" % name, ".agentic/agents/%s.md" % name, "agents/" + name)
+    if "agents/" + name not in PRESET_TEMPLATE_IDS:
+        continue
+    subdir = "qa" if name in {"test-automation-author", "test-case-generator",
+                              "test-case-syncer", "test-failure-triage", "work-item-creator"} else "core"
+    copy_tpl("agents/%s/%s.md.tmpl" % (subdir, name), ".agentic/agents/%s.md" % name, "agents/" + name)
     tools = "Read, Grep, Glob" if ro else "Read, Grep, Glob, Edit, Write, Bash"
     ptr = ("---\nname: %s\ndescription: Pointer to the canonical %s contract.\n"
            "tools: %s\nmodel: inherit\n---\n\nRead `.agentic/agents/%s.md` — the canonical "
@@ -359,8 +498,10 @@ for name, ro in CORE_AGENTS:
     write(".claude/commands/%s.md" % name, cmd, "derived")
 
 # commands (canonical in .claude/commands)
-copy_tpl("commands/core/pipeline-orchestrator.md.tmpl", ".claude/commands/pipeline-orchestrator.md",
-         "commands/pipeline-orchestrator")
+for command in ("pipeline-orchestrator", "dispatch"):
+    tid = "commands/" + command
+    if tid in PRESET_TEMPLATE_IDS:
+        copy_tpl("commands/core/%s.md.tmpl" % command, ".claude/commands/%s.md" % command, tid)
 
 # --- Phase 4 step 8: seed instruction scorecard -------------------------------
 scorecard = {"schema": 1, "threshold": 95, "files": {}}

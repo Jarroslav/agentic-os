@@ -31,7 +31,7 @@ terms (HITL, gate, preset…) are one-liners in the [Glossary](#glossary).
 
 | Your goal | Install from marketplace | First command in *your* project |
 |-----------|--------------------------|----------------------------------|
-| **Governed agents in my repo** — scoped writes, blind pre-commit review, role presets, stack agents | **agentic-os** + **agentic-sdlc** + [**superpowers**](https://github.com/anthropics/claude-plugins-official) (≥ **6.1.0** — enforced by `/agentic-init`; see `plugins/agentic-os/manifest/dependencies.json`) | `/agentic-init --defaults` → `/agentic-doctor` |
+| **Governed agents in my repo** — scoped writes, blind pre-commit review, role presets, stack agents | **agentic-os** + **agentic-sdlc** + [**superpowers**](https://github.com/anthropics/claude-plugins-official) (≥ **6.1.0** — enforced by `/agentic-init`; see `plugins/agentic-os/manifest/dependencies.json`) | Choose roles: `/agentic-init --presets ba-po` → `/agentic-doctor` |
 | **SDLC pipeline on top** — spec → plan → TDD → QA (`/sdlc-start`, `/sdlc-autonomous`, …) | Same three plugins (pipeline skills ship in **agentic-sdlc**) | After init: `/sdlc-start <task>` or run **sdlc-doctor** |
 | **QE AI blueprints** — scaffold a QE agent framework from a catalog, or set up evals for skills/agents | **agentic-qe** (standalone — no `/agentic-init` needed) | Ask e.g. *"scaffold the bug-reporting blueprint for Claude Code"* or *"set up evals for my skills"* |
 
@@ -39,7 +39,7 @@ terms (HITL, gate, preset…) are one-liners in the [Glossary](#glossary).
 
 1. [Install the plugin(s)](#install) for your editor (Claude Code or Cursor).
 2. Open the **git repo you want to improve** (not this marketplace repo).
-3. Run `/agentic-init --defaults` (or `/agentic-init` for the full interview).
+3. Run `/agentic-init --presets <role[,role...]>` (or `/agentic-init` for the full role-selection interview).
 4. Run `/agentic-doctor` — expect `passed: true` in `.agentic/agentic-os/doctor.json`.
 5. `git status` — review scaffolded files; nothing is committed for you.
 6. If you use the SDLC pipeline, run **sdlc-doctor** — expect `passed: true` in
@@ -291,8 +291,8 @@ Reload Cursor. Plugins registered in Claude appear as **Imported** in Cursor.
 Open the **target repo** (your app, not the `agentic-os` clone), then:
 
 ```
-/agentic-init            # full interview (six screens, pre-filled from stack discovery)
-/agentic-init --defaults # accept detected defaults, no prompts
+/agentic-init --presets ba-po            # explicit role selection + guided interview
+/agentic-init --presets ba-po --defaults # explicit role, accept detected defaults
 ```
 
 The interview **never commits** — it scaffolds files, shows a settings diff
@@ -320,6 +320,45 @@ superpowers, `node`, and `git`.
 | Init or sdlc doctor fails on superpowers | Install superpowers ≥ **6.1.0** ([Install superpowers](#install-superpowers)), then reload. |
 | sdlc-doctor fails on node | Install **Node.js** (`node --version` on PATH). |
 
+### Portfolio and MCP (Cursor or Claude Code)
+
+Role selection is explicit. Choose `ba-po` when your work is requirements,
+customer, and delivery focused; it installs the dispatcher and requirements
+workflow without developer/code-writing agents. Add another role later by
+re-running `/agentic-init --presets ba-po,developer` (or the role combination
+you need); the installer unions the existing architecture and preserves
+user-owned files.
+
+MCP is optional. During setup choose one of:
+
+- **Connect now** — use an approved host directory/“Add to Cursor” connector
+  or an organization-provided server.
+- **Configure later** — finish setup and return when access is available.
+- **Continue without MCP** — paste a table, attach a CSV, share a screenshot,
+  or paste a Power BI finding. Portfolio workflows remain usable.
+
+For Cursor, project MCP configuration is `.cursor/mcp.json` and global
+configuration is `~/.cursor/mcp.json`. Verify with
+`cursor-agent mcp list`, authenticate with `cursor-agent mcp login <name>`, and
+inspect capabilities with `cursor-agent mcp list-tools <name>`.
+
+For Claude Code, shared project configuration is `.mcp.json`. Use
+`claude mcp add <name> --scope project ...` or `claude mcp add-json`, verify
+with `claude mcp list` / `claude mcp get <name>`, and use `/mcp` for OAuth and
+approval. Keep secrets in OAuth or environment variables, never in committed
+JSON.
+
+Glossary: a **repo** is the project folder Git tracks; a **plugin** adds
+skills; a **marketplace** is where plugins are installed; **MCP** connects
+approved external tools and data; **OAuth** is browser-based sign-in; and
+**project scope** means configuration shared by that project.
+
+First Portfolio prompts:
+
+- “Turn this Power BI insight into a customer-ready requirement.”
+- “Convert this Excel analysis into acceptance criteria.”
+- “Prepare clarification questions for the customer and delivery team.”
+
 Cursor reads `.cursor-plugin/marketplace.json` from the repo root. Use a Git
 clone URL ending in `.git`, not the GitHub browser URL.
 
@@ -337,7 +376,7 @@ Open **Claude Code** or **Cursor** in that directory (after the
 [marketplace/plugin install](#install) steps and a session reload), then run:
 
 ```
-/agentic-init --defaults
+/agentic-init --presets ba-po
 ```
 
 What happens, in order:
@@ -347,9 +386,11 @@ What happens, in order:
    `nextjs-supabase` profile, then a subagent confirms that match against the
    real repo (a non-matching repo gets a full from-scratch inspection
    instead, not a dead-end fallback).
-2. **Interview** — with `--defaults`, all six screens (role preset, HITL dial,
-   autonomy matrix, gates, stack confirm, ticket/MR adapter) are accepted at
-   their detected defaults instead of prompted.
+2. **Interview** — role selection is explicit. The flow then asks for MCP
+   access (`connect now`, `configure later`, or `continue without MCP`) before
+   role-relevant autonomy, gates, stack, and adapter questions. `--defaults`
+   accepts detected defaults only after an explicit `--presets` selection (or
+   an existing journal).
 3. **Dependency check** — verifies every non-optional dependency
    (`agentic-sdlc`, `superpowers`) is registered; prints a pending-restart
    notice for any that aren't.
