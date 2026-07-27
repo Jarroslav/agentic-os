@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-27T07:25:19Z",
+ "attested_at": "2026-07-27T07:46:37Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -143,7 +143,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "f55ebf9c2ea61304c992efe4333928a7336a9818eea095b2e4608ad1dcc11faa",
+   "sha256": "553b1172a99b52cc13c9817de0c4d140a55a61a75d35d39872ec7397821c7657",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -383,25 +383,25 @@
    "max_run": 0
   },
   "plugins/agentic-os/.claude-plugin/plugin.json": {
-   "sha256": "fc1b2c05cf383d4f091f843da863f57cc60f224dfc22e7af1c68eb35708b3606",
+   "sha256": "d2117d16959a755128a7ae7d2cf5f60d1f83778c3c1dd2e6faa794eb5292ea3f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.codex-plugin/plugin.json": {
-   "sha256": "f8d7a87149ca1d5753b13049c006d85b8110457b57ae8fee914d214d2b605694",
+   "sha256": "02addde1fbcd3321279a73769af5d9b5793f0c2987a50a6a72660bd64e7128ee",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.cursor-plugin/plugin.json": {
-   "sha256": "cb29489f59c253b53b9fe1dd64265ff49b9a67f01ba10ab6197052a2167d6c90",
+   "sha256": "f880d6b87c38b4b989e44278f83466d92b3910f161c80505424362115cabe125",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "b3638631ec942ddb0a134c1ba968bdf2865686e9fd42aafb0d33a884b7aec8c6",
+   "sha256": "c045a091cb2fa3d973e708975bb9b8d0703a81ac6db7d915cd7b8d5bd5325b62",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

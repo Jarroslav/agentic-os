@@ -5,7 +5,11 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
-## [Unreleased]
+## [0.3.0] — BA/PO onboarding and MCP access
+
+Makes `ba-po` a first-class role rather than a preset that installed no guidance
+of its own, and gives the business roles a supported path to data that does not
+assume a working MCP connection.
 
 ### Added
 
@@ -19,6 +23,36 @@ Semantic Versioning. The plugin version lives in
   verification commands in the generated MCP onboarding guide. This makes the
   installer seven screens: the HITL dial, autonomy matrix, gates, stack confirm
   and adapter screens shift from 2–6 to 3–7.
+- **`guides/mcp-onboarding`** — the shared, host-specific MCP guidance for the
+  business roles, generated to `.agentic/guides/standards/mcp-onboarding.md`.
+  Installed only when a selected preset declares it, so a developer-only install
+  is unaffected.
+- **`guides/ba-po-operating-model`** — the role-specific BA/PO entrypoint. It
+  delegates to the existing product-owner, requirements-intake and adapter
+  contracts rather than defining a second orchestration system beside them.
+- **`{{TICKET_ADAPTER_STATUS}}`**, derived from `{{TICKET_ADAPTER}}`, so a
+  generated guide can state the adapter's real state instead of asserting one.
+- An eval set for the `ba-po` preset (`presets/evals/ba-po.json`).
+
+### Changed
+
+- The `ba-po` preset installs the two new guides, so a `ba-po`-only install now
+  scaffolds its own operating model instead of leaving the role undocumented.
+- **Role selection is explicit.** The installer never silently selects
+  `developer`, `ba-po`, or any other role: Screen 1 asks unless `--presets` was
+  passed. `--defaults` accepts detected stack and autonomy defaults only — it
+  does not invent a role selection, and is valid only alongside an explicit
+  `--presets` or an existing journal.
+- Role changes are documented as additive for this lifecycle. Removing a role is
+  not automatic, because its files may have been edited by the user; removal
+  needs an explicit future migration flow.
+
+### Fixed
+
+- The generated `sdlc/project.md` hard-coded **Status: configured** for the
+  ticket adapter. An install that selected no adapter therefore claimed one was
+  configured and hid the local-work-item fallback; it now renders the derived
+  status and makes that fallback visible.
 
 ## [0.2.0] — mature fleet adoption and native Codex packaging
 
