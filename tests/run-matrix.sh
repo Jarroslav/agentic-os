@@ -199,6 +199,19 @@ else
   bad "ba-po guide isolated from developer-only install"
 fi
 
+echo "== T3d devops incident triage =="
+OPS_WORK="$WORK/devops-only"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$OPS_WORK" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$OPS_WORK" \
+  --presets devops --mcp-state without-mcp >/dev/null
+python3 "$ROOT/tests/lib/check-incident-triage.py" "$OPS_WORK" \
+  "$PLUGIN/presets/evals/devops.json" && ok "devops triage pair + eval scenarios" || bad "devops triage pair + eval scenarios"
+if test ! -e "$DEV_ONLY/.agentic/guides/standards/incident-triage.md"; then
+  ok "incident-triage guide isolated from developer-only install"
+else
+  bad "incident-triage guide isolated from developer-only install"
+fi
+
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.
 # (The fixture never commits the scaffold, so `git status` is the wrong probe —

@@ -1,6 +1,6 @@
 {
   "name": "devops",
-  "description": "Delivery infrastructure: git hooks, quality gates, PR pipeline gate, MR monitoring/CI-fixing glue — dispatcher-routed, no code-writing agents.",
+  "description": "Delivery infrastructure: git hooks, quality gates, PR pipeline gate, MR monitoring/CI-fixing glue, read-only incident triage — dispatcher-routed, no code-writing agents.",
   "templates": [
     "hooks/subagent-gate",
     "hooks/session-bootstrap",
@@ -26,9 +26,11 @@
     "guides/quality-gates",
     "guides/working-with-agents",
     "guides/evidence-integrity",
+    "guides/incident-triage",
     "agents/dispatcher",
     "agents/pr-pipeline-gate",
     "agents/security-reviewer",
+    "agents/incident-triage",
     "commands/dispatch",
     "sdlc/config",
     "sdlc/project"

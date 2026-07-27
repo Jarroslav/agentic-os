@@ -188,6 +188,15 @@ QA_GUIDE_ROWS_TEXT = (
 QA_GUIDE_ROWS = QA_GUIDE_ROWS_TEXT if {
     "guides/test-design-pattern", "guides/flaky-protocol"} <= PRESET_TEMPLATE_IDS else ""
 
+# The devops-only incident-triage row, same emitted-iff-installed contract as
+# the QA rows above.
+OPS_GUIDE_ROWS_TEXT = (
+    "| Incident triage (read-only diagnosis, three-hypothesis rule, runtime bounds) | "
+    "[`.agentic/guides/standards/incident-triage.md`]"
+    "(.agentic/guides/standards/incident-triage.md) |\n"
+)
+OPS_GUIDE_ROWS = OPS_GUIDE_ROWS_TEXT if "guides/incident-triage" in PRESET_TEMPLATE_IDS else ""
+
 # Screen 3's per-capability autonomy answers. `--defaults` accepts every mode
 # default, so nothing is tightened — the block is the "no overrides" note. A real
 # interview emits one bullet per capability the user set stricter than its mode row.
@@ -202,6 +211,7 @@ def render(text: str, is_json: bool, escape: bool) -> str:
     # what it installs. Only in markdown templates, so never escaped.
     text = text.replace("{{GATE_ENTRIES}}", gate_entries())
     text = text.replace("{{QA_GUIDE_ROWS}}", QA_GUIDE_ROWS)
+    text = text.replace("{{OPS_GUIDE_ROWS}}", OPS_GUIDE_ROWS)
     # --defaults accepts each capability's mode default, so no autonomy tightening.
     text = text.replace("{{AUTONOMY_OVERRIDES}}", AUTONOMY_OVERRIDES)
     for var in NEWLINE_VARS:
@@ -439,6 +449,7 @@ GUIDE_IDS = {
     "instruction-quality-rubric": "guides/instruction-quality-rubric",
     "working-with-agents": "guides/working-with-agents",
     "evidence-integrity": "guides/evidence-integrity",
+    "incident-triage": "guides/incident-triage",
     "qa-strategy-stub": "guides/qa-strategy-stub",
     "test-design-pattern": "guides/test-design-pattern",
     "flaky-protocol": "guides/flaky-protocol",
@@ -483,7 +494,8 @@ if project_path.exists():
 # --- Phase 4 step 7: core agents + pointers -----------------------------------
 CORE_AGENTS = [("dispatcher", True), ("blind-code-reviewer", False),
                ("security-reviewer", True), ("instruction-auditor", True),
-               ("pr-pipeline-gate", True), ("test-case-generator", False),
+               ("pr-pipeline-gate", True), ("incident-triage", True),
+               ("test-case-generator", False),
                ("test-automation-author", False), ("test-case-syncer", False),
                ("test-failure-triage", True), ("work-item-creator", False)]
 for name, ro in CORE_AGENTS:

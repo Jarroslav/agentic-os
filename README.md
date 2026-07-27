@@ -442,7 +442,7 @@ Presets are **additive** — install several and their template sets union
 | **ba-po** | story & requirements intake via agentic-sdlc, ticket adapter — no code-writing agents | gated-autonomous / dispatcher |
 | **architect** | full governance scaffolding (AGENTS/PATTERNS/registry), instruction-auditor + scorecard spawn gate, generated architecture guides | gated-autonomous / pipeline |
 | **pm-delivery** | ticket/MR adapters, PR pipeline gate, MR-monitoring glue, status conventions | gated-autonomous / dispatcher |
-| **devops** | git hooks + quality gates, PR pipeline gate, MR-monitoring/CI-fixing glue, security reviewer — no code-writing agents | gated-autonomous / dispatcher |
+| **devops** | git hooks + quality gates, PR pipeline gate, MR-monitoring/CI-fixing glue, security reviewer, read-only incident triage (3 ranked hypotheses, human-executed fixes) — no code-writing agents | gated-autonomous / dispatcher |
 | **portfolio** | run status, repo/knowledge health audits, durable cross-session memory, requirements intake — read/report-only, no git layer | gated-autonomous / dispatcher |
 
 ## The HITL dial

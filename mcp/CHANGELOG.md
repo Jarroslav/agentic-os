@@ -8,6 +8,13 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.4]
+
+### Changed
+- **Served content refreshed** for `agentic-os` 0.5.0: the devops incident-triage
+  pair (`agents/incident-triage` + `guides/incident-triage`), the devops preset
+  eval fixture, and the `guides/evidence-integrity` registration fix.
+
 ## [0.2.3]
 
 ### Changed

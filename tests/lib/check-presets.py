@@ -39,7 +39,7 @@ HOOK_FILE = {
     "sdlc/project": "sdlc/project.md.tmpl",
 }
 CORE_AGENTS = {"dispatcher", "blind-code-reviewer", "security-reviewer",
-               "instruction-auditor", "pr-pipeline-gate"}
+               "instruction-auditor", "pr-pipeline-gate", "incident-triage"}
 
 
 def resolve(tid: str) -> Path | None:
@@ -112,5 +112,18 @@ if qa["default_orchestration"] != "dispatcher":
 for need in ("agents/test-failure-triage", "agents/work-item-creator"):
     if need not in qa["templates"]:
         print("  qa missing", need); fail = 1
+
+# (5) devops preset invariants — incident triage ships as a pair (agent + guide),
+# and the agent contract stays read-only with the no-padding literal intact.
+devops = presets["devops"]
+for need in ("agents/incident-triage", "guides/incident-triage"):
+    if need not in devops["templates"]:
+        print("  devops missing", need); fail = 1
+triage_tpl = TPL / "agents/core/incident-triage.md.tmpl"
+triage_text = triage_tpl.read_text() if triage_tpl.is_file() else ""
+if "readonly: true" not in triage_text:
+    print("  incident-triage template not readonly"); fail = 1
+if "speculative — no direct evidence" not in triage_text:
+    print("  incident-triage template lost the no-padding literal"); fail = 1
 
 sys.exit(fail)
