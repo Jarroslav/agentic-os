@@ -5,6 +5,12 @@ name: ci
 on:
   pull_request:
     branches: [main]
+    # `labeled`/`unlabeled` beyond the defaults, because the changelog gate can
+    # be waived with the `no-changelog` label. A label change raises no event by
+    # default, and re-running a finished run replays the original payload — so
+    # without these, applying the label leaves the PR red with no way to clear
+    # it short of an empty commit.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches: [main]
 
