@@ -312,7 +312,9 @@ GitHub / GitLab / none), `{{TICKET_PREFIX}}`, `{{MR_ADAPTER}}` (`gh` / `glab`
 GitHub).
 Derive `{{TICKET_ADAPTER_STATUS}}` as `configured` only when
 `{{TICKET_ADAPTER}}` is not `none`; otherwise render `not configured` and make
-the local-work-item fallback visible.
+the local-work-item fallback visible. Derive `{{MR_ADAPTER_STATUS}}` the same
+way from `{{MR_ADAPTER}}`: a repo with no `gh`/`glab`/MCP review path must not
+be handed a guide asserting one is configured.
 
 Derived values (no screen): `{{PROJECT_NAME}}` = repo dir name (confirm on
 screen 5), `{{STACK_SUMMARY}}` = `journal.stack_discovery.stack_summary`,

@@ -53,6 +53,14 @@ assume a working MCP connection.
   ticket adapter. An install that selected no adapter therefore claimed one was
   configured and hid the local-work-item fallback; it now renders the derived
   status and makes that fallback visible.
+- The same template hard-coded **Status: configured** for the MR adapter, which
+  is equally optional (`gh` / `glab` / MCP / **none**), so a repo with no review
+  path was handed a guide asserting one existed. The generated value could never
+  be `not configured`, even though that is half of the documented schema — which
+  left the consumers' fallbacks unreachable: `qa-e2e-generator` would attempt
+  MR-diff steps instead of dropping to commit search, and `mr-creator`'s
+  infer-from-remote recovery never triggered. Added `{{MR_ADAPTER_STATUS}}`,
+  derived from `{{MR_ADAPTER}}` exactly as the ticket adapter's status is.
 
 ## [0.2.0] — mature fleet adoption and native Codex packaging
 
