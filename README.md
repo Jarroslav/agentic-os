@@ -27,6 +27,11 @@ terms (HITL, gate, preset…) are one-liners in the [Glossary](#glossary).
 
 ## Start here
 
+> **Prefer a walk-through?** The **[role-based setup guides](https://jarroslav.github.io/agentic-os/setup/)**
+> cover the same install for every role preset — pick your role (developer, QA,
+> BA/PO, architect, DevOps, PM, portfolio) and follow the checklist, quick or
+> fully guided.
+
 **New to this repo?** You do not need to read everything below. Pick a path:
 
 | Your goal | Install from marketplace | First command in *your* project |

@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-27T13:58:38Z",
+ "attested_at": "2026-07-27T16:00:59Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -83,7 +83,7 @@
    "max_run": 0
   },
   "README.md": {
-   "sha256": "2395ef42b416c03df8b50cd45685ba34c45101466c6c6a92ed0f69a541ee46f0",
+   "sha256": "71d4e3dd2fe16fd17466f1adb50c36cba9114db82ffe9e741df6ead7fb058f97",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -100,9 +100,33 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "docs/.nojekyll": {
+   "sha256": "42e1dd98dc6f3f0ca6bb02948a81680c2672977c6408f4042f7d64fdc79f8c0e",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "docs/PRINCIPLES.md": {
    "sha256": "f75ee3e36f3965f1a890c840d7ef3c895dd1e41ec79bc543ec762a52ea899871",
    "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "docs/setup/app.js": {
+   "sha256": "769e4a34477f849ade1b24ead0e320ff3daa57dc50e3c504449b4d86597586e4",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "docs/setup/index.html": {
+   "sha256": "54f1d6ed93ccf976e1538482aedf9efc615b48eae5eec45a8cb82da473eddbe0",
+   "line": 0.0588,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "docs/setup/styles.css": {
+   "sha256": "6fea354710ec4e3b2b979b723ed37d8e8959bb7d9137425d0d562b4ad8733cda",
+   "line": 0.0309,
    "shingle": 0.0,
    "max_run": 0
   },
