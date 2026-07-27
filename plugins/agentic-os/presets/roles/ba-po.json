@@ -21,6 +21,7 @@
     "guides/ba-po-operating-model",
     "guides/mcp-onboarding",
     "guides/working-with-agents",
+    "guides/evidence-integrity",
     "agents/dispatcher",
     "commands/dispatch",
     "sdlc/config",

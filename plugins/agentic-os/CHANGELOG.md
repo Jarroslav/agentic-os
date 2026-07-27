@@ -5,6 +5,46 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.4.0] — Contract hardening, evidence integrity, rule provenance
+
+Tightens the authoring standards every agent contract is built and graded
+against, and gives inlined rule digests a declared source of truth.
+
+### Added
+
+- **`guides/evidence-integrity`** — new blocking standards guide
+  (`.agentic/guides/standards/evidence-integrity.md`) against fabricated
+  compliance: no self-citation, quotes verified verbatim before presenting,
+  classification/approval tags only from durable owner-authored records, no
+  padding lists to a required count (shortfalls stated, extras labeled
+  `speculative — no direct evidence`), sourced/unverified tags preserved across
+  documents, and a counted self-check. Installed by every role preset and
+  indexed in `PATTERNS.md`.
+- **Required contract blocks** section in the instruction-quality rubric — the
+  normative structural list for agent contracts: a `Not for:` routing clause in
+  the description, a `## Decision rules` DO/DON'T table, an
+  escalate-never-decide list, `## Stop and ask when` triggers, and counted
+  (recomputable) verification criteria. The agent-generator skeleton, both
+  exemplars, and all ten shipped agent templates now carry these blocks;
+  the instruction-auditor grades against the list.
+- **Rule provenance markers** — inlined guide-rule digests in generated
+  contracts are wrapped in `agentic-os:rules source="…" topic="…"` marker
+  pairs (spec: `working-with-agents.md` § Rule provenance markers; index note
+  in `PATTERNS.md`). The agent-generator emits them; a deterministic CI check
+  validates marker syntax and that standards/policy sources map to shipped
+  templates.
+
+### Changed
+
+- The three skill descriptions (`agentic-init`, `agentic-doctor`,
+  `agentic-upgrade`) gained explicit `Not for:` routing clauses; new skills
+  must include one (CI-enforced; pre-existing sdlc skills are grandfathered
+  with a visible warning).
+- Upgraders: expect `/agentic-upgrade` diff prompts on the rubric,
+  `working-with-agents.md`, `PATTERNS.md`, and any locally modified agent
+  templates; the new evidence-integrity guide arrives automatically as a new
+  preset template.
+
 ## [0.3.0] — BA/PO onboarding and MCP access
 
 Makes `ba-po` a first-class role rather than a preset that installed no guidance

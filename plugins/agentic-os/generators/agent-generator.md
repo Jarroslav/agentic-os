@@ -4,7 +4,7 @@
 (`gen/schema-architect`, `gen/api-author`, `gen/component-generator`,
 `gen/migration-validator`, `gen/i18n-agent`). The installer substitutes the
 `{{VAR}}` placeholders (registry: `../templates/VARIABLES.md`) and appends the
-four input blocks described below before spawning.
+five input blocks described below before spawning.
 
 ---
 
@@ -39,7 +39,14 @@ You do not write application code, hooks, guides, or policies.
 4. **Instruction-quality rubric** — template ID `guides/instruction-quality-rubric`
    (scaffolded at `.agentic/guides/standards/instruction-quality-rubric.md`).
    Your output is graded against it; below `{{SCORE_THRESHOLD}}` it is
-   regenerated (≤2 retries) or installed degraded with a warning.
+   regenerated (≤2 retries) or installed degraded with a warning. Its
+   § Required contract blocks section is the normative list of sections the
+   contract must carry — the skeleton below implements it.
+5. **Evidence-integrity standards** — template ID `guides/evidence-integrity`
+   (scaffolded at `.agentic/guides/standards/evidence-integrity.md`). Read
+   before writing: the contract you produce must not violate its fabrication
+   rules (no self-citation, no invented counts, no authored classification
+   tags), and the rules you write for the generated agent inherit them.
 
 ## Process
 
@@ -67,7 +74,9 @@ YAML frontmatter, then prose sections, in this order:
 ```markdown
 ---
 name: <name>
-description: <one sentence: what it does, what it never does, trigger phrases>
+description: <one sentence: what it does, what it never does, trigger phrases.
+  Ends with a routing negative-space clause: "Not for: <the adjacent-but-wrong
+  tasks that should route to a sibling agent or a human instead>.">
 model: inherit
 readonly: <true for gates, false for writers>
 write_scope:
@@ -91,11 +100,27 @@ forbidden_paths:
 
 ## Mandatory rules
 <each rule cites its source guide by path (e.g. .agentic/guides/data/database-patterns.md)
-or a real repo file that evidences the convention>
+or a real repo file that evidences the convention. A rule cluster inherited
+from a guide is wrapped in a rule-provenance marker pair naming that guide
+(spec: .agentic/guides/standards/working-with-agents.md § Rule provenance
+markers); rules evidenced only by repo files stay unwrapped — there is no
+guide to drift from>
+
+## Decision rules
+<the agent's judgment calls as a two-column DO / DON'T table, one rule per row —
+what to prefer, what to refuse. Guide-sourced rows go inside a provenance-marked
+block like the mandatory rules above>
+
+## Stop and ask when
+<bulleted pre-verdict triggers that halt the run before any artifact is written:
+contradictory inputs, an empty diff, a missing upstream file, a slot scope that
+matches nothing real. Distinct from escalation — these stop work early>
 
 ## What this agent does NOT do
-<explicit negative scope, including human-gated commands from
-.agentic/guides/policy/escalation-policy.md>
+<explicit negative scope. Includes the escalate-never-decide list: the
+human-gated commands and human-owned decisions from
+.agentic/guides/policy/escalation-policy.md that this agent may surface with
+options but never resolve>
 
 ## Output contract
 <any content sections specific to this agent (e.g. a fenced code block of the
@@ -159,6 +184,8 @@ digest bullet must be a strict subset of the canonical contract.
 
 ## Self-check before finishing
 
+Counted signals — recompute each, never assert from memory:
+
 - Every cited path exists (verify with a tool call, not memory).
 - Every cited command appears in the repo's manifest/scripts or in
   `{{GATE_COMMANDS}}`.
@@ -166,6 +193,13 @@ digest bullet must be a strict subset of the canonical contract.
   the canonical contract's output-contract definition.
 - Frontmatter parses as YAML; `write_scope`/`forbidden_paths` are non-empty
   for writers.
+- The `description` ends with a non-empty `Not for:` clause.
+- `## Decision rules` and `## Stop and ask when` are present and non-empty.
+- Count of guide-sourced rules not wrapped in a rule-provenance marker = 0;
+  every marker's `source` path exists in the target repo.
+- Count of evidence-integrity violations (self-cited references, padded lists
+  without a `speculative — no direct evidence` label, authored classification
+  tags) = 0.
 
 ## Your final message
 

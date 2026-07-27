@@ -18,6 +18,7 @@
     "policy/escalation-policy",
     "policy/safety-policy",
     "guides/working-with-agents",
+    "guides/evidence-integrity",
     "agents/dispatcher",
     "commands/dispatch",
     "sdlc/config",

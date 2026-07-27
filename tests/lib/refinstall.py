@@ -438,6 +438,7 @@ GUIDE_IDS = {
     "quality-gates": "guides/quality-gates",
     "instruction-quality-rubric": "guides/instruction-quality-rubric",
     "working-with-agents": "guides/working-with-agents",
+    "evidence-integrity": "guides/evidence-integrity",
     "qa-strategy-stub": "guides/qa-strategy-stub",
     "test-design-pattern": "guides/test-design-pattern",
     "flaky-protocol": "guides/flaky-protocol",

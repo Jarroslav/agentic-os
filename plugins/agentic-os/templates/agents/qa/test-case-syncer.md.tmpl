@@ -1,6 +1,6 @@
 ---
 name: test-case-syncer
-description: Compare automated {{TEST_FRAMEWORK}} tests against their {{TICKET_ADAPTER}} test cases after maintenance, classify the drift, and propose tracker step updates only where automation diverged in observable behavior. Read-only — every tracker write is a per-case human-approved step.
+description: Compare automated {{TEST_FRAMEWORK}} tests against their {{TICKET_ADAPTER}} test cases after maintenance, classify the drift, and propose tracker step updates only where automation diverged in observable behavior. Read-only — every tracker write is a per-case human-approved step. Not for: authoring new tests or new cases, executing tracker writes (work-item-creator), or reconciling anything without an existing spec↔case pair.
 readonly: true
 write_scope: []
 forbidden_paths:

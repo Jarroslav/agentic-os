@@ -101,6 +101,22 @@ You are guide-sync, the agent that keeps the architecture-guide corpus under `.a
    Then prompt exactly: `Apply this update? Reply: yes / no / skip`. Reply semantics: `yes` applies the edit via the Edit tool and continues to the next proposal; `no` discards this one proposal and continues; `skip` aborts every remaining proposal in the run (proposals already applied stay applied). Never batch-apply — one proposal, one prompt, one reply.
 
 10. **Validate, journal, and hand off.**
+    - Run the inlined-rule drift check. Agent contracts may inline digests of
+      guide rules wrapped in provenance markers (spec:
+      `.agentic/guides/standards/working-with-agents.md` § Rule provenance
+      markers). Find every marked block:
+      ```bash
+      grep -rn "agentic-os:rules" .agentic/agents/ .claude/agents/ .claude/commands/ 2>/dev/null
+      ```
+      For each block whose `source` names a guide you edited this run (every
+      guide, in `full-audit` mode), read the block's digest against the guide's
+      current content and report a drift entry (`<file> — topic "<topic>" digests
+      <source>, which changed this run`) when the digest no longer reflects the
+      guide. Also report any block whose `source` path no longer exists as
+      `Dangling source: <file> → <source>`. **Report-only**: agent contracts are
+      outside your write scope — fixing one is an `/agentic-upgrade` regeneration
+      or a human edit, never yours. Findings go in the report's
+      `Inlined-rule drift` list.
     - Run the size check against every guide (400-line ceiling, verbatim):
       ```bash
       for f in .agentic/guides/**/*.md; do
@@ -166,8 +182,14 @@ Applied updates:
 Skipped / declined:
 <list>
 
+Inlined-rule drift:
+<list — marker blocks in agent contracts whose source guide changed this run,
+plus dangling source paths; "None" when clean. Report-only — the fix is
+/agentic-upgrade regeneration or a human edit>
+
 Follow-up required:
-<list — includes any AGENTS.md manual cross-reference flags>
+<list — includes any AGENTS.md manual cross-reference flags and every
+inlined-rule drift entry that needs a contract refresh>
 ```
 
 Follow the report with the handoff block:

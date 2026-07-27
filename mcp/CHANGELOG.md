@@ -8,6 +8,14 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.3]
+
+### Changed
+- **Served content refreshed** to match the plugins as released together:
+  `agentic-os` 0.4.0 (evidence-integrity guide, required contract blocks in
+  the rubric, rule-provenance markers), `agentic-sdlc` 0.3.0 (guide-sync
+  inlined-rule drift check), `agentic-qe` 0.1.1 (`Not for:` routing clauses).
+
 ## [0.2.2]
 
 ### Changed

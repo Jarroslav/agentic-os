@@ -1,6 +1,6 @@
 ---
 name: agentic-init
-description: Install the agentic-os process layer into the current repo — interview (role presets, HITL dial, autonomy matrix, stack confirm, adapters), dependency registration, template scaffold, stack-specific agent generation with instruction-quality audit, then doctor verification. Journaled and resumable. Use when the user says "/agentic-init", "install agentic-os", "scaffold the agent architecture", "set up the agentic process layer", or "add agentic-os to this repo".
+description: Install the agentic-os process layer into the current repo — interview (role presets, HITL dial, autonomy matrix, stack confirm, adapters), dependency registration, template scaffold, stack-specific agent generation with instruction-quality audit, then doctor verification. Journaled and resumable. Use when the user says "/agentic-init", "install agentic-os", "scaffold the agent architecture", "set up the agentic process layer", or "add agentic-os to this repo". Not for: upgrading an existing install (agentic-upgrade), verifying one (agentic-doctor), or running SDLC work.
 version: 0.1.0
 license: Apache-2.0
 ---

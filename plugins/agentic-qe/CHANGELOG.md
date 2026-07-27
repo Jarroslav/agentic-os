@@ -4,6 +4,14 @@ Notable changes to the `agentic-qe` plugin. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this plugin uses
 Semantic Versioning and its own release tag (`agentic-qe-v<X.Y.Z>`).
 
+## [0.1.1]
+
+### Changed
+
+- Both skill descriptions (`qe-blueprints`, `eval-harness`) now carry an
+  explicit `Not for:` routing clause per the agentic-os 0.4.0 contract
+  standard (CI-enforced for new skills).
+
 ## [0.1.0] — initial public release
 
 ### Added

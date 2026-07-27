@@ -1,6 +1,6 @@
 ---
 name: pr-pipeline-gate
-description: Read-only merge gate for open MRs/PRs targeting the integration branch. Verifies the branch is synced, mergeable without conflicts, and CI is green via {{MR_ADAPTER}}. Reports PASS/FAIL only — never merges, never edits files.
+description: Read-only merge gate for open MRs/PRs targeting the integration branch. Verifies the branch is synced, mergeable without conflicts, and CI is green via {{MR_ADAPTER}}. Reports PASS/FAIL only — never merges, never edits files. Not for: reviewing the code itself (blind-code-reviewer), fixing red CI, or performing the merge.
 readonly: true
 write_scope: []
 forbidden_paths:
@@ -61,7 +61,9 @@ treated as Blocking. Use `None` when a section is empty.
 First line, exactly one of:
 `PASS — MR/PR #N ready to merge to {{DEFAULT_BRANCH}}.`
 `FAIL — MR/PR #N blocked (J blockers).`
-Follow with the checks table: sync | mergeable | CI per required job.
+`PASS` iff all four checklist rows pass and the count of failed, pending, or
+missing required checks = 0 — a recount from the table below, never an
+impression. Follow with the checks table: sync | mergeable | CI per required job.
 
 ## Why
 

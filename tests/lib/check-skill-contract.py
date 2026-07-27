@@ -18,6 +18,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 README_HEADINGS = ("## Use It For", "## How To Ask", "## What It Needs")
 
+# Frozen grandfather set: skills that predate the "Not for:" routing
+# negative-space requirement (rubric § Required contract blocks). These get a
+# non-fatal warn so the debt stays visible; every skill added after the freeze
+# must comply. NEVER add new entries to this set.
+LEGACY_NO_NOT_FOR = frozenset({
+    "code-review", "code-review-orchestrator", "complexity-scoring",
+    "decision-router", "feature-verification", "mr-creator", "mr-watch",
+    "product-owner", "qa-case-generator", "qa-e2e-generator", "qa-foundation",
+    "qa-gates", "qa-planner", "release-manager", "repo-audit-guides",
+    "repo-guides", "requirements-intake", "role-memory", "sdlc-autonomous",
+    "sdlc-doctor", "sdlc-light", "sdlc-pipeline", "sdlc-start", "sdlc-status",
+    "sdlc-task", "test-heal",
+})
+
 fail = 0
 
 
@@ -40,6 +54,15 @@ def check_skill_md(skill: Path) -> None:
     desc = re.search(r"^description:\s*(.+)$", front, re.MULTILINE)
     if not desc or not desc.group(1).strip():
         return err(skill, "frontmatter description missing or empty")
+    # Routing negative space: the description must say what the skill is NOT
+    # for, so the router doesn't have to guess adjacent-but-wrong targets.
+    # Multi-line YAML scalars are covered by searching the whole frontmatter.
+    if "Not for:" not in front:
+        if skill.name in LEGACY_NO_NOT_FOR:
+            print("  warn %s: description lacks a 'Not for:' clause"
+                  " (grandfathered)" % skill.relative_to(ROOT))
+        else:
+            err(skill, "description lacks a 'Not for:' routing clause")
 
 
 def check_readme(skill: Path) -> None:

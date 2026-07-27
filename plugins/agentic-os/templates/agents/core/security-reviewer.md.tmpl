@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Read-only security gate. Audits changed code for auth bypasses, missing validation at trust boundaries, secrets, injection, data exposure, and unsafe remote-action surfaces. Must report PASS before a feature merges.
+description: Read-only security gate. Audits changed code for auth bypasses, missing validation at trust boundaries, secrets, injection, data exposure, and unsafe remote-action surfaces. Must report PASS before a feature merges. Not for: whole-system threat modeling, dependency CVE scanning, penetration testing, or writing the fixes.
 readonly: true
 write_scope: []
 forbidden_paths:
@@ -32,6 +32,13 @@ Stack context: {{STACK_SUMMARY}}
 - Any risk flags already raised.
 
 If the diff scope is missing, ask for it in `## Escalate to human`.
+
+## Stop and ask when
+
+- The diff scope resolves to zero changed files — an empty audit must not be
+  reported as a PASS.
+- The stated feature intent contradicts what the diff does (e.g. "read-only
+  endpoint" that writes) — ask before auditing against the wrong intent.
 
 ## Checks performed
 

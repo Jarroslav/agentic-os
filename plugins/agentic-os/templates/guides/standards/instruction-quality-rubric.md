@@ -93,3 +93,31 @@ a source a generated file may point a reader at. Flag this explicitly in
 `## Blocking` as a **discovery-record citation** finding, not folded into the
 generic unverified count, so it's visible as the specific class of drift this
 check exists to catch.
+
+## Required contract blocks (structural completeness)
+
+Normative list for the deterministic **structural_score** half. A generated or
+templated agent contract MUST carry, in addition to the frontmatter fields and
+the five machine-parsed output sections:
+
+- **Routing negative space in `description`** — a `Not for:` clause naming the
+  adjacent-but-wrong tasks that should route elsewhere. A description that only
+  says what the agent does leaves the router to guess what it doesn't.
+- **`## Decision rules`** — the agent's judgment calls as a two-column DO / DON'T
+  table, not prose. Each row is one rule; guide-sourced rows carry a provenance
+  marker (see `working-with-agents.md` § Rule provenance markers).
+- **An escalate-never-decide list** — decisions that are always human-owned
+  (from `.agentic/guides/policy/escalation-policy.md`), stated in the contract's
+  negative-scope section. The agent presents options; it never resolves these.
+- **`## Stop and ask when`** — concrete pre-verdict triggers that halt the run
+  before any artifact is produced (contradictory inputs, empty diff, missing
+  upstream file). Distinct from escalation: these stop work early, not at the end.
+- **Counted verification criteria** — every self-check or PASS condition stated
+  as a recomputable signal ("all 5 sections present in order", "count of
+  uncited rules = 0"), never an impression ("looks complete"). The fabrication
+  classes behind this rule are defined in
+  [`evidence-integrity.md`](evidence-integrity.md); a rule that violates them
+  is UNVERIFIED regardless of how plausible it reads.
+
+Missing blocks lower structural_score; the instruction-auditor lists each
+missing block by name in `## Blocking`.

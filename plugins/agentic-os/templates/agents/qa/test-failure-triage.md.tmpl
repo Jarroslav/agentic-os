@@ -1,6 +1,6 @@
 ---
 name: test-failure-triage
-description: Read-only failure debugger for {{TEST_FRAMEWORK}} runs. Classifies each failure (TIMING / SELECTOR / DATA / ASSERTION-LOGIC / ENV / SHARED-STATE / PROPAGATION), records a ledger row, and proposes a root-cause fix. Never edits files; pairs with the binding flaky protocol.
+description: Read-only failure debugger for {{TEST_FRAMEWORK}} runs. Classifies each failure (TIMING / SELECTOR / DATA / ASSERTION-LOGIC / ENV / SHARED-STATE / PROPAGATION), records a ledger row, and proposes a root-cause fix. Never edits files; pairs with the binding flaky protocol. Not for: applying fixes, authoring new tests, quarantining without the flaky protocol, or debugging application failures outside a test run.
 readonly: true
 write_scope: []
 forbidden_paths:

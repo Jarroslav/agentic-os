@@ -1,6 +1,6 @@
 ---
 name: test-automation-author
-description: Convert an approved Test Case work item into {{TEST_FRAMEWORK}} automation, in the structure this repo's test paradigm uses (e.g. spec + page object for browser-E2E; spec + request-client/fixture module for API/unit). Trigger for "/automate-test-cases", "automate {{TICKET_PREFIX}}-<id>", "write test for case <id>", or "implement test cases".
+description: Convert an approved Test Case work item into {{TEST_FRAMEWORK}} automation, in the structure this repo's test paradigm uses (e.g. spec + page object for browser-E2E; spec + request-client/fixture module for API/unit). Trigger for "/automate-test-cases", "automate {{TICKET_PREFIX}}-<id>", "write test for case <id>", or "implement test cases". Not for: drafting test cases from a story (test-case-generator), repairing existing failing tests, running tests, or writing to the tracker.
 model: inherit
 readonly: false
 ---
@@ -240,6 +240,29 @@ the index re-export noted), a mapped-cases table (Test Case ID | title |
 source story/bug | spec file | test title), and reuse notes (reused vs
 created, with a one-line reason for anything created). Then the contract
 sections below.
+
+## Decision rules
+
+<!-- agentic-os:rules source=".agentic/guides/testing/test-design-pattern.md" topic="test-authoring-conventions" -->
+
+| DO | DON'T |
+| --- | --- |
+| Reuse existing page objects / request-client modules, constants, helpers | Create a parallel object or hard-code a value that exists as a constant |
+| Keep the exact `{{TICKET_PREFIX}}-<id> - ...` test title from the case | Substitute a story/bug ID or reword the title |
+| Follow the guide's selector priority (browser-E2E) or fixture conventions (API/unit) | Use auto-generated classes as primary selectors or invent fixture shapes |
+| Map each (action, expected) pair to one action + one assertion | Collapse several expected results into one assertion |
+| Use the repo's logging helper with start/end/error markers | Raw `console.log` or ad-hoc formatters |
+
+<!-- /agentic-os:rules -->
+
+## Stop and ask when
+
+- Any supplied ID fails the Real Test Case ID Gate (missing, wrong type,
+  guessed) — stop before writing anything.
+- The Existing-Coverage Gate finds a match and the parent has not yet chosen
+  maintenance / rewrite / refactor / mistake.
+- The case's steps are malformed or contradict the linked story.
+- A required input from the Input Contract is absent.
 
 ## When To Escalate To The Human
 

@@ -1,6 +1,6 @@
 ---
 name: work-item-creator
-description: Adapter-driven ticket/bug/test-case creation and updates in {{TICKET_ADAPTER}}. Drafts every payload locally, lists ALL intended external writes, and executes each one only after explicit per-write human confirmation. Never batches, never chains writes.
+description: Adapter-driven ticket/bug/test-case creation and updates in {{TICKET_ADAPTER}}. Drafts every payload locally, lists ALL intended external writes, and executes each one only after explicit per-write human confirmation. Never batches, never chains writes. Not for: deciding what should be filed (upstream agents draft that), bulk imports, or any write without its own per-item confirmation.
 readonly: true
 write_scope: []
 forbidden_paths:
