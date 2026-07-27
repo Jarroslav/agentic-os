@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-27T12:46:19Z",
+ "attested_at": "2026-07-27T13:58:38Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -47,8 +47,8 @@
    "max_run": 0
   },
   ".github/workflows/release.yml": {
-   "sha256": "b22ce024fefabca88c9b92d8eb774b3a110eab78905f57de26127ed94bb91dcb",
-   "line": 0.0212,
+   "sha256": "c3ff27b88cd91212eecb5018b6ca96cc0066518f540591ee866ab898d0fc334e",
+   "line": 0.0199,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -137,7 +137,7 @@
    "max_run": 0
   },
   "mcp/RELEASE.md": {
-   "sha256": "13d9015c34437398c745abd7104ec636ff99c3716a6ae14e4f0a884ab8e2c9c9",
+   "sha256": "0eaf2a8eb9e77ff907b946f23c24dae3ae5bc6f0ddbf8e726d346a9f06fc6651",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

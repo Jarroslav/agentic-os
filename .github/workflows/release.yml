@@ -59,7 +59,7 @@ concurrency:
 
 permissions:
   contents: write # attach the .mcpb to the GitHub release
-  id-token: write # npm provenance, and mcp-publisher's GitHub OIDC login
+  id-token: write # npm trusted publishing + provenance, and mcp-publisher's GitHub OIDC login
 
 jobs:
   gate:
@@ -154,6 +154,21 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      # npm publishes via trusted publishing (OIDC): the package on npmjs.com
+      # names this repo + workflow as a trusted publisher, and npm exchanges
+      # this job's GitHub id-token for a short-lived publish credential. No
+      # NPM_TOKEN secret is read anywhere in this workflow. Adopted 2026-07-27
+      # after npm began refusing token-based publishes for the package
+      # ("Two-factor authentication is required to publish this package but an
+      # automation token was specified") — the token path is being retired
+      # upstream, so this is the fix rather than a workaround. The OIDC
+      # exchange needs npm >= 11.5.1; Node 22 bundles npm 10.x, so upgrade
+      # deliberately here.
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
+
       - name: Install
         working-directory: mcp
         run: npm ci
@@ -211,12 +226,11 @@ jobs:
 
       # `npm publish`'s prepack lifecycle script runs `npm run build`
       # (see mcp/package.json), so dist/ exists for the .mcpb build step
-      # below without a separate build step here.
+      # below without a separate build step here. Auth is the trusted-publisher
+      # OIDC exchange set up above — deliberately no NODE_AUTH_TOKEN env.
       - name: Publish to npm
         working-directory: mcp
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # --- Everything below only proceeds once npm publish has actually
       # succeeded. ---

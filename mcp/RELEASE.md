@@ -16,17 +16,30 @@ package is broken, the fix is a **new** version, not a redo of the old one.
 
 ## One-time setup (before the first release)
 
-1. **Create an npm automation token.**
-   - Log in to npmjs.com as the account that will own the `agentic-os-mcp`
-     package.
-   - Account Settings → Access Tokens → Generate New Token → **Automation**
-     (automation tokens work in CI without 2FA prompts and are scoped for
-     exactly this use — publishing from a script, not a human session).
-   - Copy the token immediately; npm shows it only once.
-2. **Add it as the `NPM_TOKEN` repository secret** (Settings → Secrets and
-   variables → Actions → New repository secret, name `NPM_TOKEN`). This is
-   the secret `.github/workflows/release.yml`'s "Publish to npm" step reads
-   as `NODE_AUTH_TOKEN`.
+1. **Configure npm trusted publishing for the package.**
+   - Log in to npmjs.com as the account that owns `agentic-os-mcp`.
+   - Package page → Settings → **Publishing access / Trusted publisher** →
+     GitHub Actions, with:
+     - organization or user: `Jarroslav`
+     - repository: `agentic-os`
+     - workflow filename: `release.yml`
+     - environment: leave empty (the workflow declares none)
+   - That is the whole credential: the workflow's own GitHub OIDC token is
+     exchanged for a short-lived publish credential at run time. There is no
+     npm token to create, store, or rotate, and no `NPM_TOKEN` repository
+     secret — if one still exists it is unused and can be deleted.
+   - History, so nobody reintroduces a token: the original setup used a
+     classic **Automation** token as `NPM_TOKEN` (granular/publish tokens
+     fail headless CI with `EOTP`). That worked through 0.2.1 and then npm
+     began refusing it outright — the 0.2.2 release failed with
+     `403 … Two-factor authentication is required to publish this package
+     but an automation token was specified` on 2026-07-27, with no change on
+     our side. npm is retiring token-based publishing; trusted publishing is
+     the supported replacement, and the version was not burned because the
+     workflow fails closed.
+   - The publish job upgrades npm to `>= 11.5.1` before publishing — the
+     OIDC exchange does not exist in the npm 10.x that Node 22 bundles. Keep
+     that step.
 3. **The MCP Registry namespace case has already been confirmed — read this
    before touching it again.** `mcp/package.json`'s `mcpName` and
    `mcp/server.json`'s `name` are both `io.github.Jarroslav/agentic-os`
