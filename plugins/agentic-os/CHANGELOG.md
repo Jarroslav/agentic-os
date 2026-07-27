@@ -5,6 +5,21 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [Unreleased]
+
+### Added
+
+- **Screen 2 — MCP access** in the `/agentic-init` interview: a required
+  single-choice screen (`connect now` / `configure later` / `continue without
+  MCP`) recorded as `answers.mcp_state` (`configured`, `deferred`,
+  `without-mcp`). MCP stays optional — the no-MCP path is supported by pasted
+  tables, CSV extracts, screenshots, and manually supplied findings — and an
+  unavailable server is recorded as `unavailable` rather than blocking the
+  install. Connecting now surfaces the easiest available route and host-specific
+  verification commands in the generated MCP onboarding guide. This makes the
+  installer seven screens: the HITL dial, autonomy matrix, gates, stack confirm
+  and adapter screens shift from 2–6 to 3–7.
+
 ## [0.2.0] — mature fleet adoption and native Codex packaging
 
 ### Added
