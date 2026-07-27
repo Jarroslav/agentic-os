@@ -472,7 +472,9 @@ Ordered steps:
      Substitute `{{QA_GUIDE_ROWS}}` with the `test-design-pattern` + `flaky-protocol`
      index rows **only if those guides are in the install** (the `qa` preset), else
      the empty string — the index must never link a guide the preset did not install.
-     (Same principle as agent-registry row pruning below.)
+     Substitute `{{OPS_GUIDE_ROWS}}` the same way: the `incident-triage.md` index
+     row iff `guides/incident-triage` is in the union (the `devops` preset), else
+     the empty string. (Same principle as agent-registry row pruning below.)
    - `agent-registry.md` → `.agentic/guides/agent-registry.md`, then apply
      **hand-off (b), row pruning**: the template documents that "the installer
      removes rows whose preset is not installed" — delete every row of the
@@ -482,8 +484,9 @@ Ordered steps:
      `test-failure-triage`, `work-item-creator`) go unless `qa` is installed;
      the `dispatcher` row goes unless `agents/dispatcher` is in the union;
      `security-reviewer` / `pr-pipeline-gate` rows go unless their agent IDs
-     are in the union; the `pipeline-orchestrator.md` / `dispatch.md` rows go
-     unless the matching command ID is in the union. Never prune the
+     are in the union; the `incident-triage` row goes unless
+     `agents/incident-triage` is in the union; the `pipeline-orchestrator.md`
+     / `dispatch.md` rows go unless the matching command ID is in the union. Never prune the
      `blind-code-reviewer` or `instruction-auditor` rows when their agents
      install. **Never prune the `<!-- generated-agent-rows -->` marker row**
      (the one with an empty "Owning asset" cell, below the curated rows) —

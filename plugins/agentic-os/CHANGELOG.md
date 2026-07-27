@@ -5,6 +5,45 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.5.0] — Read-only incident triage for the devops role
+
+First role-capability wave driven by the blind role-grading baseline
+(2026-07-27): the devops preset gains an incident-triage capability, and the
+baseline's one hard checker failure is fixed.
+
+### Added
+
+- **`agents/incident-triage`** — read-only incident reporter for
+  production/runtime incidents: exactly three ranked root-cause hypotheses,
+  each with a confidence label, its evidence lines, and the cheapest
+  read-only next diagnostic; shortfalls stated ("1 of 3 slots
+  evidence-backed") with unsupported slots labeled `speculative — no direct
+  evidence`; number+unit runtime bounds with the
+  `AGENTIC_INCIDENT_TRIAGE_DISABLED=1` kill-switch; allowlist-only tooling.
+  Never mutates cluster or infra state — fixes are human-executed. Carries
+  the full required-contract-block set (Decision rules table, Stop and ask
+  when, counted PASS criteria, provenance-marked guide digests).
+- **`guides/incident-triage`** — the binding triage standards the agent
+  digests: read-only principle, three-hypothesis rule (governed by
+  evidence-integrity's no-padding rule), runtime bounds ("a bound without a
+  unit is not a bound"), allowlist-not-denylist, human-owned escalation.
+  Indexed in `PATTERNS.md` via the new conditional `{{OPS_GUIDE_ROWS}}`
+  variable — only installs that carry the guide index it.
+- **`presets/evals/devops.json`** — eight counted triage scenarios (second
+  preset-level eval fixture after ba-po), shape-checked by the new
+  deterministic `check-incident-triage.py` in the acceptance matrix (T3d),
+  including isolation (a developer-only install must not receive the guide).
+- devops preset installs the pair; its description, README row, and setup-page
+  entry now say so.
+
+### Fixed
+
+- **`guides/evidence-integrity` registered in `templates/VARIABLES.md`** — it
+  was claimed by every preset since 0.4.0 but never registered, so
+  `validate-presets.sh` failed on all seven presets (unnoticed because that
+  script is not wired into CI; `check-presets.py` only checks the reverse
+  direction).
+
 ## [0.4.0] — Contract hardening, evidence integrity, rule provenance
 
 Tightens the authoring standards every agent contract is built and graded

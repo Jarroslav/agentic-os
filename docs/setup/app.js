@@ -85,10 +85,11 @@
       ] },
     { id: 'devops', label: 'DevOps', longLabel: 'DevOps Engineers', icon: 'ph-git-branch', guided: false, sdlc: true,
       time: '~20–30 min', presets: 'devops', hitl: 'gated-autonomous', orch: 'dispatcher',
-      tagline: 'Git hooks, quality gates, PR pipeline gate and MR monitoring — no code-writing agents.',
-      note: 'Installs the git-hook layer (blind pre-commit review) plus the PR pipeline gate and security reviewer. sdlc-doctor is your health check for the whole SDLC layer.',
+      tagline: 'Git hooks, quality gates, PR pipeline gate, MR monitoring and read-only incident triage — no code-writing agents.',
+      note: 'Installs the git-hook layer (blind pre-commit review) plus the PR pipeline gate, security reviewer and incident-triage agent. sdlc-doctor is your health check for the whole SDLC layer.',
       phrases: [
         { say: "What's the status of the last pipeline run?", get: 'Run/pipeline health across the repo, read-only', skill: 'sdlc-status' },
+        { say: 'Triage the checkout latency incident', get: '3 ranked hypotheses + cheapest read-only next diagnostic', skill: 'incident-triage' },
         { say: 'Watch MR 42 and report CI failures', get: 'Pipeline monitored, breakage reported', skill: 'mr-watch' },
         { say: 'Create an MR for this branch', get: 'Review-ready merge request', skill: 'mr-creator' },
         { say: 'Run the SDLC doctor', get: 'Health report → .agentic/agentic-sdlc/doctor.json', skill: 'sdlc-doctor' }

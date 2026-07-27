@@ -103,6 +103,7 @@ a security boundary:
 | `{{GATE_COMMANDS}}` | Quality-gate commands (lint/typecheck/test), newline list | stack-fact record (`variable_defaults.GATE_COMMANDS`) |
 | `{{GATE_ENTRIES}}` | **Derived** (not collected): the installer expands `{{GATE_COMMANDS}}` into one Markdown gate block each — the body of `quality-gates.md.tmpl § Gates`. Empty list ⇒ an "add a gate" note, never a blank registry. See `agentic-init/SKILL.md` Phase 4 step 5. | expanded from `{{GATE_COMMANDS}}` |
 | `{{QA_GUIDE_ROWS}}` | **Derived** (not collected): the `PATTERNS.md` index rows for `test-design-pattern.md` and `flaky-protocol.md`, emitted **only when those guides are installed** (the `qa` preset). Empty otherwise — a preset that does not install them must not index them. Each row ends in a newline; the empty value collapses without breaking the GFM table. | the two rows if `guides/test-design-pattern` + `guides/flaky-protocol` are in the union, else empty |
+| `{{OPS_GUIDE_ROWS}}` | **Derived** (not collected): the `PATTERNS.md` index row for `incident-triage.md`, emitted **only when that guide is installed** (the `devops` preset). Empty otherwise — same must-not-index rule and newline handling as `{{QA_GUIDE_ROWS}}`. | the row if `guides/incident-triage` is in the union, else empty |
 | `{{HUMAN_GATED_COMMANDS}}` | Shell commands always blocked pending human action, newline list | `git push origin {{DEFAULT_BRANCH}}` + interview |
 | `{{GUARDED_WRITE_PATHS}}` | Paths writable only via a named flow, newline list | empty + interview |
 | `{{SECRET_DENY_PATTERNS}}` | File patterns agents must never read, newline list (only ever rendered inside fenced blocks / deny arrays) | `.env*`, `.auth/**`, `*token*.env` |
@@ -220,9 +221,13 @@ empty; `AGENTIC_LINT_ON_SAVE_DISABLED=1` disables at runtime).
 **Policy** — `policy/ai-policy`, `policy/escalation-policy`, `policy/safety-policy`.
 **Guides** — `guides/git-workflow`, `guides/code-quality`, `guides/quality-gates`,
 `guides/instruction-quality-rubric`, `guides/working-with-agents`, `guides/qa-strategy-stub`,
-`guides/test-design-pattern`, `guides/flaky-protocol`.
+`guides/test-design-pattern`, `guides/flaky-protocol`, `guides/evidence-integrity`,
+`guides/incident-triage` (read-only triage standards: three-hypothesis rule,
+number+unit runtime bounds, allowlist-only tooling; pairs with `agents/incident-triage`).
 **Agents (core)** — `agents/dispatcher`, `agents/blind-code-reviewer`, `agents/security-reviewer`,
-`agents/instruction-auditor`, `agents/pr-pipeline-gate`.
+`agents/instruction-auditor`, `agents/pr-pipeline-gate`, `agents/incident-triage`
+(read-only incident reporter: exactly-3 ranked hypotheses with confidence labels;
+fixes are human-executed; pairs with `guides/incident-triage`).
 **Agents (QA)** — `agents/test-case-generator`, `agents/test-automation-author`,
 `agents/test-case-syncer`, `agents/test-failure-triage` (read-only debugger: classify →
 ledger → root-cause; pairs with `guides/flaky-protocol`), `agents/work-item-creator`
