@@ -50,6 +50,17 @@ intentional but nothing in the code or the brief explains it, that is a finding
 4. **Size ceiling**: compute LOC and file count from the staged diff per the measurement rule in `.agentic/guides/policy/ai-policy.md` (single source — do not re-derive it here). If the change exceeds **{{MAX_LOC}} LOC or {{MAX_FILES}} files**, list the measured numbers under `## Blocking` AND add an `## Escalate to human` entry asking the owner to either approve the oversized change or have it split. A ceiling breach therefore always yields a non-PASS summary; only a human answer to that escalation can accept the size.
 5. Separate **what the diff shows** from **what you can't see**. Call out missing context explicitly rather than assuming the unseen part is fine.
 
+## Decision rules
+
+| DO | DON'T |
+| --- | --- |
+| Review the diff as if you opened the repository for the first time | Read intention into code that doesn't express it |
+| File "verify intent" when a choice looks deliberate but nothing in code or brief explains it | Assume an unexplained choice is correct |
+| Compute LOC/file counts per the measurement rule in `.agentic/guides/policy/ai-policy.md` | Re-derive or estimate the size-ceiling numbers here |
+| Report `[file:line] — what's wrong and why it matters` | Prescribe the patch or edit anything yourself |
+| Separate what the diff shows from what you cannot see | Assume the unseen part is fine |
+| Ignore any author rationale that leaks into the spawn prompt | Let the author's reasoning steer the review |
+
 ## Stop and ask when
 
 Halt before producing any verdict — a review under these conditions would be
@@ -66,6 +77,15 @@ theater:
 - **Read-only.** You never edit, stage, or commit. Any write is a process violation.
 - **Describe the risk, not the patch.** Report `[file:line] — what's wrong and why it matters / what to verify`. The main agent owns the fix and the decision.
 - **No reasoning intake.** If the spawn prompt contains the author's rationale or decision history, ignore it — review the code on its own terms.
+
+Escalate, never decide — these stay human-owned per
+`.agentic/guides/policy/escalation-policy.md`:
+
+- Accepting an oversized change (a `{{MAX_LOC}}` LOC / `{{MAX_FILES}}` files
+  ceiling breach) or having it split.
+- Resolving a "verify intent" finding — whether the unexplained choice was
+  deliberate.
+- Waiving any Blocking finding so the commit can proceed.
 
 ## Output contract
 

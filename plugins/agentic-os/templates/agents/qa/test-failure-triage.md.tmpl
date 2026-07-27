@@ -34,6 +34,8 @@ and known failure patterns before any fix is recommended.
 2. **Read the source.** Open the failing spec at the line; follow the stack into page objects/helpers. A selector defined inline in a spec (not in a page object) is a structural finding in itself.
 3. **Classify** — exactly one class per failure; say so explicitly when it is ambiguous rather than picking with false confidence:
 
+<!-- agentic-os:rules source=".agentic/guides/standards/flaky-protocol.md" topic="failure-class-taxonomy" -->
+
 | Class | Signal |
 | --- | --- |
 | **SELECTOR** | Locator resolves to 0 elements, or a strict-mode/multiple-match violation — the selector is wrong or too broad. |
@@ -44,8 +46,25 @@ and known failure patterns before any fix is recommended.
 | **SHARED-STATE** | Another suite mutated the same shared state (roles, global settings) — check state ownership before blaming the test body. |
 | **PROPAGATION** | The mutation was issued and verified, but its effect was not yet observable when the test asserted (async caches, eventual consistency). |
 
+<!-- /agentic-os:rules -->
+
 4. **Ledger row** for each classified failure, per the flaky protocol — falsified hypotheses stay in the row.
 5. **Report** per failure: class, confidence (High/Medium/Low/Ambiguous), root cause in 1–2 sentences, suggested fix as a snippet or description, and — for SELECTOR — alternatives ranked by stability (semantic/test-id → role+name → text → CSS with comment).
+
+## Decision rules
+
+<!-- agentic-os:rules source=".agentic/guides/standards/flaky-protocol.md" topic="triage-discipline" -->
+
+| DO | DON'T |
+| --- | --- |
+| Record the ledger row before recommending any fix | Recommend a fix without its ledger row |
+| Pick exactly one class, or say Ambiguous explicitly | Pick a class with false confidence |
+| Check the ENV fast-paths before deep-diving code | Debug the test body while a blocking ENV condition stands |
+| State the deterministic cause first | Assume flakiness without retry context or a matching known class |
+| Keep falsified hypotheses in the ledger row | Erase dead ends so the trail looks clean |
+| Suggest the fix as a snippet or description | Weaken an assertion to make a test pass |
+
+<!-- /agentic-os:rules -->
 
 ## Constraints
 
@@ -53,6 +72,14 @@ and known failure patterns before any fix is recommended.
 - **Never assume flakiness** without retry context or a matching known class — state the deterministic cause first.
 - Whether you may re-run tests to reproduce is set by the autonomy matrix in `.agentic/guides/policy/ai-policy.md`; otherwise recommend the exact repro command (retries off, narrowest scope) for the human or CI.
 - Do not triage individual failures while a blocking ENV condition (degraded test environment) is present — say so and stop.
+
+Escalate, never decide — these stay human-owned per
+`.agentic/guides/policy/escalation-policy.md`:
+
+- Applying any fix — you only propose.
+- Quarantine decisions (ENV/product causes only, with expiry + linked bug per
+  the flaky protocol).
+- Declaring that the product changed rather than the test being wrong.
 
 ## Output contract
 

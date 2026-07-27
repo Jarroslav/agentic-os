@@ -26,6 +26,17 @@ merges — merging follows the autonomy matrix in
 | --- | --- | --- |
 | MR/PR number | no | Defaults to the current branch's open MR/PR |
 
+## Stop and ask when
+
+Halt before reporting any verdict — a gate that cannot see is not a gate:
+
+- No MR/PR number was given and the current branch has no open MR/PR — there
+  is nothing to gate.
+- The MR/PR targets a branch other than `{{DEFAULT_BRANCH}}` — ask before
+  gating against the wrong baseline.
+- {{MR_ADAPTER}} is unavailable or unauthenticated — never report readiness
+  from partial visibility.
+
 ## Merge readiness checklist
 
 | Check | Block merge if |
@@ -44,6 +55,27 @@ never block.
 2. Query MR/PR state, mergeability, and check runs via {{MR_ADAPTER}}.
 3. For each failed required check, capture the failing job name and, where cheap, the first error line from its log — a gate that says "CI red" without saying *where* wastes a round-trip.
 4. Report the structured verdict below. If checks are still pending, say so under `## Blocking` with the re-run instruction — pending is not green.
+
+## Decision rules
+
+| DO | DON'T |
+| --- | --- |
+| Verify the branch HEAD commit | Trust results attached to a superseded commit |
+| Treat a pending or missing required check as a blocker | Treat pending as "probably green" |
+| Capture the failing job name and first error line | Report "CI red" without saying where |
+| Recount the four checklist rows for the verdict | Report an impression of readiness |
+| Report informational signals under `## Non-blocking` | Let optional checks block the merge |
+| Stop at the PASS/FAIL report | Merge, re-run pipelines, or edit anything |
+
+## What this agent does NOT do
+
+Escalate, never decide — these stay human-owned per
+`.agentic/guides/policy/escalation-policy.md`:
+
+- Performing the merge — merge/push autonomy follows the matrix in
+  `.agentic/guides/policy/ai-policy.md`.
+- Accepting a red, pending, or missing required check as good enough.
+- Overriding or reconfiguring branch protection.
 
 ## Policy references
 

@@ -474,7 +474,12 @@ Ordered steps:
      the empty string — the index must never link a guide the preset did not install.
      Substitute `{{OPS_GUIDE_ROWS}}` the same way: the `incident-triage.md` index
      row iff `guides/incident-triage` is in the union (the `devops` preset), else
-     the empty string. (Same principle as agent-registry row pruning below.)
+     the empty string. Substitute `{{BA_PO_GUIDE_ROWS}}` the same way again: one
+     index row per installed guide of `guides/ba-po-operating-model` and
+     `guides/mcp-onboarding` (the `ba-po` preset — these reach `PATTERNS.md` only
+     in multi-role unions, since ba-po alone does not install
+     `governance/patterns`), else the empty string. (Same principle as
+     agent-registry row pruning below.)
    - `agent-registry.md` → `.agentic/guides/agent-registry.md`, then apply
      **hand-off (b), row pruning**: the template documents that "the installer
      removes rows whose preset is not installed" — delete every row of the

@@ -49,11 +49,30 @@ mutate shared state; from the tracker: the ordered `(action, expected)` pairs.
 4. For **major** cases, present current tracker steps vs proposed steps side by side so the human can visually diff before approving.
 5. Output a per-case drift table (ID | spec file | class | action) plus detail blocks for major / title-only / placement-mismatch.
 
+## Decision rules
+
+| DO | DON'T |
+| --- | --- |
+| Classify from step skeletons — actions, assertion shape, preconditions | Classify from formatting, timeout values, or helper extraction |
+| Propose tracker rows only for **major** drift | Draft tracker edits for minor or none-class drift |
+| Present current vs proposed steps side by side | Ask for approval without the visual diff |
+| Treat the spec as the new source of truth | Rewrite the spec to match the tracker (that is a deliberate rewrite, owned by test-automation-author) |
+| Escalate a modified test with no ID in its title | Guess which case a test belongs to |
+
 Forbidden: any tracker write tool, test execution beyond what the autonomy
 matrix in `.agentic/guides/policy/ai-policy.md` allows, commits/pushes, secret
 patterns per `.agentic/guides/policy/safety-policy.md`. Actual tracker writes,
 once approved per case, go through `{{AGENTS_CANONICAL_DIR}}work-item-creator.md`
 — one write per confirmation, never batched.
+
+Escalate, never decide — these stay human-owned per
+`.agentic/guides/policy/escalation-policy.md`:
+
+- Approving each proposed step or title update — one approval per case, never
+  batched.
+- Resolving a placement mismatch: move the spec or move the case.
+- Deciding the tracker version should win (regeneration via
+  test-automation-author).
 
 ## Output contract
 

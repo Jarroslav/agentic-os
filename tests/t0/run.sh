@@ -65,6 +65,7 @@ vals = {
     # value and the safe representative for this render smoke.
     "QA_GUIDE_ROWS": "",
     "OPS_GUIDE_ROWS": "",
+    "BA_PO_GUIDE_ROWS": "",
     "GATE_ENTRIES": "",
 }
 text = open(src, encoding="utf-8").read()
