@@ -197,6 +197,105 @@ OPS_GUIDE_ROWS_TEXT = (
 )
 OPS_GUIDE_ROWS = OPS_GUIDE_ROWS_TEXT if "guides/incident-triage" in PRESET_TEMPLATE_IDS else ""
 
+# The five core guide rows, one per installed guide, fixed order — the index must
+# never link a guide the union did not install (SKILL.md Phase 4 step 4).
+CORE_GUIDE_ROW_TEXTS = [
+    ("guides/git-workflow",
+     "| Git workflow (branch flow, commit format, sync-before-work) | "
+     "[`.agentic/guides/standards/git-workflow.md`](.agentic/guides/standards/git-workflow.md) |\n"),
+    ("guides/code-quality",
+     "| Code quality (tests & gates, blind review, comments, dead code) | "
+     "[`.agentic/guides/standards/code-quality.md`](.agentic/guides/standards/code-quality.md) |\n"),
+    ("guides/quality-gates",
+     "| Quality gate commands (run/pass/fail/skip per gate) | "
+     "[`.agentic/guides/standards/quality-gates.md`](.agentic/guides/standards/quality-gates.md) |\n"),
+    ("guides/instruction-quality-rubric",
+     "| Instruction quality grading (evidence-accuracy rubric) | "
+     "[`.agentic/guides/standards/instruction-quality-rubric.md`]"
+     "(.agentic/guides/standards/instruction-quality-rubric.md) |\n"),
+    ("guides/qa-strategy-stub",
+     "| QA / test strategy | "
+     "[`.agentic/guides/standards/qa-strategy-stub.md`](.agentic/guides/standards/qa-strategy-stub.md) "
+     "*(replaced by `.agentic/guides/testing/qa-strategy.md` after `/sdlc:qa-init`)* |\n"),
+]
+CORE_GUIDE_ROWS = "".join(
+    row for tid, row in CORE_GUIDE_ROW_TEXTS if tid in PRESET_TEMPLATE_IDS)
+
+# CLAUDE.md governance block: promise only what this union installs. The
+# write-scope rule always renders; the hook citation only when the hook does.
+WRITE_SCOPE_RULE = (
+    "**Respect your `write_scope` absolutely.** Writing outside it is blocked by\n"
+    "   `.claude/hooks/write_scope_guard.py` and treated as an orchestration error."
+    if "hooks/write-scope-guard" in PRESET_TEMPLATE_IDS else
+    "**Respect your `write_scope` absolutely.** Writing outside it is an\n"
+    "   orchestration error — stop and escalate.")
+
+# The blind-review section installs only with the git review layer; the spawn
+# step names blind-code-reviewer only when that agent installs (devops has the
+# gate but not the reviewer). Ends in a blank line; empty collapses cleanly.
+_REVIEW_STEP_AGENT = (
+    "spawn\n`blind-code-reviewer` on the staged diff (pass a one-paragraph "
+    "functional brief only,\nnever your reasoning)")
+_REVIEW_STEP_HUMAN = (
+    "obtain an\nindependent review of the staged diff (this install carries no "
+    "`blind-code-reviewer`\nagent — a human or external reviewer approves)")
+REVIEW_GATE_SECTION = "" if not (
+    {"hooks/precommit-review-gate", "githooks/pre-commit"} <= PRESET_TEMPLATE_IDS
+) else (
+    "### Blind code review before every commit (MANDATORY)\n"
+    "\n"
+    "Every `git commit` must be preceded by a review pass over the exact\n"
+    "staged diff. Enforced by two independent layers:\n"
+    "\n"
+    "1. **PreToolUse(Bash) hook** — `python3 .claude/hooks/precommit_review_gate.py`\n"
+    "   blocks the commit (exit 2) unless the staged diff is approved.\n"
+    "2. **Native git `pre-commit` hook** — `.githooks/pre-commit` (installed via\n"
+    "   `bash scripts/install-git-hooks.sh`) blocks at the git level even outside the harness.\n"
+    "\n"
+    "Workflow: run the quality gates → stage exactly what you intend to commit → "
+    + ("%s" % (_REVIEW_STEP_AGENT
+               if "agents/blind-code-reviewer" in PRESET_TEMPLATE_IDS
+               else _REVIEW_STEP_HUMAN))
+    + " → address every Blocker/Major → record approval\n"
+    "(`python3 .claude/hooks/precommit_review_gate.py approve`) → commit. Any further\n"
+    "`git add` invalidates the stamp. Escape hatch for merge/mechanical commits only:\n"
+    "`[skip-review]` in the message or `SKIP_REVIEW=1 git commit …`.\n"
+    "\n")
+
+# The quality-gates section cites the gate catalogue guide, so it installs only
+# when that guide does. Contains {{GATE_COMMANDS}} — substituted before the
+# scalar/list pass in render(), so the nested placeholder still renders.
+QUALITY_GATES_SECTION = "" if "guides/quality-gates" not in PRESET_TEMPLATE_IDS else (
+    "### Quality gates\n"
+    "\n"
+    "Run before staging (commands catalogued in\n"
+    "`.agentic/guides/standards/quality-gates.md`):\n"
+    "\n"
+    "```\n"
+    "{{GATE_COMMANDS}}\n"
+    "```\n"
+    "\n")
+
+# Agent-registry "Multi-step work" bullet: name only installed commands.
+_HAS_PIPE = "commands/pipeline-orchestrator" in PRESET_TEMPLATE_IDS
+_HAS_DISPATCH = "commands/dispatch" in PRESET_TEMPLATE_IDS
+if _HAS_PIPE and _HAS_DISPATCH:
+    ORCHESTRATION_STYLE_RULE = (
+        "**Multi-step work** goes through the orchestration style your HITL mode "
+        "prescribes: `strict` installs default to `dispatch`; "
+        "`gated-autonomous`/`autonomous` default to `pipeline-orchestrator`.")
+elif _HAS_DISPATCH:
+    ORCHESTRATION_STYLE_RULE = (
+        "**Multi-step work** goes through `dispatch` — the only orchestration "
+        "command in this install; each step is user-invoked.")
+elif _HAS_PIPE:
+    ORCHESTRATION_STYLE_RULE = (
+        "**Multi-step work** goes through `pipeline-orchestrator` — the only "
+        "orchestration command in this install.")
+else:
+    ORCHESTRATION_STYLE_RULE = (
+        "**Multi-step work** is orchestrated by the human — this install has no "
+        "orchestration command.")
 # The ba-po guide rows, same emitted-iff-installed contract; per-guide because the
 # two guides are independent entries in the preset's template list.
 BA_PO_GUIDE_ROWS_PER_GUIDE = (
@@ -227,6 +326,12 @@ def render(text: str, is_json: bool, escape: bool) -> str:
     text = text.replace("{{GATE_ENTRIES}}", gate_entries())
     text = text.replace("{{QA_GUIDE_ROWS}}", QA_GUIDE_ROWS)
     text = text.replace("{{OPS_GUIDE_ROWS}}", OPS_GUIDE_ROWS)
+    text = text.replace("{{CORE_GUIDE_ROWS}}", CORE_GUIDE_ROWS)
+    text = text.replace("{{WRITE_SCOPE_RULE}}", WRITE_SCOPE_RULE)
+    # Before the scalar/list pass: the quality-gates section nests {{GATE_COMMANDS}}.
+    text = text.replace("{{REVIEW_GATE_SECTION}}", REVIEW_GATE_SECTION)
+    text = text.replace("{{QUALITY_GATES_SECTION}}", QUALITY_GATES_SECTION)
+    text = text.replace("{{ORCHESTRATION_STYLE_RULE}}", ORCHESTRATION_STYLE_RULE)
     text = text.replace("{{BA_PO_GUIDE_ROWS}}", BA_PO_GUIDE_ROWS)
     # --defaults accepts each capability's mode default, so no autonomy tightening.
     text = text.replace("{{AUTONOMY_OVERRIDES}}", AUTONOMY_OVERRIDES)

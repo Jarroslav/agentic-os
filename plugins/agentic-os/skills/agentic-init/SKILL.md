@@ -465,6 +465,29 @@ Ordered steps:
      (or replace an existing agentic-os block between markers); **never touch
      content outside the markers**. Journal owner `managed` (the block is the
      managed unit).
+     The block must promise only what this union installs (the same
+     must-not-index principle as `{{QA_GUIDE_ROWS}}`); three derived
+     substitutions enforce that:
+     - `{{WRITE_SCOPE_RULE}}` — when `hooks/write-scope-guard` is in the
+       union, the bullet citing `.claude/hooks/write_scope_guard.py` as the
+       enforcement layer; otherwise the same rule without the hook citation
+       (`**Respect your \`write_scope\` absolutely.** Writing outside it is an
+       orchestration error — stop and escalate.`). Never empty.
+     - `{{REVIEW_GATE_SECTION}}` — the "Blind code review before every
+       commit" section, **only when `hooks/precommit-review-gate` and
+       `githooks/pre-commit` are both in the union**; else the empty string
+       (a preset with no git layer must not mandate a pre-commit gate it
+       does not install). When the union has the gate but not
+       `agents/blind-code-reviewer` (the devops union), emit the variant
+       whose workflow step asks for an independent review of the staged
+       diff instead of instructing a spawn of the uninstalled agent. The
+       non-empty value ends in a blank line so the empty value collapses
+       without leaving double blank lines.
+     - `{{QUALITY_GATES_SECTION}}` — the "Quality gates" section, **only
+       when `guides/quality-gates` is in the union**; else the empty string.
+       Substitute it (and `{{REVIEW_GATE_SECTION}}`) **before** the
+       scalar/list pass — the section body contains `{{GATE_COMMANDS}}`,
+       which must still render.
    - `AGENTS.md`: absent ⇒ write the rendered file whole (owner `managed`).
      Present ⇒ wrap the rendered content in the same begin/end markers and
      append; content outside markers is untouched.
@@ -474,12 +497,19 @@ Ordered steps:
      the empty string — the index must never link a guide the preset did not install.
      Substitute `{{OPS_GUIDE_ROWS}}` the same way: the `incident-triage.md` index
      row iff `guides/incident-triage` is in the union (the `devops` preset), else
-     the empty string. Substitute `{{BA_PO_GUIDE_ROWS}}` the same way again: one
-     index row per installed guide of `guides/ba-po-operating-model` and
+     the empty string. (Same principle as agent-registry row pruning below.)
+     Substitute `{{CORE_GUIDE_ROWS}}` under the same contract: one index row per
+     guide of `git-workflow`, `code-quality`, `quality-gates`,
+     `instruction-quality-rubric`, `qa-strategy-stub` — **only the ones whose
+     `guides/<name>` ID is in the union**, in that fixed order, each row ending in
+     a newline. A union installing none of the five renders the empty string; the
+     static working-with-agents and evidence-integrity rows (installed by every
+     preset) keep the table non-empty.
+     Substitute `{{BA_PO_GUIDE_ROWS}}` under the same contract again: one index
+     row per installed guide of `guides/ba-po-operating-model` and
      `guides/mcp-onboarding` (the `ba-po` preset — these reach `PATTERNS.md` only
      in multi-role unions, since ba-po alone does not install
-     `governance/patterns`), else the empty string. (Same principle as
-     agent-registry row pruning below.)
+     `governance/patterns`), else the empty string.
    - `agent-registry.md` → `.agentic/guides/agent-registry.md`, then apply
      **hand-off (b), row pruning**: the template documents that "the installer
      removes rows whose preset is not installed" — delete every row of the
@@ -500,6 +530,17 @@ Ordered steps:
      does not apply to it the way it applies to the real rows above; pruning
      it here would delete the one anchor Phase 5 step 6 needs to append
      generated-agent rows later in this same install.
+     Substitute `{{ORCHESTRATION_STYLE_RULE}}` (the "Multi-step work" bullet
+     under § Orchestration rules) with the variant matching the installed
+     command set — the bullet must not name a default the union does not
+     install: both commands ⇒ the mode-dependent default rule (`strict`
+     installs default to `dispatch`; `gated-autonomous`/`autonomous` default
+     to `pipeline-orchestrator`); `commands/dispatch` only ⇒ "goes through
+     `dispatch` — the only orchestration command in this install; each step
+     is user-invoked."; `commands/pipeline-orchestrator` only ⇒ "goes through
+     `pipeline-orchestrator` — the only orchestration command in this
+     install."; neither ⇒ "is orchestrated by the human — this install has no
+     orchestration command." Never empty.
 5. **Policies, guides, sdlc adapters.** Render/copy per the map.
    **Existing-guide rule (hard)**: a destination guide file that already
    exists is **skipped** and journaled with `owner: "user"` and the *current*

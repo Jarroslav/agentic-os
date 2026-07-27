@@ -57,5 +57,5 @@ placeholder waiting to be filled.
 - **One owner per intent.** If two rows seem to match, the more specific intent wins; if still ambiguous, ask the dispatcher.
 - **Gates are read-only.** Reviewer/auditor/gate agents report; the parent (or a writer agent) owns the fix.
 - **Escalation is layered**, not improvised: hard hook denial → `## Blocking` → `## Non-blocking` → `## Escalate to human` — see `.agentic/guides/policy/escalation-policy.md`.
-- **Multi-step work** goes through the orchestration style your HITL mode prescribes: `strict` installs default to `dispatch`; `gated-autonomous`/`autonomous` default to `pipeline-orchestrator`.
+- {{ORCHESTRATION_STYLE_RULE}}
 - Binding process rules live in `.agentic/guides/` (policies under `policy/`, standards under `standards/`) — owned there, referenced everywhere else.

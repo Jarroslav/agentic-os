@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Governance docs promise only what the install delivers.
+
+The blind role-grading baseline (2026-07-27) found that presets which skip the
+git layer install governance text mandating enforcement they don't ship: a
+CLAUDE.md block citing `precommit_review_gate.py` / `.githooks/pre-commit` /
+`install-git-hooks.sh` none of which the union scaffolds, and a PATTERNS.md
+index linking guides the preset never installs. This check runs against any
+scaffolded target and asserts, on the rendered output rather than the
+templates:
+
+1. Every enforcement artifact the CLAUDE.md managed block cites —
+   `.claude/hooks/*.py`, `.githooks/*`, `scripts/*.sh` — exists in the target.
+2. Every `.agentic/guides/**/*.md` file link in PATTERNS.md resolves (italic
+   parentheticals are forward references, e.g. the post-`/sdlc:qa-init` path,
+   and are excluded — same rule as the T1 inline check).
+3. The agent-registry orchestration-rules bullet names no orchestration
+   command whose `.claude/commands/<name>.md` file is absent.
+
+Usage: check-governance-promises.py <TARGET_REPO>
+"""
+import re
+import sys
+from pathlib import Path
+
+TARGET = Path(sys.argv[1])
+problems = []
+
+# --- 1. CLAUDE.md managed block cites no uninstalled enforcement artifact ----
+claude = (TARGET / "CLAUDE.md").read_text(encoding="utf-8")
+block = re.search(r"<!-- agentic-os:begin.*?agentic-os:end -->", claude, re.S)
+if not block:
+    problems.append("CLAUDE.md: managed agentic-os block missing")
+else:
+    cited = set(re.findall(
+        r"(?:\.claude/hooks/[\w-]+\.py|\.githooks/[\w-]+|scripts/[\w-]+\.sh)",
+        block.group(0)))
+    for rel in sorted(cited):
+        if not (TARGET / rel).exists():
+            problems.append(
+                "CLAUDE.md cites an enforcement artifact that was not installed: %s" % rel)
+
+# --- 2. PATTERNS.md file links all resolve -----------------------------------
+patterns_path = TARGET / "PATTERNS.md"
+if not patterns_path.exists():
+    problems.append("PATTERNS.md not scaffolded")
+else:
+    body = patterns_path.read_text(encoding="utf-8")
+    current = re.sub(r"\*\([^)]*\)\*", "", body)  # drop forward references
+    for rel in sorted({m for m in re.findall(r"\.agentic/guides/[a-z0-9/-]+\.md",
+                                             current)}):
+        if not (TARGET / rel).exists():
+            problems.append("PATTERNS.md links a guide that was not installed: %s" % rel)
+
+# --- 3. registry names no absent orchestration command -----------------------
+registry_path = TARGET / ".agentic/guides/agent-registry.md"
+if registry_path.exists():
+    rules = registry_path.read_text(encoding="utf-8").split("## Orchestration rules")[-1]
+    for name in ("pipeline-orchestrator", "dispatch"):
+        if "`%s`" % name in rules and not (TARGET / (".claude/commands/%s.md" % name)).exists():
+            problems.append(
+                "agent-registry orchestration rules name `%s`, but "
+                ".claude/commands/%s.md was not installed" % (name, name))
+else:
+    problems.append(".agentic/guides/agent-registry.md not scaffolded")
+
+for p in problems:
+    print("  " + p)
+sys.exit(1 if problems else 0)
