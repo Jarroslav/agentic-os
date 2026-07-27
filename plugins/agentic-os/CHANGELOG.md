@@ -5,6 +5,51 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.6.0] — Governance docs promise only what the preset installs
+
+Second wave driven by the blind role-grading baseline (2026-07-27): presets
+that skip the git layer (portfolio, and partially ba-po/pm-delivery) used to
+install governance text mandating enforcement they don't deliver — a
+`CLAUDE.md` block citing `precommit_review_gate.py`, `.githooks/pre-commit`,
+`install-git-hooks.sh` and the `blind-code-reviewer` agent none of which those
+unions scaffold, a `PATTERNS.md` index linking uninstalled guides, and an
+agent-registry default naming a `pipeline-orchestrator` command read-only
+presets don't get. All of that is now conditional on the preset union, the
+same emitted-iff-installed contract `{{QA_GUIDE_ROWS}}` established.
+
+### Added
+
+- **`{{CORE_GUIDE_ROWS}}`** — the `PATTERNS.md` index rows for
+  `git-workflow`, `code-quality`, `quality-gates`,
+  `instruction-quality-rubric`, and `qa-strategy-stub` are now derived: one
+  row per guide actually in the union, fixed order, empty for a union that
+  installs none (the static working-with-agents / evidence-integrity rows
+  keep the table non-empty).
+- **`{{WRITE_SCOPE_RULE}}`**, **`{{REVIEW_GATE_SECTION}}`**,
+  **`{{QUALITY_GATES_SECTION}}`** — the `CLAUDE.md` governance block's
+  write-scope bullet cites `write_scope_guard.py` only when that hook
+  installs; the blind-review section renders only when
+  `hooks/precommit-review-gate` + `githooks/pre-commit` are in the union
+  (with a no-agent-spawn variant for unions carrying the gate but not
+  `agents/blind-code-reviewer`, i.e. devops); the quality-gates section
+  renders only when `guides/quality-gates` installs.
+- **`{{ORCHESTRATION_STYLE_RULE}}`** — the agent-registry "Multi-step work"
+  bullet now names only orchestration commands the union installs, instead
+  of unconditionally defaulting `gated-autonomous` installs to a
+  `pipeline-orchestrator` command that read-only presets don't get.
+- **`check-governance-promises.py`** + acceptance-matrix section T3e — for
+  portfolio-only, ba-po, devops, and developer scaffolds: every enforcement
+  artifact `CLAUDE.md` cites exists, every `PATTERNS.md` guide link
+  resolves, the registry's orchestration rules name no absent command — and
+  full installs verifiably keep the review-gate mandate.
+
+### Changed
+
+- `agentic-init` SKILL.md Phase 4 and `templates/VARIABLES.md` document the
+  five new derived variables and their substitution rules (section values
+  substitute before the scalar/list pass so the nested `{{GATE_COMMANDS}}`
+  still renders).
+
 ## [0.5.0] — Read-only incident triage for the devops role
 
 First role-capability wave driven by the blind role-grading baseline
