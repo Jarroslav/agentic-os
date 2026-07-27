@@ -57,10 +57,20 @@ Usage:
   check-provenance.py --build DIR...  (local, offline) rebuild the fingerprint
                                       store from corpus directories
   check-provenance.py --attest        record a clean tree's per-file measurements
-                                      to tests/lib/originality-attestation.json
+                                      to tests/lib/originality-attestation.json.
+                                      Refuses if the store is not the one the
+                                      current record was made against (different
+                                      salt, or a smaller corpus); --force to
+                                      re-baseline deliberately.
   check-provenance.py --verify-attestation
                                       re-check the tree against that record;
                                       needs no store, so it runs anywhere
+
+Environment:
+  PROVENANCE_SALT   the salt (else tests/lib/.provenance-salt)
+  PROVENANCE_STORE  path to the fingerprint store (else tests/lib/
+                    provenance-fingerprints.json) — lets any worktree attest
+                    against a store held in one place
 
 Exit 0 clean (or skipped / report-only / self-test pass), 1 findings."""
 from __future__ import annotations
@@ -75,7 +85,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-FP_PATH = ROOT / "tests/lib/provenance-fingerprints.json"
+# The store is git-ignored, so it lives in whichever working copy last ran
+# --build and is invisible to every other clone and worktree. PROVENANCE_STORE
+# points at it from anywhere, which is what lets a fresh worktree re-attest
+# without copying a secret-adjacent file around. Same escape hatch the salt
+# already has in PROVENANCE_SALT.
+FP_PATH = Path(os.environ.get("PROVENANCE_STORE")
+               or ROOT / "tests/lib/provenance-fingerprints.json")
 SALT_PATH = ROOT / "tests/lib/.provenance-salt"
 ATT_PATH = ROOT / "tests/lib/originality-attestation.json"
 
@@ -478,6 +494,28 @@ def self_test() -> None:
     report(m["line"] == 0.0 and m["max_run"] == 0, "self-test",
            "a mismatched salt matches nothing (so a silent 0% is a real signal)")
 
+    # 7. The attestation is only as good as the store it was made against, so
+    #    --attest's identity guard is a detector too and gets the same treatment.
+    base = {"salt_id": "aaaa", "store_id": "s1", "corpus_file_count": 1892}
+    same = {"salt_id": "aaaa", "store_id": "s1", "corpus_file_count": 1892}
+    blocking, _ = attest_guard(base, same)
+    report(not blocking, "self-test", "attest guard passes an identical store")
+
+    blocking, _ = attest_guard(base, dict(same, salt_id="bbbb"))
+    report(any("salt_id" in b for b in blocking), "self-test",
+           "attest guard blocks a different salt")
+
+    blocking, _ = attest_guard(base, dict(same, store_id="s2", corpus_file_count=1400))
+    report(any("smaller corpus" in b or "weakens" in b for b in blocking), "self-test",
+           "attest guard blocks a shrunken corpus")
+
+    blocking, notes = attest_guard(base, dict(same, store_id="s2", corpus_file_count=2000))
+    report(not blocking and any("grew" in n for n in notes), "self-test",
+           "attest guard allows a grown corpus, and says so")
+
+    blocking, _ = attest_guard(None, same)
+    report(not blocking, "self-test", "attest guard allows a first attestation")
+
     report(True, "self-test", "detectors present")
 
 
@@ -529,11 +567,62 @@ def _att_thresholds(cfg: dict) -> dict:
                                 "min_lines_gate", "hash_len")}
 
 
-def attest() -> None:
+def attest_guard(prev: dict | None, cfg: dict) -> tuple[list[str], list[str]]:
+    """Decide whether this store may replace the store the current attestation
+    was made against. Returns (blocking, notes).
+
+    --build already refuses to shrink the corpus, because a store rebuilt from a
+    subset quietly weakens every later scan. --attest is the same hazard one
+    layer up: re-attesting against a weaker or unrelated store produces a green
+    record that means nothing, and the diff looks routine because only the
+    hashes move. That is how two byte-identical files once passed. The identity
+    check was a step in a written procedure; a written procedure is not a
+    control, so it lives here now."""
+    blocking, notes = [], []
+    if not prev:
+        return blocking, notes                      # first attestation, nothing to compare
+    if prev.get("salt_id") != cfg["salt_id"]:
+        blocking.append(
+            "salt_id %s does not match the attested %s — measurements taken under "
+            "different salts are not comparable"
+            % (cfg["salt_id"], prev.get("salt_id")))
+    was, now = prev.get("corpus_file_count", 0), cfg["corpus_file_count"]
+    if now < was:
+        blocking.append(
+            "corpus is %d files vs %d when last attested — re-attesting against a "
+            "smaller corpus weakens the record" % (now, was))
+    elif now > was:
+        notes.append("corpus grew %d → %d files since the last attestation" % (was, now))
+    if prev.get("store_id") != cfg["store_id"] and not blocking:
+        notes.append("store rebuilt since the last attestation (store_id %s → %s)"
+                     % (str(prev.get("store_id"))[:12], cfg["store_id"][:12]))
+    return blocking, notes
+
+
+def _load_prev_attestation() -> dict | None:
+    if not ATT_PATH.exists():
+        return None
+    try:
+        return json.loads(ATT_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def attest(force: bool = False) -> None:
     if not FP_PATH.exists():
         print("  FAIL --attest needs a local fingerprint store (run --build first)")
         sys.exit(1)
     cfg = load_cfg()
+    prev = _load_prev_attestation()
+    guard_fail, guard_notes = attest_guard(prev, cfg)
+    for n in guard_notes:
+        print("  note %s" % n)
+    if guard_fail and not force:
+        for g in guard_fail:
+            print("  FAIL --attest refused: %s" % g)
+        print("       Rebuild the store from every corpus directory, or --force to "
+              "re-baseline deliberately.")
+        sys.exit(1)
     files = tracked_text_files()
     target, run_target = cfg["author_target"], cfg["max_run_target"]
     entries, blocking = {}, []
@@ -574,6 +663,19 @@ def attest() -> None:
         "files": dict(sorted(entries.items())),
     }
     ATT_PATH.write_text(json.dumps(doc, indent=1, sort_keys=False) + "\n", encoding="utf-8")
+    # Say what moved. The reviewer's job is to confirm these are the files they
+    # actually touched; making them count it out of a 400-entry JSON diff by hand
+    # is how a stray re-baseline slips through.
+    if prev:
+        old = prev.get("files", {})
+        added = sorted(set(entries) - set(old))
+        removed = sorted(set(old) - set(entries))
+        changed = sorted(k for k in set(old) & set(entries) if old[k] != entries[k])
+        print("  ok   attestation changes: %d added, %d changed, %d removed"
+              % (len(added), len(changed), len(removed)))
+        for label, group in (("+", added), ("~", changed), ("-", removed)):
+            for rel in group:
+                print("       %s %s" % (label, rel))
     print("  ok   attested %d tracked files against %d corpus files → %s"
           % (len(entries), cfg["corpus_file_count"], ATT_PATH.relative_to(ROOT)))
 
@@ -644,7 +746,7 @@ def main() -> None:
         self_test()
         sys.exit(fail)
     if "--attest" in args:
-        attest()
+        attest(force="--force" in args)
         sys.exit(fail)
     if "--verify-attestation" in args:
         verify_attestation()

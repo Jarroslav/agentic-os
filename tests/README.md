@@ -54,6 +54,16 @@ salted one-way hashes, is built locally from corpus directories, and is
 first `--build`. Keep it — a store read under the wrong salt would match nothing,
 so the check refuses to run rather than report a comfortable 0%.
 
+Because both are git-ignored they exist only in the working copy that last ran
+`--build`, which leaves every other clone and worktree unable to re-attest.
+Point at them instead of copying them around:
+
+```bash
+PROVENANCE_STORE=/path/to/provenance-fingerprints.json \
+PROVENANCE_SALT="$(cat /path/to/.provenance-salt)" \
+  python3 tests/lib/check-provenance.py --attest
+```
+
 That leaves CI unable to repeat the scan, since it has neither corpus nor store.
 So the maintainer records the result and CI holds the tree to it —
 `tests/lib/originality-attestation.json`, the same shape as
@@ -77,6 +87,15 @@ python3 tests/lib/check-provenance.py --verify-attestation      # what CI runs; 
 Pass every corpus directory in one `--build`: a rebuild replaces the store, so
 building from a subset would quietly weaken every later scan. The check refuses
 to shrink the corpus without `--force`.
+
+`--attest` guards the same hazard one layer up. Re-attesting against a weaker or
+unrelated store would produce a green record that means nothing, and the diff
+would look routine because only hashes move — so `--attest` refuses when the
+store's `salt_id` differs from the current record's, or when the corpus has
+fewer files than when it was last attested. A grown corpus is allowed and
+reported. `--force` re-baselines deliberately. Each run also prints which
+entries were added, changed, or removed: confirm that list is exactly the files
+you touched.
 
 ## What is automated vs manual
 

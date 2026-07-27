@@ -97,6 +97,15 @@ Each plugin versions independently, so releases are cut and tagged per plugin:
    `--attest` is the only way `--verify-attestation` can pass in CI, and it
    cannot be produced from a tree that has findings — so this step is where a
    release either confirms the tree is clean or stops.
+
+   Run `--require-store` first and read its result: `--attest` on its own would
+   still refuse a dirty tree, but the scan is what tells you the tree is
+   *clean* rather than merely re-baselined. `--attest` also refuses a store that
+   is not the one behind the current record (different salt, or a smaller
+   corpus), and prints exactly which entries it added, changed, or removed —
+   check that list matches the files you touched. From a worktree without the
+   store, set `PROVENANCE_STORE` and `PROVENANCE_SALT` rather than copying
+   either file (see [tests/README.md](tests/README.md)).
 4. Merge via PR as usual, then tag the merge commit and push the tag:
 
    ```bash
