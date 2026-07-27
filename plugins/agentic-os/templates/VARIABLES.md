@@ -104,6 +104,7 @@ a security boundary:
 | `{{GATE_ENTRIES}}` | **Derived** (not collected): the installer expands `{{GATE_COMMANDS}}` into one Markdown gate block each — the body of `quality-gates.md.tmpl § Gates`. Empty list ⇒ an "add a gate" note, never a blank registry. See `agentic-init/SKILL.md` Phase 4 step 5. | expanded from `{{GATE_COMMANDS}}` |
 | `{{QA_GUIDE_ROWS}}` | **Derived** (not collected): the `PATTERNS.md` index rows for `test-design-pattern.md` and `flaky-protocol.md`, emitted **only when those guides are installed** (the `qa` preset). Empty otherwise — a preset that does not install them must not index them. Each row ends in a newline; the empty value collapses without breaking the GFM table. | the two rows if `guides/test-design-pattern` + `guides/flaky-protocol` are in the union, else empty |
 | `{{OPS_GUIDE_ROWS}}` | **Derived** (not collected): the `PATTERNS.md` index row for `incident-triage.md`, emitted **only when that guide is installed** (the `devops` preset). Empty otherwise — same must-not-index rule and newline handling as `{{QA_GUIDE_ROWS}}`. | the row if `guides/incident-triage` is in the union, else empty |
+| `{{SEC_GUIDE_ROWS}}` | **Derived** (not collected): the `PATTERNS.md` index row for `threat-modeling.md`, emitted **only when that guide is installed** (the `security` preset). Empty otherwise — same must-not-index rule and newline handling as `{{QA_GUIDE_ROWS}}`. | the row if `guides/threat-modeling` is in the union, else empty |
 | `{{CORE_GUIDE_ROWS}}` | **Derived** (not collected): the `PATTERNS.md` index rows for `git-workflow.md`, `code-quality.md`, `quality-gates.md`, `instruction-quality-rubric.md`, and `qa-strategy-stub.md` — one row per guide, emitted **only for guides whose ID is in the union**, in that fixed order. Same must-not-index rule and newline handling as `{{QA_GUIDE_ROWS}}`; a union installing none of the five renders the empty string (the static working-with-agents / evidence-integrity rows keep the table non-empty). See `agentic-init/SKILL.md` Phase 4 step 4. | one row per installed guide of the five, else empty |
 | `{{WRITE_SCOPE_RULE}}` | **Derived** (not collected): the `CLAUDE.md` subagent-bootstrap write-scope bullet. Cites `.claude/hooks/write_scope_guard.py` as the enforcement layer **only when `hooks/write-scope-guard` is in the union**; otherwise states the rule without citing a hook that is not installed. Never empty. See `agentic-init/SKILL.md` Phase 4 step 4. | hook-citing bullet iff `hooks/write-scope-guard` is in the union, else the no-hook variant |
 | `{{REVIEW_GATE_SECTION}}` | **Derived** (not collected): the `CLAUDE.md` "Blind code review before every commit" section. Emitted **only when the git review layer is installed** (`hooks/precommit-review-gate` **and** `githooks/pre-commit` both in the union); a union with the gate but without `agents/blind-code-reviewer` (devops) gets the variant that does not instruct spawning the uninstalled agent. Empty otherwise — the governance block must never mandate a gate the install does not enforce. Value ends in a blank line (`\n\n`); the empty value collapses cleanly. See `agentic-init/SKILL.md` Phase 4 step 4. | full section iff gate hook + git hook (+ reviewer agent for the spawn step) are in the union, else empty |
@@ -228,11 +229,15 @@ empty; `AGENTIC_LINT_ON_SAVE_DISABLED=1` disables at runtime).
 `guides/instruction-quality-rubric`, `guides/working-with-agents`, `guides/qa-strategy-stub`,
 `guides/test-design-pattern`, `guides/flaky-protocol`, `guides/evidence-integrity`,
 `guides/incident-triage` (read-only triage standards: three-hypothesis rule,
-number+unit runtime bounds, allowlist-only tooling; pairs with `agents/incident-triage`).
+number+unit runtime bounds, allowlist-only tooling; pairs with `agents/incident-triage`),
+`guides/threat-modeling` (DFD-first STRIDE standards: per-element-type constraints,
+risk-distribution rule, model-in-scope gate; pairs with `agents/threat-modeler`).
 **Agents (core)** — `agents/dispatcher`, `agents/blind-code-reviewer`, `agents/security-reviewer`,
 `agents/instruction-auditor`, `agents/pr-pipeline-gate`, `agents/incident-triage`
 (read-only incident reporter: exactly-3 ranked hypotheses with confidence labels;
-fixes are human-executed; pairs with `guides/incident-triage`).
+fixes are human-executed; pairs with `guides/incident-triage`), `agents/threat-modeler`
+(scoped doc-writer, `write_scope: docs/security/**`; DFD-first threat modeling with
+proposed-only severities; pairs with `guides/threat-modeling`).
 **Agents (QA)** — `agents/test-case-generator`, `agents/test-automation-author`,
 `agents/test-case-syncer`, `agents/test-failure-triage` (read-only debugger: classify →
 ledger → root-cause; pairs with `guides/flaky-protocol`), `agents/work-item-creator`

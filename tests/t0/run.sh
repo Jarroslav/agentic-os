@@ -65,6 +65,7 @@ vals = {
     # value and the safe representative for this render smoke.
     "QA_GUIDE_ROWS": "",
     "OPS_GUIDE_ROWS": "",
+    "SEC_GUIDE_ROWS": "",
     "GATE_ENTRIES": "",
     # More installer-side conditionals (empty / minimal render-smoke values;
     # the union-dependent variants are exercised by refinstall in run-matrix).
