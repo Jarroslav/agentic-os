@@ -21,6 +21,7 @@ python3 tests/lib/check-skill-contract.py  # every skill ships SKILL.md + README
 python3 tests/lib/check-neutrality.py      # no PII / org names ship (hashed denylist + shape patterns)
 python3 tests/lib/check-html-refs.py       # every source path a shipped HTML page cites resolves
 python3 tests/lib/check-provenance.py --verify-attestation  # originality policy: the tree still matches its recorded measurements
+python3 tests/lib/check-changelog.py --self-test  # plugin content may not change without a changelog entry (CI adds --base <PR base>)
 ```
 
 ## Originality check

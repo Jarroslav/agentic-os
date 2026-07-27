@@ -67,6 +67,14 @@ add, edit, or remove a file under `plugins/**`, you must also run
   (`tests/lib/check-html-refs.py`): `plugins/agentic-sdlc/sdlc.html` names a
   source file per inventory entry and fetches it on click, so a rename leaves a
   dead link that nothing else would notice. Every cited path is resolved here.
+- **A plugin's shipped content carries a changelog entry**
+  (`tests/lib/check-changelog.py`): the plugins are distributed — users install
+  what is on `main`, and the CHANGELOG is the only place they learn what moved.
+  A PR that changes anything under `plugins/<name>/` must also change that
+  plugin's `CHANGELOG.md`. This runs on pull requests only, since it needs a
+  base ref to diff against. For a change a user genuinely cannot observe, apply
+  the **`no-changelog`** label; reach for it rarely, because a typo in shipped
+  text is still text a user reads.
 - **The originality attestation still holds**
   (`tests/lib/check-provenance.py --verify-attestation`): every tracked text
   file's hash must match `tests/lib/originality-attestation.json`, the recorded
