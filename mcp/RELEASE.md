@@ -97,15 +97,23 @@ workflow's own GitHub Actions OIDC token — no PAT, no additional secret.
 
 ## Each release
 
-1. **Bump the version in all three files, together:**
+1. **Bump the version in all five files, together:**
    - `mcp/package.json` → `version`
    - `mcp/server.json` → `version` (and `packages[0].version`)
    - `mcp/manifest.json` → `version`
+   - `mcp/package-lock.json` → `version` (twice: the root and the `""` entry)
+   - `mcp/src/index.ts` → the hardcoded `version` in the server identity
 
-   `mcp/tests/package.test.ts` asserts all three agree with each other (and
-   with `server.json`'s `name` / `packages[0].identifier` against
-   `package.json`'s `mcpName` / `name`) — a mismatch fails `npm test` before
-   you ever reach the tag.
+   `mcp/tests/package.test.ts` asserts the first three agree with each other
+   (and with `server.json`'s `name` / `packages[0].identifier` against
+   `package.json`'s `mcpName` / `name`). The last two are asserted elsewhere and
+   are easy to miss: `src/index.ts` hardcodes what the server reports over the
+   wire, so bumping `package.json` alone leaves the contract test red, and a
+   stale lockfile version makes `npm ci` disagree with the manifest. A mismatch
+   in any of them fails `npm test` before you ever reach the tag.
+
+   Verify with `grep -rn "<old-version>" mcp --include="*.json" --include="*.ts"`
+   (excluding `node_modules` and `dist`) — the count should reach zero.
 2. **Move `mcp/CHANGELOG.md`'s `[Unreleased]` entries under the new version
    heading**, dated, following Keep a Changelog.
 3. **If `plugins/**` changed since the last release, refresh the originality

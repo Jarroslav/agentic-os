@@ -8,6 +8,21 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.2]
+
+### Changed
+- **Served content refreshed.** `dist/content/` now matches the plugins as they
+  stand: `agentic-os` 0.3.0 — the `ba-po` role made first-class (its own
+  operating-model and MCP-onboarding guides), the new MCP access screen in the
+  `/agentic-init` interview, and the adapter statuses in the generated
+  `sdlc/project.md` now derived rather than asserted. 330 files indexed.
+
+  0.2.1 shipped before those landed, so `agentic-os://file/...` reads against it
+  return the earlier text for the affected paths — and the `ba-po` guides do not
+  exist there at all. Prefer 0.2.2.
+
+  No server code changed; this release exists to publish the content.
+
 ## [0.2.1]
 
 ### Changed
