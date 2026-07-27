@@ -66,6 +66,13 @@ vals = {
     "QA_GUIDE_ROWS": "",
     "OPS_GUIDE_ROWS": "",
     "GATE_ENTRIES": "",
+    # More installer-side conditionals (empty / minimal render-smoke values;
+    # the union-dependent variants are exercised by refinstall in run-matrix).
+    "CORE_GUIDE_ROWS": "",
+    "WRITE_SCOPE_RULE": "Respect your write_scope absolutely.",
+    "REVIEW_GATE_SECTION": "",
+    "QUALITY_GATES_SECTION": "",
+    "ORCHESTRATION_STYLE_RULE": "Multi-step work is orchestrated by the human.",
 }
 text = open(src, encoding="utf-8").read()
 for k, v in vals.items():

@@ -212,6 +212,33 @@ else
   bad "incident-triage guide isolated from developer-only install"
 fi
 
+echo "== T3e minimal-union governance promises =="
+# The blind role-grading baseline (2026-07-27) found the portfolio scaffold's
+# governance docs mandating a pre-commit review gate the preset never installs.
+# The CLAUDE/PATTERNS/registry conditionals must render a minimal install whose
+# promises all resolve — and must NOT strip the mandate from full installs.
+PORT_WORK="$WORK/portfolio-only"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$PORT_WORK" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$PORT_WORK" \
+  --presets portfolio --mcp-state without-mcp >/dev/null
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$PORT_WORK" \
+  && ok "portfolio-only governance promises all resolve" || bad "portfolio-only governance promises all resolve"
+# with the core guide rows empty, the generated-guide marker must still be a real row
+python3 "$ROOT/tests/lib/check-patterns.py" "$PORT_WORK" && ok "portfolio PATTERNS.md marker row intact" || bad "portfolio PATTERNS.md marker row intact"
+assert "portfolio CLAUDE.md drops the review-gate mandate" "! grep -q 'precommit_review_gate' '$PORT_WORK/CLAUDE.md'"
+assert "portfolio registry names no pipeline-orchestrator default" "! grep -q 'default to .pipeline-orchestrator' '$PORT_WORK/.agentic/guides/agent-registry.md'"
+# the same check must hold on every other scaffold this harness produces …
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$FRESH" \
+  && ok "developer governance promises all resolve" || bad "developer governance promises all resolve"
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$ROLE_WORK/ba-po" \
+  && ok "ba-po governance promises all resolve" || bad "ba-po governance promises all resolve"
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$OPS_WORK" \
+  && ok "devops governance promises all resolve" || bad "devops governance promises all resolve"
+# … while full installs keep the mandate, and the devops variant keeps the gate
+# without instructing a spawn of the uninstalled blind-code-reviewer agent.
+assert "developer CLAUDE.md keeps the review-gate mandate" "grep -q 'Blind code review before every commit' '$FRESH/CLAUDE.md' && grep -q 'blind-code-reviewer' '$FRESH/CLAUDE.md'"
+assert "devops CLAUDE.md keeps the gate, not the reviewer spawn" "grep -q 'precommit_review_gate' '$OPS_WORK/CLAUDE.md' && ! grep -q 'spawn' <(sed -n '/Blind code review/,/Human-gated/p' '$OPS_WORK/CLAUDE.md')"
+
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.
 # (The fixture never commits the scaffold, so `git status` is the wrong probe —
