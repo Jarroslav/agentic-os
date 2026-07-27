@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-27T08:38:22Z",
+ "attested_at": "2026-07-27T09:29:13Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -41,8 +41,8 @@
    "max_run": 0
   },
   ".github/workflows/ci.yml": {
-   "sha256": "dc3ec1aacbe60a651a1e458a53c181c4dfe8c6d05f084dac20394cb2328672a5",
-   "line": 0.0667,
+   "sha256": "986e40f26795ad0213c42c0516a3ea7abc6552a45af7d7161d878d82e2d44fbe",
+   "line": 0.0517,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -65,7 +65,7 @@
    "max_run": 0
   },
   "CONTRIBUTING.md": {
-   "sha256": "814ba8d2e4e5b7bcef9981adef001606a4df303dd5dde767b77795c564e1704d",
+   "sha256": "1b5107a070452959e07cd7ce482327f296a7a611c490069c3888d56cc6b98a32",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2363,7 +2363,7 @@
    "max_run": 0
   },
   "tests/README.md": {
-   "sha256": "0dbce20bf0eb9352fd782b898b81b9b64aa20f619e7e28bcd69ef7b3e2013262",
+   "sha256": "3d99f56f6188dd1269338e18108561b77329b8d1eca357a9d1385cd1d126fb07",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2407,6 +2407,12 @@
   "tests/lib/check-ba-po-operating-model.py": {
    "sha256": "d5d572caf0bae62eab36b7a36dce4dd8fde3150ab3ab4a26bae1e620528b4896",
    "line": 0.0893,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/lib/check-changelog.py": {
+   "sha256": "b8f4a5dd055b1656b7fd2bef67db5f0428612ec24cdb5bf4b50195ba9fbfc575",
+   "line": 0.0455,
    "shingle": 0.0,
    "max_run": 0
   },

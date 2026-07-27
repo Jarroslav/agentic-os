@@ -12,8 +12,11 @@ jobs:
   gate:
     runs-on: ubuntu-latest
     steps:
+      # Full history: the changelog gate diffs against the PR base, which a
+      # shallow clone has no merge base for.
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
 
       - name: Hook unit tests (t0)
         run: |
@@ -28,6 +31,20 @@ jobs:
 
       - name: Skill contract check
         run: python3 tests/lib/check-skill-contract.py
+
+      # A plugin's shipped content may not change without a changelog entry —
+      # users install what is on main and the changelog is the only place they
+      # learn what moved. The self-test runs everywhere; the diff itself needs a
+      # base ref, so it is pull_request-only. Apply the `no-changelog` label for
+      # a change a user genuinely cannot observe.
+      - name: Changelog entry for plugin changes
+        run: python3 tests/lib/check-changelog.py --self-test
+
+      - name: Changelog entry required (PR)
+        if: >-
+          github.event_name == 'pull_request' &&
+          !contains(github.event.pull_request.labels.*.name, 'no-changelog')
+        run: python3 tests/lib/check-changelog.py --base "origin/${{ github.base_ref }}"
 
       - name: Neutrality & PII scan
         run: |
