@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-27T12:27:00Z",
+ "attested_at": "2026-07-27T12:46:19Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -125,7 +125,7 @@
    "max_run": 0
   },
   "mcp/CHANGELOG.md": {
-   "sha256": "75a876c5899938520298f2d17373253481de1ab618d70f9ae142a2b443e68c0e",
+   "sha256": "b5d67690f8c152da0b432d42adb8a96d7108bf51b763349969c8901084933e34",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -137,7 +137,7 @@
    "max_run": 0
   },
   "mcp/RELEASE.md": {
-   "sha256": "0f678bfa93de0eb466199967fc07ea146107ea5ddafd2d01bbfd254da9cab98a",
+   "sha256": "13d9015c34437398c745abd7104ec636ff99c3716a6ae14e4f0a884ab8e2c9c9",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -149,13 +149,13 @@
    "max_run": 0
   },
   "mcp/manifest.json": {
-   "sha256": "635827448b04e85cc989473e01b9932cbbc2b908ef3406522095f6cee43c3401",
+   "sha256": "9e778444e52366b7bc46cf56f09982540244e632498617aeca7226b0a8bbf58e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "mcp/package.json": {
-   "sha256": "f2d64fbd75d76df5371bdf38d07e4c92e64307db8852aa60680dd2d1668dd0ed",
+   "sha256": "b6fb7b15ae6a91d52b13dea6b31a1182799deeacc5ffb26e1eb9519d1b467501",
    "line": 0.1818,
    "shingle": 0.0,
    "max_run": 0
@@ -185,7 +185,7 @@
    "max_run": 0
   },
   "mcp/server.json": {
-   "sha256": "d78a268f9708aa83c5a5a21533e9aea31634ec4390436e8b323de0da87e30a86",
+   "sha256": "dc1c81747bfb016ff5434fb3b3d5cd2ae03a15718b6c1a005e20190aa764d23e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -203,7 +203,7 @@
    "max_run": 0
   },
   "mcp/src/index.ts": {
-   "sha256": "38c492adaa74b1e60c9c9916b32e64fe97f41b43f92aa7004f4aa1958a7d4008",
+   "sha256": "7bda69ecac3e392772a3f5f48ba6081a7ada10cb3bc26c9e654b1aab70656963",
    "line": 0.0204,
    "shingle": 0.0,
    "max_run": 0
