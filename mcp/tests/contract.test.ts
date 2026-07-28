@@ -331,7 +331,7 @@ describe('list_presets', () => {
       presets: Array<{ name: string; uri: string; hitl_default: string }>;
     };
     expect(presets.map(p => p.name).sort()).toEqual([
-      'architect', 'ba-po', 'developer', 'devops',
+      'architect', 'ba-po', 'data', 'developer', 'devops',
       'pm-delivery', 'portfolio', 'qa', 'security',
     ]);
   });

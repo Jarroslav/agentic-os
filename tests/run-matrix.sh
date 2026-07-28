@@ -277,6 +277,22 @@ python3 "$ROOT/tests/lib/check-governance-promises.py" "$QA_WORK" \
 python3 "$ROOT/tests/lib/check-governance-promises.py" "$SEC_WORK" \
   && ok "security-only governance promises all resolve" || bad "security-only governance promises all resolve"
 
+echo "== T3h data pipeline design =="
+DATA_WORK="$WORK/data-only"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$DATA_WORK" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$DATA_WORK" \
+  --presets data --mcp-state without-mcp >/dev/null
+python3 "$ROOT/tests/lib/check-data-pipeline-design.py" "$DATA_WORK" \
+  "$PLUGIN/presets/evals/data.json" && ok "data pipeline-design pair + eval scenarios" || bad "data pipeline-design pair + eval scenarios"
+if test ! -e "$DEV_ONLY/.agentic/guides/standards/data-pipeline-design.md"; then
+  ok "data guide isolated from developer-only install"
+else
+  bad "data guide isolated from developer-only install"
+fi
+assert "data-only ai-policy active mode is strict" "[ \"\$(active_mode '$DATA_WORK')\" = strict ]"
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$DATA_WORK" \
+  && ok "data-only governance promises all resolve" || bad "data-only governance promises all resolve"
+
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.
 # (The fixture never commits the scaffold, so `git status` is the wrong probe —

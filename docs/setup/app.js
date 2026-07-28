@@ -132,6 +132,20 @@
         { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
         { name: 'role-memory', desc: 'Durable per-role memory across sessions' }
       ] },
+    { id: 'data', label: 'Data Engineer', longLabel: 'Data Engineers', icon: 'ph-database', guided: false, sdlc: false,
+      time: '~20–30 min', presets: 'data', hitl: 'strict HITL', orch: 'dispatcher',
+      tagline: 'Layered pipeline design with counted row math and force-tested DQ checks — writes only docs/data/, recommend-only queries.',
+      note: 'Installs the pipeline-designer (doc-writer scoped to docs/data/) and dispatcher routing. Classifications always land as proposed — you confirm them; verification queries are handed to you or CI to run.',
+      phrases: [
+        { say: 'Design the orders ingest pipeline', get: 'Layer diagram + row-math equations + DQ test plans + lineage map', skill: 'pipeline-designer' },
+        { say: 'All checks passed first run — mark them verified', get: 'Refusal — a check that has never failed has never been tested', skill: 'pipeline-designer' },
+        { say: 'Tag the customer table PII', get: 'Proposed-only classification, escalated for your confirmation', skill: 'pipeline-designer' },
+        { say: 'Turn this data request into requirements', get: 'Structured requirements doc', skill: 'requirements-intake' }
+      ],
+      skills: [
+        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'role-memory', desc: 'Durable per-role memory across sessions' }
+      ] },
     { id: 'portfolio', label: 'Portfolio / Program', longLabel: 'Portfolio & Program Managers', icon: 'ph-chart-line-up', guided: true, sdlc: false,
       time: '~45–60 min', presets: 'portfolio', hitl: 'gated-autonomous', orch: 'dispatcher',
       tagline: 'Run status, knowledge health and durable cross-session memory — read/report-only, no git layer.',
@@ -609,7 +623,7 @@
       '<h4 style="margin-bottom:12px">What your assistant can do with it</h4>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">' +
       capCard('ph-magnifying-glass', 'Search the docs', 'Governance, SDLC and QE methodology, queryable in place.') +
-      capCard('ph-users-three', 'List role presets', 'All eight roles and the 28 QE blueprints, with what each installs.') +
+      capCard('ph-users-three', 'List role presets', 'All nine roles and the 28 QE blueprints, with what each installs.') +
       capCard('ph-list-checks', 'Plan an install', 'Turn a role into a concrete install plan for your setup.') +
       capCard('ph-stethoscope', 'Audit an install', 'Check an existing .agentic/ install against the methodology.') + '</div>' +
 

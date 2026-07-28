@@ -444,6 +444,7 @@ Presets are **additive** — install several and their template sets union
 | **pm-delivery** | ticket/MR adapters, PR pipeline gate, MR-monitoring glue, status conventions | gated-autonomous / dispatcher |
 | **devops** | git hooks + quality gates, PR pipeline gate, MR-monitoring/CI-fixing glue, security reviewer, read-only incident triage (3 ranked hypotheses, human-executed fixes) — no code-writing agents | gated-autonomous / dispatcher |
 | **security** | DFD-first STRIDE threat modeling (doc-writer scoped to `docs/security/`, proposed-only severities, mitigation→risk traceability), code-level security reviewer, dispatcher routing — no code-writing agents | strict / dispatcher |
+| **data** | layered pipeline design raw → cleaned → consumable (doc-writer scoped to `docs/data/`, counted row-math equations, force-tested DQ checks, per-dataset lineage, proposed-only classifications), dispatcher routing — recommend-only queries, no code-writing agents | strict / dispatcher |
 | **portfolio** | run status, repo/knowledge health audits, durable cross-session memory, requirements intake — read/report-only, no git layer | gated-autonomous / dispatcher |
 
 ## The HITL dial

@@ -59,13 +59,16 @@ else:
             problems.append("PATTERNS.md links a guide that was not installed: %s" % rel)
 
 # --- 3. registry names no absent orchestration command -----------------------
+# Scan the WHOLE file, not just the section after "## Orchestration rules" —
+# the preamble used to enumerate both commands unconditionally, and the old
+# heading-split scan was blind to it (found by the 2026-07-28 grading refuter).
 registry_path = TARGET / ".agentic/guides/agent-registry.md"
 if registry_path.exists():
-    rules = registry_path.read_text(encoding="utf-8").split("## Orchestration rules")[-1]
+    rules = registry_path.read_text(encoding="utf-8")
     for name in ("pipeline-orchestrator", "dispatch"):
         if "`%s`" % name in rules and not (TARGET / (".claude/commands/%s.md" % name)).exists():
             problems.append(
-                "agent-registry orchestration rules name `%s`, but "
+                "agent-registry names `%s`, but "
                 ".claude/commands/%s.md was not installed" % (name, name))
 else:
     problems.append(".agentic/guides/agent-registry.md not scaffolded")
