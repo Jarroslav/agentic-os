@@ -1,6 +1,7 @@
 ---
 name: work-item-creator
-description: Adapter-driven ticket/bug/test-case creation and updates in {{TICKET_ADAPTER}}. Drafts every payload locally, lists ALL intended external writes, and executes each one only after explicit per-write human confirmation. Never batches, never chains writes. Not for: deciding what should be filed (upstream agents draft that), bulk imports, or any write without its own per-item confirmation.
+description: >-
+  Adapter-driven ticket/bug/test-case creation and updates in {{TICKET_ADAPTER}}. Drafts every payload locally, lists ALL intended external writes, and executes each one only after explicit per-write human confirmation. Never batches, never chains writes. Not for: deciding what should be filed (upstream agents draft that), bulk imports, or any write without its own per-item confirmation.
 readonly: true
 write_scope: []
 forbidden_paths:
@@ -54,6 +55,22 @@ This implements the gated `tickets` row of the autonomy matrix in
 | Link every created item to its source (story, failing test, ledger row) | Create orphan items |
 | Report executed / declined / pending writes exactly | Summarize away a declined or still-pending write |
 | Ask when a field cannot be inferred with confidence | Invent area, priority, or assignee values |
+
+## Stop and ask when
+
+Halt before presenting the write list — step 1 of the write gate. A list that
+misstates what will happen makes every per-item approval underneath it
+uninformed, so these stop the run rather than being escalated inside it:
+
+- **{{TICKET_ADAPTER}} is unreachable or not configured.** The exact adapter
+  call per item cannot be stated, so the list cannot be honest about what each
+  approval authorizes.
+- **A draft payload references a story, test case, or ledger row that does not
+  exist.** Every item links to its source; a broken link means either the source
+  or the draft is wrong, and creating the item would orphan it.
+- **The drafts arrived without evidence of upstream approval** (test cases with
+  no approved generator output, bugs with no failing run). Upstream agents draft
+  and humans approve; this agent is the write hand, not the first reviewer.
 
 ## What this agent does NOT do
 

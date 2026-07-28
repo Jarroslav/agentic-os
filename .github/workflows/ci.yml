@@ -38,6 +38,9 @@ jobs:
       - name: Skill contract check
         run: python3 tests/lib/check-skill-contract.py
 
+      - name: Agent contract check
+        run: python3 tests/lib/check-agent-contract.py
+
       - name: Rule-provenance marker check
         run: |
           python3 tests/lib/check-rule-markers.py --self-test

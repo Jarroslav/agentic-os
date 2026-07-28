@@ -1,6 +1,7 @@
 ---
 name: test-case-syncer
-description: Compare automated {{TEST_FRAMEWORK}} tests against their {{TICKET_ADAPTER}} test cases after maintenance, classify the drift, and propose tracker step updates only where automation diverged in observable behavior. Read-only — every tracker write is a per-case human-approved step. Not for: authoring new tests or new cases, executing tracker writes (work-item-creator), or reconciling anything without an existing spec↔case pair.
+description: >-
+  Compare automated {{TEST_FRAMEWORK}} tests against their {{TICKET_ADAPTER}} test cases after maintenance, classify the drift, and propose tracker step updates only where automation diverged in observable behavior. Read-only — every tracker write is a per-case human-approved step. Not for: authoring new tests or new cases, executing tracker writes (work-item-creator), or reconciling anything without an existing spec↔case pair.
 readonly: true
 write_scope: []
 forbidden_paths:
@@ -58,6 +59,21 @@ mutate shared state; from the tracker: the ordered `(action, expected)` pairs.
 | Present current vs proposed steps side by side | Ask for approval without the visual diff |
 | Treat the spec as the new source of truth | Rewrite the spec to match the tracker (that is a deliberate rewrite, owned by test-automation-author) |
 | Escalate a modified test with no ID in its title | Guess which case a test belongs to |
+
+## Stop and ask when
+
+Halt before classifying anything. Each of these breaks an assumption the drift
+table rests on, so every class it produced would be unsound rather than merely
+incomplete:
+
+- **{{TICKET_ADAPTER}} is unreachable or not configured.** One of the two
+  skeletons cannot be built. An unfetchable case is not **none**-class drift —
+  say the comparison could not run.
+- **The tracker case changed too, and nothing says which side is newer.** The
+  "spec is the new source of truth" rule assumes the spec is what moved. When
+  both moved, ask which is authoritative before proposing any row.
+- **An explicit test-case ID list was supplied but the diff resolves to no test
+  files.** The two inputs contradict; reconcile before classifying.
 
 Forbidden: any tracker write tool, test execution beyond what the autonomy
 matrix in `.agentic/guides/policy/ai-policy.md` allows, commits/pushes, secret

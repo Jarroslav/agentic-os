@@ -67,7 +67,7 @@
         { name: 'repo-audit-guides', desc: 'Documentation health check (via portfolio)' }
       ] },
     { id: 'architect', label: 'Architect', longLabel: 'Architects', icon: 'ph-compass', guided: false, sdlc: true, gen: true,
-      time: '~20–30 min', presets: 'architect', hitl: 'gated-autonomous', orch: 'pipeline',
+      time: '~20–30 min', presets: 'architect', hitl: 'gated-autonomous', orch: 'dispatcher',
       tagline: 'Governance and instruction quality: agent registry, scorecard spawn gate, generated architecture guides.',
       note: 'The instruction-auditor scores every agent contract against the quality rubric before it can be spawned; stack guides are generated from live repo discovery, not guessed.',
       phrases: [
