@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-28T07:17:39Z",
+ "attested_at": "2026-07-28T07:40:27Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "d638bd91bb4c748ecd849ed193bb92f7db83a7ab3fad6ff2d16fc1205a401e70",
+   "sha256": "fb13ed490621bc6011f9ff8a03d8d96b275489bcdbbb3f761d0f3f375a64b7d1",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -791,7 +791,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/governance/agent-registry.md.tmpl": {
-   "sha256": "3351013f1acf49b68c5416f42bca38e3f9c7d30b4e5632f5533e40c138263127",
+   "sha256": "03ae6fb5a4eae77bc831605825f4258241b0d6a8a69a6acb6fe698ac6fa4f45a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2537,8 +2537,8 @@
    "max_run": 0
   },
   "tests/lib/check-governance-promises.py": {
-   "sha256": "27a65afc4b237e56286677f417fd057a2c1a3170c4342193e91e63dfa718b714",
-   "line": 0.0345,
+   "sha256": "5d54379a683298ef02c6bc14bcc0d3ef709f6a8a6d286fcee4ef15ee6834382a",
+   "line": 0.0328,
    "shingle": 0.0,
    "max_run": 0
   },

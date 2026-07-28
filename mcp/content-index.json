@@ -62,7 +62,7 @@
   "plugins/agentic-os/templates/governance/AGENTS.md.tmpl": "b9e8c8c15f3c61ac1d001a201b0db20d4ee7e477257257367735079e07b56a0c",
   "plugins/agentic-os/templates/governance/CLAUDE.section.md.tmpl": "423d66f39f970a8879839851e609bdd34d240768e0c5cc385fe00aba5b899213",
   "plugins/agentic-os/templates/governance/PATTERNS.md.tmpl": "9ea8367cdb99002701bccd70ada48ec7ccb6129a14c5ef6b7d9b0b061674f832",
-  "plugins/agentic-os/templates/governance/agent-registry.md.tmpl": "3351013f1acf49b68c5416f42bca38e3f9c7d30b4e5632f5533e40c138263127",
+  "plugins/agentic-os/templates/governance/agent-registry.md.tmpl": "03ae6fb5a4eae77bc831605825f4258241b0d6a8a69a6acb6fe698ac6fa4f45a",
   "plugins/agentic-os/templates/guides/standards/ba-po-operating-model.md": "1dd9de63493fea84fb40cbe265d317ed34d29e7646f47ef8d327e4b05ecbe13e",
   "plugins/agentic-os/templates/guides/standards/code-quality.md": "be3b46d8207badcea2e818658c55bba938ab8d83608376bf2c8b815ab2c56cd9",
   "plugins/agentic-os/templates/guides/standards/data-pipeline-design.md": "d10c3fa1f53ddaa5577741cdb7bd970e9d5bf170464bb3b3d1925bec60981a6e",

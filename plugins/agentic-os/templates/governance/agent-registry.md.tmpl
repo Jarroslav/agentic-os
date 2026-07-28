@@ -8,9 +8,10 @@
 
 Canonical **agent** contracts live in `{{AGENTS_CANONICAL_DIR}}`; their
 harness-specific files (`.claude/agents/`, `.claude/commands/<agent>.md`) are thin
-pointers. The two **orchestration commands** (`pipeline-orchestrator`, `dispatch`)
-are the exception: they are commands, not agents — their canonical body lives
-directly in `.claude/commands/`.
+pointers. Installed **orchestration commands** are the exception: they are
+commands, not agents — their canonical body lives directly in
+`.claude/commands/` (which commands this install carries is stated under
+§ Orchestration rules below).
 
 ## Orchestration matrix (intent → owner)
 
