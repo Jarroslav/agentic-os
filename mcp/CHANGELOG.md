@@ -8,6 +8,12 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.10]
+
+### Changed
+- **Served content refreshed** for `agentic-os` 0.12.0: skill-owned registry
+  rows, eval fixtures for all ten presets, and ten-role docs parity.
+
 ## [0.2.9]
 
 ### Changed

@@ -5,6 +5,47 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.12.0] — Every dot connected: skill routing, full-union proof, ten-role parity
+
+The post-role-wave consolidation: the routing matrix now covers skill-owned
+intents, every preset has a graded eval fixture, and the largest install shape
+is finally tested.
+
+### Added
+
+- **Skill-owned rows in the agent-registry matrix** — six intents whose owner
+  is an agentic-sdlc skill rather than an agent or command (story drafting →
+  `product-owner`; requirements normalization → `requirements-intake`;
+  commit/push/MR → `mr-creator`; MR watching → `mr-watch`; run inspection →
+  `sdlc-status`; knowledge audits → `repo-audit-guides`), each with accurate
+  preset parentheticals and human-gate notes. Installer spec and the reference
+  executor prune them against the union's `sdlc_skills` — ba-po, pm-delivery,
+  portfolio, and architect intents no longer dead-end in dispatcher
+  escalation.
+- **Preset eval fixtures for the five remaining roles** (developer, qa,
+  architect, pm-delivery, portfolio) — eight counted scenarios each, plus the
+  generic `tests/lib/check-preset-evals.py`, which requires a well-formed
+  fixture for **every** preset (wired into the acceptance matrix).
+- **T3j: the full ten-preset union install** — previously the largest union
+  ever tested was two presets. T3j installs all ten and asserts governance
+  promises resolve, active mode is strict (strictest-wins), PATTERNS/registry
+  integrity, all six role-specific guides present, every agent and skill row
+  in the matrix, zero unrendered placeholders, and skill-row pruning in both
+  directions (present in the union, absent from a developer-only scaffold).
+
+### Changed
+
+- Ten-role parity across every remaining seven-role surface: README intro,
+  Start-here note, "Using it, by role" (three new bullets + incident triage on
+  devops + the no-code note), Glossary, FAQ, MCP README examples table,
+  setup-page meta description, and the stale partial enumerations in
+  agentic-init/agentic-upgrade/stack-discovery/registry template/ROADMAP/
+  tests docs (portfolio joins the git-layer exclusion list; "any no-code
+  union" replaces the qa/ba-po/pm-delivery-only lists).
+- `tests/lib/check-presets.py` prints usage instead of a traceback and
+  resolves its plugin path from any cwd.
+- `tests/README.md` documents T3e, T3g, the fixtures checker, and T3j.
+
 ## [0.11.1]
 
 ### Changed

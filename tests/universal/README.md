@@ -161,7 +161,7 @@ Stage 3.2:
   Stage 3.2 below) — every capability's every paradigm value now has at
   least one non-curated live proof.
 - **Not yet run**: `i18n`/`gen/i18n-agent` on a non-curated fixture, and a
-  zero-capability install (`pm-delivery`/`qa`-only role preset,
+  zero-capability install (any of the seven no-code presets — e.g. `pm-delivery`- or `qa`-only,
   `generated: []`) through this specific discovery-front-end path. The
   latter is lower risk than the rest of this list — Phase 5's "skip entirely
   when the union's `generated` set is empty" is unconditional, pre-existing

@@ -6,7 +6,9 @@ import re
 import sys
 from pathlib import Path
 
-PLUGIN = Path(sys.argv[1])
+if len(sys.argv) < 2:
+    sys.exit("usage: check-presets.py <PLUGIN_ROOT>")
+PLUGIN = Path(sys.argv[1]).resolve()
 TPL = PLUGIN / "templates"
 presets = {p.stem: json.loads(p.read_text()) for p in (PLUGIN / "presets/roles").glob("*.json")}
 

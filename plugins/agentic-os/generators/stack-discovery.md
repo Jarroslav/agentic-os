@@ -53,8 +53,9 @@ a curated profile or it didn't.
    "Sequencing note"). The field is defined for a caller that *does* have the
    union available (a future phase-ordering change, or a direct invocation
    outside the normal install flow) — treat non-null as which of the four
-   capabilities below are even relevant to ask about. A `pm-delivery`/`ba-po`/
-   `qa`-only union has `generated: []` — skip straight to emitting a record
+   capabilities below are even relevant to ask about. A union of only
+   no-code presets (qa, ba-po, pm-delivery, portfolio, security, data,
+   design) has `generated: []` — skip straight to emitting a record
    with every capability `applies: false` and `confidence: 100` (there is
    nothing to discover; this is a true fact, not
    a guess), and do not spend tool calls inspecting for code capabilities
