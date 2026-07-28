@@ -211,8 +211,8 @@ does not invent a role selection. It is valid only when roles were supplied
 explicitly with `--presets` or already exist in the install journal.
 
 **Screen 1 — Role presets** (required multi-select): `developer`, `qa`, `ba-po`,
-`architect`, `pm-delivery`, `devops`, `portfolio` — one JSON each under
-`PLUGIN/presets/roles/`.
+`architect`, `pm-delivery`, `devops`, `portfolio`, `security` — one JSON each
+under `PLUGIN/presets/roles/`.
 Display plain-language descriptions before the choices. For example, `ba-po`
 means requirements, customer conversations, stories, and acceptance criteria;
 it installs no code-writing agents. A `ba-po`-only install must not scaffold
@@ -448,7 +448,7 @@ Ordered steps:
    confirmation BEFORE writing** — this is a hard mature-repo rule even on
    fresh installs.
 3. **Git hooks** — only when `githooks/pre-commit` is in the preset union
-   (the ba-po and pm-delivery unions exclude the git layer; installing the
+   (the ba-po, pm-delivery, and security unions exclude the git layer; installing the
    native hook there would reference an absent
    `.claude/hooks/precommit_review_gate.py`). Copy `.githooks/pre-commit` +
    `scripts/install-git-hooks.sh`,
@@ -497,7 +497,10 @@ Ordered steps:
      the empty string — the index must never link a guide the preset did not install.
      Substitute `{{OPS_GUIDE_ROWS}}` the same way: the `incident-triage.md` index
      row iff `guides/incident-triage` is in the union (the `devops` preset), else
-     the empty string. (Same principle as agent-registry row pruning below.)
+     the empty string. Substitute `{{SEC_GUIDE_ROWS}}` the same way: the
+     `threat-modeling.md` index row iff `guides/threat-modeling` is in the union
+     (the `security` preset), else the empty string. (Same principle as
+     agent-registry row pruning below.)
      Substitute `{{CORE_GUIDE_ROWS}}` under the same contract: one index row per
      guide of `git-workflow`, `code-quality`, `quality-gates`,
      `instruction-quality-rubric`, `qa-strategy-stub` — **only the ones whose
@@ -520,8 +523,10 @@ Ordered steps:
      the `dispatcher` row goes unless `agents/dispatcher` is in the union;
      `security-reviewer` / `pr-pipeline-gate` rows go unless their agent IDs
      are in the union; the `incident-triage` row goes unless
-     `agents/incident-triage` is in the union; the `pipeline-orchestrator.md`
-     / `dispatch.md` rows go unless the matching command ID is in the union. Never prune the
+     `agents/incident-triage` is in the union; the `threat-modeler` row goes
+     unless `agents/threat-modeler` is in the union; the
+     `pipeline-orchestrator.md` / `dispatch.md` rows go unless the matching
+     command ID is in the union. Never prune the
      `blind-code-reviewer` or `instruction-auditor` rows when their agents
      install. **Never prune the `<!-- generated-agent-rows -->` marker row**
      (the one with an empty "Owning asset" cell, below the curated rows) —

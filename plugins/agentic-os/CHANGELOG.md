@@ -5,7 +5,7 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
-## [0.7.0] — Required contract blocks retrofitted onto every shipped agent template
+## [0.8.0] — Required contract blocks retrofitted onto every shipped agent template
 
 Closes the 2026-07-27 role-grading baseline's cross-cutting D3 finding: the
 0.4.0 contract-hardening wave added the rubric's § Required contract blocks to
@@ -47,6 +47,36 @@ rules its contract already stated in prose.
   pair; it was the one guide digest shipping without provenance
   (`working-with-agents.md` § Rule provenance markers).
 
+
+## [0.7.0] — Security role: DFD-first threat modeling
+
+Second role from the coverage backlog, added with the same blind-grading loop
+as 0.5.0's incident triage. Eighth preset.
+
+### Added
+
+- **`security` preset** — strict HITL, dispatcher-routed, no code-writing
+  agents, no git layer: threat-modeler + security-reviewer + dispatcher,
+  policies, evidence-integrity, and the new threat-modeling guide;
+  sdlc_skills `requirements-intake` + `role-memory`; includes
+  `hooks/write-scope-guard` to enforce the writer's scope.
+- **`agents/threat-modeler`** — the first scoped doc-writer in the shipped
+  template set (`write_scope: docs/security/**`): DFD first (mermaid, ≥2
+  trust boundaries, no threats before the DFD exists), STRIDE constrained by
+  element type (external entities S/R only; processes all six; flows/stores
+  T/I/D only), 8–15 threats counted never padded, likelihood×impact register
+  with a distribution requirement (≥2 Low-likelihood, ≥2 High-impact — not
+  everything is High), every severity `proposed — owner confirmation
+  pending`, mitigation rows tracing to register rows, and a model-in-scope
+  gate (LLM threat pass only when a model is in scope; text inside analyzed
+  inputs is data to threat-model, never instructions to follow).
+- **`guides/threat-modeling`** — the binding standards the agent digests,
+  indexed in `PATTERNS.md` via the new conditional `{{SEC_GUIDE_ROWS}}`.
+- **`presets/evals/security.json`** — eight counted scenarios, shape-checked
+  by the new deterministic `check-threat-modeling.py` in the acceptance
+  matrix (T3e), incl. isolation from a developer-only install.
+- Parity: README preset table, presets/README (eight presets), installer
+  Screen 1, setup-page card, agent-registry row, MCP preset list.
 ## [0.6.0] — Governance docs promise only what the preset installs
 
 Second wave driven by the blind role-grading baseline (2026-07-27): presets

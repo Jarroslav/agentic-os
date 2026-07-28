@@ -239,6 +239,19 @@ python3 "$ROOT/tests/lib/check-governance-promises.py" "$OPS_WORK" \
 assert "developer CLAUDE.md keeps the review-gate mandate" "grep -q 'Blind code review before every commit' '$FRESH/CLAUDE.md' && grep -q 'blind-code-reviewer' '$FRESH/CLAUDE.md'"
 assert "devops CLAUDE.md keeps the gate, not the reviewer spawn" "grep -q 'precommit_review_gate' '$OPS_WORK/CLAUDE.md' && ! grep -q 'spawn' <(sed -n '/Blind code review/,/Human-gated/p' '$OPS_WORK/CLAUDE.md')"
 
+echo "== T3f security threat modeling =="
+SEC_WORK="$WORK/security-only"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$SEC_WORK" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$SEC_WORK" \
+  --presets security --mcp-state without-mcp >/dev/null
+python3 "$ROOT/tests/lib/check-threat-modeling.py" "$SEC_WORK" \
+  "$PLUGIN/presets/evals/security.json" && ok "security threat-modeling pair + eval scenarios" || bad "security threat-modeling pair + eval scenarios"
+if test ! -e "$DEV_ONLY/.agentic/guides/standards/threat-modeling.md"; then
+  ok "threat-modeling guide isolated from developer-only install"
+else
+  bad "threat-modeling guide isolated from developer-only install"
+fi
+
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.
 # (The fixture never commits the scaffold, so `git status` is the wrong probe —

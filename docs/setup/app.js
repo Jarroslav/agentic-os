@@ -118,6 +118,20 @@
         { name: 'sdlc-status', desc: 'Pipeline/run visibility (read-only)' },
         { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' }
       ] },
+    { id: 'security', label: 'Security Engineer', longLabel: 'Security Engineers', icon: 'ph-shield-check', guided: false, sdlc: false,
+      time: '~20–30 min', presets: 'security', hitl: 'strict HITL', orch: 'dispatcher',
+      tagline: 'DFD-first STRIDE threat modeling with proposed-only severities — writes only docs/security/, no code-writing agents.',
+      note: 'Installs the threat-modeler (doc-writer scoped to docs/security/), the code-level security reviewer, and dispatcher routing. Severities always land as proposed — you confirm them.',
+      phrases: [
+        { say: 'Threat-model the checkout service', get: 'DFD (≥2 trust boundaries) + 8–15 STRIDE threats + risk register + mitigations', skill: 'threat-modeler' },
+        { say: 'Finalize the severities', get: 'Refusal — severities stay proposed until you confirm each row', skill: 'threat-modeler' },
+        { say: 'Review this PR diff for injection bugs', get: 'Routed to the code-level security reviewer', skill: 'security-reviewer' },
+        { say: 'Turn this compliance note into requirements', get: 'Structured requirements doc', skill: 'requirements-intake' }
+      ],
+      skills: [
+        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'role-memory', desc: 'Durable per-role memory across sessions' }
+      ] },
     { id: 'portfolio', label: 'Portfolio / Program', longLabel: 'Portfolio & Program Managers', icon: 'ph-chart-line-up', guided: true, sdlc: false,
       time: '~45–60 min', presets: 'portfolio', hitl: 'gated-autonomous', orch: 'dispatcher',
       tagline: 'Run status, knowledge health and durable cross-session memory — read/report-only, no git layer.',
@@ -595,7 +609,7 @@
       '<h4 style="margin-bottom:12px">What your assistant can do with it</h4>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">' +
       capCard('ph-magnifying-glass', 'Search the docs', 'Governance, SDLC and QE methodology, queryable in place.') +
-      capCard('ph-users-three', 'List role presets', 'All seven roles and the 28 QE blueprints, with what each installs.') +
+      capCard('ph-users-three', 'List role presets', 'All eight roles and the 28 QE blueprints, with what each installs.') +
       capCard('ph-list-checks', 'Plan an install', 'Turn a role into a concrete install plan for your setup.') +
       capCard('ph-stethoscope', 'Audit an install', 'Check an existing .agentic/ install against the methodology.') + '</div>' +
 
