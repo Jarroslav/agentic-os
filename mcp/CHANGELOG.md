@@ -8,6 +8,13 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.5]
+
+### Changed
+- **Served content refreshed** for `agentic-os` 0.6.0 + 0.7.0 together: the
+  preset-conditional governance rendering (0.6.0) and the `security` preset
+  (threat-modeler pair, security evals) with its parity surfaces (0.7.0).
+
 ## [0.2.4]
 
 ### Changed

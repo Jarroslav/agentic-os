@@ -39,7 +39,8 @@ HOOK_FILE = {
     "sdlc/project": "sdlc/project.md.tmpl",
 }
 CORE_AGENTS = {"dispatcher", "blind-code-reviewer", "security-reviewer",
-               "instruction-auditor", "pr-pipeline-gate", "incident-triage"}
+               "instruction-auditor", "pr-pipeline-gate", "incident-triage",
+               "threat-modeler"}
 
 
 def resolve(tid: str) -> Path | None:
@@ -125,5 +126,22 @@ if "readonly: true" not in triage_text:
     print("  incident-triage template not readonly"); fail = 1
 if "speculative — no direct evidence" not in triage_text:
     print("  incident-triage template lost the no-padding literal"); fail = 1
+
+# (6) security preset invariants — threat modeling ships as a pair, strict HITL,
+# and the writer stays scoped to docs/security/ with proposed-only severities.
+sec = presets["security"]
+for need in ("agents/threat-modeler", "guides/threat-modeling"):
+    if need not in sec["templates"]:
+        print("  security missing", need); fail = 1
+if sec["default_hitl"] != "strict":
+    print("  security default_hitl != strict"); fail = 1
+tm_tpl = TPL / "agents/core/threat-modeler.md.tmpl"
+tm_text = tm_tpl.read_text() if tm_tpl.is_file() else ""
+if "readonly: true" in tm_text:
+    print("  threat-modeler template must be a writer"); fail = 1
+if 'docs/security/**' not in tm_text:
+    print("  threat-modeler template lost its docs/security write scope"); fail = 1
+if "proposed — owner confirmation pending" not in tm_text:
+    print("  threat-modeler template lost the proposed-severity literal"); fail = 1
 
 sys.exit(fail)

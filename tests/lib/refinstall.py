@@ -197,6 +197,13 @@ OPS_GUIDE_ROWS_TEXT = (
 )
 OPS_GUIDE_ROWS = OPS_GUIDE_ROWS_TEXT if "guides/incident-triage" in PRESET_TEMPLATE_IDS else ""
 
+# The security-only threat-modeling row, same contract.
+SEC_GUIDE_ROWS_TEXT = (
+    "| Threat modeling (DFD-first STRIDE, risk distribution, proposed-only severities) | "
+    "[`.agentic/guides/standards/threat-modeling.md`]"
+    "(.agentic/guides/standards/threat-modeling.md) |\n"
+)
+SEC_GUIDE_ROWS = SEC_GUIDE_ROWS_TEXT if "guides/threat-modeling" in PRESET_TEMPLATE_IDS else ""
 # The five core guide rows, one per installed guide, fixed order — the index must
 # never link a guide the union did not install (SKILL.md Phase 4 step 4).
 CORE_GUIDE_ROW_TEXTS = [
@@ -312,6 +319,7 @@ def render(text: str, is_json: bool, escape: bool) -> str:
     text = text.replace("{{GATE_ENTRIES}}", gate_entries())
     text = text.replace("{{QA_GUIDE_ROWS}}", QA_GUIDE_ROWS)
     text = text.replace("{{OPS_GUIDE_ROWS}}", OPS_GUIDE_ROWS)
+    text = text.replace("{{SEC_GUIDE_ROWS}}", SEC_GUIDE_ROWS)
     text = text.replace("{{CORE_GUIDE_ROWS}}", CORE_GUIDE_ROWS)
     text = text.replace("{{WRITE_SCOPE_RULE}}", WRITE_SCOPE_RULE)
     # Before the scalar/list pass: the quality-gates section nests {{GATE_COMMANDS}}.
@@ -556,6 +564,7 @@ GUIDE_IDS = {
     "working-with-agents": "guides/working-with-agents",
     "evidence-integrity": "guides/evidence-integrity",
     "incident-triage": "guides/incident-triage",
+    "threat-modeling": "guides/threat-modeling",
     "qa-strategy-stub": "guides/qa-strategy-stub",
     "test-design-pattern": "guides/test-design-pattern",
     "flaky-protocol": "guides/flaky-protocol",
@@ -601,6 +610,7 @@ if project_path.exists():
 CORE_AGENTS = [("dispatcher", True), ("blind-code-reviewer", False),
                ("security-reviewer", True), ("instruction-auditor", True),
                ("pr-pipeline-gate", True), ("incident-triage", True),
+               ("threat-modeler", False),
                ("test-case-generator", False),
                ("test-automation-author", False), ("test-case-syncer", False),
                ("test-failure-triage", True), ("work-item-creator", False)]

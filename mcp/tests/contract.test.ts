@@ -332,7 +332,7 @@ describe('list_presets', () => {
     };
     expect(presets.map(p => p.name).sort()).toEqual([
       'architect', 'ba-po', 'developer', 'devops',
-      'pm-delivery', 'portfolio', 'qa',
+      'pm-delivery', 'portfolio', 'qa', 'security',
     ]);
   });
 
