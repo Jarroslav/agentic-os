@@ -48,6 +48,38 @@
           "description": "The response states the repo is not installed and points at /agentic-init instead of failing with a traceback."
         }
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Run doctor. This repo was installed with --presets ba-po only, so .githooks/pre-commit is absent from journal.files and no hook is installed in .git/hooks/.",
+      "expected_output": "Check 6's git-hook clause is skipped because the git layer is not journaled: git_hook reports passed: true with a detail saying the layer is not installed for this preset set. The dependencies clause still runs, and the overall verdict is not failed on account of the absent hook.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "git-layer-conditional",
+          "description": "A preset set carrying no githooks/pre-commit is not failed for a missing hook; git_hook passes with the reason recorded in its detail."
+        },
+        {
+          "name": "dependencies-still-checked",
+          "description": "Skipping the git-hook clause does not skip the dependencies clause in the same check."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Run doctor. .git/hooks/pre-commit exists and contains the agentic-os: marker, but .claude/hooks/precommit_review_gate.py is missing.",
+      "expected_output": "Check 6 fails on the gate-script clause: the installed hook invokes the missing script as its first action, so python3 exits non-zero and every git commit in the repo is blocked, with the chained pre-commit.local never reached. The verdict is FAIL and the remedy offered is to re-run /agentic-init or delete the hook (restoring pre-commit.local if present).",
+      "files": [".claude/hooks/", ".githooks/pre-commit"],
+      "assertions": [
+        {
+          "name": "commit-block-detected",
+          "description": "The marked-but-unbacked hook is reported as a failure naming the commit-blocking consequence, not passed over as merely informational."
+        },
+        {
+          "name": "journal-independent",
+          "description": "The clause fires from the marker on the installed hook alone, without requiring githooks/pre-commit to still be present in journal.files."
+        }
+      ]
     }
   ]
 }
