@@ -5,6 +5,16 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.11.1]
+
+### Changed
+
+- **The dispatcher's PASS is now a counted signal**: `PASS` iff matrix rows
+  matching the intent = 1, recomputed against the registry table — 0 or ≥2
+  matches is a `FAIL` with the tie or gap escalated. Pays down the last
+  recurring D3 "counted PASS criteria" partial from the blind role-grading
+  waves; every shipped agent contract now carries a recomputable verdict.
+
 ## [0.11.0] — The design role: emotion-annotated journeys and agent-ready handoffs
 
 Fourth and final core role from the coverage backlog. Tenth preset.

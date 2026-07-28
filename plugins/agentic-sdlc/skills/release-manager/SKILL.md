@@ -9,6 +9,7 @@ description: >-
   which fix-version tickets have no matching commits (and vice versa).
   Read-only (R0) — reports mismatches, never mutates tags, tickets, or fix
   versions.
+  Not for: creating releases, tags, or tickets, fixing the gaps it finds, or watching an open MR (mr-watch).
 version: 0.1.0
 license: Apache-2.0
 allowed-tools:

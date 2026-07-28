@@ -2,6 +2,7 @@
 name: test-heal
 description: |-
   Repairs failing tests whose failure is the test's own fault — and only those. Consumes a failure triage (test_issue | environment_issue | flaky | application_issue), fixes test code, fixtures, selectors, and waits, never application code, and never re-runs the suite itself: it applies fixes, sanity-checks that they parse, commits once, and hands a machine-readable Loop Decision back to the orchestrator, which owns re-running qa-gates. application_issue failures are returned untouched as pipeline fix-up work.
+  Not for: application-code fixes (returned untouched as pipeline fix-up work), triaging failures (the triage is its input), or re-running suites (the orchestrator owns qa-gates).
 version: 0.1.0
 license: Apache-2.0
 discoverable: false

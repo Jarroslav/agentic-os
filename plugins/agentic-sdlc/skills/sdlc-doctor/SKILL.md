@@ -13,6 +13,8 @@ description: >-
   are ready, or asks for the legacy sdlc:doctor command on a host (for
   example, a Codex-class host) that has no native slash-command support and
   must substitute a skill for it.
+  Not for: fixing the problems it reports, verifying the agentic-os layer (agentic-doctor), or cached readiness checks — it always re-runs in full.
+
 ---
 
 # sdlc-doctor

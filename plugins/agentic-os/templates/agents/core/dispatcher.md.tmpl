@@ -75,6 +75,9 @@ treated as Blocking. Use `None` when a section is empty.
 ## Summary
 
 First line: `PASS — routed to <owning path>` or `FAIL — no unambiguous owner`.
+`PASS` iff matrix rows matching the intent = 1 — a recount of the matched rows
+against the registry table, never an impression; 0 or ≥2 matching rows is a
+`FAIL` with the tie or gap under `## Escalate to human`.
 
 ## Why
 

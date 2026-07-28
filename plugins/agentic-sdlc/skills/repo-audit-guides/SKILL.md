@@ -3,7 +3,8 @@ name: repo-audit-guides
 version: 0.1.0
 author: agentic-os
 allowed-tools: [Read, Glob, Grep, Bash]
-description: Read-only audit of a repository's documentation, structure, and agentic assistant setup, run before knowledge planting so the downstream repo-guides workflow knows how to handle every pre-existing doc and assistant surface. Invoke when the user asks to survey, audit, inspect, assess, or review repo docs, assistant instructions, Claude / Codex / Gemini / GitHub Copilot setup, subagents, skills, hooks, AGENTS.md, CLAUDE.md, GEMINI.md, or whether a repository is ready for knowledge planting. Produces a structured readiness report, never a numeric grade, and never writes.
+description: Read-only audit of a repository's documentation, structure, and agentic assistant setup, run before knowledge planting so the downstream repo-guides workflow knows how to handle every pre-existing doc and assistant surface. Invoke when the user asks to survey, audit, inspect, assess, or review repo docs, assistant instructions, Claude / Codex / Gemini / GitHub Copilot setup, subagents, skills, hooks, AGENTS.md, CLAUDE.md, GEMINI.md, or whether a repository is ready for knowledge planting. Produces a structured readiness report, never a numeric grade, and never writes. Not for: writing or fixing anything it finds (repo-guides plants knowledge afterwards), numeric grading, or auditing application-code quality.
+
 ---
 
 # Repo Audit Guides

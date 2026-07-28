@@ -9,6 +9,7 @@ description: >-
   on explicit review-workflow requests — "commit changes", "push changes",
   "create MR", "make merge request", "open a PR", and similar. Every commit is
   rejected unless it carries a ticket reference in the guide's pattern.
+  Not for: monitoring an already-open MR/PR (mr-watch), merging, or committing without a ticket reference.
 authors:
   - agentic-os
 ---

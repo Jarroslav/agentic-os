@@ -8,6 +8,7 @@ description: >-
   need to recall what you already know before acting. Uses Read/Write/Edit/Glob only: no CLI, no
   scripts, host-independent (Claude Code, Cursor, Gemini CLI, Windsurf, Copilot CLI, or an external
   supervisor).
+  Not for: project or repo documentation (guides own that), task tracking, or storing secrets — plain-markdown per-role memory only.
 license: Apache-2.0
 version: 0.1.0
 authors: agentic-os

@@ -10,8 +10,8 @@ description: >-
   Azure DevOps / GitHub / GitLab work-item id and wants manual or API-level
   functional cases. Produces case documents under docs/superpowers/qa-tasks/,
   gates them behind a human review, and optionally pushes to a test-management
-  adapter. Not for unit/integration tests, code-coverage, or automation setup —
-  and never auto-invoked by other pipeline skills.
+  adapter. Not for: unit/integration tests, code-coverage, e2e automation
+  (qa-e2e-generator), or auto-invocation by other pipeline skills.
 allowed-tools: Read, Write, Bash, AskUserQuestion, TaskCreate, TaskUpdate
 ---
 

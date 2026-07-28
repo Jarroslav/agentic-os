@@ -4,7 +4,7 @@ version: 0.1.0
 license: Apache-2.0
 discoverable: true
 authors: [agentic-os]
-description: Lightest-ceremony entry point into the agentic-sdlc pipeline for a task the user has already judged small and unambiguous. Invoke on phrases like "just do this quickly", "small fix, skip the ceremony", "simple task, no spec needed", or "run sdlc-light on <task>". Runs a mandatory research pass via the codebase-scout agent, a binary Clear/Unclear clarity check capped at 3 questions instead of complexity scoring or brainstorming, skips spec.md entirely, then proceeds through planning, QA checklist, inline TDD, QA test review, up to two code-review rounds, quality gates, and a QA health update, ending in a handoff message rather than an automatic merge or PR. Do not invoke for ambiguous or ticket-sized work (use sdlc-start or sdlc-autonomous) or when the user has already classified task size XS/S/M (use sdlc-task instead).
+description: Lightest-ceremony entry point into the agentic-sdlc pipeline for a task the user has already judged small and unambiguous. Invoke on phrases like "just do this quickly", "small fix, skip the ceremony", "simple task, no spec needed", or "run sdlc-light on <task>". Runs a mandatory research pass via the codebase-scout agent, a binary Clear/Unclear clarity check capped at 3 questions instead of complexity scoring or brainstorming, skips spec.md entirely, then proceeds through planning, QA checklist, inline TDD, QA test review, up to two code-review rounds, quality gates, and a QA health update, ending in a handoff message rather than an automatic merge or PR. Not for: ambiguous or ticket-sized work (sdlc-start / sdlc-autonomous) or tasks the user already sized XS/S/M (sdlc-task).
 ---
 
 # sdlc-light
