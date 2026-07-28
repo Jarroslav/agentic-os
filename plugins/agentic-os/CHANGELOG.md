@@ -5,6 +5,42 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.8.0] — Enforcement promises match the install everywhere
+
+The 2026-07-28 governance re-grade found two leftovers from 0.6.0's
+conditional-rendering pass: the policy templates still promised enforcement
+hooks a minimal union never installs, and the acceptance harness's reference
+installer ignored the strictest-HITL union rule.
+
+### Changed
+
+- **`ai-policy.md` enforcement layers are union-conditional** — the four
+  hook-backed rows of the "Enforcement layers" table (pre-commit review
+  stamp, output-contract gate, write-scope guard, instruction-quality gate)
+  render via the new derived `{{ENFORCEMENT_LAYER_ROWS}}` and list only what
+  the selected preset union installs. A portfolio-only install no longer
+  claims three hard hooks it does not scaffold.
+- **`AGENTS.md` fleet invariants are union-conditional** — the numbered list
+  renders via the new derived `{{FLEET_INVARIANTS}}`, renumbered contiguously:
+  the write-scope invariant cites `write_scope_guard.py` only when that hook
+  installs (else it states the rule as stop-and-escalate), and the
+  instruction-quality and blind-review invariants drop entirely when their
+  layer is absent from the union. Both variables are documented in
+  `templates/VARIABLES.md` and `agentic-init/SKILL.md` Phase 4.
+
+### Fixed
+
+- **Reference installer implements strictest-HITL-wins** —
+  `tests/lib/refinstall.py` hardcoded `gated-autonomous`, so a qa-only or
+  security-only fixture install rendered an `ai-policy.md` contradicting the
+  preset's declared `default_hitl: strict`. It now derives `{{HITL_MODE}}`
+  from the union (`strict > gated-autonomous > autonomous`) per the SKILL.md
+  Screen 1 rule; run-matrix T3g pins the rendered active mode for qa-only,
+  security-only, developer-only, and developer+qa unions.
+- **`check-governance-promises.py` also audits `AGENTS.md` + `ai-policy.md`**
+  for citations of uninstalled hooks, git hooks, and scripts — it previously
+  passed while a portfolio scaffold cited three uninstalled enforcement hooks.
+
 ## [0.7.0] — Security role: DFD-first threat modeling
 
 Second role from the coverage backlog, added with the same blind-grading loop

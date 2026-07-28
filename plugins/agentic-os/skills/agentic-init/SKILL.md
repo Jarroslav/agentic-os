@@ -491,6 +491,22 @@ Ordered steps:
    - `AGENTS.md`: absent ⇒ write the rendered file whole (owner `managed`).
      Present ⇒ wrap the rendered content in the same begin/end markers and
      append; content outside markers is untouched.
+     Substitute `{{FLEET_INVARIANTS}}` (the "Fleet invariants" numbered list)
+     under the same promise-only-what-is-installed contract, **renumbered
+     contiguously** so a dropped invariant leaves no gap: the write-scope
+     invariant is always present but cites
+     `.claude/hooks/write_scope_guard.py` only when `hooks/write-scope-guard`
+     is in the union (else it states the rule as stop-and-escalate with the
+     humans in the loop as the enforcement layer); the instruction-quality
+     invariant renders **only when `hooks/instruction-gate` is in the union**
+     (its repair path names the `instruction-auditor` iff
+     `agents/instruction-auditor` is in the union, else a human re-grade); the
+     blind-review invariant renders **only when `hooks/precommit-review-gate`
+     and `githooks/pre-commit` are both in the union** (mirroring
+     `{{REVIEW_GATE_SECTION}}`); the orchestrator-only-spawning, read-only
+     gate-agent, output-contract, and escalation-over-improvisation invariants
+     render in every install (every preset ships `hooks/subagent-gate`, so its
+     citation stays). Never empty.
    - `PATTERNS.md`: absent ⇒ write. Present ⇒ **collision prompt** (step 6).
      Substitute `{{QA_GUIDE_ROWS}}` with the `test-design-pattern` + `flaky-protocol`
      index rows **only if those guides are in the install** (the `qa` preset), else
@@ -552,6 +568,18 @@ Ordered steps:
    `Run`. If `GATE_COMMANDS` is empty, write a one-line instruction to add a gate,
    never a blank registry (`code-quality.md` treats this file as the canonical gate
    catalogue and forbids relying on an empty one).
+   **`ai-policy.md` `{{ENFORCEMENT_LAYER_ROWS}}`**: substitute with the
+   hook-backed rows of the "Enforcement layers" table — pre-commit review
+   stamp (**only when `hooks/precommit-review-gate` and `githooks/pre-commit`
+   are both in the union**), output-contract gate (iff `hooks/subagent-gate`),
+   write-scope guard (iff `hooks/write-scope-guard`), instruction-quality gate
+   (iff `hooks/instruction-gate`) — in that fixed order, each emitted row
+   ending in a newline so absent rows collapse without breaking the GFM table.
+   The two soft/settings rows stay in the template, so the table is never
+   empty. The instruction-gate row nests `{{SCORECARD_PATH}}`; substitute this
+   variable **before** the scalar/list pass so it still renders. A policy that
+   lists an enforcement layer the union does not install is the same defect
+   class `{{REVIEW_GATE_SECTION}}` exists to prevent.
    **`ai-policy.md` `{{AUTONOMY_OVERRIDES}}`**: substitute with one bullet per
    Screen-4 capability the user set **stricter** than its active-mode cell. Only a
    `recommend-only` answer can tighten (→ `gated`); a `yes` answer is never stricter

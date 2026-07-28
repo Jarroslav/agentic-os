@@ -90,11 +90,7 @@ depend on the model cooperating.
 | --- | --- | --- |
 | This policy + agent contracts | referenced from every contract | soft |
 | Secret read denial | settings deny rules (patterns pinned in `safety-policy.md`) | hard |
-| Pre-commit review stamp | `.claude/hooks/precommit_review_gate.py` + `.githooks/pre-commit` | hard (exit 2) |
-| Output-contract gate | `.claude/hooks/subagent_gate.py` (fail-closed) | hard (exit 2) |
-| Write-scope guard | `.claude/hooks/write_scope_guard.py` per agent contract | hard (exit 2) |
-| Instruction-quality gate | `.claude/hooks/instruction_gate.py` vs {{SCORECARD_PATH}} | hard (exit 2) |
-
+{{ENFORCEMENT_LAYER_ROWS}}
 ## Quality gates
 
 The local gate commands for this repository (run before staging any change):

@@ -53,6 +53,13 @@ available_presets = {
 unknown_presets = sorted(set(PRESET_NAMES) - set(available_presets))
 if unknown_presets:
     raise SystemExit("refinstall: unknown preset(s): " + ", ".join(unknown_presets))
+# SKILL.md Screen 1 union rule: `default_hitl` resolves strictest-wins
+# (strict > gated-autonomous > autonomous) across the selected presets, and
+# `--defaults` accepts that pre-fill on Screen 3 — so a qa-only or
+# security-only scaffold renders a `strict` policy of record.
+HITL_ORDER = ["strict", "gated-autonomous", "autonomous"]
+HITL_MODE = min((available_presets[name]["default_hitl"] for name in PRESET_NAMES),
+                key=HITL_ORDER.index)
 MCP_STATE = option("--mcp-state", "without-mcp")
 if MCP_STATE not in {"without-mcp", "configured", "unavailable"}:
     raise SystemExit("refinstall: --mcp-state must be without-mcp, configured, or unavailable")
@@ -94,7 +101,7 @@ SCALARS = {
     "APP_START_COMMAND": "npm run dev",
     "BASE_URL": "http://localhost:3000",
     "DEFAULT_BRANCH": "main",
-    "HITL_MODE": "gated-autonomous",
+    "HITL_MODE": HITL_MODE,
     "LINT_FIX_COMMAND": "npx eslint --fix",
     "LINT_CHECK_COMMAND": "npx eslint",
     "MAX_FILES": "10",
@@ -304,6 +311,81 @@ else:
         "**Multi-step work** is orchestrated by the human — this install has no "
         "orchestration command.")
 
+# ai-policy "Enforcement layers": the hard hook-backed rows list only what this
+# union installs — same promise-only-what-is-installed contract as the guide
+# rows. Each row ends in a newline so absent rows collapse without breaking the
+# GFM table; the two soft/settings rows stay in the template, so the table is
+# never empty. The instruction-gate row nests {{SCORECARD_PATH}} — substituted
+# before the scalar pass in render(), so it still resolves.
+_ENFORCEMENT_ROW_TEXTS = [
+    ({"hooks/precommit-review-gate", "githooks/pre-commit"},
+     "| Pre-commit review stamp | `.claude/hooks/precommit_review_gate.py` + "
+     "`.githooks/pre-commit` | hard (exit 2) |\n"),
+    ({"hooks/subagent-gate"},
+     "| Output-contract gate | `.claude/hooks/subagent_gate.py` (fail-closed) "
+     "| hard (exit 2) |\n"),
+    ({"hooks/write-scope-guard"},
+     "| Write-scope guard | `.claude/hooks/write_scope_guard.py` per agent "
+     "contract | hard (exit 2) |\n"),
+    ({"hooks/instruction-gate"},
+     "| Instruction-quality gate | `.claude/hooks/instruction_gate.py` vs "
+     "{{SCORECARD_PATH}} | hard (exit 2) |\n"),
+]
+ENFORCEMENT_LAYER_ROWS = "".join(
+    row for ids, row in _ENFORCEMENT_ROW_TEXTS if ids <= PRESET_TEMPLATE_IDS)
+
+# AGENTS.md "Fleet invariants": derived as one numbered list so a union that
+# skips an enforcement layer neither cites its hook nor leaves a numbering gap.
+# Invariants 1 and 5 have no-hook variants; 5 and 6 drop entirely when their
+# layer is absent; the rest hold in every install (every preset ships
+# hooks/subagent-gate, so its citation stays unconditional).
+_FLEET_WRITE_SCOPE = (
+    "**Write scope is absolute.** An agent that writes outside the `write_scope` in its\n"
+    "   contract frontmatter is a bug; treat it as you would a security breach. Enforced at\n"
+    "   PreToolUse by `.claude/hooks/write_scope_guard.py` when an orchestrator has set the\n"
+    "   active-agent lock (`.agentic/state/active-agent.json`)."
+    if "hooks/write-scope-guard" in PRESET_TEMPLATE_IDS else
+    "**Write scope is absolute.** An agent that writes outside the `write_scope` in its\n"
+    "   contract frontmatter is a bug; treat it as you would a security breach — stop and\n"
+    "   escalate. This install carries no write-scope guard hook; the humans in the loop\n"
+    "   are the enforcement layer.")
+_FLEET_INSTRUCTION_GATE = None if "hooks/instruction-gate" not in PRESET_TEMPLATE_IDS else (
+    "**Instruction-quality gate.** Spawning an agent whose contract (or a guide it\n"
+    "   cites, or the core index files) is stale/ungraded/below threshold is blocked at\n"
+    "   SubagentStart by `.claude/hooks/instruction_gate.py`. The repair path is the\n"
+    "   `instruction-auditor` (itself exempt — gating the auditor would deadlock)."
+    if "agents/instruction-auditor" in PRESET_TEMPLATE_IDS else
+    "**Instruction-quality gate.** Spawning an agent whose contract (or a guide it\n"
+    "   cites, or the core index files) is stale/ungraded/below threshold is blocked at\n"
+    "   SubagentStart by `.claude/hooks/instruction_gate.py`. The repair path is a human\n"
+    "   re-grade of the instruction set (this install carries no `instruction-auditor`).")
+_FLEET_BLIND_REVIEW = None if not (
+    {"hooks/precommit-review-gate", "githooks/pre-commit"} <= PRESET_TEMPLATE_IDS
+) else (
+    "**Blind review before commit.** No commit ships unreviewed — see the managed\n"
+    "   governance block in `CLAUDE.md`.")
+FLEET_INVARIANTS = "\n".join(
+    "%d. %s" % (i, item) for i, item in enumerate(
+        [item for item in [
+            _FLEET_WRITE_SCOPE,
+            "**Orchestrator-only spawning.** Peer agents never spawn each other; only\n"
+            "   orchestrating commands (and the human) spawn subagents. This keeps every spawn\n"
+            "   auditable and every write attributable.",
+            "**Gate agents are read-only** and must emit a literal `PASS` token for the\n"
+            "   pipeline to advance. No PASS, no progress — a gate that \"mostly passed\" failed.",
+            "**Output contract.** Every agent ends its final message with\n"
+            "   `## Summary / ## Why / ## Blocking / ## Non-blocking / ## Escalate to human`.\n"
+            "   `.claude/hooks/subagent_gate.py` parses it fail-closed: a missing contract is\n"
+            "   treated as Blocking; a non-empty `## Escalate to human` requires the parent to ask\n"
+            "   the human before proceeding.",
+            _FLEET_INSTRUCTION_GATE,
+            _FLEET_BLIND_REVIEW,
+            "**Escalation over improvisation.** Anything listed in\n"
+            "   `.agentic/guides/policy/escalation-policy.md` (human-gated commands, guarded write\n"
+            "   paths, `escalate_on` risk flags) stops the pipeline and goes to the human with\n"
+            "   concrete options.",
+        ] if item is not None], 1))
+
 # Screen 3's per-capability autonomy answers. `--defaults` accepts every mode
 # default, so nothing is tightened — the block is the "no overrides" note. A real
 # interview emits one bullet per capability the user set stricter than its mode row.
@@ -326,6 +408,9 @@ def render(text: str, is_json: bool, escape: bool) -> str:
     text = text.replace("{{REVIEW_GATE_SECTION}}", REVIEW_GATE_SECTION)
     text = text.replace("{{QUALITY_GATES_SECTION}}", QUALITY_GATES_SECTION)
     text = text.replace("{{ORCHESTRATION_STYLE_RULE}}", ORCHESTRATION_STYLE_RULE)
+    # Before the scalar/list pass: the instruction-gate row nests {{SCORECARD_PATH}}.
+    text = text.replace("{{ENFORCEMENT_LAYER_ROWS}}", ENFORCEMENT_LAYER_ROWS)
+    text = text.replace("{{FLEET_INVARIANTS}}", FLEET_INVARIANTS)
     # --defaults accepts each capability's mode default, so no autonomy tightening.
     text = text.replace("{{AUTONOMY_OVERRIDES}}", AUTONOMY_OVERRIDES)
     for var in NEWLINE_VARS:
