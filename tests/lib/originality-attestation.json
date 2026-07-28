@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-28T08:11:00Z",
+ "attested_at": "2026-07-28T08:53:12Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -155,7 +155,7 @@
    "max_run": 0
   },
   "mcp/CHANGELOG.md": {
-   "sha256": "94a709defa797fe30a401eef73dc84b5ce3deceeb9f38c0fc01e2234380c505d",
+   "sha256": "b19ca73be6d909f2e8cc8bdebb3e369305911439fa0b617c7583cd252d782cc9",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -173,19 +173,19 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "95a40bb7c79cb21765173ad45ccd74e5b8e0622664acda3ff17d6ffa297e8d8d",
+   "sha256": "acc01eee4b37a6c5078b366b9e27b38b10bfc0d9eb7e997c2ceeaaa0081c2fdf",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "mcp/manifest.json": {
-   "sha256": "25342433d67586b41d98862a497ea36da7641785e04085cb262deb184e3fb907",
+   "sha256": "b2cc43e37823f5246f09ed841c54e7848805f7f4aa0a75ec1f70c45ee70b1e81",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "mcp/package.json": {
-   "sha256": "d7b9108a42456f6feb30edc95b28124551742ce481d03e3c8ded07357794c3ff",
+   "sha256": "1ecc0344a669a0d918a194fb35974b68c3fb7532481f99f5c80abc9a99300c87",
    "line": 0.1818,
    "shingle": 0.0,
    "max_run": 0
@@ -215,7 +215,7 @@
    "max_run": 0
   },
   "mcp/server.json": {
-   "sha256": "a9e07807aab395979967cef04b173361357229aee6155990463b75dd353dcb37",
+   "sha256": "c92215409a8c17d038af96d97a454d91ae467b04113ead123f9fdaed29beeabd",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -233,7 +233,7 @@
    "max_run": 0
   },
   "mcp/src/index.ts": {
-   "sha256": "ccb4074bcce16fe3154ae3b66feb828f3bb2906aaeed721db7abf0e54cc2a6bd",
+   "sha256": "4835b2dfbf9782eb8f18b156bc33feb86ac8034fba44848202c07e77558d3d87",
    "line": 0.0204,
    "shingle": 0.0,
    "max_run": 0
@@ -413,25 +413,25 @@
    "max_run": 0
   },
   "plugins/agentic-os/.claude-plugin/plugin.json": {
-   "sha256": "cb6557eaa078013fd26cb41a7e53748761c8936b6eab0973ec2ff352ed743e2b",
+   "sha256": "a381006e60feaec677d6f7e5e39b410ba57ebedbb729b47421aeb70322cde26d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.codex-plugin/plugin.json": {
-   "sha256": "417458263cd811ffecee7798387d085b842424dd7f1b370084e072a556d38657",
+   "sha256": "5793ea95161626520a33c2a06ea0ffca20b7ed3bc68e103fd9376fafb4b52596",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.cursor-plugin/plugin.json": {
-   "sha256": "eb0cc9628245ee091bc74576b906700f29d612932d71218551868b9a3ee81fdf",
+   "sha256": "72664d406a472b4b84171a6cb4c1274a62f79b26e0094fc7c8f0849024c14381",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "745982a04c72ff46c5004712f093f06aa15de6ef8365082ae738dce1b88c4138",
+   "sha256": "d8d1fee9e0f2a4084c479ce49aaf307f59a45739fbd9cdc91ff37fae79103e42",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -695,8 +695,8 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/core/dispatcher.md.tmpl": {
-   "sha256": "80b1208b75dbb72f9bae70d9c0c80f092606ff6e324c31a26e235d03634fd223",
-   "line": 0.0233,
+   "sha256": "efefe4f4fd2eea4b614347ac1561908c9d11ba26747f16f2f4de96847143d7c7",
+   "line": 0.0217,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1457,19 +1457,19 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/.claude-plugin/plugin.json": {
-   "sha256": "5a5a9f1559b7f9f57c03d235619e0525a5ce8c4ac9d350f7c2db5b3fbf814058",
+   "sha256": "d5785b9e7c81ceb87668aec571f43b4a71066324a30c4608bc254ef0d5a3d231",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 3
   },
   "plugins/agentic-sdlc/.codex-plugin/plugin.json": {
-   "sha256": "55494766aeee6d8e0c77e2b1b4eb763137f5f0632dfd150e8cdea33ccc547741",
+   "sha256": "86c8aee405d41e20485abaf9f9f453b3c42e593586c0a50dc2a1395546ecdca8",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/.cursor-plugin/plugin.json": {
-   "sha256": "c57f6ced7f9d7ab1dd05200487b28b6dabc1cc9555b654ccf02300c690f6a842",
+   "sha256": "54cc57ed7b59942e1fc290cfdb07ba10f6125243abbd226b0ea9c749c2c2cf73",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1481,7 +1481,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "7635dbb2cc9ae7ba8a6776ccd7dda91378e77a6c15b9c7c96f265f4866d40cb4",
+   "sha256": "632162da9e3947359bb88e2e20bee47d10c84199550e0587d0a99bfb5408a5c2",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1775,7 +1775,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/code-review-orchestrator/SKILL.md": {
-   "sha256": "6e615cee7565cc51d28272e241f8d253ffe70d4f9bc6e513469f768204a83210",
+   "sha256": "022f9cadaacb38a5ffe5cba43c6020f4b11084b58d549ee64acf113b57987681",
    "line": 0.0132,
    "shingle": 0.0,
    "max_run": 0
@@ -1823,8 +1823,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/code-review/SKILL.md": {
-   "sha256": "d099ae33d89a7e124cb8865b377c76ecd7db2701d0d566816cd187d9486d6665",
-   "line": 0.028,
+   "sha256": "ed3ca9d5bfdbf1352d24357fdd95cf55e37035a190f24df80cd0e04a21aa0e1e",
+   "line": 0.0278,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1841,7 +1841,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/complexity-scoring/SKILL.md": {
-   "sha256": "ae3b39d746b6efb3db82469c3a2742de3ed403738dcecf18e5bd3f82cf3b0005",
+   "sha256": "f812d04f3a04a32872528c91862b801f3368defed631b22f96371476f4095f6c",
    "line": 0.03,
    "shingle": 0.0,
    "max_run": 0
@@ -1859,7 +1859,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/decision-router/SKILL.md": {
-   "sha256": "6fad06e107b71b71e78ed41e9f38d91d2b136a6a648e5baab9f4726315156ace",
+   "sha256": "32fd4b97d770110731310e84e2783fa00c11bfa5cb90c043ddbf109a4c138550",
    "line": 0.044,
    "shingle": 0.0056,
    "max_run": 3
@@ -1877,9 +1877,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/feature-verification/SKILL.md": {
-   "sha256": "cacde2d03f24c4c8570a66cc79d7095179ea85111fb889080dad45a35ef9239a",
-   "line": 0.1163,
-   "shingle": 0.0157,
+   "sha256": "31b459066a75ae69cc683d5db4a4ebf31cd1cefdbeb27ba2d57339f507463058",
+   "line": 0.1154,
+   "shingle": 0.0156,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/feature-verification/evals/evals.json": {
@@ -1895,9 +1895,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/mr-creator/SKILL.md": {
-   "sha256": "999d16ca46b54103742b601444c6d68140b08f73e09abe241c41585d0451a558",
-   "line": 0.0735,
-   "shingle": 0.0075,
+   "sha256": "f9cf7d16f9ad4fa361d578fa4127799ba7dd42639f25fe132a66ff3d05ef6d9d",
+   "line": 0.073,
+   "shingle": 0.0074,
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/mr-creator/evals/evals.json": {
@@ -1913,8 +1913,8 @@
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/mr-watch/SKILL.md": {
-   "sha256": "dbdb2de621cc765e4b37a3eb90c70345750457f385c9ce127016a1a6ddc1ab65",
-   "line": 0.0556,
+   "sha256": "0e379f6486956678619dbe7e1b9fee8e075fce760bccffa88e286243aa35c9db",
+   "line": 0.055,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1931,8 +1931,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/product-owner/SKILL.md": {
-   "sha256": "44d3d49ba392851c2f098724607a0d69cff95d1f6f8d7ea076f229cb0c046fee",
-   "line": 0.0551,
+   "sha256": "003e4320a044fc3eb096976ff88378918b0af55f3978a6856f6af7c92c1082b0",
+   "line": 0.0547,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1949,7 +1949,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/SKILL.md": {
-   "sha256": "fbc8e1bd6e6dd1b8215511fea8974da5534092821ea424b4f4f6bc1212a5c257",
+   "sha256": "0cbfe16745ae350611eaf76b5ac6e844cd1cdf5652b2a8e9edbd26b6d0da6d8d",
    "line": 0.0444,
    "shingle": 0.015,
    "max_run": 4
@@ -2021,7 +2021,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-e2e-generator/SKILL.md": {
-   "sha256": "865e9f2bffe6ccf1dfd07ce54597f12d79763dc8dd7ca67e9de5fc987bd13681",
+   "sha256": "44bcb3e87cf4080953543cdf8cc02c1972c2acafff3cce4499de1e7be86c451e",
    "line": 0.0051,
    "shingle": 0.0,
    "max_run": 0
@@ -2093,9 +2093,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-foundation/SKILL.md": {
-   "sha256": "635c8b8e858551fdb48c78fd2e13552e73b0b4baa1eb4d12046a24f8d89c6670",
-   "line": 0.0536,
-   "shingle": 0.0182,
+   "sha256": "c9c108d2f1fb348b86c5707df3e10613b00eaf107220d184edd404b496abae36",
+   "line": 0.0531,
+   "shingle": 0.018,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/qa-foundation/evals/evals.json": {
@@ -2111,9 +2111,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-gates/SKILL.md": {
-   "sha256": "37c00c536ae0869e7a902572f35a8e49d7e747e62a3e16d62dd433e599e2e06b",
-   "line": 0.0567,
-   "shingle": 0.0072,
+   "sha256": "c1e9f134275c8ee60361de3552ec42796a64386302dc54ddbbd3b15f1062a5ca",
+   "line": 0.0563,
+   "shingle": 0.0071,
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/qa-gates/evals/evals.json": {
@@ -2129,9 +2129,9 @@
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/qa-planner/SKILL.md": {
-   "sha256": "40e2d8bbb8ca51303bd0281d33ae986ef2bbf529db467d5d6039934f53270ede",
-   "line": 0.0859,
-   "shingle": 0.0079,
+   "sha256": "d5343562bdd8c5a978f0ce74058e706e9b7f4eeef38634a42023fa57aa576346",
+   "line": 0.0846,
+   "shingle": 0.0078,
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/qa-planner/evals/evals.json": {
@@ -2147,8 +2147,8 @@
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/release-manager/SKILL.md": {
-   "sha256": "92dc0da76ce7e0fe3d6053354bf00f656728b308f062a2956d6a715032356fda",
-   "line": 0.0503,
+   "sha256": "57b894c0a643761f69bc63e5ae61b30d71ef7ce6b11e7701ff3203f78073c8f0",
+   "line": 0.05,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2165,7 +2165,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/repo-audit-guides/SKILL.md": {
-   "sha256": "77656e45a658c30397a5d62f7c3b53df02efb45605710f45a74259ec56b25ddb",
+   "sha256": "5099fabcb2c5a96fabdefe680a8111a2c19412a54eb2af6cfdfc6af098b8d120",
    "line": 0.0083,
    "shingle": 0.0,
    "max_run": 0
@@ -2219,8 +2219,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/repo-guides/SKILL.md": {
-   "sha256": "490a087f083516362f0df999a002ce11f398ce53ecaf400af3abfe96038198e8",
-   "line": 0.0325,
+   "sha256": "c6ddba855c89d9f6401bac42fcd8b1a7b6ed9de90d098c14c3543340709e8287",
+   "line": 0.0323,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2315,7 +2315,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/requirements-intake/SKILL.md": {
-   "sha256": "897c2757a2823ed09cb356fb9547822350d88ef89e39ff55f6a2d7849540d739",
+   "sha256": "88e5d50b5a310fbdc3e1a0ce29bb55f93e93bc8690b0a50000b368a64a73f5af",
    "line": 0.0619,
    "shingle": 0.0,
    "max_run": 0
@@ -2333,8 +2333,8 @@
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/role-memory/SKILL.md": {
-   "sha256": "f205a3907a8520d42e2c7e8afef58e51d0c34b63dcfb95f509bf187ed82e6cc1",
-   "line": 0.0612,
+   "sha256": "5afc3fd25c368d0e63f34e41380cac3c8f78cc537c65b58f041ab125ae03b0ef",
+   "line": 0.0606,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2351,7 +2351,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-autonomous/SKILL.md": {
-   "sha256": "e8dea7aeb2a7a112efa5d2705c471db511517f1ce252dc49c6d1dc823273f8d3",
+   "sha256": "c4dab46ad70ce407e839f787a2ff22096fedda18079ca324a948b7f4223a593d",
    "line": 0.0946,
    "shingle": 0.0278,
    "max_run": 4
@@ -2369,7 +2369,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-doctor/SKILL.md": {
-   "sha256": "1d57b50dc166b67561e0263374a678b742f97eae884b1a9d23cb6e0ef33f609d",
+   "sha256": "2b3b0a35f1d1c69c98a1867e16090378067567ce04546f9ae3192f8b37b51355",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2387,7 +2387,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-light/SKILL.md": {
-   "sha256": "1d90eb73bb8e1356ebccc6df95fe833e47213ee53362d14b45a253f94ed9b2ca",
+   "sha256": "126b4e5d01357e20570b97313c8ee18fa42613068287f56b90a0e673ea7da505",
    "line": 0.0549,
    "shingle": 0.0043,
    "max_run": 3
@@ -2405,7 +2405,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-pipeline/SKILL.md": {
-   "sha256": "72f0ad3612930a7db57558331017a1ee7fd1c733c9058a0e553e501b52f2ee58",
+   "sha256": "95403a27c773c876ebab52d579d52ac884262634d9da227ec091209648676bf0",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2423,7 +2423,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-start/SKILL.md": {
-   "sha256": "ce86e0651569a87e469555e1de393ee3b45c977da231b33852e9bfc0f8562bb0",
+   "sha256": "8f3606d5c3aa3749bc558c32418b86f19de7fbac9dfaed7e9f83eaff22a27ae0",
    "line": 0.0185,
    "shingle": 0.0,
    "max_run": 0
@@ -2441,8 +2441,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-status/SKILL.md": {
-   "sha256": "c0873464726e2fbada5a8069d46d8450a691afc43bd21ac8ae83adc110538313",
-   "line": 0.0113,
+   "sha256": "9c25ac2e1cc369e77c646bb75de52778975399eacaaf8f5425df58fa2075ebba",
+   "line": 0.0111,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2459,7 +2459,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-task/SKILL.md": {
-   "sha256": "0864d69cb03aae7826684e29b295e3aec592414db06432d1958ec2df711150ef",
+   "sha256": "e82d602b4116a3f8ca2e4d177b2a240335064fb44ff1bb729b3f824e7bcde41d",
    "line": 0.0518,
    "shingle": 0.0209,
    "max_run": 4
@@ -2477,7 +2477,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/test-heal/SKILL.md": {
-   "sha256": "60f72a138011fee9d181d049fc8835b08351535be013e3060031fdbbdb66c266",
+   "sha256": "ccb89fa806621c15f4b2886256b013b917cab4fb88f73a4d78880117fcea51fc",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2651,8 +2651,8 @@
    "max_run": 0
   },
   "tests/lib/check-skill-contract.py": {
-   "sha256": "83124b51af4cfee76c1d84f3c21c1284b958c58a40ef58a40da0b96c4fc8f847",
-   "line": 0.0482,
+   "sha256": "7424105588f73a43509669a7ce81fb19af92c5fbb21119652d837be834d5192e",
+   "line": 0.058,
    "shingle": 0.0,
    "max_run": 0
   },

@@ -8,10 +8,10 @@ description: >
   "small task, just spec and build it", "quick fix workflow", "this is an XS/S/M
   task", "lightweight SDLC for this change", or a request to reconcile a finished
   task's spec/plan against changes made after handoff ("sdlc-task sync", "sync my
-  task", "reconcile the spec with what shipped", mode: sync). Do not invoke for
-  ambiguous or ticket-sized work that needs a full audit trail (use sdlc-start),
-  low-touch full-pipeline automation (use sdlc-autonomous), or simple, research-first
-  work with no spec (use sdlc-light).
+  task", "reconcile the spec with what shipped", mode: sync). Not for: ambiguous or
+  ticket-sized work that needs a full audit trail (sdlc-start), low-touch
+  full-pipeline automation (sdlc-autonomous), or simple research-first work with
+  no spec (sdlc-light).
 version: 0.1.0
 license: Apache-2.0
 discoverable: true

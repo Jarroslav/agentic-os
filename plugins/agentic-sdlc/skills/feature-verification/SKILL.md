@@ -2,6 +2,7 @@
 name: feature-verification
 description: |-
   Required functional proof for anything user-visible, run right after qa-gates. When a change touches UI or another externally visible surface, it reuses e2e coverage that already exists, or generates a focused Playwright check when none does; either way it captures screenshots, console output, and network errors, and writes verification-evidence.json per feature.
+  Not for: unit/integration testing (qa-gates), changes with no externally visible surface, or replacing a full QA pass.
 version: 0.1.0
 license: Apache-2.0
 authors:

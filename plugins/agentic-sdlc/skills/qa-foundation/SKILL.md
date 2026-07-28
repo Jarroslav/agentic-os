@@ -11,6 +11,8 @@ description: >-
   "qa init", "qa foundation", or "set up qa", or via the slash command
   /sdlc:qa-init. These guides are consumed downstream by the qa-planner skill on
   every feature run, so run this once before the first /sdlc:start or /sdlc:story.
+  Not for: per-feature test planning (qa-planner), running gates (qa-gates), or day-to-day QA work once the foundation exists.
+
 ---
 
 # qa-foundation

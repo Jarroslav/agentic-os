@@ -7,8 +7,9 @@ description: >-
   (full multi-lens pass after implementation evidence) and `code-review.check`
   (narrow re-check of prior blocking findings against a fix-up diff). Trigger
   when the router reaches "code review", "resolve the review gate", "run code
-  review", "re-check the prior findings", or "verify the fix-up diff". Not for
-  direct user discovery — the router owns invocation.
+  review", "re-check the prior findings", or "verify the fix-up diff". Not for: direct user
+  invocation (the router owns it) or ad-hoc reviews outside a managed pipeline
+  (use code-review).
 discoverable: false
 license: Apache-2.0
 version: 0.1.0

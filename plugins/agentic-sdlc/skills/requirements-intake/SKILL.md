@@ -6,8 +6,9 @@ description: >-
   that every later pipeline phase reads, and guarantee a work-item reference exists before those
   requirements are written. Invoked automatically by sdlc-pipeline at Phase 1; also triggers on
   direct asks like "normalize these requirements", "turn this into requirements", or "write
-  requirements from this ticket". Only normalizes and clarifies — never plans, estimates,
-  scaffolds, or implements.
+  requirements from this ticket". Not for: planning, estimating,
+  scaffolding, or implementing — it only normalizes and clarifies input into
+  requirements.md.
 ---
 
 # requirements-intake

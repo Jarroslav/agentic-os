@@ -9,7 +9,9 @@ description: >-
   Trigger phrases: "sdlc status", "what's the run status", "list sdlc runs",
   "resume the pipeline", "resume run <id>", "is the run stuck", "sdlc:status".
   Never mutates a completed run, and never resumes an aborted one without an
-  explicit yes.
+  explicit yes. Not for: starting new runs (sdlc-start / sdlc-autonomous),
+  editing run artifacts, or lightweight task flows — inspection and explicit
+  resume handoff only.
 version: 0.1.0
 license: Apache-2.0
 discoverable: true

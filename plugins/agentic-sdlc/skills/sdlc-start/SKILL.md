@@ -1,6 +1,6 @@
 ---
 name: sdlc-start
-description: Starts a human-in-the-loop agentic-sdlc run from a task description, an external work-item reference, or a greenfield idea. Triggers include "start sdlc", "implement this with sdlc", "begin SDLC workflow", or a request for the legacy sdlc:start command on a skills-based host.
+description: Starts a human-in-the-loop agentic-sdlc run from a task description, an external work-item reference, or a greenfield idea. Triggers include "start sdlc", "implement this with sdlc", "begin SDLC workflow", or a request for the legacy sdlc:start command on a skills-based host. Not for: autonomous runs (sdlc-autonomous), pre-sized small tasks (sdlc-task / sdlc-light), or resuming an existing run (sdlc-status).
 version: 0.1.0
 license: Apache-2.0
 discoverable: true

@@ -8,6 +8,8 @@ description: >-
   driving the review. Resolves a review scope, materializes a diff, hands it to
   the review orchestrator, and renders the machine verdict. Read-only (R0):
   reports findings, never edits source, never applies fixes, never commits.
+  Not for: pipeline-managed review gates (code-review-orchestrator via decision-router), editing code, or applying the fixes it recommends.
+
 ---
 
 # code-review

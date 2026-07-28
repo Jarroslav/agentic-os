@@ -10,6 +10,8 @@ description: >-
   says "watch the MR", "monitor MR", "keep an eye on the PR", "babysit this PR",
   "monitor MR !123", or when an MR-creator skill hands off a freshly opened
   request for hands-off management. Blast radius R3.
+  Not for: creating the MR/PR (mr-creator), one-shot status checks, or reviewing code quality (code-review) — it is a persistent unblocking loop.
+
 ---
 
 # mr-watch

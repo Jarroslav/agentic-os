@@ -1,6 +1,6 @@
 ---
 name: sdlc-autonomous
-description: Start an autonomous ("factory mode") SDLC run from a task description, external work-item reference, story path, or greenfield idea, on hosts that support skills but not custom slash commands. Trigger on "run autonomously", "factory mode", "ship this without asking", or a request for the legacy `sdlc:autonomous` command. Parses free-form intent into a structured payload and hands off to sdlc-pipeline — carries no orchestration logic of its own.
+description: Start an autonomous ("factory mode") SDLC run from a task description, external work-item reference, story path, or greenfield idea, on hosts that support skills but not custom slash commands. Trigger on "run autonomously", "factory mode", "ship this without asking", or a request for the legacy `sdlc:autonomous` command. Parses free-form intent into a structured payload and hands off to sdlc-pipeline — carries no orchestration logic of its own. Not for: human-in-the-loop runs (sdlc-start), pre-sized small tasks (sdlc-task / sdlc-light), or carrying orchestration logic of its own.
 version: 0.1.0
 license: Apache-2.0
 discoverable: true

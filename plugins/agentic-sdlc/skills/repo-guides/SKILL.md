@@ -9,6 +9,7 @@ description: >-
   entrypoint". On a brownfield repo, run repo-audit-guides first and feed its
   "# Repo Knowledge Audit" in here. Writes tracked files (blast radius R2) —
   no writes happen until the user approves the plan.
+  Not for: ongoing guide-drift sync after merges (the guide-sync agent), read-only readiness audits (repo-audit-guides), or authoring application code.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash, Write, Edit, Agent, Skill
 ---

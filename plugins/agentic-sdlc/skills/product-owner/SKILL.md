@@ -14,6 +14,8 @@ description: >-
   improvement, or fix into a written, agreed requirement qualifies. Works
   standalone in any repository with no prerequisite project files; the skill
   explores the codebase for context before it asks the user anything.
+  Not for: normalizing existing input into pipeline requirements (requirements-intake), estimating or planning the work, or writing to an external tracker.
+
 ---
 
 # product-owner

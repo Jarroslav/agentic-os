@@ -5,8 +5,9 @@ description: >-
   invokes directly: --checklist (Phase 6) turns requirements and QA knowledge into
   qa-checklist.md before implementation starts; --review-tests (Phase 8) reviews
   the tests that were written for quality and completeness; --update (Phase 11)
-  refreshes qa-health.md once qa-gates has passed. Not meant to be invoked directly
-  by a user.
+  refreshes qa-health.md once qa-gates has passed. Not for: direct user
+  invocation (sdlc-pipeline owns its three modes), building the QA foundation
+  (qa-foundation), or executing gates (qa-gates).
 version: 0.1.0
 license: Apache-2.0
 ---

@@ -8,6 +8,13 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.9]
+
+### Changed
+- **Served content refreshed** for `agentic-sdlc` 0.4.0 (literal `Not for:`
+  routing clauses on all 26 skill descriptions) and `agentic-os` 0.11.1
+  (counted dispatcher PASS signal).
+
 ## [0.2.8]
 
 ### Changed

@@ -4,6 +4,19 @@ Notable changes to the `agentic-sdlc` plugin, as distributed here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this plugin
 uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
+## [0.4.0]
+
+### Changed
+
+- **Every skill description now carries a literal `Not for:` routing clause**
+  — all 26 skills, each clause accurate to that skill's adjacent-but-wrong
+  routing targets (e.g. requirements-intake vs planning; qa-case-generator vs
+  qa-e2e-generator; sdlc-task vs sdlc-start/sdlc-autonomous/sdlc-light).
+  Existing prose negatives were converted to the literal form without losing
+  meaning. This pays down the recurring D2 "routing negative space" partial
+  from the blind role-grading waves, and the CI grandfather list is gone:
+  `check-skill-contract.py` now enforces the clause on every skill, hard.
+
 ## [0.3.0]
 
 ### Added

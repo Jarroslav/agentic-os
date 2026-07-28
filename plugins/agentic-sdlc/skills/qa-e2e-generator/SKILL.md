@@ -9,6 +9,7 @@ description: >-
   from this story". Standalone orchestrator — NOT auto-invoked by
   sdlc-pipeline. Requires a prior QA foundation (qa-strategy.md) and a
   configured ticket adapter (project.md). Top-of-pyramid only: no unit tests.
+  Not for: manual/functional case writing (qa-case-generator), unit tests, or auto-invocation by sdlc-pipeline.
 version: 0.1.0
 license: Apache-2.0
 allowed-tools: Read, Write, Bash, Glob, Grep, Agent, AskUserQuestion, TaskCreate, TaskUpdate, Skill

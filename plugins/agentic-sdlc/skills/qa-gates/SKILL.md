@@ -14,6 +14,8 @@ description: >-
   quality gates", "check merge readiness", "run lint/build/tests on this
   branch", or the SDLC pipeline's post-implementation QA step. This skill
   reports readiness only; it never creates an MR/PR.
+  Not for: browser-level functional proof (feature-verification), fixing the failures it reports, or making the merge decision — it reports readiness.
+
 ---
 
 # qa-gates
