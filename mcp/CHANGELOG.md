@@ -8,6 +8,15 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.11]
+
+### Changed
+- **Served content refreshed** for `agentic-os` 0.13.0 and `agentic-sdlc` 0.4.1:
+  the agent-contract CI check and its required blocks, stop-and-ask blocks on
+  the QA and sdlc agents, the counted-rule ba-po operating model, and the
+  architect preset's dispatcher routing. Agent frontmatter is now valid YAML in
+  every served contract — 16 descriptions were unparseable before this release.
+
 ## [0.2.10]
 
 ### Changed

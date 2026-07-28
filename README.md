@@ -441,7 +441,7 @@ Presets are **additive** — install several and their template sets union
 | **developer** | generated stack writer agents (schema/api/component), read-only gates, blind pre-commit review, staged pipeline orchestrator | gated-autonomous / pipeline |
 | **qa** | dispatcher routing; test-case generation / automation / sync agents with real-ID + existing-coverage gates; failure triage + flaky protocol; adapter-driven work-item creation (tests are recommend-only) | strict / dispatcher |
 | **ba-po** | story & requirements intake via agentic-sdlc, ticket adapter — no code-writing agents | gated-autonomous / dispatcher |
-| **architect** | full governance scaffolding (AGENTS/PATTERNS/registry), instruction-auditor + scorecard spawn gate, generated architecture guides | gated-autonomous / pipeline |
+| **architect** | full governance scaffolding (AGENTS/PATTERNS/registry), instruction-auditor + scorecard spawn gate, dispatcher routing, generated architecture guides | gated-autonomous / dispatcher |
 | **pm-delivery** | ticket/MR adapters, PR pipeline gate, MR-monitoring glue, status conventions | gated-autonomous / dispatcher |
 | **devops** | git hooks + quality gates, PR pipeline gate, MR-monitoring/CI-fixing glue, security reviewer, read-only incident triage (3 ranked hypotheses, human-executed fixes) — no code-writing agents | gated-autonomous / dispatcher |
 | **security** | DFD-first STRIDE threat modeling (doc-writer scoped to `docs/security/`, proposed-only severities, mitigation→risk traceability), code-level security reviewer, dispatcher routing — no code-writing agents | strict / dispatcher |
@@ -511,7 +511,8 @@ After install, what you reach for depends on the preset(s) you chose:
 - **ba-po** — draft stories and requirements through the agentic-sdlc intake
   skills, wired to your ticket adapter.
 - **architect** — the governance layer: `AGENTS.md`/`PATTERNS.md`/agent-registry,
-  the instruction-auditor + scorecard spawn gate, generated architecture guides.
+  the instruction-auditor + scorecard spawn gate, dispatcher routing over that
+  registry, generated architecture guides.
 - **pm-delivery** — ticket/MR adapters, the PR pipeline gate, MR-monitoring.
 - **devops** — the delivery-infrastructure layer: chained git hooks, the
   quality-gates registry, the PR pipeline gate, MR-monitoring that fixes

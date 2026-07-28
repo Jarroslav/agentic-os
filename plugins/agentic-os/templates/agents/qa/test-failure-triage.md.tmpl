@@ -1,6 +1,7 @@
 ---
 name: test-failure-triage
-description: Read-only failure debugger for {{TEST_FRAMEWORK}} runs. Classifies each failure (TIMING / SELECTOR / DATA / ASSERTION-LOGIC / ENV / SHARED-STATE / PROPAGATION), records a ledger row, and proposes a root-cause fix. Never edits files; pairs with the binding flaky protocol. Not for: applying fixes, authoring new tests, quarantining without the flaky protocol, or debugging application failures outside a test run.
+description: >-
+  Read-only failure debugger for {{TEST_FRAMEWORK}} runs. Classifies each failure (TIMING / SELECTOR / DATA / ASSERTION-LOGIC / ENV / SHARED-STATE / PROPAGATION), records a ledger row, and proposes a root-cause fix. Never edits files; pairs with the binding flaky protocol. Not for: applying fixes, authoring new tests, quarantining without the flaky protocol, or debugging application failures outside a test run.
 readonly: true
 write_scope: []
 forbidden_paths:
@@ -65,6 +66,23 @@ and known failure patterns before any fix is recommended.
 | Suggest the fix as a snippet or description | Weaken an assertion to make a test pass |
 
 <!-- /agentic-os:rules -->
+
+## Stop and ask when
+
+Halt before classifying any failure. An **Ambiguous** class is the honest answer
+when the evidence is thin; these are different — the evidence is not merely thin
+but self-contradictory or absent, so no class would be recoverable:
+
+- **The failure output and the named spec disagree** — the error cites a test
+  title, file, or line the supplied spec does not contain. Reconcile which run
+  produced this output before reading a cause into it.
+- **No error output, failing command, or report path was supplied** and none can
+  be read. There is nothing to normalize in step 1; ask rather than triaging the
+  spec's source on suspicion.
+- **A blocking ENV condition stands across the whole run** (degraded environment,
+  every suite failing on auth or connection). Report the environment finding and
+  stop — per-failure triage underneath it would attribute infrastructure damage
+  to individual tests.
 
 ## Constraints
 

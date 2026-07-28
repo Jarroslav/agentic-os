@@ -121,3 +121,20 @@ the five machine-parsed output sections:
 
 Missing blocks lower structural_score; the instruction-auditor lists each
 missing block by name in `## Blocking`.
+
+### What is machine-enforced, and what is not
+
+The first four blocks are asserted deterministically by
+`tests/lib/check-agent-contract.py` in CI over every shipped agent contract, so
+a contract missing one cannot merge. That checker also requires the frontmatter
+`description` to be a block (`>`, `|`) or quoted scalar: `Not for:` is a
+`word:` pair, and inside a bare unquoted scalar it makes the frontmatter
+unparseable to any real YAML reader — the routing rule and the plain-scalar
+style are mutually exclusive.
+
+**Counted verification criteria are not machine-checked**, and deliberately so.
+A counted criterion is recognizable but not mechanically decidable — a
+`## Summary` line reading `PASS — N files audited. 0 blocking, K non-blocking.`
+is properly counted, and no pattern separates it from prose without failing
+correct contracts. It stays part of structural_score, graded by the
+instruction-auditor reading the contract, not by a regex.

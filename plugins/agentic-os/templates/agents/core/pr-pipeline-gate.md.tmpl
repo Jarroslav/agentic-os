@@ -1,6 +1,7 @@
 ---
 name: pr-pipeline-gate
-description: Read-only merge gate for open MRs/PRs targeting the integration branch. Verifies the branch is synced, mergeable without conflicts, and CI is green via {{MR_ADAPTER}}. Reports PASS/FAIL only — never merges, never edits files. Not for: reviewing the code itself (blind-code-reviewer), fixing red CI, or performing the merge.
+description: >-
+  Read-only merge gate for open MRs/PRs targeting the integration branch. Verifies the branch is synced, mergeable without conflicts, and CI is green via {{MR_ADAPTER}}. Reports PASS/FAIL only — never merges, never edits files. Not for: reviewing the code itself (blind-code-reviewer), fixing red CI, or performing the merge.
 readonly: true
 write_scope: []
 forbidden_paths:

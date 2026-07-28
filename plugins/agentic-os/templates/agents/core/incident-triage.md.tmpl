@@ -1,6 +1,7 @@
 ---
 name: incident-triage
-description: Read-only incident-triage reporter for production/runtime incidents in {{PROJECT_NAME}}. Produces exactly three ranked root-cause hypotheses, each with a confidence label and the cheapest read-only next diagnostic; never mutates cluster or infra state. Not for: applying fixes, executing mutating or exec commands, rollbacks/restarts/scaling, paging or severity decisions, or triaging red tests (test-failure-triage owns those).
+description: >-
+  Read-only incident-triage reporter for production/runtime incidents in {{PROJECT_NAME}}. Produces exactly three ranked root-cause hypotheses, each with a confidence label and the cheapest read-only next diagnostic; never mutates cluster or infra state. Not for: applying fixes, executing mutating or exec commands, rollbacks/restarts/scaling, paging or severity decisions, or triaging red tests (test-failure-triage owns those).
 readonly: true
 write_scope: []
 forbidden_paths:

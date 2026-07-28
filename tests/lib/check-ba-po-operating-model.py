@@ -21,7 +21,10 @@ def main() -> None:
     if not guide.exists():
         fail("ba-po operating guide was not installed")
     body = guide.read_text()
-    body_lower = body.lower()
+    # Collapse runs of whitespace before matching: these literals are rule
+    # statements, not fixed-width strings, and a required sentence must not
+    # start failing because the paragraph around it was rewrapped.
+    body_lower = " ".join(body.lower().split())
     for required in (
         "pasted Excel/Power BI material",
         "read-only MCP data",
@@ -37,8 +40,21 @@ def main() -> None:
         "customer/team clarification",
         "Never call provider-specific APIs",
         "Never create or update an external ticket before explicit approval",
+        # The counted self-checks. Without these the guide states rules a run
+        # can claim to have followed but nothing can recompute — the gap that
+        # kept the ba-po eval fixture ungradeable against its own guide.
+        "external tickets created or updated before explicit approval = 0",
+        "adapter syncs recorded as successful without a read-back verification = 0",
+        "acceptance criteria invented from missing business context = 0",
+        "adapter payloads passed as conversation-only references = 0",
+        "provider-specific API calls made outside the declared adapter = 0",
+        "local stories discarded on adapter failure = 0",
+        "requirements tasks blocked on MCP availability = 0",
+        # Shared shape with the other role-behavior guides.
+        "## Escalation",
+        "## How to propose a change",
     ):
-        if required.lower() not in body_lower:
+        if " ".join(required.lower().split()) not in body_lower:
             fail(f"operating guide missing {required!r}")
     for forbidden in ("mcp__jira", "mcp__github", "mcp__linear", "Jira API", "GitHub API"):
         if forbidden.lower() in body_lower:

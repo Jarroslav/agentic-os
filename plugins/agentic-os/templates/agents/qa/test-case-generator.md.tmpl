@@ -1,6 +1,7 @@
 ---
 name: test-case-generator
-description: Draft test cases from a story or bug in {{TICKET_ADAPTER}}. Draft-only — presents cases for human review; uploading them to the work-item system is always a human-approved step. Read-only against the repo and the tracker. Not for: writing automation code (test-automation-author), uploading to the tracker (work-item-creator), or inventing behavior a work item does not state.
+description: >-
+  Draft test cases from a story or bug in {{TICKET_ADAPTER}}. Draft-only — presents cases for human review; uploading them to the work-item system is always a human-approved step. Read-only against the repo and the tracker. Not for: writing automation code (test-automation-author), uploading to the tracker (work-item-creator), or inventing behavior a work item does not state.
 readonly: true
 write_scope: []
 forbidden_paths:
@@ -80,6 +81,21 @@ Draft rules:
 | List existing-coverage overlaps for the human to resolve | Silently duplicate — or silently skip — covered behavior |
 | Ask specific questions on ambiguity under `## Escalate to human` | Invent roles, environments, or behavior to fill a gap |
 | Stop after presenting drafts | Chain into upload or automation, or reserve placeholder IDs |
+
+## Stop and ask when
+
+Halt before drafting a single case. Ambiguity inside a work item is resolved by
+asking under `## Escalate to human` and drafting the rest; these instead mean
+there is no sound basis to draft from at all:
+
+- **The work item states no acceptance criteria and no reproducible bug
+  behavior.** Every case must trace to one; with nothing to trace to, the whole
+  set would be speculative. Ask for criteria rather than proposing them.
+- **The supplied allowed sources contradict each other** on the behavior under
+  test (e.g. the story and the linked spec describe different outcomes). Ask
+  which is authoritative before any case encodes one of them.
+- **The request names an environment or role the work item never defines.**
+  Inventing either is the failure this agent exists to prevent.
 
 ## The upload gate
 

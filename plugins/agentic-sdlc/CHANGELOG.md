@@ -4,6 +4,36 @@ Notable changes to the `agentic-sdlc` plugin, as distributed here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this plugin
 uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
+## [0.4.1]
+
+### Added
+
+- **The required contract blocks on all five agents** — `codebase-scout`,
+  `guide-sync`, `lead-proxy`, `sizing-analyst`, and `story-proxy` now each
+  carry a `Not for:` routing clause, a `## Decision rules` DO/DON'T table, a
+  `## Stop and ask when` block, and an escalate-never-decide list. The 0.4.0
+  retrofit covered all 26 skills but no agent; `tests/lib/check-agent-contract.py`
+  in agentic-os now enforces the same blocks here.
+- **`## Escalate, never decide` as an accepted spelling of the escalation
+  block** — `lead-proxy` and `story-proxy` are contractually forbidden from
+  escalating (decision-router owns every human contact, triggered by their
+  `confidence` field). Their stop-and-ask blocks emit an immediate
+  low-confidence verdict rather than prompting a user, so the contract no
+  longer has to contradict itself to satisfy the rubric.
+
+### Fixed
+
+- **`story-proxy.md` frontmatter was unparseable YAML.** Its bare unquoted
+  `description` contained `<example>Context:`, which a strict YAML reader takes
+  as a nested mapping — the agent would fail to load in any host that parses
+  frontmatter properly. Now a folded block scalar.
+
+### Changed
+
+- **`lead-proxy.md` heading levels normalized** from `#` to `##` for top-level
+  sections (gate subsections demoted to `###`), matching every other agent
+  contract in both plugins.
+
 ## [0.4.0]
 
 ### Changed

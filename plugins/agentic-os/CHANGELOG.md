@@ -5,6 +5,67 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.13.0] — Agent contracts get the gate skills already had
+
+A grading pass against this plugin's own instruction-quality rubric found the
+required contract blocks enforced on skills and on nothing else. Closing that
+gap surfaced two defects the asymmetry had been hiding.
+
+### Added
+
+- **`tests/lib/check-agent-contract.py`** — deterministic CI check over all 21
+  shipped agent contracts (14 scaffolded templates, 5 agentic-sdlc agents, 2
+  generator exemplars). Asserts four of the rubric's required blocks: the
+  `Not for:` routing clause, `## Decision rules` holding a DO/DON'T table, an
+  escalate-never-decide list, and `## Stop and ask when`. Wired into `ci.yml`
+  and `release.yml` beside the skill-contract check. Counted verification
+  criteria stay model-graded — see the rubric's new "What is machine-enforced"
+  section for why a regex cannot decide them.
+- **`## Stop and ask when` on all five QA agent contracts** — pre-verdict halt
+  triggers, distinct from the `## Escalate to human` section they already had:
+  escalation resolves at the end of a run, stop-and-ask halts before an
+  artifact exists. Each names the conditions that make its own gates
+  unanswerable (an unreachable ticket adapter, a case with no parseable steps,
+  a spec and tracker that disagree on which is newer).
+- **Counted self-checks, `## Escalation`, and a change protocol in
+  `ba-po-operating-model.md`** — seven `= 0` rules covering approval-before-write,
+  read-back verification, invented acceptance criteria, conversation-only
+  payloads, direct provider calls, discarded local stories, and MCP-blocked
+  work. The guide now matches the shape of the other role-behavior guides, and
+  its eval fixture grades against rules a run can recompute.
+
+### Fixed
+
+- **Agent frontmatter was unparseable YAML in 16 of 21 contracts.** The
+  repo-wide `Not for:` retrofit put a `word:` pair inside bare unquoted
+  `description` scalars, so a strict YAML reader rejected every core and QA
+  agent template plus both exemplars (`mapping values are not allowed here`).
+  All descriptions are now folded block scalars, and the new checker rejects
+  bare ones. `story-proxy.md` in agentic-sdlc had the same break independently,
+  via the `<example>Context:` text in its description.
+- **The architect preset promised routing it did not install.** Its eval
+  fixture expected "the dispatcher outputs the owning asset or escalates", but
+  an architect-only scaffold contained neither `agents/dispatcher` nor
+  `commands/dispatch`. The preset now installs both and defaults to
+  `dispatcher` orchestration — matching ba-po, devops, pm-delivery and
+  portfolio, which already pair `gated-autonomous` with `dispatcher`.
+  `commands/pipeline-orchestrator` is retained: removing it would orphan the
+  file in existing architect installs, and architect-only now exercises the
+  both-commands `{{ORCHESTRATION_STYLE_RULE}}` variant that previously only
+  appeared in multi-role unions.
+
+### Changed
+
+- **Exemplar headings normalized to sentence case.** `test-automation-author.md`
+  used Title Case (`## When To Escalate To The Human`, `## Input Contract`)
+  where every other contract uses sentence case. Generated contracts are
+  modelled on the exemplars, so the divergence propagated into every generated
+  fleet. The five machine-parsed output sections were already correctly cased
+  and are untouched.
+- **`check-ba-po-operating-model.py` matches its required literals with
+  whitespace collapsed**, so a rule statement no longer fails because the
+  paragraph around it was rewrapped.
+
 ## [0.12.0] — Every dot connected: skill routing, full-union proof, ten-role parity
 
 The post-role-wave consolidation: the routing matrix now covers skill-owned

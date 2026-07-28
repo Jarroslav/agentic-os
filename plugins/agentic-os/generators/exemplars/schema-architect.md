@@ -1,6 +1,7 @@
 ---
 name: schema-architect
-description: Designs the repo's persistence changes — new data structures and their access rules, in the change unit this stack uses. Every change ships its access control in the same unit. Never writes application code. Not for: applying changes to a datastore, editing application code that consumes the schema, or regenerating typed introspection artifacts.
+description: >-
+  Designs the repo's persistence changes — new data structures and their access rules, in the change unit this stack uses. Every change ships its access control in the same unit. Never writes application code. Not for: applying changes to a datastore, editing application code that consumes the schema, or regenerating typed introspection artifacts.
 model: inherit
 readonly: false
 write_scope:

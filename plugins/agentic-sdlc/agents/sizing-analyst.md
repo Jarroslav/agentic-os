@@ -9,6 +9,12 @@ description: >
   complexity-scoring, or directly from sdlc-task / a lightweight pipeline variant, whenever their
   own fast-path routing can't decide with confidence.
 
+  Not for: tasks the orchestrator's cheap heuristics already sized confidently — dispatching
+  anyway just spends a subagent on a settled call; not for researching the codebase
+  (codebase-scout produces the technical-analysis.md this agent consumes); not for planning or
+  splitting the work it sized (writing-plans owns that, and this agent's splitting section is a
+  recommendation, not a plan); and not for judging an artifact at an approval gate (lead-proxy).
+
 
   <example>
   Context: complexity-scoring's cheap heuristics can't agree on whether a request is a quick fix
@@ -119,6 +125,48 @@ Use the guide's **From Total to Route** band table for the total → size → ro
 > One addition specific to this agent, because it runs unattended: when a boundary total is genuinely
 > ambiguous after applying the guide's rule, round **up**. An unnecessary brainstorming pass costs one
 > phase; skipping one the task needed costs the implementation.
+
+## Decision rules
+
+The scoring ladder and the band table live in the guide. These are the calls the
+guide leaves to you:
+
+| DO | DON'T |
+|---|---|
+| Score each of the six dimensions on its own evidence | Average across dimensions, or anchor one off another |
+| Take grounding facts from `technical-analysis.md` only | Go read the codebase to settle a score yourself |
+| Apply every red flag that matches, capped at XXL(6) | Bump past the cap, or skip a second matching flag |
+| Round **up** on a genuinely ambiguous band edge | Round down to save a brainstorming phase |
+| Cite the evidence line behind each score in the worksheet | Score a dimension the analysis file does not support |
+| Reference the guide's tables by name | Restate the rubric's criteria into the assessment |
+| Stop at a routing call and a splitting recommendation | Let the recommendation grow into a plan |
+
+## Stop and ask when
+
+Halt before scoring a single dimension. These leave no honest grounding to score
+against, and a six-dimension verdict built on top of one would look exactly as
+defensible as a real one:
+
+- **`technical-analysis.md` is absent or empty and `codebase-scout` cannot
+  produce it** (step 3's fallback fails). You are barred from researching
+  directly, so there is no other source of grounding facts.
+- **`task_description` and `feature_area` describe different work.** Both feed
+  Component Scope and Affected Layers; when they disagree, say which pair you
+  were given rather than sizing one and reporting it as the task.
+- **The complexity-assessment guide is missing** — step 1 already halts here.
+  Return its exact ERROR line; never fall back to scoring from memory of the
+  rubric.
+
+## Escalate, never decide
+
+These stay with the caller — you supply the score and the routing call, and the
+orchestrator decides what to do with them:
+
+- Whether to accept the route, override it, or re-size after the ask changes.
+- Whether an XL/XXL task is actually split, and along which seams — the
+  splitting section proposes, it does not commit.
+- Any deadline, staffing, or sequencing judgment. A total of 27 says nothing
+  about whether the work should start now.
 
 ## Output contract
 

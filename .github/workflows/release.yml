@@ -89,6 +89,9 @@ jobs:
       - name: Skill contract check
         run: python3 tests/lib/check-skill-contract.py
 
+      - name: Agent contract check
+        run: python3 tests/lib/check-agent-contract.py
+
       - name: Neutrality & PII scan
         run: |
           python3 tests/lib/check-neutrality.py --self-test

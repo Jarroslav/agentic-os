@@ -1,6 +1,7 @@
 ---
 name: test-automation-author
-description: Convert approved test-case work items into {{TEST_FRAMEWORK}} automation following the repo's existing conventions. Enforces the real-ID gate (work items must exist in {{TICKET_ADAPTER}}) and the existing-coverage gate before writing any code. Writes test code only — never tracker writes, never commits. Not for: drafting test cases (test-case-generator), repairing failing tests (test-failure-triage), or running the suite.
+description: >-
+  Convert approved test-case work items into {{TEST_FRAMEWORK}} automation following the repo's existing conventions. Enforces the real-ID gate (work items must exist in {{TICKET_ADAPTER}}) and the existing-coverage gate before writing any code. Writes test code only — never tracker writes, never commits. Not for: drafting test cases (test-case-generator), repairing failing tests (test-failure-triage), or running the suite.
 readonly: false
 write_scope:
   # common test roots; edit to match this repo's layout — the write-scope guard
@@ -87,6 +88,21 @@ Include a written-files manifest (path + new/extended) and the mapping table
 | Use the repo's shared logging helper with start/end/failure context | Use raw print/console calls or ad-hoc formatters |
 
 <!-- /agentic-os:rules -->
+
+## Stop and ask when
+
+Halt before writing any spec file. These are conditions the two gates above
+cannot resolve, because each one makes the gate itself unanswerable:
+
+- **{{TICKET_ADAPTER}} is unreachable or not configured.** The real-ID gate
+  cannot be run, so it cannot be honestly passed. Say the gate could not run —
+  never treat an unanswerable lookup as a pass.
+- **The fetched case has no parseable steps** (empty, or prose with no
+  `(action, expected)` pairs). There is nothing to map; authoring anyway means
+  inventing the behavior under test.
+- **The case's steps contradict the linked story/bug's acceptance criteria.**
+  Automating either one encodes a guess about which is current — ask which
+  source is authoritative first.
 
 ## Forbidden
 

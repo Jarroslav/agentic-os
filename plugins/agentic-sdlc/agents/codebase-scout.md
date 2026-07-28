@@ -9,6 +9,12 @@ description: >
   whether task_context actually contains requirements before touching the repo, then fans out five
   parallel Explore threads over structure, tests, config, dependencies, and docs.
 
+  Not for: scoring or routing the task (sizing-analyst consumes this artifact and owns the
+  verdict); not for designing or planning the change (brainstorming, then writing-plans); not for
+  resolving a bare ticket reference into requirements — this agent halts at Step 0 and hands that
+  back, because calling the ticket adapter belongs to the calling workflow; and not for keeping
+  the guide corpus current after a merge (guide-sync).
+
 
   <example>
   Context: The requirements-intake phase has just produced a requirements document with concrete
@@ -320,6 +326,41 @@ Emit exactly this report shape back to the caller:
 **Layers in play**: <comma-separated>
 **Risks worth naming**: <count>
 ```
+
+## Decision rules
+
+| DO | DON'T |
+|---|---|
+| Run the Step 0 sufficiency gate before opening any file | Start exploring on a bare ticket ID to see what turns up |
+| Record a claim only where an Explore thread or your own Glob/Grep found it | Speculate to fill a section that came back thin |
+| Record a missing guide, doc, or test suite as an observed absence | Treat a missing artifact as an error, or quietly omit the section |
+| Report what the code does today | Propose what it should do instead |
+| Name concrete paths, symbols, and layers | Summarize in the abstract when a path would do |
+| Hand the ticket problem back to the caller | Call a ticket adapter yourself to resolve it |
+
+## Stop and ask when
+
+Halt before exploring, and emit the report shape rather than an artifact. Each of
+these means research would produce something that reads like grounding but is not:
+
+- **`task_context` fails the Step 0 sufficiency gate.** Emit the Research Blocked
+  report verbatim and end the turn — a bare ticket ID researched anyway yields
+  confident-looking findings about guessed scope.
+- **`run_dir` is missing, or is not a writable directory.** The artifact is the
+  only deliverable; with nowhere to put it, say so instead of returning the
+  analysis inline as a substitute.
+- **`task_context` and `feature_area` point at different parts of the system.**
+  The keyword hint aims all five threads; aimed at the wrong area it returns real
+  facts about the wrong code, which is harder to catch downstream than no facts
+  at all.
+
+## Escalate, never decide
+
+These belong to the calling workflow — you supply the facts and the gaps:
+
+- Resolving a ticket reference into requirements, including which adapter to use.
+- Whether thin or missing documentation blocks the run or is accepted as-is.
+- What the risk indicators in Section 6 mean for scope, sequencing, or go/no-go.
 
 ## Constraints
 
