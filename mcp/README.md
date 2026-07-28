@@ -109,6 +109,9 @@ preset; `list_presets` shows all ten with their human-in-the-loop mode.
 | **BA / PO** | "How do I turn a ticket into requirements with agentic-sdlc?" | `search_methodology`, `get_document` | the `requirements-intake` / `product-owner` method — a story with acceptance criteria and an early complexity read (no code) |
 | **PM / delivery** | "What's the PR-gate and status workflow for a delivery manager?" | `list_presets`, `get_document` | the pm-delivery preset — ticket/MR adapters, a PR pipeline gate, `mr-watch`, and status conventions |
 | **Portfolio** | "What cross-project oversight does the portfolio role give?" | `list_presets`, `get_document` | run status, repo/knowledge-health audits, and durable cross-session memory — read/report-only, no git footprint |
+| **Security** | "What does the security preset enforce when I threat-model a feature?" | `list_presets`, `get_document` | the threat-modeler contract + threat-modeling guide — DFD-first STRIDE with per-element constraints, severities `proposed — owner confirmation pending`, writes only `docs/security/` |
+| **Data** | "What are the standards for designing a pipeline with quality checks?" | `list_presets`, `get_document` | the pipeline-designer contract + data-pipeline-design guide — counted row-math equations, force-tested DQ checks, lineage, recommend-only queries |
+| **Design** | "What must an agent-ready design handoff contain?" | `list_presets`, `get_document` | the experience-designer contract + experience-design guide — emotion-annotated journeys, decision-closing workshops, verbatim negative ACs, the context+spec pair |
 
 `plan_install` turns any of these roles into an ordered file manifest; you (or
 your assistant, with your review) apply it. To run the pipeline or scaffold the

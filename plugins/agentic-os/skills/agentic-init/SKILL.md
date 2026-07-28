@@ -552,7 +552,10 @@ Ordered steps:
      `experience-designer` row goes unless `agents/experience-designer` is in
      the union; the
      `pipeline-orchestrator.md` / `dispatch.md` rows go unless the matching
-     command ID is in the union. Never prune the
+     command ID is in the union; skill-owned rows (Owning asset of the form
+     ``the agentic-sdlc `<name>` skill``) go unless `<name>` is in the
+     union's `sdlc_skills` set (the union of every installed preset's
+     `sdlc_skills` array). Never prune the
      `blind-code-reviewer` or `instruction-auditor` rows when their agents
      install. **Never prune the `<!-- generated-agent-rows -->` marker row**
      (the one with an empty "Owning asset" cell, below the curated rows) —
@@ -665,8 +668,8 @@ Ordered steps:
 
 ## Phase 5 — Generate (one subagent per gen/* slot)
 
-Skip entirely when the union's `generated` set is empty (qa/ba-po/pm-delivery
-only). Otherwise:
+Skip entirely when the union's `generated` set is empty (any all-no-code
+union — qa, ba-po, pm-delivery, portfolio, security, data, design). Otherwise:
 
 1. **Applicability filter — capability-driven** (the flip from Stage 1: this
    now reads `journal.stack_discovery.capabilities` directly, not the matched
@@ -683,7 +686,7 @@ only). Otherwise:
    and wasn't generated. There is no `generic-fallback.md` special case
    anymore — a repo with zero applicable capabilities (e.g. a genuinely
    stateless service) simply produces `generated: []` for this install, the
-   same shape a `qa`-only or `pm-delivery`-only union already produces;
+   same shape any of the seven no-code unions already produces;
    `generic-fallback.md` becomes a documentation stub pointing here (Stage 3
    cleans up its wording).
 2. **Slot definitions** (installer-owned; the generator narrows `write_scope`/

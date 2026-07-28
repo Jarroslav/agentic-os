@@ -76,6 +76,10 @@ PRESET_TEMPLATE_IDS = {
 PRESET_GENERATED_IDS = {
     gid for name in PRESET_NAMES for gid in available_presets[name]["generated"]
 }
+PRESET_SDLC_SKILLS = {
+    s for name in PRESET_NAMES
+    for s in available_presets[name].get("sdlc_skills", [])
+}
 
 # SKILL.md Phase 4 step 1, first installer-side conditional: these two are
 # scaffolded whenever `hooks/settings-fragment` is in the union EVEN IF no preset
@@ -664,6 +668,11 @@ if registry_path.exists():
             elif asset.startswith(".claude/commands/"):
                 name = asset.rsplit("/", 1)[-1].removesuffix(".md")
                 missing_selected_asset |= "commands/" + name not in PRESET_TEMPLATE_IDS
+        # Skill-owned rows (SKILL.md Phase 4 step 4): the fixed cell shape
+        # ``the agentic-sdlc `<name>` skill`` prunes against the union's
+        # sdlc_skills, not template IDs.
+        for skill in re.findall(r"agentic-sdlc `([a-z0-9-]+)` skill", line):
+            missing_selected_asset |= skill not in PRESET_SDLC_SKILLS
         if missing_selected_asset:
             continue
         registry_lines.append(line)

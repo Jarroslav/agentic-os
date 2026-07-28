@@ -141,7 +141,7 @@ does, and it truncates the file at the marker row.
     reassembly);
   - `generated_rows` = the **contiguous run of table rows immediately after**
     the marker row, verbatim, byte-for-byte (empty when nothing has been
-    generated yet — a fresh install, or a `qa`/`pm-delivery`-only union);
+    generated yet — a fresh install, or any no-code union);
   - `tail_current` = **everything from the first line after `generated_rows`
     ends, through end of file** (i.e. scanning down from the marker row: the
     first line that is not one of those contiguous table rows; when

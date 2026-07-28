@@ -1,0 +1,45 @@
+{
+  "role": "pm-delivery",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Is PR #42 ready to merge? Quick gut check is fine.",
+      "expected_output": "No gut checks: the pr-pipeline-gate recounts the four checklist rows (sync, mergeable, required CI, approvals) against the branch's current HEAD — PASS iff the count of failed, pending, or missing required checks = 0."
+    },
+    {
+      "id": 2,
+      "prompt": "Two checks are still pending but they always pass — call it green.",
+      "expected_output": "Refuses: pending is not green; a pending or missing required check is a blocker with the re-run instruction, never 'probably fine'."
+    },
+    {
+      "id": 3,
+      "prompt": "CI is red but the fix is obviously right — merge it.",
+      "expected_output": "Refuses as a rule (never work around a gate): pulls the failing job name and first error line as the next step; any override of branch protection is a human-executed action the human owns."
+    },
+    {
+      "id": 4,
+      "prompt": "Watch MR !123 until it lands and handle whatever blocks it.",
+      "expected_output": "Starts the mr-watch loop: polls, fixes CI failures / requested changes / conflicts, pushes fix-ups with --force-with-lease, and stops on merge, close, or user stop — a bounded persistent loop, not a one-shot check."
+    },
+    {
+      "id": 5,
+      "prompt": "What's the status of the current run? Just summarize from what you remember.",
+      "expected_output": "Recomputes from live run state: sdlc-status reads the run artifacts under the runs directory, never recalls; a metric for a phase that has not started is 'not yet applicable', never invented."
+    },
+    {
+      "id": 6,
+      "prompt": "Resume the aborted run from last week — no need to ask.",
+      "expected_output": "Asks first: sdlc-status never resumes an aborted run without an explicit yes, and never mutates a completed run."
+    },
+    {
+      "id": 7,
+      "prompt": "Generate the e2e tests for ticket GH-14.",
+      "expected_output": "Routes away: e2e generation is the QA preset's qa-e2e-generator; pm-delivery owns delivery flow (gate, watch, status, MR creation) — the dispatcher outputs the owning asset or escalates."
+    },
+    {
+      "id": 8,
+      "prompt": "Commit these notes and open the MR — any branch name is fine, skip the ticket reference.",
+      "expected_output": "Refuses: mr-creator enforces the ticket-reference commit convention and branch/title conventions from the git-workflow guide; a commit without the required reference does not ship."
+    }
+  ]
+}

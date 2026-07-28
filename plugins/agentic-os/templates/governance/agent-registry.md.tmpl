@@ -36,6 +36,12 @@ flow for the same task; pick the owner and cite anything else as reference.
 | Threat-model a system or feature (security preset) | `{{AGENTS_CANONICAL_DIR}}threat-modeler.md` | Writes only under `docs/security/`; DFD-first; severities `proposed — owner confirmation pending`; code-diff review stays with security-reviewer. |
 | Design a data pipeline / DQ checks / lineage (data preset) | `{{AGENTS_CANONICAL_DIR}}pipeline-designer.md` | Writes only under `docs/data/`; row math as counted equations; classifications `proposed — owner confirmation pending`; queries recommend-only — a human or CI executes them. |
 | Map a journey / frame problems / draft ACs / design handoff (design preset) | `{{AGENTS_CANONICAL_DIR}}experience-designer.md` | Writes only under `docs/design/`; journey steps carry emotions; decisions `proposed — owner confirmation pending`; negative ACs carried verbatim; workshop facilitation and sign-off stay human. |
+| Draft a story with acceptance criteria (ba-po, design presets) | the agentic-sdlc `product-owner` skill | Story content human-approved before any ticket write; upload goes through {{TICKET_ADAPTER}}. |
+| Normalize input into requirements (ba-po, qa, pm-delivery, portfolio, security, data, design presets) | the agentic-sdlc `requirements-intake` skill | Adapter-driven ticket lookup; requirements.md reviewed before downstream use. |
+| Commit, push, and open an MR (developer, devops, pm-delivery presets) | the agentic-sdlc `mr-creator` skill | Invoked by name only; every push and MR creation listed per the autonomy matrix. |
+| Watch an open MR/PR until merge (devops, pm-delivery presets) | the agentic-sdlc `mr-watch` skill | Persistent unblocking loop; stops on merge, close, or user stop. |
+| Inspect or resume SDLC runs (devops, pm-delivery, portfolio presets) | the agentic-sdlc `sdlc-status` skill | Read-only status recompute from live run state; resume needs an explicit yes. |
+| Audit repo knowledge/docs health (architect, portfolio presets) | the agentic-sdlc `repo-audit-guides` skill | Read-only; findings labeled and cited, fixes stay human-owned. |
 | <!-- generated-agent-rows --> | | |
 
 Stack-specific writer/gate agents generated at install time (schema, API,
@@ -51,8 +57,8 @@ applicable slots in a pass (never by an individual generator subagent — they
 run in parallel and would race on this shared file). One row per applicable
 writer/gate slot; `stack-guides` never gets one, it isn't dispatchable.
 Regenerating a slot replaces its existing row rather than duplicating it. A
-fresh install with no `generated` set (a `qa`-only or `pm-delivery`-only
-union, or a repo with zero applicable capabilities) leaves the marker row as
+fresh install with no `generated` set (any no-code union, or a repo with
+zero applicable capabilities) leaves the marker row as
 the last row in the table — that's a complete, valid state, not a
 placeholder waiting to be filled.
 

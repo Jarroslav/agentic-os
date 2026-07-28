@@ -74,8 +74,9 @@ top-level index.
   `gen/i18n-agent` generation has not yet been run end-to-end against a
   non-curated fixture. Tracked in `tests/universal/README.md` § "What's
   proven vs. still open."
-- **Zero-capability install path end-to-end.** A `pm-delivery`/`qa`-only role
-  preset (`generated: []`) has deterministic coverage
+- **Zero-capability install path end-to-end.** A no-code union (any of the
+  seven no-code presets — e.g. `pm-delivery`- or `qa`-only, `generated: []`)
+  has deterministic coverage
   (`tests/lib/check-presets.py`) but has never been driven through a live
   `/agentic-init` run to confirm the discovery-front-end path degrades
   cleanly with nothing to generate.

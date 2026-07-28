@@ -166,6 +166,7 @@ assert "foreign hook body preserved" "grep -q 'TEAM-PRECOMMIT-RAN' '$MAT/.git/ho
 
 echo "== T3 role matrix (static) =="
 python3 "$ROOT/tests/lib/check-presets.py" "$PLUGIN" && ok "preset matrix + ID resolution" || bad "preset matrix + ID resolution"
+python3 "$ROOT/tests/lib/check-preset-evals.py" "$PLUGIN" && ok "preset eval fixtures shape" || bad "preset eval fixtures shape"
 python3 "$ROOT/tests/lib/check-discovery-priors.py" "$PLUGIN" && ok "Tier-1 marker-prior table" || bad "Tier-1 marker-prior table"
 python3 "$ROOT/tests/lib/check-mature-adoption.py" && ok "mature .agents adoption detection" || bad "mature .agents adoption detection"
 
@@ -308,6 +309,39 @@ fi
 assert "design-only ai-policy active mode is strict" "[ \"\$(active_mode '$DESIGN_WORK')\" = strict ]"
 python3 "$ROOT/tests/lib/check-governance-promises.py" "$DESIGN_WORK" \
   && ok "design-only governance promises all resolve" || bad "design-only governance promises all resolve"
+
+echo "== T3j full ten-preset union =="
+ALL_WORK="$WORK/all-ten"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$ALL_WORK" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$ALL_WORK" \
+  --presets developer,qa,ba-po,architect,pm-delivery,devops,portfolio,security,data,design \
+  --mcp-state without-mcp >/dev/null && ok "ten-preset refinstall exits 0" || bad "ten-preset refinstall exits 0"
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$ALL_WORK" \
+  && ok "ten-preset governance promises all resolve" || bad "ten-preset governance promises all resolve"
+assert "ten-preset ai-policy active mode is strict" "[ \"\$(active_mode '$ALL_WORK')\" = strict ]"
+python3 "$ROOT/tests/lib/check-patterns.py" "$ALL_WORK" && ok "ten-preset PATTERNS marker intact" || bad "ten-preset PATTERNS marker intact"
+python3 "$ROOT/tests/lib/check-registry.py" "$ALL_WORK" && ok "ten-preset registry table intact" || bad "ten-preset registry table intact"
+for g in ba-po-operating-model mcp-onboarding incident-triage threat-modeling data-pipeline-design experience-design; do
+  test -e "$ALL_WORK/.agentic/guides/standards/$g.md" || bad "ten-preset union missing guide $g"
+done
+ok "all six role-specific guides present in the union"
+for a in dispatcher blind-code-reviewer security-reviewer instruction-auditor pr-pipeline-gate incident-triage threat-modeler pipeline-designer experience-designer test-case-generator test-automation-author test-case-syncer test-failure-triage work-item-creator; do
+  grep -q "$a.md" "$ALL_WORK/.agentic/guides/agent-registry.md" || bad "ten-preset registry missing agent row $a"
+done
+ok "registry carries every agent row"
+for s in product-owner requirements-intake mr-creator mr-watch sdlc-status repo-audit-guides; do
+  grep -q "agentic-sdlc \`$s\` skill" "$ALL_WORK/.agentic/guides/agent-registry.md" || bad "ten-preset registry missing skill row $s"
+done
+ok "registry carries every skill-owned row"
+assert "ten-preset scaffold has no unresolved placeholders" "! grep -rlF '{{' '$ALL_WORK/.claude' '$ALL_WORK/.agentic' '$ALL_WORK/AGENTS.md' '$ALL_WORK/PATTERNS.md' '$ALL_WORK/CLAUDE.md' 2>/dev/null | grep -q ."
+# pruning the other way: a developer-only scaffold keeps only its own skill row
+if grep -q "agentic-sdlc \`mr-watch\` skill" "$DEV_ONLY/.agentic/guides/agent-registry.md"; then
+  bad "developer-only registry kept an unowned skill row (mr-watch)"
+else
+  ok "developer-only registry pruned unowned skill rows"
+fi
+grep -q "agentic-sdlc \`mr-creator\` skill" "$DEV_ONLY/.agentic/guides/agent-registry.md" \
+  && ok "developer-only registry kept its own skill row (mr-creator)" || bad "developer-only registry kept its own skill row (mr-creator)"
 
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.

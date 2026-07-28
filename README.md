@@ -21,16 +21,17 @@ work gets independently reviewed before anything is committed. The second,
 guardrails: it takes an idea or a ticket and carries it through requirements,
 a spec, a plan, tested code, and a review-ready pull request. You don't need
 to be a programmer to benefit — there are role setups for developers, QA,
-architects, DevOps, business analysts, and project/portfolio managers, and
-the non-coding roles work entirely through plain chat phrases. Unfamiliar
+architects, DevOps, business analysts, project/portfolio managers, security
+engineers, data engineers, and designers, and the non-coding roles work
+entirely through plain chat phrases. Unfamiliar
 terms (HITL, gate, preset…) are one-liners in the [Glossary](#glossary).
 
 ## Start here
 
 > **Prefer a walk-through?** The **[role-based setup guides](https://jarroslav.github.io/agentic-os/setup/)**
 > cover the same install for every role preset — pick your role (developer, QA,
-> BA/PO, architect, DevOps, PM, portfolio) and follow the checklist, quick or
-> fully guided.
+> BA/PO, architect, DevOps, PM, portfolio, security, data, design) and follow
+> the checklist, quick or fully guided.
 
 **New to this repo?** You do not need to read everything below. Pick a path:
 
@@ -513,13 +514,30 @@ After install, what you reach for depends on the preset(s) you chose:
   the instruction-auditor + scorecard spawn gate, generated architecture guides.
 - **pm-delivery** — ticket/MR adapters, the PR pipeline gate, MR-monitoring.
 - **devops** — the delivery-infrastructure layer: chained git hooks, the
-  quality-gates registry, the PR pipeline gate, and MR-monitoring that fixes
-  red CI and reviewer comments until the MR merges.
+  quality-gates registry, the PR pipeline gate, MR-monitoring that fixes
+  red CI and reviewer comments until the MR merges, and read-only incident
+  triage (exactly three ranked hypotheses with the cheapest read-only next
+  diagnostic; fixes stay human-executed).
 - **portfolio** — oversight without touching code: ask for run status, audit
   a repo's docs/agent-setup health, keep durable notes across sessions, and
   turn stakeholder asks into normalized requirements.
+- **security** — say *"threat-model the checkout flow"*: the threat-modeler
+  writes the DFD-first pack (diagram → per-element threats → risk register →
+  mitigations) only under `docs/security/`, with every severity
+  `proposed — owner confirmation pending` until you confirm it. Code-diff
+  review stays with the security-reviewer.
+- **data** — say *"design the orders pipeline"*: the pipeline-designer writes
+  layered designs, force-tested DQ checks, and lineage maps only under
+  `docs/data/`, with row math as counted equations and every verification
+  query handed to you ready to run — never executed by the agent.
+- **design** — say *"map the checkout journey"*: the experience-designer
+  writes emotion-annotated journeys, step+emotion framings, decision-closing
+  workshop logs, and the agent-ready `context.md` + `spec.md` handoff pair
+  only under `docs/design/`; negative acceptance criteria are carried
+  verbatim, and story drafting hands off to `product-owner`.
 
-> **If you don't write code** (pm-delivery, ba-po, portfolio): everything you
+> **If you don't write code** (pm-delivery, ba-po, portfolio, security, data,
+> design): everything you
 > need is a plain chat phrase, not a CLI command. Type things like *"draft a
 > story for password reset"*, *"what's the status of the current run?"*,
 > *"watch MR !123"*, or *"turn this stakeholder email into requirements"*
@@ -578,8 +596,9 @@ is verified against non-curated fixtures spanning both persistence paradigms
 and both UI paradigms; see [`tests/universal/README.md`](tests/universal/README.md).
 
 **What if I have no code stack at all?**
-That's a first-class path by design, not a degradation: a `pm-delivery` or
-`ba-po` install declares `generated: []` and wires ticket/MR adapters plus the
+That's a first-class path by design, not a degradation: any no-code preset
+(qa, ba-po, pm-delivery, portfolio, security, data, design) declares
+`generated: []`; a `pm-delivery` or `ba-po` install wires ticket/MR adapters plus the
 governance layer instead of code agents. Honest caveat — the preset
 combinatorics are covered deterministically in CI, but this zero-capability
 path hasn't yet been driven through a live end-to-end `/agentic-init` run
@@ -633,8 +652,8 @@ One-liners for the jargon used above, no forward references required:
 - **Hook** — a small program the editor runs automatically around an agent's
   actions; a failing hook physically blocks the action, unlike a prompt.
 - **Preset** — a role-shaped bundle (developer, qa, ba-po, architect,
-  pm-delivery, devops, portfolio) choosing which agents, hooks, and skills get
-  installed.
+  pm-delivery, devops, portfolio, security, data, design) choosing which
+  agents, hooks, and skills get installed.
 - **Scaffold** — the set of files `/agentic-init` writes into your repo
   (contracts, hooks, policies, guides); nothing is committed for you.
 - **Doctor** — a read-only verifier (`/agentic-doctor`, sdlc-doctor) that
