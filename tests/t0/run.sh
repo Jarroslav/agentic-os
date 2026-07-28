@@ -75,6 +75,8 @@ vals = {
     "REVIEW_GATE_SECTION": "",
     "QUALITY_GATES_SECTION": "",
     "ORCHESTRATION_STYLE_RULE": "Multi-step work is orchestrated by the human.",
+    "FLEET_INVARIANTS": "1. Write scope is absolute.",
+    "ENFORCEMENT_LAYER_ROWS": "",
 }
 text = open(src, encoding="utf-8").read()
 for k, v in vals.items():

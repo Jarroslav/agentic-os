@@ -16,6 +16,11 @@ templates:
    and are excluded — same rule as the T1 inline check).
 3. The agent-registry orchestration-rules bullet names no orchestration
    command whose `.claude/commands/<name>.md` file is absent.
+4. `AGENTS.md` and the rendered `ai-policy.md` cite no uninstalled enforcement
+   artifact either — the 2026-07-28 D4 re-grade found the PR #33 conditionals
+   covered CLAUDE/PATTERNS/registry while a portfolio-only install still
+   promised `write_scope_guard.py` / `instruction_gate.py` /
+   `precommit_review_gate.py` in these two files.
 
 Usage: check-governance-promises.py <TARGET_REPO>
 """
@@ -26,16 +31,17 @@ from pathlib import Path
 TARGET = Path(sys.argv[1])
 problems = []
 
+# Every way a governance doc can name an enforcement artifact by path.
+CITATION = re.compile(
+    r"(?:\.claude/hooks/[\w-]+\.py|\.githooks/[\w-]+|scripts/[\w-]+\.sh)")
+
 # --- 1. CLAUDE.md managed block cites no uninstalled enforcement artifact ----
 claude = (TARGET / "CLAUDE.md").read_text(encoding="utf-8")
 block = re.search(r"<!-- agentic-os:begin.*?agentic-os:end -->", claude, re.S)
 if not block:
     problems.append("CLAUDE.md: managed agentic-os block missing")
 else:
-    cited = set(re.findall(
-        r"(?:\.claude/hooks/[\w-]+\.py|\.githooks/[\w-]+|scripts/[\w-]+\.sh)",
-        block.group(0)))
-    for rel in sorted(cited):
+    for rel in sorted(set(CITATION.findall(block.group(0)))):
         if not (TARGET / rel).exists():
             problems.append(
                 "CLAUDE.md cites an enforcement artifact that was not installed: %s" % rel)
@@ -63,6 +69,18 @@ if registry_path.exists():
                 ".claude/commands/%s.md was not installed" % (name, name))
 else:
     problems.append(".agentic/guides/agent-registry.md not scaffolded")
+
+# --- 4. AGENTS.md + ai-policy.md cite no uninstalled enforcement artifact ----
+for rel in ("AGENTS.md", ".agentic/guides/policy/ai-policy.md"):
+    doc = TARGET / rel
+    if not doc.exists():
+        problems.append("%s not scaffolded" % rel)
+        continue
+    for cited in sorted(set(CITATION.findall(doc.read_text(encoding="utf-8")))):
+        if not (TARGET / cited).exists():
+            problems.append(
+                "%s cites an enforcement artifact that was not installed: %s"
+                % (rel, cited))
 
 for p in problems:
     print("  " + p)

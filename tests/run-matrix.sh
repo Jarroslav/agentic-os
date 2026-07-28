@@ -252,6 +252,31 @@ else
   bad "threat-modeling guide isolated from developer-only install"
 fi
 
+echo "== T3g strictest-HITL-wins =="
+# The 2026-07-28 D4 re-grade: refinstall hardcoded gated-autonomous, so a
+# qa-only / security-only scaffold rendered a policy of record contradicting
+# the preset's declared `default_hitl: strict`. The union rule (SKILL.md
+# Screen 1) is strictest-wins: strict > gated-autonomous > autonomous.
+active_mode() { sed -n 's/^Active mode: \*\*.\([a-z-]*\).\*\*.*/\1/p' "$1/.agentic/guides/policy/ai-policy.md"; }
+QA_WORK="$WORK/qa-only"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$QA_WORK" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$QA_WORK" \
+  --presets qa --mcp-state without-mcp >/dev/null
+assert "qa-only ai-policy active mode is strict"        "[ \"\$(active_mode '$QA_WORK')\" = strict ]"
+assert "security-only ai-policy active mode is strict"  "[ \"\$(active_mode '$SEC_WORK')\" = strict ]"
+assert "developer ai-policy stays gated-autonomous"     "[ \"\$(active_mode '$FRESH')\" = gated-autonomous ]"
+# a strict role joining a gated-autonomous role must tighten the whole union
+STRICT_MIX="$WORK/developer-qa"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$STRICT_MIX" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$STRICT_MIX" \
+  --presets developer,qa --mcp-state without-mcp >/dev/null
+assert "developer+qa union resolves strict"             "[ \"\$(active_mode '$STRICT_MIX')\" = strict ]"
+# the enforcement-layer promises of these scaffolds must resolve too
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$QA_WORK" \
+  && ok "qa-only governance promises all resolve" || bad "qa-only governance promises all resolve"
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$SEC_WORK" \
+  && ok "security-only governance promises all resolve" || bad "security-only governance promises all resolve"
+
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.
 # (The fixture never commits the scaffold, so `git status` is the wrong probe —
