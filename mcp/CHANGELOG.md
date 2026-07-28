@@ -11,10 +11,12 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 ## [0.2.6]
 
 ### Changed
-- **Served content refreshed** for `agentic-os` 0.8.0: union-conditional
-  enforcement promises in `ai-policy.md.tmpl` / `AGENTS.md.tmpl` (new derived
-  `{{ENFORCEMENT_LAYER_ROWS}}` + `{{FLEET_INVARIANTS}}` in the variable
-  registry and the agentic-init skill), and the matching changelog entry.
+- **Served content refreshed** for `agentic-os` 0.8.0 + 0.9.0 together: the
+  required-contract-blocks retrofit on all 10 pre-0.5.0 agent templates, and
+  the union-conditional enforcement promises in `ai-policy.md.tmpl` /
+  `AGENTS.md.tmpl` (new derived `{{ENFORCEMENT_LAYER_ROWS}}` +
+  `{{FLEET_INVARIANTS}}` in the variable registry and the agentic-init
+  skill), with both changelog entries.
 
 ## [0.2.5]
 

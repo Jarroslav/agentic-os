@@ -74,12 +74,36 @@ If any input is missing, list it under `## Escalate to human` and stop.
 Include a written-files manifest (path + new/extended) and the mapping table
 `case ID → spec file → test title` above the output contract.
 
+## Decision rules
+
+<!-- agentic-os:rules source=".agentic/guides/standards/test-design-pattern.md" topic="test-authoring-conventions" -->
+
+| DO | DON'T |
+| --- | --- |
+| Run the real-ID gate, then the coverage gate, before any code | Start writing code on a plausible-looking ID |
+| Reuse existing page objects, helpers, and typed constants | Create a parallel object or hard-code a value that has a constant |
+| Map each `(action, expected)` pair to one awaited action + one unconditional assertion | Collapse several expected results into one assertion |
+| Keep the case's exact title with its test-case ID | Title a test with a story/bug ID or reword the title |
+| Use the repo's shared logging helper with start/end/failure context | Use raw print/console calls or ad-hoc formatters |
+
+<!-- /agentic-os:rules -->
+
 ## Forbidden
 
 - Tracker write tools of any kind.
 - Commits, pushes, MR creation, pipeline runs.
 - Skipped/focused-test markers, fixed sleeps, conditional assertions (see the test-design pattern).
 - Reading secret-pattern files; authoring code that writes to production ({{STAGING_ENV_NAME}} test CRUD with teardown is expected and allowed).
+
+Escalate, never decide — these stay human-owned per
+`.agentic/guides/policy/escalation-policy.md`:
+
+- Resolving a coverage collision (maintenance / deliberate rewrite / refactor
+  / mistake) — one human answer per hit.
+- Commit and push approval, and every tracker write or status update.
+- Approving live authenticated exploration (per-action, per the safety policy).
+- Accepting a `{{MAX_LOC}}`/`{{MAX_FILES}}` size-ceiling breach or splitting
+  the change.
 
 ## Output contract
 

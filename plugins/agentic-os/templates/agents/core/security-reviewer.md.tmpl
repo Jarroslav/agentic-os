@@ -57,11 +57,31 @@ Stack-specific checks live in the generated security guide under
 | 8 | **Sensitive logging** — no logging of tokens, credentials, or PII | Warning |
 | 9 | **Dependency & config drift** — new dependencies or config changes that widen the attack surface are called out for human awareness | Warning |
 
+## Decision rules
+
+| DO | DON'T |
+| --- | --- |
+| Flag anything that *could* be a security issue, even if possibly intentional | Suppress a finding because it is probably deliberate |
+| Audit every change — the gate is mandatory, not risk-triggered | Skip changes that don't "look security-relevant" |
+| Report the risk as `[FILE:LINE] CHECK_N — specific risk` | Prescribe the code change — the writer agent owns the fix |
+| Route confirmed findings to a human (`security` is an `escalate_on` flag) | Downgrade or waive a confirmed finding yourself |
+| Apply the stack-neutral floor plus the generated security guide | Treat the floor table as the complete check set when a stack guide exists |
+| Hold a FAIL until a human records an override reason | Soften a FAIL to keep the pipeline moving |
+
 ## What this agent does NOT do
 
 - Does **not** write fixes and does **not** prescribe the code change — it reports the *risk*; the writer agent owns the fix.
 - Does **not** run penetration tests, fuzzing, or dynamic analysis.
 - Does **not** override its own FAIL — override requires an explicit human-written reason recorded with the change.
+
+Escalate, never decide — these stay human-owned per
+`.agentic/guides/policy/escalation-policy.md`:
+
+- Overriding a FAIL verdict, in any mode.
+- Accepting a flagged finding as a documented exception so future audits
+  don't re-flag it.
+- Confirming intent where a policy grants broader access than the spec
+  requires.
 
 ## Policy references
 

@@ -5,7 +5,7 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
-## [0.8.0] — Enforcement promises match the install everywhere
+## [0.9.0] — Enforcement promises match the install everywhere
 
 The 2026-07-28 governance re-grade found two leftovers from 0.6.0's
 conditional-rendering pass: the policy templates still promised enforcement
@@ -40,6 +40,48 @@ installer ignored the strictest-HITL union rule.
 - **`check-governance-promises.py` also audits `AGENTS.md` + `ai-policy.md`**
   for citations of uninstalled hooks, git hooks, and scripts — it previously
   passed while a portfolio scaffold cited three uninstalled enforcement hooks.
+
+## [0.8.0] — Required contract blocks retrofitted onto every shipped agent template
+
+Closes the 2026-07-27 role-grading baseline's cross-cutting D3 finding: the
+0.4.0 contract-hardening wave added the rubric's § Required contract blocks to
+the generator and exemplars, but none of the pre-0.5.0 shipped templates
+carried them. All 10 now do; no behavior was added — every new block restates
+rules its contract already stated in prose.
+
+### Added
+
+- **`## Decision rules` DO/DON'T table on all 10 pre-0.5.0 agent templates**
+  (`blind-code-reviewer`, `dispatcher`, `instruction-auditor`,
+  `pr-pipeline-gate`, `security-reviewer`, `test-automation-author`,
+  `test-case-generator`, `test-case-syncer`, `test-failure-triage`,
+  `work-item-creator`), 4–6 rows each, grounded in each contract's existing
+  rules. The `test-automation-author` and `test-failure-triage` tables digest
+  guide rules and are wrapped in `agentic-os:rules` provenance markers naming
+  `test-design-pattern.md` and `flaky-protocol.md` respectively.
+- **`## Stop and ask when`** on `instruction-auditor` (ungovernable input,
+  missing rubric, unmatchable `content_sha256`) and `pr-pipeline-gate` (no
+  open MR/PR, wrong target branch, adapter unavailable) — the two templates
+  that lacked it.
+- **Escalate-never-decide list on all 10 templates**: each contract's
+  negative-scope section now states the always-human-owned decisions as a
+  list sourced from `.agentic/guides/policy/escalation-policy.md`
+  (previously prose-only equivalents); templates without a negative-scope
+  section gained `## What this agent does NOT do`.
+- **`{{BA_PO_GUIDE_ROWS}}`** derived variable: `PATTERNS.md` index rows for
+  `ba-po-operating-model.md` and `mcp-onboarding.md`, emitted only when those
+  guides are installed — so multi-role unions that include the ba-po guides
+  no longer leave them unindexed (registered in `templates/VARIABLES.md`,
+  substituted in `agentic-init` Phase 4, slotted in
+  `templates/governance/PATTERNS.md.tmpl`).
+
+### Fixed
+
+- **`test-failure-triage`'s inlined failure-class taxonomy** (the
+  TIMING/SELECTOR/…/PROPAGATION table digested from
+  `flaky-protocol.md`) now carries the required `agentic-os:rules` marker
+  pair; it was the one guide digest shipping without provenance
+  (`working-with-agents.md` § Rule provenance markers).
 
 ## [0.7.0] — Security role: DFD-first threat modeling
 
