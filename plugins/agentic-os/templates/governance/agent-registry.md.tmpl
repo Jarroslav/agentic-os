@@ -33,6 +33,7 @@ flow for the same task; pick the owner and cite anything else as reference.
 | Create tickets/bugs in {{TICKET_ADAPTER}} (QA preset) | `{{AGENTS_CANONICAL_DIR}}work-item-creator.md` | Every external write listed and human-confirmed before execution. |
 | Triage a production/runtime incident (devops preset) | `{{AGENTS_CANONICAL_DIR}}incident-triage.md` | Read-only; exactly three ranked hypotheses, fixes human-executed per `.agentic/guides/standards/incident-triage.md`. |
 | Threat-model a system or feature (security preset) | `{{AGENTS_CANONICAL_DIR}}threat-modeler.md` | Writes only under `docs/security/`; DFD-first; severities `proposed — owner confirmation pending`; code-diff review stays with security-reviewer. |
+| Design a data pipeline / DQ checks / lineage (data preset) | `{{AGENTS_CANONICAL_DIR}}pipeline-designer.md` | Writes only under `docs/data/`; row math as counted equations; classifications `proposed — owner confirmation pending`; queries recommend-only — a human or CI executes them. |
 | <!-- generated-agent-rows --> | | |
 
 Stack-specific writer/gate agents generated at install time (schema, API,

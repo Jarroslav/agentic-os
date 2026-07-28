@@ -8,6 +8,13 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.7]
+
+### Changed
+- **Served content refreshed** for `agentic-os` 0.10.0: the `data` preset
+  (pipeline-designer + data-pipeline-design guide + evals) and its parity
+  surfaces.
+
 ## [0.2.6]
 
 ### Changed

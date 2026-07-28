@@ -40,7 +40,7 @@ HOOK_FILE = {
 }
 CORE_AGENTS = {"dispatcher", "blind-code-reviewer", "security-reviewer",
                "instruction-auditor", "pr-pipeline-gate", "incident-triage",
-               "threat-modeler"}
+               "threat-modeler", "pipeline-designer"}
 
 
 def resolve(tid: str) -> Path | None:
@@ -143,5 +143,25 @@ if 'docs/security/**' not in tm_text:
     print("  threat-modeler template lost its docs/security write scope"); fail = 1
 if "proposed — owner confirmation pending" not in tm_text:
     print("  threat-modeler template lost the proposed-severity literal"); fail = 1
+
+# (7) data preset invariants — pipeline design ships as a pair, strict HITL,
+# and the writer stays scoped to docs/data/ with proposed-only classifications
+# and force-tested checks.
+dat = presets["data"]
+for need in ("agents/pipeline-designer", "guides/data-pipeline-design"):
+    if need not in dat["templates"]:
+        print("  data missing", need); fail = 1
+if dat["default_hitl"] != "strict":
+    print("  data default_hitl != strict"); fail = 1
+pd_tpl = TPL / "agents/core/pipeline-designer.md.tmpl"
+pd_text = pd_tpl.read_text() if pd_tpl.is_file() else ""
+if "readonly: true" in pd_text:
+    print("  pipeline-designer template must be a writer"); fail = 1
+if 'docs/data/**' not in pd_text:
+    print("  pipeline-designer template lost its docs/data write scope"); fail = 1
+if "classification: proposed — owner confirmation pending" not in pd_text:
+    print("  pipeline-designer template lost the proposed-classification literal"); fail = 1
+if "a check that has never failed has never been tested" not in pd_text:
+    print("  pipeline-designer template lost the force-tested-checks literal"); fail = 1
 
 sys.exit(fail)

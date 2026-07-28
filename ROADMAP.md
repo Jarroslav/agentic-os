@@ -16,8 +16,8 @@ top-level index.
   model-defined-no-migration) and both UI paradigms (component-framework,
   template-engine). See `tests/universal/README.md` for the full evidence
   trail.
-- Eight role presets (developer, qa, ba-po, architect, pm-delivery, devops,
-  portfolio, security), additive composition, strictest-HITL-wins union semantics.
+- Nine role presets (developer, qa, ba-po, architect, pm-delivery, devops,
+  portfolio, security, data), additive composition, strictest-HITL-wins union semantics.
 - The HITL escalation ladder, decision-router, write-scope enforcement,
   blind pre-commit review, and the instruction-quality audit/scorecard gate
   — see `docs/PRINCIPLES.md` for what each does and why.

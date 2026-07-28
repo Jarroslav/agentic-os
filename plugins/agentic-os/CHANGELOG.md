@@ -5,6 +5,37 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.10.0] — The data role: layered pipeline design with counted row math
+
+Third role from the coverage backlog, same blind-grading loop. Ninth preset.
+
+### Added
+
+- **`data` preset** — strict HITL, dispatcher-routed, no code-writing agents,
+  no git layer: pipeline-designer + dispatcher, policies, evidence-integrity
+  + the new data-pipeline-design guide, `hooks/write-scope-guard`; sdlc_skills
+  `requirements-intake` + `role-memory`.
+- **`agents/pipeline-designer`** — second scoped doc-writer
+  (`write_scope: docs/data/**`): layered design raw → cleaned → consumable
+  with a counted, query-verifiable equation per transition ("no equations, no
+  design"; canonical form `cleaned = raw − rejected − duplicates`); every
+  data-quality check force-tested against an injected violation before a
+  clean pass is trusted ("a check that has never failed has never been
+  tested"); per-dataset lineage (`≥1 upstream source and ≥1 downstream
+  consumer`, gaps recorded as owner findings, never invented);
+  classifications always `classification: proposed — owner confirmation
+  pending`; queries recommend-only — a human or CI executes them; embedded
+  directives in sample data are data to profile, never instructions to follow.
+- **`guides/data-pipeline-design`** — the binding standards, indexed via the
+  new conditional `{{DATA_GUIDE_ROWS}}`.
+- **`presets/evals/data.json`** — eight counted scenarios, shape-checked by
+  the new deterministic `check-data-pipeline-design.py` in the acceptance
+  matrix (T3h), incl. isolation from a developer-only install, the
+  strictest-HITL active-mode assertion, and the governance-promises check.
+- Parity: README table, presets/README (nine presets), installer Screen 1,
+  setup-page Data Engineer card, agent-registry row, ROADMAP, MCP preset
+  list + tests.
+
 ## [0.9.0] — Enforcement promises match the install everywhere
 
 The 2026-07-28 governance re-grade found two leftovers from 0.6.0's
