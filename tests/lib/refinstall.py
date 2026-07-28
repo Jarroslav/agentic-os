@@ -303,6 +303,20 @@ else:
     ORCHESTRATION_STYLE_RULE = (
         "**Multi-step work** is orchestrated by the human — this install has no "
         "orchestration command.")
+# The ba-po guide rows, same emitted-iff-installed contract; per-guide because the
+# two guides are independent entries in the preset's template list.
+BA_PO_GUIDE_ROWS_PER_GUIDE = (
+    ("guides/ba-po-operating-model",
+     "| BA/PO operating model (input paths, evidence rules, story handoffs) | "
+     "[`.agentic/guides/standards/ba-po-operating-model.md`]"
+     "(.agentic/guides/standards/ba-po-operating-model.md) |\n"),
+    ("guides/mcp-onboarding",
+     "| MCP onboarding (optional read-only data access for business work) | "
+     "[`.agentic/guides/standards/mcp-onboarding.md`]"
+     "(.agentic/guides/standards/mcp-onboarding.md) |\n"),
+)
+BA_PO_GUIDE_ROWS = "".join(
+    row for tid, row in BA_PO_GUIDE_ROWS_PER_GUIDE if tid in PRESET_TEMPLATE_IDS)
 
 # Screen 3's per-capability autonomy answers. `--defaults` accepts every mode
 # default, so nothing is tightened — the block is the "no overrides" note. A real
@@ -326,6 +340,7 @@ def render(text: str, is_json: bool, escape: bool) -> str:
     text = text.replace("{{REVIEW_GATE_SECTION}}", REVIEW_GATE_SECTION)
     text = text.replace("{{QUALITY_GATES_SECTION}}", QUALITY_GATES_SECTION)
     text = text.replace("{{ORCHESTRATION_STYLE_RULE}}", ORCHESTRATION_STYLE_RULE)
+    text = text.replace("{{BA_PO_GUIDE_ROWS}}", BA_PO_GUIDE_ROWS)
     # --defaults accepts each capability's mode default, so no autonomy tightening.
     text = text.replace("{{AUTONOMY_OVERRIDES}}", AUTONOMY_OVERRIDES)
     for var in NEWLINE_VARS:

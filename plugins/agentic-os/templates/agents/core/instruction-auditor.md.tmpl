@@ -32,6 +32,18 @@ longer exits the way it says it does.
 | `file_path` | yes | The governed file to grade |
 | `content_sha256` | no | When provided, grade exactly this content, not whatever the file has since become |
 
+## Stop and ask when
+
+Halt before grading — a score produced under these conditions would be noise:
+
+- `file_path` is missing, unreadable, or not a governed file (application
+  code, a third-party plugin file) — grading it is out of scope, not a low
+  score.
+- The rubric or `evidence-integrity.md` is missing at its stated path —
+  grading without the standard substitutes opinion for it.
+- `content_sha256` was supplied but no content hashing to it is available —
+  ask for the intended snapshot rather than silently grading the current file.
+
 ## What this agent does
 
 1. Reads the rubric at `.agentic/guides/standards/instruction-quality-rubric.md` first, alongside `.agentic/guides/standards/evidence-integrity.md` — the fabrication classes it defines (self-cited references, authored classification tags, padded counts) are graded as UNVERIFIED claims when found.
@@ -42,11 +54,29 @@ longer exits the way it says it does.
 4. Computes `evidence_score = round(100 * verified / total_claims)` (100 if `total_claims == 0`).
 5. Reports the score and the full claim trail. It does **not** write the scorecard — the invoking command persists results to `{{SCORECARD_PATH}}`, where the instruction gate (`.claude/hooks/instruction_gate.py`) reads them: a governed agent scoring below **{{SCORE_THRESHOLD}}** is blocked from spawning until re-graded (per-agent overrides recorded in the scorecard).
 
+## Decision rules
+
+| DO | DON'T |
+| --- | --- |
+| Verify every claim with grep/read/glob and record the method | Mark a claim VERIFIED without a recorded method |
+| Compute `evidence_score = round(100 * verified / total_claims)` | Round an impression of accuracy into a score |
+| Name each missing § Required contract block in `## Blocking` | Fold structural gaps into an overall impression |
+| Grade the fabrication classes from `evidence-integrity.md` as UNVERIFIED | Credit a self-cited reference or authored tag as evidence |
+| Grade the content you were given (`content_sha256` when provided) | Grade whatever the file has since become |
+| Report the score and claim trail, nothing else | Edit the graded file or write the scorecard yourself |
+
 ## What this agent does NOT do
 
 - Does **not** edit the graded file or write fixes — reports only.
 - Does **not** grade prose quality, tone, or style.
 - Does **not** grade installed third-party plugin skills — only files this repo owns.
+
+Escalate, never decide — these stay human-owned per
+`.agentic/guides/policy/escalation-policy.md`:
+
+- Overriding a below-threshold score or unblocking a spawn-blocked agent.
+- Changing `{{SCORE_THRESHOLD}}` or recording a per-agent override.
+- Settling a claim no mechanical check can — update the doc or the code.
 
 ## Output contract
 

@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-27T21:08:22Z",
+ "attested_at": "2026-07-28T05:57:08Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "cdba8c03dc000f73a439ce675cd47f63861472b94e588523e3638eb9b156aaec",
+   "sha256": "8c4cc85a1a7ad0be4da54904fa90122d1073a0c60f972303464638fc744747e3",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -413,25 +413,25 @@
    "max_run": 0
   },
   "plugins/agentic-os/.claude-plugin/plugin.json": {
-   "sha256": "237fbee9a72d993e38a82f08f4386521c5cbd8d0e462744f659631e930b90bff",
+   "sha256": "9b3606e6e89ce23c12c7a6f717001225ca0fb0803d3c58407c596395775e9677",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.codex-plugin/plugin.json": {
-   "sha256": "65d209523bde42efbf33f0deda29ac8a09010d87c871ddd4e291cceaabdcd659",
+   "sha256": "ea956280e2e24bf3d41a535c576e0d70092fd85bbd3fa386be214de47c18d59c",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.cursor-plugin/plugin.json": {
-   "sha256": "345dae7b3a1dce12f197fe54845ae5b85c54e0637cc18e6d0a7d3509109ecb5e",
+   "sha256": "fcf25d6a64c7b7006b966c9a7fe424d53158ca0ce69757df252ad490aa39d416",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "36bafdf62981dffa863daf31439bfb773bca0844e6ad87a38b5f79691f605d8c",
+   "sha256": "59f66ec5429ca03b8adfc1b5d2280a8f50426b917674e93b4c65ad28d37658d7",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -629,7 +629,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-init/SKILL.md": {
-   "sha256": "f7977ca04725cf26b28b8bdd2f59d7b05f8ed9b251ef117c35f54c4d2c1d7121",
+   "sha256": "70014085028ab53ebb1ad371de8087f935be8df5a44b895eecd5536334f92c6b",
    "line": 0.0014,
    "shingle": 0.0,
    "max_run": 0
@@ -659,20 +659,20 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/VARIABLES.md": {
-   "sha256": "bca7fd48672c600c49f74f4d67dd686e6b3064458c55e98810b8c56ae277105b",
+   "sha256": "6089a3977c5da41fadecd4637ab696f1f5fd40685724106adef5207109f30cd8",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/core/blind-code-reviewer.md.tmpl": {
-   "sha256": "232dc198417e9545d0fd57092771ce5ec30959c647ef96b4a82fcf682342713a",
+   "sha256": "e6706b04dc74f8e1dbfbbf2baf142bdde23d196f658889023c7c5f0ad31bab47",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/core/dispatcher.md.tmpl": {
-   "sha256": "5c9b9efc783ee9ae45dc7d2bd06d12442ebcf5b9068fe62048f014f2781ddca5",
-   "line": 0.0,
+   "sha256": "80b1208b75dbb72f9bae70d9c0c80f092606ff6e324c31a26e235d03634fd223",
+   "line": 0.0233,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -683,20 +683,20 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/core/instruction-auditor.md.tmpl": {
-   "sha256": "fa663e622df986104be0e029c748410b349afa90cff489256b4a92950f431950",
-   "line": 0.0227,
+   "sha256": "0751c3e0c3d76432380d65ea65619959fd9dab6ac04a71b2b0ff02ee70812c0a",
+   "line": 0.0159,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/core/pr-pipeline-gate.md.tmpl": {
-   "sha256": "07e2bd33e9caa6338d54d5eabce0e61f6e5f3338b6776337b6d2f1d90696bcbb",
-   "line": 0.0,
+   "sha256": "558e4cec3bc2183058091b863c602fd24c0f8606698818c649052b5ecb79c804",
+   "line": 0.0169,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/core/security-reviewer.md.tmpl": {
-   "sha256": "c811ee105c6f6ce3aa8fb8a7d409298d7875948d4fe00ae9d56c9e8412ae9188",
-   "line": 0.0192,
+   "sha256": "2605314580ee5445a93b9c80964dd2f2f3905790a3533b86cda7665d72925c5f",
+   "line": 0.0159,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -707,32 +707,32 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/qa/test-automation-author.md.tmpl": {
-   "sha256": "c3bb1cba1488e105441449c8e0b4caf71e86424a6ad7a7c968cbdc1158becbe6",
+   "sha256": "d782726a0cf12dd5d8f98ff6e533c164b82a9cc5f65d3ed37856312dd91dab3f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/qa/test-case-generator.md.tmpl": {
-   "sha256": "71d85f5eeae8a1ccada13bed8b33758fa03863a55afa1aa6b8870bb307905ac3",
-   "line": 0.0,
+   "sha256": "0c70169b76b047642a92013f7748c30857042b9af8b554a4c47042804ca99a64",
+   "line": 0.0152,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/qa/test-case-syncer.md.tmpl": {
-   "sha256": "45f00fbe5cd519a5c3b7fbd59f55fc13f41574bacd80a338aa838fecfec4a1a0",
+   "sha256": "1908a136d638b571fda15086033532aafea6adc15419454a3a36501bbbad2ac9",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/qa/test-failure-triage.md.tmpl": {
-   "sha256": "77b2a758f03da3f2736853dbd25655aa7866ce24a061ea96c1052adcf773084b",
+   "sha256": "46fcb5adfca25778169ecdb139807e15c93cbcbd5e24b46f60d5ace335ddc998",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/agents/qa/work-item-creator.md.tmpl": {
-   "sha256": "977e9b0d019c99c8a014c3ce641fa26afc758e9067048dab6e18bf8fa3ae5156",
-   "line": 0.0,
+   "sha256": "5d8477f51f66df4b6d30bef2f0982b6025695c17e25970915725ea2f47a6de0f",
+   "line": 0.0217,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -767,7 +767,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/governance/PATTERNS.md.tmpl": {
-   "sha256": "b77afad67485c7217c20a34830bc9feb2bde6a36f6a8705de1ccc51cf6b382d0",
+   "sha256": "3206d975bf17441c2903f488b61c95f6ace676843ec8f7f03d0b41ed1ec34588",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2615,8 +2615,8 @@
    "max_run": 0
   },
   "tests/lib/refinstall.py": {
-   "sha256": "cda3ed7abc1cd38d5a703fb2457b8212aa80c6778cdb9b7e35868bd2691b1965",
-   "line": 0.008,
+   "sha256": "0dd3c02be97832911f053936013ec05dc3a393f9de22627465d23b0211cca9d4",
+   "line": 0.0078,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2639,7 +2639,7 @@
    "max_run": 0
   },
   "tests/t0/run.sh": {
-   "sha256": "aab3007e2cbb57c3893df7349e4988e635806f14a0daa08b991f9b01a03af5a4",
+   "sha256": "a03fdbc510d55a1449866659a3cef5dd306be75959cd65851225cc457d5487e2",
    "line": 0.0037,
    "shingle": 0.0,
    "max_run": 0

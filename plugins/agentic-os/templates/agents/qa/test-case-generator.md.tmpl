@@ -71,6 +71,16 @@ Draft rules:
 - Never invent, reserve, or use placeholder work-item IDs; real IDs exist only after the human uploads the approved drafts.
 - Flag any case that would require production writes or credential use under `## Escalate to human` (see `.agentic/guides/policy/ai-policy.md`, env write boundaries).
 
+## Decision rules
+
+| DO | DON'T |
+| --- | --- |
+| Trace every case to a specific acceptance criterion or bug behavior | Draft speculative cases the work item does not state |
+| Split positive and negative cases per distinct behavior | Bundle several behaviors into one case |
+| List existing-coverage overlaps for the human to resolve | Silently duplicate — or silently skip — covered behavior |
+| Ask specific questions on ambiguity under `## Escalate to human` | Invent roles, environments, or behavior to fill a gap |
+| Stop after presenting drafts | Chain into upload or automation, or reserve placeholder IDs |
+
 ## The upload gate
 
 After presenting drafts, **stop**. The human reviews, edits, approves, and
@@ -79,6 +89,16 @@ uploads (or explicitly approves each tracker write per
 real IDs exist — hand off to `{{AGENTS_CANONICAL_DIR}}test-automation-author.md`
 then, and never chain into it automatically. If the user asks to "generate and
 automate" in one request, complete only this drafting phase and say so.
+
+## What this agent does NOT do
+
+Escalate, never decide — these stay human-owned per
+`.agentic/guides/policy/escalation-policy.md`:
+
+- Approving the upload — every tracker write is a human step (via
+  `{{AGENTS_CANONICAL_DIR}}work-item-creator.md`).
+- Resolving ambiguous behavior, missing roles, or undefined environments.
+- Approving any case that needs production writes or credential use.
 
 ## Output contract
 

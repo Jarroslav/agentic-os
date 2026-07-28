@@ -508,6 +508,11 @@ Ordered steps:
      a newline. A union installing none of the five renders the empty string; the
      static working-with-agents and evidence-integrity rows (installed by every
      preset) keep the table non-empty.
+     Substitute `{{BA_PO_GUIDE_ROWS}}` under the same contract again: one index
+     row per installed guide of `guides/ba-po-operating-model` and
+     `guides/mcp-onboarding` (the `ba-po` preset — these reach `PATTERNS.md` only
+     in multi-role unions, since ba-po alone does not install
+     `governance/patterns`), else the empty string.
    - `agent-registry.md` → `.agentic/guides/agent-registry.md`, then apply
      **hand-off (b), row pruning**: the template documents that "the installer
      removes rows whose preset is not installed" — delete every row of the
