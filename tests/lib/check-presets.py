@@ -40,7 +40,8 @@ HOOK_FILE = {
 }
 CORE_AGENTS = {"dispatcher", "blind-code-reviewer", "security-reviewer",
                "instruction-auditor", "pr-pipeline-gate", "incident-triage",
-               "threat-modeler", "pipeline-designer"}
+               "threat-modeler", "pipeline-designer",
+               "experience-designer"}
 
 
 def resolve(tid: str) -> Path | None:
@@ -163,5 +164,25 @@ if "classification: proposed — owner confirmation pending" not in pd_text:
     print("  pipeline-designer template lost the proposed-classification literal"); fail = 1
 if "a check that has never failed has never been tested" not in pd_text:
     print("  pipeline-designer template lost the force-tested-checks literal"); fail = 1
+
+# (8) design preset invariants — the experience pair ships together, strict
+# HITL, and the writer stays scoped to docs/design/ with proposed-only
+# decisions and the journey-emotion rule.
+des = presets["design"]
+for need in ("agents/experience-designer", "guides/experience-design"):
+    if need not in des["templates"]:
+        print("  design missing", need); fail = 1
+if des["default_hitl"] != "strict":
+    print("  design default_hitl != strict"); fail = 1
+xd_tpl = TPL / "agents/core/experience-designer.md.tmpl"
+xd_text = xd_tpl.read_text() if xd_tpl.is_file() else ""
+if "readonly: true" in xd_text:
+    print("  experience-designer template must be a writer"); fail = 1
+if 'docs/design/**' not in xd_text:
+    print("  experience-designer template lost its docs/design write scope"); fail = 1
+if "decision: proposed — owner confirmation pending" not in xd_text:
+    print("  experience-designer template lost the proposed-decision literal"); fail = 1
+if "a journey map without emotions is a flowchart" not in xd_text:
+    print("  experience-designer template lost the journey-emotion literal"); fail = 1
 
 sys.exit(fail)

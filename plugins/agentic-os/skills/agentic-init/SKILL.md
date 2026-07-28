@@ -211,7 +211,8 @@ does not invent a role selection. It is valid only when roles were supplied
 explicitly with `--presets` or already exist in the install journal.
 
 **Screen 1 — Role presets** (required multi-select): `developer`, `qa`, `ba-po`,
-`architect`, `pm-delivery`, `devops`, `portfolio`, `security`, `data` — one JSON
+`architect`, `pm-delivery`, `devops`, `portfolio`, `security`, `data`, `design`
+— one JSON
 each
 under `PLUGIN/presets/roles/`.
 Display plain-language descriptions before the choices. For example, `ba-po`
@@ -449,7 +450,7 @@ Ordered steps:
    confirmation BEFORE writing** — this is a hard mature-repo rule even on
    fresh installs.
 3. **Git hooks** — only when `githooks/pre-commit` is in the preset union
-   (the ba-po, pm-delivery, security, and data unions exclude the git layer; installing the
+   (the ba-po, pm-delivery, security, data, and design unions exclude the git layer; installing the
    native hook there would reference an absent
    `.claude/hooks/precommit_review_gate.py`). Copy `.githooks/pre-commit` +
    `scripts/install-git-hooks.sh`,
@@ -519,7 +520,9 @@ Ordered steps:
      (the `security` preset), else the empty string. Substitute
      `{{DATA_GUIDE_ROWS}}` the same way: the `data-pipeline-design.md` index row
      iff `guides/data-pipeline-design` is in the union (the `data` preset), else
-     the empty string. (Same principle as
+     the empty string. Substitute `{{DESIGN_GUIDE_ROWS}}` the same way: the
+     `experience-design.md` index row iff `guides/experience-design` is in the
+     union (the `design` preset), else the empty string. (Same principle as
      agent-registry row pruning below.)
      Substitute `{{CORE_GUIDE_ROWS}}` under the same contract: one index row per
      guide of `git-workflow`, `code-quality`, `quality-gates`,
@@ -546,6 +549,8 @@ Ordered steps:
      `agents/incident-triage` is in the union; the `threat-modeler` row goes
      unless `agents/threat-modeler` is in the union; the `pipeline-designer` row
      goes unless `agents/pipeline-designer` is in the union; the
+     `experience-designer` row goes unless `agents/experience-designer` is in
+     the union; the
      `pipeline-orchestrator.md` / `dispatch.md` rows go unless the matching
      command ID is in the union. Never prune the
      `blind-code-reviewer` or `instruction-auditor` rows when their agents

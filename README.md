@@ -445,6 +445,7 @@ Presets are **additive** — install several and their template sets union
 | **devops** | git hooks + quality gates, PR pipeline gate, MR-monitoring/CI-fixing glue, security reviewer, read-only incident triage (3 ranked hypotheses, human-executed fixes) — no code-writing agents | gated-autonomous / dispatcher |
 | **security** | DFD-first STRIDE threat modeling (doc-writer scoped to `docs/security/`, proposed-only severities, mitigation→risk traceability), code-level security reviewer, dispatcher routing — no code-writing agents | strict / dispatcher |
 | **data** | layered pipeline design raw → cleaned → consumable (doc-writer scoped to `docs/data/`, counted row-math equations, force-tested DQ checks, per-dataset lineage, proposed-only classifications), dispatcher routing — recommend-only queries, no code-writing agents | strict / dispatcher |
+| **design** | emotion-annotated journey mapping → step+emotion problem framings → decision-closing workshops → negative-AC acceptance criteria → agent-ready context+spec handoff pair (doc-writer scoped to `docs/design/`, proposed-only decisions), dispatcher routing — no code, no visual-asset generation, no code-writing agents | strict / dispatcher |
 | **portfolio** | run status, repo/knowledge health audits, durable cross-session memory, requirements intake — read/report-only, no git layer | gated-autonomous / dispatcher |
 
 ## The HITL dial

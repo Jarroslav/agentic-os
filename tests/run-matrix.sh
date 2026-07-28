@@ -293,6 +293,22 @@ assert "data-only ai-policy active mode is strict" "[ \"\$(active_mode '$DATA_WO
 python3 "$ROOT/tests/lib/check-governance-promises.py" "$DATA_WORK" \
   && ok "data-only governance promises all resolve" || bad "data-only governance promises all resolve"
 
+echo "== T3i design experience handoff =="
+DESIGN_WORK="$WORK/design-only"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$DESIGN_WORK" >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$DESIGN_WORK" \
+  --presets design --mcp-state without-mcp >/dev/null
+python3 "$ROOT/tests/lib/check-experience-design.py" "$DESIGN_WORK" \
+  "$PLUGIN/presets/evals/design.json" && ok "design experience pair + eval scenarios" || bad "design experience pair + eval scenarios"
+if test ! -e "$DEV_ONLY/.agentic/guides/standards/experience-design.md"; then
+  ok "design guide isolated from developer-only install"
+else
+  bad "design guide isolated from developer-only install"
+fi
+assert "design-only ai-policy active mode is strict" "[ \"\$(active_mode '$DESIGN_WORK')\" = strict ]"
+python3 "$ROOT/tests/lib/check-governance-promises.py" "$DESIGN_WORK" \
+  && ok "design-only governance promises all resolve" || bad "design-only governance promises all resolve"
+
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.
 # (The fixture never commits the scaffold, so `git status` is the wrong probe —

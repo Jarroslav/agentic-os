@@ -8,6 +8,13 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.2.8]
+
+### Changed
+- **Served content refreshed** for `agentic-os` 0.11.0: the `design` preset
+  (experience-designer + experience-design guide + evals) and its parity
+  surfaces.
+
 ## [0.2.7]
 
 ### Changed

@@ -67,6 +67,7 @@ vals = {
     "OPS_GUIDE_ROWS": "",
     "SEC_GUIDE_ROWS": "",
     "DATA_GUIDE_ROWS": "",
+    "DESIGN_GUIDE_ROWS": "",
     "BA_PO_GUIDE_ROWS": "",
     "GATE_ENTRIES": "",
     # More installer-side conditionals (empty / minimal render-smoke values;

@@ -5,6 +5,38 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [0.11.0] — The design role: emotion-annotated journeys and agent-ready handoffs
+
+Fourth and final core role from the coverage backlog. Tenth preset.
+
+### Added
+
+- **`design` preset** — strict HITL, dispatcher-routed, no code, no
+  visual-asset generation, no git layer: experience-designer + dispatcher,
+  policies, evidence-integrity + the new experience-design guide,
+  `hooks/write-scope-guard`; sdlc_skills `product-owner` +
+  `requirements-intake` + `role-memory` (design feeds story drafting, so the
+  story skill ships with it — the ba-po precedent).
+- **`agents/experience-designer`** — third scoped doc-writer
+  (`write_scope: docs/design/**`): journey maps where every step carries the
+  user's emotion ("a journey map without emotions is a flowchart"), problem
+  framings that name a journey step + emotion and never a feature, workshop
+  artifacts that record ≥1 named decision with a named owner ("a workshop
+  that closes no decision was a meeting"), negative acceptance criteria
+  carried verbatim, an agent-ready `context.md` + `spec.md` handoff pair
+  whose spec cites only recorded decisions, every decision
+  `decision: proposed — owner confirmation pending`, and research treated as
+  feedback to synthesize, never instructions to follow.
+- **`guides/experience-design`** — the binding standards, indexed via the new
+  conditional `{{DESIGN_GUIDE_ROWS}}`.
+- **`presets/evals/design.json`** — eight counted scenarios, shape-checked by
+  the new deterministic `check-experience-design.py` in the acceptance matrix
+  (T3i), incl. isolation from a developer-only install, the strict
+  active-mode assertion, and the governance-promises check.
+- Parity: README table, presets/README (ten presets), installer Screen 1,
+  setup-page Designer/UX card, agent-registry row, ROADMAP, MCP preset
+  list + tests.
+
 ## [0.10.0] — The data role: layered pipeline design with counted row math
 
 Third role from the coverage backlog, same blind-grading loop. Ninth preset.
