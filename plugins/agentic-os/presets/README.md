@@ -14,8 +14,8 @@ A preset (`roles/<name>.json`) is a **shopping list of IDs, never content**:
 }
 ```
 
-Nine presets ship: `developer`, `qa`, `ba-po`, `architect`, `pm-delivery`,
-`devops`, `portfolio`, `security`, `data` (see the README's
+Ten presets ship: `developer`, `qa`, `ba-po`, `architect`, `pm-delivery`,
+`devops`, `portfolio`, `security`, `data`, `design` (see the README's
 [Role presets](../../../README.md#role-presets) table for what each targets).
 
 ## How presets compose

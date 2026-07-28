@@ -1,0 +1,39 @@
+{
+  "name": "design",
+  "description": "Design/UX: emotion-annotated journey maps, step+emotion problem framings, decision-closing workshops, negative-AC acceptance criteria, agent-ready context+spec handoff pair — writes only under docs/design/, dispatcher-routed, no code, no visual-asset generation, no code-writing agents.",
+  "templates": [
+    "hooks/subagent-gate",
+    "hooks/session-bootstrap",
+    "hooks/precompact-checkpoint",
+    "hooks/settings-fragment",
+    "hooks/session-learnings-notice",
+    "hooks/context-monitor",
+    "hooks/prompt-scan-guard",
+    "hooks/guarded-write-paths",
+    "hooks/human-gated-commands",
+    "hooks/write-scope-guard",
+    "governance/claude-section",
+    "governance/agents",
+    "governance/patterns",
+    "governance/agent-registry",
+    "policy/ai-policy",
+    "policy/escalation-policy",
+    "policy/safety-policy",
+    "guides/working-with-agents",
+    "guides/evidence-integrity",
+    "guides/experience-design",
+    "agents/dispatcher",
+    "agents/experience-designer",
+    "commands/dispatch",
+    "sdlc/config",
+    "sdlc/project"
+  ],
+  "generated": [],
+  "default_hitl": "strict",
+  "default_orchestration": "dispatcher",
+  "sdlc_skills": [
+    "product-owner",
+    "requirements-intake",
+    "role-memory"
+  ]
+}

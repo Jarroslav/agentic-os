@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-28T07:40:27Z",
+ "attested_at": "2026-07-28T08:11:00Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -83,13 +83,13 @@
    "max_run": 0
   },
   "README.md": {
-   "sha256": "9f93480275fe4c2b19c56b30356ad1d919c01614db8d0466475237fb3b2179c7",
+   "sha256": "de29165ea5a443e59d19a410d61838694942c6cb70cabef698224c0444a20bbd",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "ROADMAP.md": {
-   "sha256": "8f7d74bf2b3f28bae9e17fbc7a367ce65fa37064042aa8ee8bcaaf76348c3733",
+   "sha256": "7574c435162769c9d3fb09ba1c04c2dfcf1cca77201daf33e1601a8fcd157fea",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -119,7 +119,7 @@
    "max_run": 0
   },
   "docs/setup/app.js": {
-   "sha256": "64c4296d3ced88f5ae4c25633ea24aec83ba447d2ea3836282830aaaa87da4c5",
+   "sha256": "c5f90697c081b8401d57ab17c3ccb96c28e7c547fc1770dd3a2dd1e36d74e89a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -155,13 +155,13 @@
    "max_run": 0
   },
   "mcp/CHANGELOG.md": {
-   "sha256": "53d52a2fbcd57f6ae98396539281c8fca70a124d0f6385e79bbb0afef83b22f3",
+   "sha256": "94a709defa797fe30a401eef73dc84b5ce3deceeb9f38c0fc01e2234380c505d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "mcp/README.md": {
-   "sha256": "f96f33977dc1441c9556fe9bea98173c0153e857b07fe2fcf321718a8cb50c7e",
+   "sha256": "88fda368ac2f1c5e3655577ef6d5c751c56bcd888613b92be7e8b3e65fc2f03a",
    "line": 0.0065,
    "shingle": 0.0,
    "max_run": 0
@@ -173,19 +173,19 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "fb13ed490621bc6011f9ff8a03d8d96b275489bcdbbb3f761d0f3f375a64b7d1",
+   "sha256": "95a40bb7c79cb21765173ad45ccd74e5b8e0622664acda3ff17d6ffa297e8d8d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "mcp/manifest.json": {
-   "sha256": "1adfba692a20cd7f3b522fe354d28e16c3e4380bc47b563579e0420491969390",
+   "sha256": "25342433d67586b41d98862a497ea36da7641785e04085cb262deb184e3fb907",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "mcp/package.json": {
-   "sha256": "ae84308e8ca6361933f07a71b8a3175cc0e5d7c7ba3cba3c16b3675d2f7095f9",
+   "sha256": "d7b9108a42456f6feb30edc95b28124551742ce481d03e3c8ded07357794c3ff",
    "line": 0.1818,
    "shingle": 0.0,
    "max_run": 0
@@ -215,7 +215,7 @@
    "max_run": 0
   },
   "mcp/server.json": {
-   "sha256": "f2f4d597fbf17a703969d70317f102371310f2f86b272dcec9e62fddb0250e11",
+   "sha256": "a9e07807aab395979967cef04b173361357229aee6155990463b75dd353dcb37",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -233,7 +233,7 @@
    "max_run": 0
   },
   "mcp/src/index.ts": {
-   "sha256": "2d8be4ca11234c2e9efff555f9bebb5a8ad07c2afbea237018e808051ca8cf2c",
+   "sha256": "ccb4074bcce16fe3154ae3b66feb828f3bb2906aaeed721db7abf0e54cc2a6bd",
    "line": 0.0204,
    "shingle": 0.0,
    "max_run": 0
@@ -347,7 +347,7 @@
    "max_run": 0
   },
   "mcp/tests/contract.test.ts": {
-   "sha256": "0c242e52aeedfef9375f456b1c193496a7c57b9945d4d45ea8e400cd868c8223",
+   "sha256": "6ea4121d7ce8081712f46c8731a93298f2ed1001cde02fa2b65621267d1892d9",
    "line": 0.0076,
    "shingle": 0.0,
    "max_run": 0
@@ -413,25 +413,25 @@
    "max_run": 0
   },
   "plugins/agentic-os/.claude-plugin/plugin.json": {
-   "sha256": "91322888a482ab4b2c5260bd11d3b8016867694920c7f789000b3699f4670f82",
+   "sha256": "cb6557eaa078013fd26cb41a7e53748761c8936b6eab0973ec2ff352ed743e2b",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.codex-plugin/plugin.json": {
-   "sha256": "bb555fc29d14c987947ca007035e84b57b59e4ba09ed48ca2b07de44bd54fd75",
+   "sha256": "417458263cd811ffecee7798387d085b842424dd7f1b370084e072a556d38657",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.cursor-plugin/plugin.json": {
-   "sha256": "c781849123202de4e0d4e9d6bbf77cf93dcab45662eb5b85c8df472ac600e476",
+   "sha256": "eb0cc9628245ee091bc74576b906700f29d612932d71218551868b9a3ee81fdf",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "9cf01f94742445f17f0d0ad72266a5ba9bb0e4e84e1087a9f7a948096f46e4c4",
+   "sha256": "745982a04c72ff46c5004712f093f06aa15de6ef8365082ae738dce1b88c4138",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -521,7 +521,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/presets/README.md": {
-   "sha256": "99a90272133e1de4eb2262d554890c2653b84afcf42ffa7cf77a1df21c2918d1",
+   "sha256": "99eee64dd96cccceeb947a58eeb194db786127f1225f3dcbed4a71fd01f597d6",
    "line": 0.0192,
    "shingle": 0.0,
    "max_run": 0
@@ -534,6 +534,12 @@
   },
   "plugins/agentic-os/presets/evals/data.json": {
    "sha256": "5a99bbe863067555b0e5105e1f55063fe0a15a165ac33304553759705615fdde",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/presets/evals/design.json": {
+   "sha256": "4221b2f5487ffdef2d30487d6062c46e2fce66b7cf41907f32c202e510de471c",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -564,6 +570,12 @@
   },
   "plugins/agentic-os/presets/roles/data.json": {
    "sha256": "96fe43c49e6dd3a5e19ea3eb8ac46ece9504f1ba98617ee7c11f2a66bc915e27",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/presets/roles/design.json": {
+   "sha256": "928e137aed5ea6f8f4f1b602a8ef9909735dc1c93944f031d99502cb7b842543",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -641,7 +653,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-init/SKILL.md": {
-   "sha256": "2dd02675def7c1d2787944eda298cf2b8ccd42f5ae2c205be6dfb9c17ac177fa",
+   "sha256": "c03e202ea7050ae6854ca71bc6b457f7fef8609559d6ac7cdfbdfcac14117f5a",
    "line": 0.0013,
    "shingle": 0.0,
    "max_run": 0
@@ -671,7 +683,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/VARIABLES.md": {
-   "sha256": "e80fc12ad92fa46a85b8cb45e32ac577ecd30181c9509ae9126e87c918840fbf",
+   "sha256": "4c818b3e5c10d4fb0d70864e5a523ea1c15ac953a3ac7d172015f7c8c43f6a33",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -685,6 +697,12 @@
   "plugins/agentic-os/templates/agents/core/dispatcher.md.tmpl": {
    "sha256": "80b1208b75dbb72f9bae70d9c0c80f092606ff6e324c31a26e235d03634fd223",
    "line": 0.0233,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/templates/agents/core/experience-designer.md.tmpl": {
+   "sha256": "273eb3201773d00efdb6cf4d7874f72123b844e39835e50954dd59a9d5b7c412",
+   "line": 0.0211,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -785,13 +803,13 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/governance/PATTERNS.md.tmpl": {
-   "sha256": "9ea8367cdb99002701bccd70ada48ec7ccb6129a14c5ef6b7d9b0b061674f832",
+   "sha256": "9eb50919f34b4c4e5c2e3f33b9ef7603c243716ed2ab3f665b76d7184a4ddf9c",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/templates/governance/agent-registry.md.tmpl": {
-   "sha256": "03ae6fb5a4eae77bc831605825f4258241b0d6a8a69a6acb6fe698ac6fa4f45a",
+   "sha256": "abc0713af8c8226b47ef4a0560b1eb48295f1f10c966b68b4d615e50de5272d9",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -816,6 +834,12 @@
   },
   "plugins/agentic-os/templates/guides/standards/evidence-integrity.md": {
    "sha256": "76f98a070997f25cc8441644687670aa6ca90d8d34e9f03fe584a3f85cf6ab24",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/templates/guides/standards/experience-design.md": {
+   "sha256": "c8b1aa6fb444f4790c0b7b7ff7c193647c3c52805cdfce41a25eecbc5055aa8d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2465,7 +2489,7 @@
    "max_run": 0
   },
   "tests/README.md": {
-   "sha256": "657f75d411ac0d3f0317240e850c2d2279cb95cb17511861fe9b07da414b5dcb",
+   "sha256": "bf8d53cbdc2ae5b5280e1dd5c1d9940e3592c87970e3c6bdfda1032c9be6abb4",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2536,6 +2560,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "tests/lib/check-experience-design.py": {
+   "sha256": "a3dc41feecb9ea49f1cacf13d06e565f6fbde5589529e52d951cd046d0b3395a",
+   "line": 0.0847,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "tests/lib/check-governance-promises.py": {
    "sha256": "5d54379a683298ef02c6bc14bcc0d3ef709f6a8a6d286fcee4ef15ee6834382a",
    "line": 0.0328,
@@ -2585,8 +2615,8 @@
    "max_run": 0
   },
   "tests/lib/check-presets.py": {
-   "sha256": "1e842b1f0156b6c8be8fa37a7c6903adbd8da974e15ff13c84c3aa7eb964340b",
-   "line": 0.0143,
+   "sha256": "c96693847226ae02a09dc22979293b0f49584e6546a1ccb3b8a9940f148b5370",
+   "line": 0.0125,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2645,8 +2675,8 @@
    "max_run": 0
   },
   "tests/lib/refinstall.py": {
-   "sha256": "20c76442a59d7b55adf6c0554138ae9ec4c3a8ea53cff12158ec1b80e6d194ac",
-   "line": 0.0067,
+   "sha256": "8fb020dc35e36b6b6431a5e2a4a802bbd33ffb034ff2b73af56bcfb92788e4a6",
+   "line": 0.0066,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2657,7 +2687,7 @@
    "max_run": 0
   },
   "tests/run-matrix.sh": {
-   "sha256": "7fc17f7f5c7005ca1ce3a072470d4b6d820a86e225ecefac2c7a22dcb6b81285",
+   "sha256": "fd09be908ba54c73fe464246d5158ba30d3df439179e00d26ba04f230b3b824d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2669,7 +2699,7 @@
    "max_run": 0
   },
   "tests/t0/run.sh": {
-   "sha256": "5dd9043f362805b45b7b51e2c2307029c4d8d3e9339c2a2189884838f7d74e0b",
+   "sha256": "0fdbbba9cf75e32c226a5b6d9ecc1606435c83a689d5e3d1c2ae09a9cd8939b6",
    "line": 0.0036,
    "shingle": 0.0,
    "max_run": 0

@@ -325,13 +325,13 @@ describe('get_document surrogate safety and max_chars ceiling', () => {
 });
 
 describe('list_presets', () => {
-  it('returns all seven role presets', async () => {
+  it('returns all ten role presets', async () => {
     const res = await client.callTool({ name: 'list_presets', arguments: {} });
     const { presets } = res.structuredContent as {
       presets: Array<{ name: string; uri: string; hitl_default: string }>;
     };
     expect(presets.map(p => p.name).sort()).toEqual([
-      'architect', 'ba-po', 'data', 'developer', 'devops',
+      'architect', 'ba-po', 'data', 'design', 'developer', 'devops',
       'pm-delivery', 'portfolio', 'qa', 'security',
     ]);
   });

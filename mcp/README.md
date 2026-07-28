@@ -98,7 +98,7 @@ role into an install plan, or audit an existing install — see the examples bel
 ## Examples by role
 
 Real things to ask your assistant once the server is connected. Each role is a
-preset; `list_presets` shows all nine with their human-in-the-loop mode.
+preset; `list_presets` shows all ten with their human-in-the-loop mode.
 
 | Role | Ask your assistant | Tools it triggers | What you get |
 | --- | --- | --- | --- |

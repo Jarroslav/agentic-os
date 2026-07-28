@@ -146,6 +146,21 @@
         { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
         { name: 'role-memory', desc: 'Durable per-role memory across sessions' }
       ] },
+    { id: 'design', label: 'Designer / UX', longLabel: 'Designers & UX Researchers', icon: 'ph-pen-nib', guided: false, sdlc: false,
+      time: '~20–30 min', presets: 'design', hitl: 'strict HITL', orch: 'dispatcher',
+      tagline: 'Emotion-annotated journeys, decision-closing workshops and agent-ready handoffs — writes only docs/design/.',
+      note: 'Installs the experience-designer (doc-writer scoped to docs/design/) and dispatcher routing. Decisions always land as proposed — you confirm them; negative ACs are carried verbatim into the handoff.',
+      phrases: [
+        { say: 'Map the checkout journey', get: 'Journey map with an emotion entry per step', skill: 'experience-designer' },
+        { say: 'Log the workshop — no decisions yet', get: 'Refusal — a workshop that closes no decision was a meeting', skill: 'experience-designer' },
+        { say: 'Prepare the design handoff', get: 'context.md + spec.md pair, spec cites only recorded decisions', skill: 'experience-designer' },
+        { say: 'Turn the framing into a story', get: 'Story with testable acceptance criteria', skill: 'product-owner' }
+      ],
+      skills: [
+        { name: 'product-owner', desc: 'Raw idea → story with testable AC' },
+        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'role-memory', desc: 'Durable per-role memory across sessions' }
+      ] },
     { id: 'portfolio', label: 'Portfolio / Program', longLabel: 'Portfolio & Program Managers', icon: 'ph-chart-line-up', guided: true, sdlc: false,
       time: '~45–60 min', presets: 'portfolio', hitl: 'gated-autonomous', orch: 'dispatcher',
       tagline: 'Run status, knowledge health and durable cross-session memory — read/report-only, no git layer.',
@@ -623,7 +638,7 @@
       '<h4 style="margin-bottom:12px">What your assistant can do with it</h4>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">' +
       capCard('ph-magnifying-glass', 'Search the docs', 'Governance, SDLC and QE methodology, queryable in place.') +
-      capCard('ph-users-three', 'List role presets', 'All nine roles and the 28 QE blueprints, with what each installs.') +
+      capCard('ph-users-three', 'List role presets', 'All ten roles and the 28 QE blueprints, with what each installs.') +
       capCard('ph-list-checks', 'Plan an install', 'Turn a role into a concrete install plan for your setup.') +
       capCard('ph-stethoscope', 'Audit an install', 'Check an existing .agentic/ install against the methodology.') + '</div>' +
 

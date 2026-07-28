@@ -219,6 +219,14 @@ DATA_GUIDE_ROWS_TEXT = (
     "(.agentic/guides/standards/data-pipeline-design.md) |\n"
 )
 DATA_GUIDE_ROWS = DATA_GUIDE_ROWS_TEXT if "guides/data-pipeline-design" in PRESET_TEMPLATE_IDS else ""
+
+# The design-only experience row, same contract.
+DESIGN_GUIDE_ROWS_TEXT = (
+    "| Experience design (emotion-annotated journeys, decision-closing workshops, negative ACs) | "
+    "[`.agentic/guides/standards/experience-design.md`]"
+    "(.agentic/guides/standards/experience-design.md) |\n"
+)
+DESIGN_GUIDE_ROWS = DESIGN_GUIDE_ROWS_TEXT if "guides/experience-design" in PRESET_TEMPLATE_IDS else ""
 # The five core guide rows, one per installed guide, fixed order — the index must
 # never link a guide the union did not install (SKILL.md Phase 4 step 4).
 CORE_GUIDE_ROW_TEXTS = [
@@ -425,6 +433,7 @@ def render(text: str, is_json: bool, escape: bool) -> str:
     text = text.replace("{{OPS_GUIDE_ROWS}}", OPS_GUIDE_ROWS)
     text = text.replace("{{SEC_GUIDE_ROWS}}", SEC_GUIDE_ROWS)
     text = text.replace("{{DATA_GUIDE_ROWS}}", DATA_GUIDE_ROWS)
+    text = text.replace("{{DESIGN_GUIDE_ROWS}}", DESIGN_GUIDE_ROWS)
     text = text.replace("{{CORE_GUIDE_ROWS}}", CORE_GUIDE_ROWS)
     text = text.replace("{{WRITE_SCOPE_RULE}}", WRITE_SCOPE_RULE)
     # Before the scalar/list pass: the quality-gates section nests {{GATE_COMMANDS}}.
@@ -675,6 +684,7 @@ GUIDE_IDS = {
     "incident-triage": "guides/incident-triage",
     "threat-modeling": "guides/threat-modeling",
     "data-pipeline-design": "guides/data-pipeline-design",
+    "experience-design": "guides/experience-design",
     "qa-strategy-stub": "guides/qa-strategy-stub",
     "test-design-pattern": "guides/test-design-pattern",
     "flaky-protocol": "guides/flaky-protocol",
@@ -722,6 +732,7 @@ CORE_AGENTS = [("dispatcher", True), ("blind-code-reviewer", False),
                ("pr-pipeline-gate", True), ("incident-triage", True),
                ("threat-modeler", False),
                ("pipeline-designer", False),
+               ("experience-designer", False),
                ("test-case-generator", False),
                ("test-automation-author", False), ("test-case-syncer", False),
                ("test-failure-triage", True), ("work-item-creator", False)]
