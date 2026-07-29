@@ -1,5 +1,6 @@
 ---
 name: decision-router
+discoverable: false
 description: Invoke this skill whenever an SDLC pipeline phase reaches a judgment gate and needs a resolved, logged verdict — spec approval, plan approval, QA drift, code review (final or check round), requirements ambiguity, spec clarification, or feature verification. Trigger phrases include "resolve this gate", "route this decision", "get a verdict for <gate_id>", "who approves this", "check the escalation rule", or "record this to decisions.jsonl". It is the single entry point for every recognized gate id in both hitl and autonomous modes. Not for: the `qa.ready` signal — that stays deterministic inside the calling pipeline and never enters this router's table — gate ids outside its recognized set, or making the underlying judgment itself (it resolves and logs verdicts through the configured mode).
 ---
 

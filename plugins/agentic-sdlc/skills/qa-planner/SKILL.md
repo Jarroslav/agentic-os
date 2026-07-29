@@ -1,5 +1,6 @@
 ---
 name: qa-planner
+discoverable: false
 description: >-
   Plans and reviews QA on a per-feature basis, in three modes that sdlc-pipeline
   invokes directly: --checklist (Phase 6) turns requirements and QA knowledge into

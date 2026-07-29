@@ -8,6 +8,20 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ### Fixed
 
+- **Five pipeline-only skills now declare `discoverable: false`.**
+  `decision-router`, `complexity-scoring`, `feature-verification`, `qa-gates`
+  and `qa-planner` are invoked by `sdlc-pipeline`, not by users — each says so
+  in its own description — but none carried the declaration, so each read as a
+  user-facing skill a preset had failed to route.
+
+  This completes the pattern `sdlc-pipeline`, `code-review-orchestrator` and
+  `test-heal` already followed. Unlike those three, these five *are* legitimately
+  claimed by presets: the agentic-os check treats internal-ness as *allowed to be
+  unclaimed*, not *forbidden from being claimed*, so a skill can be both
+  preset-installed and pipeline-only.
+
+### Fixed
+
 - **`sdlc-pipeline` now declares `discoverable: false`.** It is the most
   emphatically pipeline-only skill here — "never in direct response to a bare
   user request", with `sdlc-start` and `sdlc-autonomous` as the only entry

@@ -1,5 +1,6 @@
 ---
 name: qa-gates
+discoverable: false
 version: 0.1.0
 license: Apache-2.0
 author: agentic-os
