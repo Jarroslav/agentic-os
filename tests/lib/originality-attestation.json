@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T09:09:36Z",
+ "attested_at": "2026-07-29T09:51:16Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -83,7 +83,7 @@
    "max_run": 0
   },
   "README.md": {
-   "sha256": "47b098086123985f70e3da8cb58e580a1109b30e3eb7eebe2bb14e34ecca65be",
+   "sha256": "fae85fd0876e3707fdf649dfe82aa2d64ffea4b88f5addacf9c67b19ba5f8dce",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -119,7 +119,7 @@
    "max_run": 0
   },
   "docs/setup/app.js": {
-   "sha256": "caf0a4f2aba2bb7c13abc2a4b9efc19d5e0270923b1dca88a3a5d8e88a1ee4cc",
+   "sha256": "9dc8eeb91f1ad01f993d57ebf9db99fca2f5a0d879aa7ff6da53b87fe6002252",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "16406c03110d09939356fa5e06319fd9c6db0815e7be2a697273f40f90c1ead6",
+   "sha256": "d19418eac0d7b66957437789c4983c2536d07df0233451ee94684beefa2303b4",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "fdfd67f8ec46b7f22e4a7cf4fc6e04c3290e216fdfe6b68d76b39c03952f7a9d",
+   "sha256": "583d583226a59e03c7c634adc3d312e03415fc32295d3247c69999f7edcf80d0",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -635,7 +635,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/qa.json": {
-   "sha256": "dab548f5aa44dd77e87f43ef649b1277975cf0905496407185a9451e6f3d945c",
+   "sha256": "6cecb06c1230e672f34fd8e1e43d1c041b683a3667bdc785142cbfd5b00dae72",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1091,7 +1091,7 @@
    "max_run": 0
   },
   "plugins/agentic-qe/CHANGELOG.md": {
-   "sha256": "d5fecd66f1510bcb91ba9528820b3a65ec154c2f50288fa8ec612a8e543c4441",
+   "sha256": "b3b33a7f14f464fc8e4ffff6903d73d70db540eb367e7e6bcec39a8ff2a72e89",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1235,20 +1235,20 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/catalog/analyze/change-impact-scoping.md": {
-   "sha256": "ba58506b455a15b54e201fa0b40a6a0e87e4bc85864c7964c89a3a0e74c38b2b",
-   "line": 0.0185,
+   "sha256": "70b0deaf3c857c4903aabf40dae4cba2416bbca56056f5c633716daa151948f0",
+   "line": 0.0182,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/catalog/analyze/product-risk.md": {
-   "sha256": "0d97186fc37332eb3f2eca2d8dd97a96a9619ce846a897eafc5482f211b703cd",
-   "line": 0.0217,
+   "sha256": "cb211c9f4780fae7a33d9bc948db23aae6dcf3486a32f62bcf622f8986ad604f",
+   "line": 0.0213,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/catalog/analyze/project-context.md": {
-   "sha256": "0b511872b03aef3a76a1af8be26b033d0e4e58360424f3320d842befb97c61c0",
-   "line": 0.0213,
+   "sha256": "eb08cba0a298c1774789d99f8f444d028ae81160c0c9b6dce44a99abed0c1d35",
+   "line": 0.0208,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1265,20 +1265,20 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/catalog/analyze/risk-based-selection.md": {
-   "sha256": "fd90ca47848a2d3e565c717d46fe38a21646b96703ef958b98d4251b74813662",
-   "line": 0.0204,
+   "sha256": "949e22dbfbfbee93f3f47da69db2f8e16f84177071bc761e25f84b09f7aa18d5",
+   "line": 0.02,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/catalog/analyze/threat-model.md": {
-   "sha256": "0b43293f667d3a796f19e15a48456a66190451e490b28ab07a78ac9632dedb76",
-   "line": 0.0208,
+   "sha256": "82189a6c0c8a9d83ff337880e9f4fa9a44f4d407dc1c99ca9e20296f633e2778",
+   "line": 0.0179,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/catalog/build/api-schema-validation.md": {
-   "sha256": "5ac8fec02cb50a12ea982546ac68ae14c4e9b82fdfde370f35b3fa0318ff7512",
-   "line": 0.0213,
+   "sha256": "091362c251235f9e571e4e751ef14d70be8ce438cd788ff2bdfc08d5150b8c1c",
+   "line": 0.0208,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1289,8 +1289,8 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/catalog/build/test-scripts.md": {
-   "sha256": "bd1c964a8eea30c18611af7842d918cf5bf9a76bcde2ba03e056ff1605edf008",
-   "line": 0.0185,
+   "sha256": "fbfe6e01148279a5a420e3febe1cf03d9f73f6f3d49d2763f6bc4da2b616ae77",
+   "line": 0.0182,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1373,8 +1373,8 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/catalog/operate/pr-performance-review.md": {
-   "sha256": "a144cc32c7bec0faf0d91587bcad36b4c1ce57e449146410641e275b5e9df507",
-   "line": 0.0204,
+   "sha256": "640edd969c50170f7ba31da2460e192ac0d3f3761d3d065abfae806e365980fd",
+   "line": 0.02,
    "shingle": 0.0,
    "max_run": 0
   },
