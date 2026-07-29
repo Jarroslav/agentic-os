@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T14:11:02Z",
+ "attested_at": "2026-07-29T14:12:06Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "f6648c177e228761cbd333105fd7d9e8616734aeaa2b6169ebf2d0a009c85388",
+   "sha256": "153756d246db9dc11089c4c3ad06dde5dc2ef58f40b17f40dd810a14459b4c17",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1529,7 +1529,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "963e1f64b8a123202ebcc39e4dcd11529403057982c19a3253cc508467db557b",
+   "sha256": "dbadcc6e504e39a52397763864b0e0165fdc8fc2582fe6143acfd717f71e23b1",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
