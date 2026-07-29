@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T14:12:06Z",
+ "attested_at": "2026-07-29T16:14:54Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "153756d246db9dc11089c4c3ad06dde5dc2ef58f40b17f40dd810a14459b4c17",
+   "sha256": "ebbc16146efc20025fd5aeba09a26dc6340ec8f633fee54f660979ffd6558ba1",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -413,25 +413,25 @@
    "max_run": 0
   },
   "plugins/agentic-os/.claude-plugin/plugin.json": {
-   "sha256": "a636e6585d78d3cfc058e5ef41972c23827eda5e2b6b5e0cd880e11b3932d1f7",
+   "sha256": "207646dc2ab5b092334bb0c30077bd88a8d2e6eb05ce1667a3cb751215072017",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.codex-plugin/plugin.json": {
-   "sha256": "a3dfb50c0035da3107fb52fafee66a6783dd9b087d9c500923848808cc57a7fb",
+   "sha256": "ef54fed31fe4bdc8d8e761389b75819d72abe8b6a94f756cfefde5ef59c5cd0f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/.cursor-plugin/plugin.json": {
-   "sha256": "b7667b42b64c2b315514814a28233cdc237760f3902b7dae88ed9e25032c4e41",
+   "sha256": "433854debf483892dc7a6f5c5d2901756bc937d3902919466f88d82929896619",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "6e482208d44771ca66221dfa8ba7fd825a9b677134198d546914dab5b94855dc",
+   "sha256": "7d53285a849bb9e1126b1ae7dfe386baab21dc6db65db199b89bcfcabb57f7f5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1505,19 +1505,19 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/.claude-plugin/plugin.json": {
-   "sha256": "930b97656fbe50c0947a57e6775d6f90516a1bf6241af0d7a9d83feb3535f9f0",
+   "sha256": "05f2dd462638a04ed3b3c069bb401bee43703be97d72d19b424a4d778d59eb21",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 3
   },
   "plugins/agentic-sdlc/.codex-plugin/plugin.json": {
-   "sha256": "5ed0bea0c08496e5ab50ed608bfdd49ab49e7cbea9e69c7dd2947a227a972973",
+   "sha256": "1fd55567e714a1b3ce9ac1639676fbdaae866597c30cbda450c31e66f322140e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/.cursor-plugin/plugin.json": {
-   "sha256": "8de562c5734148f5d14831b5b8881a12df9c3b600363788e5db71c6bdee3deab",
+   "sha256": "7c927e5eca04569f109eac71d4a59b42aad0bba0fcc2a9da45b28945abf9a4cb",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1529,7 +1529,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "dbadcc6e504e39a52397763864b0e0165fdc8fc2582fe6143acfd717f71e23b1",
+   "sha256": "5f0a76352d7adfb8cf7bea2941187eb3f0805f713fc2e347129ffab3a8fea6c6",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
