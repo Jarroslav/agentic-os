@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T09:51:16Z",
+ "attested_at": "2026-07-29T10:05:37Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -83,7 +83,7 @@
    "max_run": 0
   },
   "README.md": {
-   "sha256": "fae85fd0876e3707fdf649dfe82aa2d64ffea4b88f5addacf9c67b19ba5f8dce",
+   "sha256": "47b098086123985f70e3da8cb58e580a1109b30e3eb7eebe2bb14e34ecca65be",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -119,7 +119,7 @@
    "max_run": 0
   },
   "docs/setup/app.js": {
-   "sha256": "9dc8eeb91f1ad01f993d57ebf9db99fca2f5a0d879aa7ff6da53b87fe6002252",
+   "sha256": "caf0a4f2aba2bb7c13abc2a4b9efc19d5e0270923b1dca88a3a5d8e88a1ee4cc",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "d19418eac0d7b66957437789c4983c2536d07df0233451ee94684beefa2303b4",
+   "sha256": "310ccc2710a29de7d47134d2c997b0039f3b286b06246aae0a306ba048d3e3b1",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "583d583226a59e03c7c634adc3d312e03415fc32295d3247c69999f7edcf80d0",
+   "sha256": "fdfd67f8ec46b7f22e4a7cf4fc6e04c3290e216fdfe6b68d76b39c03952f7a9d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -635,7 +635,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/qa.json": {
-   "sha256": "6cecb06c1230e672f34fd8e1e43d1c041b683a3667bdc785142cbfd5b00dae72",
+   "sha256": "dab548f5aa44dd77e87f43ef649b1277975cf0905496407185a9451e6f3d945c",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
