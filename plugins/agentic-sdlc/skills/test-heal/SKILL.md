@@ -17,6 +17,13 @@ test-side causes. Heal and re-run are deliberately separate responsibilities:
 this skill edits and commits, `qa-gates` re-runs — a healer that re-runs its
 own work can mask its own failures.
 
+> **Methodology owner.** How flake causes are isolated and classified is defined by the `flaky-debugging`
+> blueprint in `agentic-qe`
+> (`skills/qe-blueprints/references/catalog/execute/flaky-debugging.md`). This skill
+> executes; the blueprint is the authority on method. If the two ever disagree,
+> the blueprint wins and this file is what gets corrected — one source of truth,
+> so two agents cannot follow two different sets of practices.
+
 ## Inputs
 
 - `run_dir` — the active run directory

@@ -6,6 +6,24 @@ Semantic Versioning and its own release tag (`agentic-qe-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Added
+
+- **The blueprint index is now CI-checked against the catalog.**
+  `qe-blueprints/SKILL.md` carries a hand-maintained 28-row index table while
+  Step 1 tells the model to enumerate `references/catalog/**/*.md` — two sources
+  for one fact, drifting quietly in both directions: a row for a deleted file
+  sends the model after a blueprint that is not there, and a file missing from
+  the table is invisible to anyone reading the skill.
+  `tests/lib/check-qe-catalog.py` fails when they disagree on membership, stage
+  or duplication. Same posture as `mcp/content-index.json` — the derived view
+  may exist, but it may not drift.
+
+  No generated manifest file was added. `list_qe_blueprints` already derives
+  `{id, stage, title, summary, uri}` at build time and `check-presets.py`
+  resolves preset entries by globbing the catalog; a third on-disk copy would be
+  one more thing to drift. The check makes the copy that already exists
+  trustworthy instead.
+
 ### Fixed
 
 - **`qe-blueprints` no longer collides with a governed repo.** It wrote full

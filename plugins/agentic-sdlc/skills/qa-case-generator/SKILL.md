@@ -26,6 +26,13 @@ optional push to a config-driven test-management backend.
 > same ticket producing the same shape of output. Do not improvise around the
 > gates — they are the contract.
 
+> **Methodology owner.** How functional cases are derived and shaped is defined by the `test-cases`
+> blueprint in `agentic-qe`
+> (`skills/qe-blueprints/references/catalog/design/test-cases.md`). This skill
+> executes; the blueprint is the authority on method. If the two ever disagree,
+> the blueprint wins and this file is what gets corrected — one source of truth,
+> so two agents cannot follow two different sets of practices.
+
 ## When to use
 
 - You have one work-item id (`PROJ-123` format) from Jira, Azure DevOps, GitHub,

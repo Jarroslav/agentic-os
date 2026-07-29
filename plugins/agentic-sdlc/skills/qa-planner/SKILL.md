@@ -34,6 +34,13 @@ Every mode takes the same two arguments: `run_dir` (absolute) and `merge_base`
 
 ---
 
+> **Methodology owner.** What a well-shaped test case set covers is defined by the `test-cases`
+> blueprint in `agentic-qe`
+> (`skills/qe-blueprints/references/catalog/design/test-cases.md`). This skill
+> executes; the blueprint is the authority on method. If the two ever disagree,
+> the blueprint wins and this file is what gets corrected — one source of truth,
+> so two agents cannot follow two different sets of practices.
+
 ## Mode: `--checklist` (Phase 6)
 
 Runs before implementation. The output is a claim about what this change has to

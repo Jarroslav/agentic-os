@@ -41,6 +41,12 @@ jobs:
       - name: Agent contract check
         run: python3 tests/lib/check-agent-contract.py
 
+      # The QE blueprint index in qe-blueprints/SKILL.md is a hand-maintained
+      # view of references/catalog/. Same posture as the MCP content index: the
+      # derived copy may exist, but it fails CI when it drifts.
+      - name: QE catalog index check
+        run: python3 tests/lib/check-qe-catalog.py
+
       - name: Rule-provenance marker check
         run: |
           python3 tests/lib/check-rule-markers.py --self-test
