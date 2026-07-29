@@ -318,6 +318,12 @@ the local-work-item fallback visible. Derive `{{MR_ADAPTER_STATUS}}` the same
 way from `{{MR_ADAPTER}}`: a repo with no `gh`/`glab`/MCP review path must not
 be handed a guide asserting one is configured.
 
+Derive `{{TICKET_INTEGRATION_ENABLED}}` from that same condition, as the bare
+JSON literal `true` or `false`. It lands unquoted in `sdlc/config.json`, and
+the machine copy must agree with the guide it points at: `enabled: true` beside
+an adapter of `none` asserts a ticket surface that does not exist, and a reader
+hitting the two has no way to tell which one is lying.
+
 Derived values (no screen): `{{PROJECT_NAME}}` = repo dir name (confirm on
 screen 5), `{{STACK_SUMMARY}}` = `journal.stack_discovery.stack_summary`,
 `{{ROLE_PRESETS_ACTIVE}}` = comma list from screen 1,
