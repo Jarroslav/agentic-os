@@ -71,6 +71,11 @@ ANSWERS = {
     "AGENTS_CANONICAL_DIR": ".agentic/agents/",
     "OUTPUT_CONTRACT_SECTIONS": "Summary,Why,Blocking",
     "MR_ADAPTER": "gh",
+    # A bare JSON literal, so it sits outside any string in sdlc/config.json —
+    # escaping is a no-op and quoting it would make `enabled` the string "true".
+    # `TICKET_ADAPTER` above is non-`none`, so the enabled branch is the one this
+    # adversarial render exercises; the `none` branch is covered in run-matrix.
+    "TICKET_INTEGRATION_ENABLED": "true",
     # The one placeholder outside any string literal (`SCORE_THRESHOLD = {{...}}`).
     # Escaping is a no-op here and could not protect it: any value that is a valid
     # Python statement executes. Kept numeric deliberately — the control is intake
@@ -134,6 +139,17 @@ JSON_ROUND_TRIP = {
     "feature_verification.base_url": ANSWERS["BASE_URL"],
     "integrations.github.command": ANSWERS["MR_ADAPTER"],
 }
+
+
+def ticket_integration_enabled(ticket_adapter):
+    """What `integrations.ticket.enabled` must be for a given `{{TICKET_ADAPTER}}`.
+
+    The flag is a claim that an external ticket surface exists. Hardcoding it
+    `true` while the adapter resolves to `none` scaffolds a config asserting an
+    integration that points at nothing: the guides say `not configured` while the
+    machine copy says enabled, and a reader has to already know which one lies.
+    """
+    return ticket_adapter != "none"
 
 
 def md_over_escape_probes():

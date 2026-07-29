@@ -131,6 +131,10 @@ SCALARS = {
     "TEST_FRAMEWORK": "playwright",
     "TICKET_ADAPTER": "none" if "ba-po" in PRESET_NAMES else "GitHub",
     "TICKET_ADAPTER_STATUS": "not configured" if "ba-po" in PRESET_NAMES else "configured",
+    # A bare JSON literal, not prose: this lands unquoted in sdlc/config.json, where
+    # the machine copy of the flag must agree with the adapter the guides declare.
+    # Mirrors the installer's derivation in agentic-init/SKILL.md.
+    "TICKET_INTEGRATION_ENABLED": "false" if "ba-po" in PRESET_NAMES else "true",
     "TICKET_PREFIX": "" if "ba-po" in PRESET_NAMES else "GH",
 }
 

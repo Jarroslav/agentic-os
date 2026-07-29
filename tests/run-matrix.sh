@@ -235,6 +235,42 @@ python3 "$ROOT/tests/lib/check-governance-promises.py" "$ROLE_WORK/ba-po" \
   && ok "ba-po governance promises all resolve" || bad "ba-po governance promises all resolve"
 python3 "$ROOT/tests/lib/check-governance-promises.py" "$OPS_WORK" \
   && ok "devops governance promises all resolve" || bad "devops governance promises all resolve"
+# The machine copy of the ticket integration must agree with the guide it points at.
+# `enabled: true` beside an adapter of `none` claims a surface that does not exist,
+# and a reader hitting the two cannot tell which one is lying. ba-po solo renders the
+# `none` branch; the developer scaffold renders a real adapter.
+PYTHONPATH="$ROOT/tests/lib" python3 - "$ROLE_WORK/ba-po" "$FRESH" <<'PY' \
+  && ok "ticket integration enabled flag tracks the declared adapter" \
+  || bad "ticket integration enabled flag tracks the declared adapter"
+import json, pathlib, re, sys
+from render_rule import ticket_integration_enabled
+
+problems = []
+for target in (pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])):
+    cfg = json.loads((target / ".agentic/agentic-sdlc/config.json").read_text(encoding="utf-8"))
+    project = (target / ".agentic/guides/project.md").read_text(encoding="utf-8")
+    # project.md is the single point of adapter configuration, so read the adapter
+    # back out of it rather than re-deriving it — otherwise the check and the
+    # scaffold could drift apart in the same way this test exists to catch.
+    # Anchored to the Ticket Adapter section: project.md carries an MR Adapter
+    # section with an identically-shaped line, and an unanchored match would read
+    # `gh` and pass this check for the wrong reason.
+    # `[^\n]+`, not `.+`: re.S is needed to span from the heading to the field, but
+    # it also lets `.` cross newlines, so a greedy `.+` captures the rest of the
+    # file and compares against a value that is never `none`.
+    m = re.search(r"^## Ticket Adapter$.*?^\*\*Adapter\*\*: ([^\n]+)$", project, re.M | re.S)
+    if not m:
+        problems.append("%s: could not read the Ticket Adapter field" % target.name)
+        continue
+    adapter = m.group(1).strip()
+    want = ticket_integration_enabled(adapter)
+    got = cfg["integrations"]["ticket"]["enabled"]
+    if got is not want:
+        problems.append("%s: adapter %r -> enabled should be %r, got %r"
+                        % (target.name, adapter, want, got))
+if problems:
+    sys.exit("; ".join(problems))
+PY
 # … while full installs keep the mandate, and the devops variant keeps the gate
 # without instructing a spawn of the uninstalled blind-code-reviewer agent.
 assert "developer CLAUDE.md keeps the review-gate mandate" "grep -q 'Blind code review before every commit' '$FRESH/CLAUDE.md' && grep -q 'blind-code-reviewer' '$FRESH/CLAUDE.md'"

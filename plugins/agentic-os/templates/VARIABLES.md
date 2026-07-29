@@ -131,6 +131,7 @@ a security boundary:
 | `{{ROLE_PRESETS_ACTIVE}}` | Installed role presets, comma list | from interview |
 | `{{TICKET_ADAPTER}}` | Work-item system + access method (ADO / Linear MCP / Jira / GitHub / GitLab / none) | interview |
 | `{{TICKET_ADAPTER_STATUS}}` | `configured` only when a ticket adapter is selected; otherwise `not configured` | derived from `{{TICKET_ADAPTER}}` |
+| `{{TICKET_INTEGRATION_ENABLED}}` | The bare JSON literal `true` / `false` for `sdlc/config.json`'s `integrations.ticket.enabled` — **unquoted**, so the machine copy agrees with the adapter the guides declare | derived from `{{TICKET_ADAPTER}}` |
 | `{{TICKET_PREFIX}}` | Work-item reference prefix in commits/titles | interview |
 | `{{MR_ADAPTER}}` | MR/PR mechanism (`gh` / `glab` / MCP / none) | detected |
 | `{{MR_ADAPTER_STATUS}}` | `configured` only when an MR adapter is detected or selected; otherwise `not configured` | derived from `{{MR_ADAPTER}}` |

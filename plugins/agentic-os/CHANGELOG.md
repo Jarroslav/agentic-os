@@ -7,6 +7,26 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
+### Fixed
+
+- **The scaffolded ticket integration no longer claims a surface that isn't
+  there.** `sdlc/config.json` hardcoded `integrations.ticket.enabled: true`
+  regardless of the adapter, so every install that selected no ticket adapter
+  got a machine copy asserting an enabled integration whose own `adapter` field
+  read `documented in .agentic/guides/project.md (none)`. The guides said
+  `not configured`; the config said enabled. Nothing reconciled the two, and a
+  reader hitting the pair had no way to tell which one was lying.
+
+  `enabled` is now the derived `{{TICKET_INTEGRATION_ENABLED}}` — `true` only
+  when `{{TICKET_ADAPTER}}` is not `none`, the same condition that already
+  drives `{{TICKET_ADAPTER_STATUS}}`, so the two cannot diverge again.
+
+  Found by two independent role-grading candidates reading a `ba-po` solo
+  install, which is the case that renders the `none` branch. `run-matrix` gains
+  a check that reads the adapter back out of `project.md` — the single point of
+  adapter configuration — and asserts the flag agrees with it, on both a
+  `ba-po` scaffold (`none`) and a developer scaffold (a real adapter).
+
 ### Added
 
 - **A shipped skill can no longer go unreachable unnoticed.** `check-presets.py`
