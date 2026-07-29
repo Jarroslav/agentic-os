@@ -29,6 +29,17 @@
       "why": "SDLC pipeline + decision-router (HITL/autonomous judgment gates with escalation and audit)."
     },
     {
+      "name": "agentic-qe",
+      "marketplace": "agentic-os",
+      "source": {
+        "source": "github",
+        "repo": "Jarroslav/agentic-os"
+      },
+      "min": "0.1.1",
+      "optional": true,
+      "why": "QE blueprint catalog — the methodology a preset's qe_blueprints entries name. Optional on purpose: blueprints are references, so their absence degrades guidance rather than breaking the install, and agentic-qe must stay installable on its own."
+    },
+    {
       "name": "ponytail",
       "marketplace": "ponytail",
       "source": {

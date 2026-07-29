@@ -10,9 +10,22 @@ A preset (`roles/<name>.json`) is a **shopping list of IDs, never content**:
   "generated": ["<gen/* slots produced by generators/agent-generator.md>"],
   "default_hitl": "strict | gated-autonomous | autonomous",
   "default_orchestration": "pipeline | dispatcher",
-  "sdlc_skills": ["<skill dirs under plugins/agentic-sdlc/skills/>"]
+  "sdlc_skills": ["<skill dirs under plugins/agentic-sdlc/skills/>"],
+  "qe_blueprints": ["<blueprint ids from the agentic-qe catalog>"]
 }
 ```
+
+`sdlc_skills` and `qe_blueprints` are the two **cross-plugin** fields. Neither
+copies anything into the target repo: each is journaled, and each prunes the
+agent-registry rows whose Owning asset names it — ``the agentic-sdlc `<name>`
+skill`` and ``the agentic-qe `<id>` blueprint`` respectively. A blueprint id is
+the filename stem under `references/catalog/<stage>/`; the stage is not part of
+the id, and `check-presets.py` enforces that stems stay unique across stages so
+an id is never ambiguous.
+
+`agentic-sdlc` is a required dependency; `agentic-qe` is optional. Blueprints
+are methodology references, so a repo missing the plugin gets weaker guidance
+rather than a broken install — and `agentic-qe` stays installable on its own.
 
 Ten presets ship: `developer`, `qa`, `ba-po`, `architect`, `pm-delivery`,
 `devops`, `portfolio`, `security`, `data`, `design` (see the README's

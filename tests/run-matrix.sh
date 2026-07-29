@@ -333,6 +333,12 @@ for s in product-owner requirements-intake mr-creator mr-watch sdlc-status repo-
   grep -q "agentic-sdlc \`$s\` skill" "$ALL_WORK/.agentic/guides/agent-registry.md" || bad "ten-preset registry missing skill row $s"
 done
 ok "registry carries every skill-owned row"
+# Same contract for the second cross-plugin field: a blueprint-owned row is
+# present exactly when some preset in the union names it.
+for b in test-cases flaky-debugging defect-triage apm-analysis; do
+  grep -q "agentic-qe \`$b\` blueprint" "$ALL_WORK/.agentic/guides/agent-registry.md" || bad "ten-preset registry missing blueprint row $b"
+done
+ok "registry carries every blueprint-owned row"
 assert "ten-preset scaffold has no unresolved placeholders" "! grep -rlF '{{' '$ALL_WORK/.claude' '$ALL_WORK/.agentic' '$ALL_WORK/AGENTS.md' '$ALL_WORK/PATTERNS.md' '$ALL_WORK/CLAUDE.md' 2>/dev/null | grep -q ."
 # pruning the other way: a developer-only scaffold keeps only its own skill row
 if grep -q "agentic-sdlc \`mr-watch\` skill" "$DEV_ONLY/.agentic/guides/agent-registry.md"; then
@@ -342,6 +348,19 @@ else
 fi
 grep -q "agentic-sdlc \`mr-creator\` skill" "$DEV_ONLY/.agentic/guides/agent-registry.md" \
   && ok "developer-only registry kept its own skill row (mr-creator)" || bad "developer-only registry kept its own skill row (mr-creator)"
+# The blueprint half of the same negative: developer names static-analysis and
+# no other preset's blueprints, so every qa/pm-delivery/devops row must be gone.
+# Without this a field that pruned nothing would still pass the positive check.
+bp_leaked=""
+for b in test-cases flaky-debugging defect-triage apm-analysis; do
+  grep -q "agentic-qe \`$b\` blueprint" "$DEV_ONLY/.agentic/guides/agent-registry.md" \
+    && bp_leaked="$bp_leaked $b"
+done
+if [ -n "$bp_leaked" ]; then
+  bad "developer-only registry kept unowned blueprint row(s):$bp_leaked"
+else
+  ok "developer-only registry pruned unowned blueprint rows"
+fi
 
 echo "== T4 idempotency =="
 # Snapshot every scaffolded file's content hash, re-run the installer, compare.

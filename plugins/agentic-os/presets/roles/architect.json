@@ -50,5 +50,8 @@
     "role-memory",
     "sdlc-start",
     "decision-router"
+  ],
+  "qe_blueprints": [
+    "change-impact-scoping"
   ]
 }

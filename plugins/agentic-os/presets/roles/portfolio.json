@@ -1,6 +1,6 @@
 {
   "name": "portfolio",
-  "description": "Portfolio/program oversight: run status, repo and knowledge health, durable cross-session memory, requirements intake — read/report-only, no code-writing agents, no git layer.",
+  "description": "Portfolio/program oversight: run status, repo and knowledge health, durable cross-session memory, requirements intake \u2014 read/report-only, no code-writing agents, no git layer.",
   "templates": [
     "hooks/subagent-gate",
     "hooks/session-bootstrap",
@@ -32,5 +32,8 @@
     "repo-audit-guides",
     "role-memory",
     "requirements-intake"
+  ],
+  "qe_blueprints": [
+    "execution-reporting"
   ]
 }

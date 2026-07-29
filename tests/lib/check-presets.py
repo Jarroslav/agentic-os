@@ -132,14 +132,53 @@ for name, p in presets.items():
         print("  preset %s splits the git layer: has %s, missing %s"
               % (name, present, missing)); fail = 1
 
-# (3) every sdlc_skills entry resolves to a shipped agentic-sdlc skill dir.
-#     Nothing else validates these names — a typo'd skill would ship silently
-#     and the installer would journal a skill /agentic-init can never surface.
-SDLC_SKILLS = PLUGIN.parent / "agentic-sdlc" / "skills"
-for name, p in presets.items():
-    for skill in p.get("sdlc_skills", []):
-        if not (SDLC_SKILLS / skill / "SKILL.md").is_file():
-            print("  MISSING sdlc skill for %s -> %s" % (name, skill)); fail = 1
+# (3) every cross-plugin asset a preset names must resolve to a real file in the
+#     sibling plugin that ships it. Nothing else validates these names — a typo'd
+#     entry would ship silently and the installer would journal an asset
+#     /agentic-init can never surface. One resolver for both fields, so a third
+#     composition axis is a table row rather than another hardcoded sibling path.
+#
+#     `qe_blueprints` entries are blueprint ids: the filename stem under the
+#     catalog, whose stage directory is not part of the id (the id is unique
+#     across stages, which the duplicate check below enforces).
+def _blueprint_files(root):
+    return {p.stem: p for p in root.rglob("*.md")} if root.is_dir() else {}
+
+
+CROSS_PLUGIN = {
+    "sdlc_skills": (
+        "agentic-sdlc skill",
+        lambda: {d.name: d for d in (PLUGIN.parent / "agentic-sdlc" / "skills").iterdir()
+                 if (d / "SKILL.md").is_file()}
+        if (PLUGIN.parent / "agentic-sdlc" / "skills").is_dir() else {},
+    ),
+    "qe_blueprints": (
+        "agentic-qe blueprint",
+        lambda: _blueprint_files(
+            PLUGIN.parent / "agentic-qe" / "skills" / "qe-blueprints"
+            / "references" / "catalog"),
+    ),
+}
+
+for field, (label, resolve) in CROSS_PLUGIN.items():
+    available = resolve()
+    for name, p in presets.items():
+        for entry in p.get(field, []):
+            if entry not in available:
+                print("  MISSING %s for %s -> %s" % (label, name, entry)); fail = 1
+        if len(p.get(field, [])) != len(set(p.get(field, []))):
+            print("  DUP %s entry in %s" % (field, name)); fail = 1
+
+# (3b) blueprint ids must be unique across catalog stages, since a preset names
+#      the stem alone. Two stages shipping the same stem would make a preset
+#      entry ambiguous and the registry-row prune non-deterministic.
+_catalog = (PLUGIN.parent / "agentic-qe" / "skills" / "qe-blueprints"
+            / "references" / "catalog")
+if _catalog.is_dir():
+    _stems = [p.stem for p in _catalog.rglob("*.md")]
+    _dupes = sorted({s for s in _stems if _stems.count(s) > 1})
+    if _dupes:
+        print("  AMBIGUOUS blueprint id(s) across stages: %s" % ", ".join(_dupes)); fail = 1
 
 # (4) QA preset invariants
 qa = presets["qa"]

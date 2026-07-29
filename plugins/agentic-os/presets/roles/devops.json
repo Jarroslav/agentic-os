@@ -1,6 +1,6 @@
 {
   "name": "devops",
-  "description": "Delivery infrastructure: git hooks, quality gates, PR pipeline gate, MR monitoring/CI-fixing glue, read-only incident triage — dispatcher-routed, no code-writing agents.",
+  "description": "Delivery infrastructure: git hooks, quality gates, PR pipeline gate, MR monitoring/CI-fixing glue, read-only incident triage \u2014 dispatcher-routed, no code-writing agents.",
   "templates": [
     "hooks/subagent-gate",
     "hooks/session-bootstrap",
@@ -45,5 +45,9 @@
     "feature-verification",
     "sdlc-doctor",
     "sdlc-status"
+  ],
+  "qe_blueprints": [
+    "apm-analysis",
+    "perf-results"
   ]
 }

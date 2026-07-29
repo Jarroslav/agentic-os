@@ -35,5 +35,8 @@
     "requirements-intake",
     "complexity-scoring",
     "role-memory"
+  ],
+  "qe_blueprints": [
+    "requirements-analysis"
   ]
 }

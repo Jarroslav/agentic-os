@@ -42,6 +42,10 @@ flow for the same task; pick the owner and cite anything else as reference.
 | Watch an open MR/PR until merge (devops, pm-delivery presets) | the agentic-sdlc `mr-watch` skill | Persistent unblocking loop; stops on merge, close, or user stop. |
 | Inspect or resume SDLC runs (devops, pm-delivery, portfolio presets) | the agentic-sdlc `sdlc-status` skill | Read-only status recompute from live run state; resume needs an explicit yes. |
 | Audit repo knowledge/docs health (architect, portfolio presets) | the agentic-sdlc `repo-audit-guides` skill | Read-only; findings labeled and cited, fixes stay human-owned. |
+| Design a test-case set for a feature (qa preset) | the agentic-qe `test-cases` blueprint | Methodology, not a runner: the QA planning skills execute, and the blueprint is the authority on how cases are shaped. |
+| Diagnose a flaky test (qa preset) | the agentic-qe `flaky-debugging` blueprint | Methodology for isolating flake causes; quarantine and re-run decisions stay human-owned. |
+| Triage a defect backlog (pm-delivery preset) | the agentic-qe `defect-triage` blueprint | Severity and priority are proposals; the owning human confirms before any tracker write. |
+| Investigate an APM or performance signal (devops preset) | the agentic-qe `apm-analysis` blueprint | Read-only analysis methodology; remediation stays with incident-triage and its human gate. |
 | <!-- generated-agent-rows --> | | |
 
 Stack-specific writer/gate agents generated at install time (schema, API,

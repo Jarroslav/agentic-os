@@ -58,5 +58,8 @@
     "feature-verification",
     "mr-creator",
     "decision-router"
+  ],
+  "qe_blueprints": [
+    "static-analysis"
   ]
 }

@@ -35,5 +35,9 @@
     "mr-watch",
     "sdlc-status",
     "requirements-intake"
+  ],
+  "qe_blueprints": [
+    "defect-triage",
+    "release-summary"
   ]
 }
