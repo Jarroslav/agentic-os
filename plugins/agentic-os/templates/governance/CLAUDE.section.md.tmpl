@@ -21,6 +21,22 @@ HITL mode: **{{HITL_MODE}}** (dial and autonomy matrix: `.agentic/guides/policy/
 The agent roster and routing matrix live in [AGENTS.md](AGENTS.md) and
 `.agentic/guides/agent-registry.md` — only orchestrators spawn subagents.
 
+### Check ownership before starting work
+
+Applies to every agent here, spawned or not, and comes before the work itself.
+Match the request against `.agentic/guides/agent-registry.md` first:
+
+- **Another installed asset owns it** — hand it there, naming the owning path.
+  Do not run a parallel workflow.
+- **No installed asset owns it** — say so and escalate. Do not improvise a
+  substitute, and do not quietly widen your own contract to cover it.
+- **Two rows match equally** — that is a tie, and ties are escalated, never
+  broken by the agent.
+
+Being *able* to do the work is not the same as *owning* it. The requests that
+slip through are the ones that sound like your domain: a preset scoped to
+governing instructions does not thereby own debugging a failing test.
+
 {{REVIEW_GATE_SECTION}}{{QUALITY_GATES_SECTION}}### Human-gated operations (never autonomous)
 
 Listed in `.agentic/guides/policy/escalation-policy.md` and hook-enforced by

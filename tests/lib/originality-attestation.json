@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T12:42:01Z",
+ "attested_at": "2026-07-29T13:07:42Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "2767e36349548395660703f71ebbdfca8c53e5ce121acb064d1462a9cc6bb9b9",
+   "sha256": "2a0a42a052b5e0200ba9189571f6bdda6959500b711b2349d80f5639c14288c5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "b87f879bcf10b3b5ca54cc13be8c6c5a5cdebfcccf41bfcf4625eb1c97f6c9e3",
+   "sha256": "e341e69d9cd654fb26d72ac5468f9cf0eadb3ed972abd4ad363af989e2308575",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -845,7 +845,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/governance/CLAUDE.section.md.tmpl": {
-   "sha256": "423d66f39f970a8879839851e609bdd34d240768e0c5cc385fe00aba5b899213",
+   "sha256": "c337e49b07ead6017a93d351c91c230291cc694d36d3710f439bc2e8207efdf1",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2747,8 +2747,8 @@
    "max_run": 0
   },
   "tests/lib/refinstall.py": {
-   "sha256": "5e79e393d99716bc71bf1689bf5baed71ca25ebc7cd9e643a341c2d26d298db6",
-   "line": 0.0064,
+   "sha256": "6450e0f8af81aee336f00c553249578843c3facde609888d55e69c8c1e5bdc2f",
+   "line": 0.0063,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2765,7 +2765,7 @@
    "max_run": 0
   },
   "tests/run-matrix.sh": {
-   "sha256": "4b89440a7d1d6188c4c9aea73318e478942bca34e53ac4c26698a38085ee25d9",
+   "sha256": "2efee99bdc5feb5cf5079d2782dbb759d7392fd12f5949d8d8e871e0ffcacc2e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
