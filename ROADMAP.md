@@ -31,7 +31,10 @@ top-level index.
   `install(a,b) → uninstall(b) == install(a)` and the repo stays installable
   with any role afterwards. Set-difference over the shared union, journal-driven,
   subtractive settings un-merge ordered before script deletion, and the repo's
-  own pre-commit hook restored from `.local`.
+  own pre-commit hook restored from `.local`. The invariant is machine-asserted:
+  `tests/lib/refuninstall.py` is the reference executor, `check-roundtrip.py`
+  the differential comparator, and `T9a`–`T9g` in the acceptance matrix build
+  both trees in the same run and diff them — no golden to re-record.
 - Per-plugin release tags (`agentic-<plugin>-v<X.Y.Z>` per `CONTRIBUTING.md`
   § Releasing) are live — activating the clean template-only upgrade diff
   documented in `plugins/agentic-os/docs/UPGRADING.md`.
@@ -71,13 +74,6 @@ top-level index.
   see `mcp/README.md`'s Install section.
 
 ## In progress / next
-
-- **`/agentic-uninstall`'s deterministic proof.** The skill spec and its evals
-  ship first so the bucket rules can be reviewed; the reference executor
-  (`tests/lib/refuninstall.py`), the differential comparator
-  (`check-roundtrip.py`) and the `T9` matrix rows that assert
-  `install(a,b) → uninstall(b) == install(a)` follow in their own change. Until
-  then the invariant is specified and eval-graded, not machine-asserted.
 
 - **Codex packaging for the `agentic-os` and `agentic-qe` plugins.** Only
   `agentic-sdlc` ships a `.codex-plugin/` manifest today, so on Codex you get

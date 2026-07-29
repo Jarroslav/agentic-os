@@ -152,10 +152,15 @@ never wired, so it must not appear in `DROP`.
 
 For each entry in `DROP`: remove it **only if its `command` string is
 byte-equal to ours** — a user-edited command is B0, left alone and reported.
-Then drop any matcher group left empty, and any event key left empty; that is
-what makes the result byte-equal to a narrower fresh install. **Never touch**
-`permissions.deny` (its entries do not vary with the union) or any key the
-fragment does not own.
+
+**Keep matcher groups and event keys that end up empty.** This is
+counter-intuitive and the round-trip test is what proves it: the installer's
+prune reaches each matcher group through its `"matcher"` branch, which filters
+that group's `hooks` list in place and returns, so a group whose every hook was
+pruned still exists — with `"hooks": []` — in a fresh install. Collapsing them
+on removal would produce a settings file no install can produce, and the
+invariant would fail. **Never touch** `permissions.deny` (its entries do not
+vary with the union) or any key the fragment does not own.
 
 **Show a unified diff of `.claude/settings.json` (old → new) and get
 confirmation before writing.** Init calls this a hard rule even on fresh
