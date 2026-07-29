@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-28T11:26:15Z",
+ "attested_at": "2026-07-29T07:03:12Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "ca3d423184271595c832f4c9f06ce1d7bb3098d28b4dd6bd3ee68ac64a4d57ca",
+   "sha256": "a21fc692fc1fe77ec8a0fcfbc8f904815c331ccfa87b634cd0407c80cc7bc002",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "128e1ca2672dcddd19f9c2d100e11fb35d6139035e690292a162206defe0b7dc",
+   "sha256": "167f0945b3c3a3c0e652725c88f05f2e26a33a07dc69a05690a1c4b0efc8caed",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -665,13 +665,13 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-doctor/SKILL.md": {
-   "sha256": "200c622f86d92e82afdc7121f079ec049f15521ad14d95db15d66f3eb95bff1f",
+   "sha256": "dcf9719001da950a90d78dbb5780f2611d49071a9aad7b8b21353b9935029ae3",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-doctor/evals/evals.json": {
-   "sha256": "80c0c21937a66b3e1f430f030cc6b2be049904e9966001178a9cefaa26e29fd7",
+   "sha256": "5e37fa22e212eca54e832d2696dc1d6574950686d639b9b4144afa2d5cf9d63d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2657,8 +2657,8 @@
    "max_run": 0
   },
   "tests/lib/check-presets.py": {
-   "sha256": "f3e5ce96a86f63c2a743eb7cbff8e8650a15aca8a5f5d1e454fe2a6fe926afa7",
-   "line": 0.0185,
+   "sha256": "000d641b467d2b5f37ff781fa8dedcc50c7a83678e50ee30cb39c18ad5404670",
+   "line": 0.0157,
    "shingle": 0.0,
    "max_run": 0
   },

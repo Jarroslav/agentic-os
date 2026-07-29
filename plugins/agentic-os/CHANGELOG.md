@@ -5,6 +5,46 @@ Notable changes to the `agentic-os` plugin, as distributed here. Format follows
 Semantic Versioning. The plugin version lives in
 [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
+## [Unreleased]
+
+Groundwork for role removal. Designing the inverse of `/agentic-init` surfaced
+two defects in the git layer that only removal would ever trigger — both are
+fixed here, ahead of the feature that would have hit them.
+
+### Fixed
+
+- **Doctor Check 6 failed six of the ten presets.** Its git-hook clause was
+  written unconditionally ("Missing installed hook ⇒ fail"), but `ba-po`,
+  `data`, `design`, `pm-delivery`, `portfolio` and `security` carry no
+  `githooks/pre-commit` — a repo installed with only those roles reported a
+  failure for a hook it was never meant to have. The clause is now conditional
+  on `.githooks/pre-commit` being present in `journal.files`; when it is not,
+  `git_hook` reports `passed: true` and says why in its `detail`.
+
+### Added
+
+- **Doctor Check 6 now detects the commit-blocking hazard.** `.githooks/pre-commit`
+  runs `python3 .claude/hooks/precommit_review_gate.py precommit || exit $?` as
+  its first action, and chains the repo's own `pre-commit.local` only
+  afterwards. If the gate script is ever absent while the marked hook is still
+  installed in `.git/hooks/`, `python3` exits non-zero and **every `git commit`
+  in the repo is blocked** — out of the working tree, absent from the install
+  journal, and with the team's own hook silenced too. Nothing detected this
+  before. The check now fails, with the remedy, whenever a hook carrying the
+  `agentic-os:` marker has no gate script behind it. Deliberately independent
+  of the journal: the installed hook lives outside the tree and can outlive the
+  layer that placed it.
+- **`check-presets.py` asserts two composition invariants** the installer has
+  always relied on implicitly. (2b) every preset carries
+  `hooks/settings-fragment` plus the two hooks force-scaffolded with it — the
+  fragment is preset-independent, which is what will let a role removal compute
+  its settings subtraction from the pruning rule alone. (2c) the git layer
+  (`githooks/pre-commit`, `hooks/precommit-review-gate`,
+  `scripts/install-git-hooks`) is all-or-nothing per preset: splitting the trio
+  across presets would make the commit-blocking state above reachable through
+  an ordinary role removal. Both hold across all ten presets today; both fail
+  loudly if a future preset breaks them.
+
 ## [0.13.0] — Agent contracts get the gate skills already had
 
 A grading pass against this plugin's own instruction-quality rubric found the

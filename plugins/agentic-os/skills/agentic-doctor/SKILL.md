@@ -264,12 +264,33 @@ Parse `.claude/settings.json`:
 
 ## Check 6 — Git hook + dependencies
 
-- **Git hook**: `HOOKS_DIR="$(git rev-parse --git-path hooks)"`;
+- **Git hook**: **applies only when the git layer is installed** — i.e. when
+  `.githooks/pre-commit` is present in `journal.files`. Six of the ten presets
+  (`ba-po`, `data`, `design`, `pm-delivery`, `portfolio`, `security`) carry no
+  `githooks/pre-commit`, so a repo installed with only those must not be failed
+  for a hook it was never meant to have. Not journaled ⇒ skip this clause and
+  report `git_hook` as `passed: true` with the reason in its `detail`
+  ("git layer not installed for this preset set").
+
+  When it **is** journaled: `HOOKS_DIR="$(git rev-parse --git-path hooks)"`;
   `$HOOKS_DIR/pre-commit` exists, is executable, and contains the
   `agentic-os:` marker ⇒ installed. Tracked twin `.githooks/pre-commit`
   exists. Missing installed hook ⇒ fail with the remedy
   `bash scripts/install-git-hooks.sh`. If `pre-commit.local` exists, report it
   as the chained foreign hook (informational).
+- **Git hook — gate-script presence (commit-blocking hazard).** Checked
+  whenever `$HOOKS_DIR/pre-commit` carries the `agentic-os:` marker,
+  *independent of the journal* — the installed hook lives outside the working
+  tree and can outlive the layer that placed it. Then
+  `.claude/hooks/precommit_review_gate.py` **must exist** ⇒ else **fail**. The
+  hook runs `python3 "$ROOT/.claude/hooks/precommit_review_gate.py" precommit
+  || exit $?` as its first action, so a missing gate script makes `python3`
+  exit non-zero and **blocks every `git commit` in the repo**, including
+  commits made outside any agent harness. The chained `pre-commit.local` runs
+  *after* that line, so a team's own pre-existing hook stops firing too.
+  Remedy: re-run `/agentic-init` to restore the script, or delete
+  `$HOOKS_DIR/pre-commit` (and restore `pre-commit.local` if present) when the
+  git layer is no longer wanted.
 - **Dependencies**: for each non-optional plugin in the plugin's
   `manifest/dependencies.json` — present in
   `~/.claude/plugins/installed_plugins.json` at ≥ `min` ⇒ ok; registered in

@@ -98,6 +98,40 @@ for name, p in presets.items():
     if len(p["templates"]) != len(set(p["templates"])):
         print("  DUP template ID in", name); fail = 1
 
+# (2b) settings baseline: every preset must carry the settings fragment and the
+#      two hooks the installer force-scaffolds alongside it. The fragment is
+#      preset-independent (no placeholders), which is what lets a role *removal*
+#      compute its settings subtraction from the pruning rule alone rather than
+#      from a per-union re-render. If some future preset omitted the fragment,
+#      that reasoning silently breaks and the subtraction would drop entries a
+#      remaining role still needs.
+SETTINGS_BASELINE = (
+    "hooks/settings-fragment",
+    "hooks/human-gated-commands",
+    "hooks/guarded-write-paths",
+)
+for name, p in presets.items():
+    for need in SETTINGS_BASELINE:
+        if need not in p["templates"]:
+            print("  preset %s missing settings-baseline ID %s" % (name, need)); fail = 1
+
+# (2c) git-layer co-occurrence: the tracked hook, the gate script it invokes, and
+#      the installer that places it are one indivisible unit. `.githooks/pre-commit`
+#      runs `python3 .claude/hooks/precommit_review_gate.py precommit || exit $?`
+#      as its FIRST action, and chains the repo's own `pre-commit.local` only
+#      afterwards. So a preset carrying the hook without the gate script would
+#      install a hook that exits non-zero on every commit -- blocking every
+#      `git commit` in the repo, out of tree, and silencing the team's own hook
+#      too. Splitting the trio across presets makes that state reachable through
+#      an ordinary role removal, so assert all-or-nothing per preset.
+GIT_LAYER = ("githooks/pre-commit", "hooks/precommit-review-gate", "scripts/install-git-hooks")
+for name, p in presets.items():
+    present = [t for t in GIT_LAYER if t in p["templates"]]
+    if present and len(present) != len(GIT_LAYER):
+        missing = [t for t in GIT_LAYER if t not in p["templates"]]
+        print("  preset %s splits the git layer: has %s, missing %s"
+              % (name, present, missing)); fail = 1
+
 # (3) every sdlc_skills entry resolves to a shipped agentic-sdlc skill dir.
 #     Nothing else validates these names — a typo'd skill would ship silently
 #     and the installer would journal a skill /agentic-init can never surface.
