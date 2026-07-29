@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T10:05:37Z",
+ "attested_at": "2026-07-29T10:18:54Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "310ccc2710a29de7d47134d2c997b0039f3b286b06246aae0a306ba048d3e3b1",
+   "sha256": "0f2ffa1000047ebcd3e869ffd88ec19b06c42e838aa7ca5f15457dca53d419e8",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "fdfd67f8ec46b7f22e4a7cf4fc6e04c3290e216fdfe6b68d76b39c03952f7a9d",
+   "sha256": "95f142d0ada069571f83adefdc832b112c02d382b25d2fdc54086ed39be52544",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -587,7 +587,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/architect.json": {
-   "sha256": "c0a0af7b18496020897734335edef8de85a58c755d08306afc7ae3c76430757f",
+   "sha256": "988993ca8ed89e16f0e473455bc99ef52ef51f0a6d9df5a3bb80bdf870bce46e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -611,19 +611,19 @@
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/developer.json": {
-   "sha256": "56aa87cf47348461cb9554bb409e81399b16a3e85123b3fc3baa63d77275e17c",
+   "sha256": "d647c45d86330fbf84bf789f6cff67b41cf3812f4b3728937fabf6a4aa5edbb5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/devops.json": {
-   "sha256": "32e277eb80e58ec6aaa2fb03ddff8ebc724dad0c45945aac0bc62311ee3c958e",
+   "sha256": "c04c9f498426abb3f556622a18a88ae8afbc10d05b10875b16b5f9c44cfad927",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/pm-delivery.json": {
-   "sha256": "8b6c540f104eb0b662cfda1852f57fbf135d608dde514df9f576cc88576622bf",
+   "sha256": "3767423eab985b284e8782cb7cf3b3a638ab5e7bacaf5d9d0b9fca382a1888d8",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -635,7 +635,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/qa.json": {
-   "sha256": "dab548f5aa44dd77e87f43ef649b1277975cf0905496407185a9451e6f3d945c",
+   "sha256": "ad0f20854e2d9e105e8f5db1e2b9db8fbc9bb7d3aa9100d37a9d928e67aba7e5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1541,7 +1541,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/README.md": {
-   "sha256": "134d3811d95a20b6a5281592b20fe6bfbfbcc3c16c54351574042dd50740a13f",
+   "sha256": "681cbc71830464b1b1615b3fe1556403a28a1f0fe5494f74969389027a2543fd",
    "line": 0.0081,
    "shingle": 0.0,
    "max_run": 0
@@ -2453,7 +2453,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-pipeline/SKILL.md": {
-   "sha256": "95403a27c773c876ebab52d579d52ac884262634d9da227ec091209648676bf0",
+   "sha256": "7cf464e43257e49e01cbd75480c21bc6a546a5f180fdc44677a830b8e0f016d5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

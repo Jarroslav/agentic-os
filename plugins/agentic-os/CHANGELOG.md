@@ -9,6 +9,39 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- **Every user-facing skill and all but one blueprint are now reachable from a
+  preset.** 8 of 26 SDLC skills and 13 of 28 QE blueprints were claimed by no
+  preset, so they never surfaced at install — a user could not discover them
+  without already knowing they existed. Worst of these: `qa-case-generator` and
+  `qa-e2e-generator`, the two skills whose methodology was wired up one change
+  earlier, were unreachable from the `qa` role.
+
+  Assigned on the assets' own declarations rather than by name: `code-review`
+  and `sdlc-light` → developer; `qa-case-generator`, `qa-e2e-generator` → qa;
+  `release-manager` → pm-delivery. Blueprints follow catalog stage against role
+  remit — eight to qa, two to devops, one each to developer and architect.
+
+  What deliberately stays unclaimed: the three genuinely internal skills
+  (`sdlc-pipeline`, `code-review-orchestrator`, `test-heal` — dispatched by the
+  pipeline, never by a user), and `threat-model`, pending the access measurement
+  that should decide whether it is retired or kept.
+
+### Fixed
+
+- **`sdlc-pipeline` did not declare itself internal.** It is the most
+  emphatically pipeline-only skill in the repo — "never in direct response to a
+  bare user request" — yet carried no `discoverable:` key, while the two other
+  internal skills both set `discoverable: false`. The declaration is now
+  consistent across all three, which lets a future exemption key on frontmatter
+  rather than parsing prose: the descriptions are YAML-folded, so
+  `Not for: direct user invocation` line-wraps mid-phrase and a naive match
+  finds only one of the three.
+
+- **`code-review` was misclassified in the agentic-sdlc README** as a "Phase
+  skill … used by the task flow", contradicting its own frontmatter, which
+  carries user trigger phrases ("review my changes", "review my branch") and
+  calls itself the standalone front door. The README now matches the contract.
+
 - **QE is discoverable from the QA role.** The composition work is worth nothing
   if a QA user never learns the catalog exists, which was the actual adoption
   blocker. The `qa` role on the setup guide now lists `qe-blueprints` among its

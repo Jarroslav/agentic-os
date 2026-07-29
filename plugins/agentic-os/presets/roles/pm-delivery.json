@@ -34,7 +34,8 @@
     "mr-creator",
     "mr-watch",
     "sdlc-status",
-    "requirements-intake"
+    "requirements-intake",
+    "release-manager"
   ],
   "qe_blueprints": [
     "defect-triage",
