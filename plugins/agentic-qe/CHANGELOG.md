@@ -6,6 +6,28 @@ Semantic Versioning and its own release tag (`agentic-qe-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Added
+
+- **`qe-blueprints` records which blueprint it used, locally.** A 28-document
+  catalog accumulates documents nobody reaches for, and the only honest test of
+  whether one earns its place is whether it is ever actually used — comparing
+  two files and judging them similar is not that test. After a successful
+  scaffold in a governed repo, one line lands in
+  `.agentic/state/qe-blueprint-usage.jsonl`: blueprint id, stage, platform,
+  date.
+
+  This is the evidence two deferred decisions are waiting on — whether
+  `threat-model` is retired now that the `threat-modeler` agent owns its method,
+  and whether `risk-based-selection` and `change-impact-scoping` should merge.
+  Both were left open deliberately rather than settled from a file comparison.
+
+  Constraints, because this is telemetry in someone else's repo: local only,
+  never transmitted, and `.agentic/state/` is already gitignored by every
+  install so it is never committed. One line per scaffold — no repo identifier,
+  no free text, no content from the run. Ungoverned repos are skipped entirely:
+  they have no `.agentic/`, and the skill does not create one just to leave a
+  log in.
+
 ### Fixed
 
 - **`threat-model` contradicted the enforced standard.** The blueprint told the
