@@ -2,7 +2,7 @@
   "plugins/agentic-os/.claude-plugin/plugin.json": "a636e6585d78d3cfc058e5ef41972c23827eda5e2b6b5e0cd880e11b3932d1f7",
   "plugins/agentic-os/.codex-plugin/plugin.json": "a3dfb50c0035da3107fb52fafee66a6783dd9b087d9c500923848808cc57a7fb",
   "plugins/agentic-os/.cursor-plugin/plugin.json": "b7667b42b64c2b315514814a28233cdc237760f3902b7dae88ed9e25032c4e41",
-  "plugins/agentic-os/CHANGELOG.md": "d887e2ef92cfa0d5d70705fdb59f22a1c9ea58ce4987849179022db717e811b0",
+  "plugins/agentic-os/CHANGELOG.md": "b87f879bcf10b3b5ca54cc13be8c6c5a5cdebfcccf41bfcf4625eb1c97f6c9e3",
   "plugins/agentic-os/docs/UPGRADING.md": "ac56d3cf1e3963f0962f9187c413eef5e0542c50916478c581a2330ffe7d08af",
   "plugins/agentic-os/generators/agent-generator.md": "873c10b23d53bd0177fc23da1108822157be9bba48c8d16893cbef5c7eb2b1b6",
   "plugins/agentic-os/generators/exemplars/schema-architect.md": "374600ad6d7f19142c95007b606f53b5189a1994cac7c761a05e8ed8b29fc907",
