@@ -7,6 +7,44 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
+### Fixed
+
+- **An installed skill an agent cannot route to is worse than an absent one.**
+  17 of the 23 skills the presets install had no row in the agent registry, and
+  none were marked `discoverable: false` — so every one was user-facing and
+  unroutable. Since the ownership cue landed, that combination actively
+  misfires: a compliant agent checks the registry, finds no owner, and
+  escalates rather than using the correct installed skill.
+
+  Blind D6 grading caught it behaviourally. Asked to "remember for next
+  quarter", a `portfolio` agent ran the ownership check, found no row owning
+  durable memory, and escalated — while `role-memory` sat installed and
+  unreachable. It then diagnosed the cause itself, noting that
+  `session_learnings_notice.py` advertises a memory store the install does not
+  carry.
+
+  Split by what each skill actually is: the 12 user-facing ones gain registry
+  rows (`role-memory`, `code-review`, `sdlc-start`, `sdlc-autonomous`,
+  `sdlc-task`, `sdlc-light`, `sdlc-doctor`, `release-manager`, `repo-guides`,
+  `qa-foundation`, `qa-case-generator`, `qa-e2e-generator`), each pruned to the
+  presets that declare it. The 5 the pipeline invokes rather than users —
+  `decision-router`, `complexity-scoring`, `feature-verification`, `qa-gates`,
+  `qa-planner` — are marked `discoverable: false`, which is what they were
+  always meant to be.
+
+  `check-presets.py` gains check (1c): every preset-declared skill must have a
+  registry row or be `discoverable: false`. Check (1b) proves a shipped skill is
+  claimed by a preset; nothing until now proved an installed agent could find
+  its owner. (1c) uses the same predicate (1b) does — *allowed to be unclaimed,
+  not forbidden from being claimed* — so a skill may be both preset-claimed and
+  internal.
+
+  One correction to the (1b) entry below: it cites `qa-planner` as a skill that
+  "declares itself internal **and** is claimed by `qa`". It was claimed but did
+  not carry the declaration; the same was true of the other four pipeline-only
+  skills. That sentence describes the intended state, and is accurate as of this
+  change rather than as of the one it appeared in.
+
 ### Added
 
 - **Agents now check ownership before starting work, not only when asked to

@@ -298,4 +298,33 @@ if "decision: proposed — owner confirmation pending" not in xd_text:
 if "a journey map without emotions is a flowchart" not in xd_text:
     print("  experience-designer template lost the journey-emotion literal"); fail = 1
 
+# (1c) every preset-declared sdlc_skill must be ROUTABLE or explicitly hidden:
+#      it needs a row in the agent-registry template, or `discoverable: false`
+#      in its own SKILL.md. (1b) proves a shipped skill is claimed by some
+#      preset; it says nothing about whether an agent can find the owner once
+#      installed. Blind D6 grading caught the gap behaviourally: asked to
+#      remember a fact for next quarter, a portfolio-preset agent ran the
+#      ownership check CLAUDE.md now mandates, found no registry row owning
+#      durable memory, and escalated -- while `role-memory` sat installed and
+#      unroutable. 17 of 23 declared skills were in that state, none of them
+#      marked non-discoverable. The ownership cue makes an unrouted skill worse
+#      than an absent one: a compliant agent escalates instead of using it.
+REGISTRY_TMPL = (TPL / "governance/agent-registry.md.tmpl").read_text()
+SDLC_SKILLS = PLUGIN.parent / "agentic-sdlc/skills"
+declared_skills: dict[str, set[str]] = {}
+for _role, _p in presets.items():
+    for _s in _p.get("sdlc_skills", []):
+        declared_skills.setdefault(_s, set()).add(_role)
+for name, prs in sorted(declared_skills.items()):
+    if "`%s` skill" % name in REGISTRY_TMPL:
+        continue
+    skill_md = SDLC_SKILLS / name / "SKILL.md"
+    head = skill_md.read_text()[:2000] if skill_md.is_file() else ""
+    if re.search(r"^discoverable:\s*false", head, re.M):
+        continue
+    print("  sdlc_skill %r (presets: %s) has no agent-registry row and is not "
+          "discoverable: false -- an installed agent cannot route to it"
+          % (name, ",".join(sorted(prs))))
+    fail = 1
+
 sys.exit(fail)

@@ -46,6 +46,18 @@ flow for the same task; pick the owner and cite anything else as reference.
 | Diagnose a flaky test (qa preset) | the agentic-qe `flaky-debugging` blueprint | Methodology for isolating flake causes; quarantine and re-run decisions stay human-owned. |
 | Triage a defect backlog (pm-delivery preset) | the agentic-qe `defect-triage` blueprint | Severity and priority are proposals; the owning human confirms before any tracker write. |
 | Investigate an APM or performance signal (devops preset) | the agentic-qe `apm-analysis` blueprint | Read-only analysis methodology; remediation stays with incident-triage and its human gate. |
+| Remember a durable fact, preference, or decision across sessions (architect, ba-po, data, design, portfolio, security presets) | the agentic-sdlc `role-memory` skill | Writes plain markdown under the role's memory directory; curated facts only, never a substitute for project docs or a tracker item. |
+| Standalone code review of local changes outside a pipeline (developer preset) | the agentic-sdlc `code-review` skill | Read-only multi-lens review; findings are reported, fixes stay with the writer. |
+| Start a human-in-the-loop SDLC run (architect, developer presets) | the agentic-sdlc `sdlc-start` skill | Every judgment gate prompts the human; agents never chain autonomously. |
+| Start an autonomous SDLC run (developer preset) | the agentic-sdlc `sdlc-autonomous` skill | `escalate_on` flags still stop the run; merge and deploy remain human-owned. |
+| Run a lightweight SDLC flow for a user-sized XS/S/M task (developer preset) | the agentic-sdlc `sdlc-task` skill | Skips complexity scoring by design; the size call is the human's. |
+| Lowest-ceremony entry into the SDLC pipeline (developer preset) | the agentic-sdlc `sdlc-light` skill | For tasks the human has already sized; no autonomous escalation of scope. |
+| Check agentic-sdlc environment readiness (devops preset) | the agentic-sdlc `sdlc-doctor` skill | Read-only probe; rewrites only its own doctor report. |
+| Audit a release against its tickets (pm-delivery preset) | the agentic-sdlc `release-manager` skill | Read-only gap analysis; release decisions stay human-owned. |
+| First-time knowledge setup for a repository (architect preset) | the agentic-sdlc `repo-guides` skill | Generates the curated guide tree; every generated rule is owner-reviewed before it binds. |
+| Bootstrap the QA knowledge foundation (QA preset) | the agentic-sdlc `qa-foundation` skill | Discovery is read-only; external adapters are configured only with human confirmation. |
+| Generate functional test cases from a work item (QA preset) | the agentic-sdlc `qa-case-generator` skill | Real-ID gate applies; tracker upload is a human-approved step. |
+| Generate end-to-end automation from a work item (QA preset) | the agentic-sdlc `qa-e2e-generator` skill | Authors tests only; execution follows the autonomy matrix. |
 | <!-- generated-agent-rows --> | | |
 
 Stack-specific writer/gate agents generated at install time (schema, API,
