@@ -25,6 +25,7 @@ const PROMPTS: Array<{ name: string; path: string }> = [
   { name: 'agentic-init', path: 'plugins/agentic-os/skills/agentic-init/SKILL.md' },
   { name: 'agentic-doctor', path: 'plugins/agentic-os/skills/agentic-doctor/SKILL.md' },
   { name: 'agentic-upgrade', path: 'plugins/agentic-os/skills/agentic-upgrade/SKILL.md' },
+  { name: 'agentic-uninstall', path: 'plugins/agentic-os/skills/agentic-uninstall/SKILL.md' },
   { name: 'sdlc-start', path: 'plugins/agentic-sdlc/skills/sdlc-start/SKILL.md' },
   { name: 'sdlc-task', path: 'plugins/agentic-sdlc/skills/sdlc-task/SKILL.md' },
   { name: 'qe-blueprint-scaffold', path: 'plugins/agentic-qe/skills/qe-blueprints/SKILL.md' },

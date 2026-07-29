@@ -201,6 +201,7 @@ Ready-made entry points your assistant can offer by name:
 | `agentic-init` | Interview to set up the governance guardrails in your repo |
 | `agentic-doctor` | Verify an existing agentic-os install is healthy |
 | `agentic-upgrade` | Upgrade the installed templates to a newer version |
+| `agentic-uninstall` | Remove a role preset — or the whole layer — by converging to what a narrower install would produce |
 | `sdlc-start` | Run the governed SDLC pipeline on a task, stopping at human gates |
 | `sdlc-task` | Lightweight SDLC flow for a small (XS/S/M) task |
 | `qe-blueprint-scaffold` | Scaffold a fill-in-ready QE agent framework from a blueprint |

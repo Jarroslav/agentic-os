@@ -268,7 +268,8 @@ You will not find it by searching Browse Marketplace → **All**.
 
 3. Open the **User** tab (not **All**).
 4. Install **both** plugins from the `agentic-os` marketplace:
-   - **agentic-os** — `/agentic-init`, `/agentic-doctor`, `/agentic-upgrade`
+   - **agentic-os** — `/agentic-init`, `/agentic-doctor`, `/agentic-upgrade`,
+     `/agentic-uninstall`
    - **agentic-sdlc** — SDLC skills + subagents (display name **Agentic SDLC**)
 5. Install **superpowers** ≥ 6.1.0 ([Install superpowers](#install-superpowers) —
    curated **Superpowers** from Browse Marketplace → **All** works in Cursor).
@@ -309,6 +310,7 @@ Then:
 ```
 /agentic-doctor          # verify governance install → .agentic/agentic-os/doctor.json
 /agentic-upgrade         # reconcile after a plugin version bump
+/agentic-uninstall qa    # drop a role (--all for the whole layer, --dry-run to preview)
 ```
 
 If you use SDLC skills (`/sdlc-start`, `/sdlc-autonomous`, …), also run
@@ -629,9 +631,16 @@ is a real, contiguous table with a row per generated agent). It writes the
 result to `.agentic/agentic-os/doctor.json`.
 
 **Can I uninstall it?**
-Nothing is committed for you, so before your first commit `git status` shows
-exactly what to delete. After that, the install journal
-(`.agentic/agentic-os/install.json`) lists every file it wrote, with ownership.
+Yes — `/agentic-uninstall <role>` drops a role, `/agentic-uninstall --all` takes
+the whole layer out, and `--dry-run` shows you either plan without writing
+anything. It is not a delete: presets share most of their templates, so removing
+`qa` from a `developer,qa` repo removes only what `developer` does not also
+claim. What it actually does is recompute the state an install of the *remaining*
+roles would produce and converge to it, which is why the result equals a fresh
+narrower install and the repo stays installable with any role afterwards. Files
+you edited are never removed without an explicit choice; files it adopted rather
+than wrote are never touched. Nothing is committed for you either way, so
+`git diff` remains your undo.
 
 ## Glossary
 
