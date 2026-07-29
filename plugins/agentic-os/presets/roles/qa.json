@@ -54,13 +54,23 @@
     "qa-planner",
     "qa-gates",
     "feature-verification",
-    "requirements-intake"
+    "requirements-intake",
+    "qa-case-generator",
+    "qa-e2e-generator"
   ],
   "qe_blueprints": [
     "qa-knowledge-base",
     "test-cases",
     "test-scripts",
     "flaky-debugging",
-    "bug-reports"
+    "bug-reports",
+    "bdd-scenarios",
+    "coverage-analysis",
+    "negative-boundary",
+    "test-data",
+    "test-suite-audit",
+    "risk-based-selection",
+    "product-risk",
+    "api-schema-validation"
   ]
 }

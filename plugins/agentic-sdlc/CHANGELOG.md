@@ -6,6 +6,24 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`sdlc-pipeline` now declares `discoverable: false`.** It is the most
+  emphatically pipeline-only skill here — "never in direct response to a bare
+  user request", with `sdlc-start` and `sdlc-autonomous` as the only entry
+  points — but it carried no `discoverable:` key, while `code-review-orchestrator`
+  and `test-heal` both set it. All three internal skills now declare
+  themselves the same way, so tooling can identify them from frontmatter
+  instead of parsing the description prose (which is YAML-folded, wrapping
+  `Not for: direct user invocation` mid-phrase).
+
+- **`code-review` was misclassified in the skill catalog** as a "Phase skill —
+  single-round inline review used by the task flow". Its own frontmatter carries
+  user trigger phrases ("review my changes", "review my branch", "run a code
+  review") and describes it as the standalone front door that resolves scope and
+  lenses before delegating to `code-review-orchestrator`. The table now matches
+  the contract; it is both an entry point and available inline.
+
 ### Changed
 
 - **The five QA skills now name their methodology owner.** `qa-foundation`,

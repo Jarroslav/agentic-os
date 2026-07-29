@@ -212,7 +212,7 @@ screenshots, console output, and network errors into
 | `complexity-scoring` | Phase skill | Produces the 6–36 score and routing decision |
 | `decision-router` | Cross-cutting | Resolves every gate; owns the audit ledgers |
 | `code-review-orchestrator` | Phase skill | Three-lens fan-out + adjudication for the heavy pipeline |
-| `code-review` | Phase skill | Single-round inline review used by the task flow |
+| `code-review` | Entry point | Standalone front door for "review my changes" — resolves scope and lenses, then delegates to `code-review-orchestrator`. Also used inline by the task flow |
 | `qa-gates` | Phase skill | Runs the project's own lint/build/test gates |
 | `test-heal` | Support skill | Repairs failing or flaking tests surfaced by `qa-gates` |
 | `feature-verification` | Phase skill | Mandatory verification for user-visible changes |

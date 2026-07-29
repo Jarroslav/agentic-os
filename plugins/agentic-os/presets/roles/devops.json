@@ -48,6 +48,8 @@
   ],
   "qe_blueprints": [
     "apm-analysis",
-    "perf-results"
+    "perf-results",
+    "jvm-tuning",
+    "load-model-from-logs"
   ]
 }

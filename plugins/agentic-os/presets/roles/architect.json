@@ -52,6 +52,7 @@
     "decision-router"
   ],
   "qe_blueprints": [
-    "change-impact-scoping"
+    "change-impact-scoping",
+    "project-context"
   ]
 }

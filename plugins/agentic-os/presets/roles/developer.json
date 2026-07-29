@@ -57,9 +57,12 @@
     "qa-gates",
     "feature-verification",
     "mr-creator",
-    "decision-router"
+    "decision-router",
+    "code-review",
+    "sdlc-light"
   ],
   "qe_blueprints": [
-    "static-analysis"
+    "static-analysis",
+    "pr-performance-review"
   ]
 }
