@@ -9,6 +9,36 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- **A shipped skill can no longer go unreachable unnoticed.** `check-presets.py`
+  gains the reverse of its existing orphan check (1b): every skill under
+  `agentic-sdlc` must be claimed by some preset, or declare `discoverable: false`.
+
+  The two checks need different opt-outs, and the reason matters. (1b) reads its
+  registry from `VARIABLES.md`, so an ID opts *out* by not being registered.
+  Skills resolve from the filesystem, so every new skill is
+  orphaned-by-default the moment it lands and there is no "just don't register
+  it" escape — which is why the exemption has to be **declared** rather than
+  listed. A hardcoded list in the checker would drift from the skills it
+  describes, which is the exact failure (1b)'s own comment records for
+  `hooks/migration-notice`.
+
+  The predicate is *allowed to be unclaimed*, not *forbidden from being
+  claimed*: `qa-planner` declares itself internal **and** is claimed by `qa`,
+  which is correct. An exclusion rule would have failed it. And it keys on
+  frontmatter rather than the "Not for: direct user invocation" prose because
+  descriptions are YAML-folded — that clause line-wraps mid-phrase, so a naive
+  match finds only one of the three internal skills.
+
+  Proven in both directions: unclaiming `release-manager` fails on exactly that
+  skill, and stripping `discoverable: false` from `test-heal` fails on exactly
+  that one.
+
+  The blueprint half is deliberately not here. Only `threat-model` is unclaimed
+  and it is already deferred pending the access measurement; a marker column
+  across all 28 index rows to exempt one deferred file is disproportionate, and
+  it belongs with that measurement work.
+
+
 - **Every user-facing skill and all but one blueprint are now reachable from a
   preset.** 8 of 26 SDLC skills and 13 of 28 QE blueprints were claimed by no
   preset, so they never surfaced at install — a user could not discover them
@@ -157,7 +187,6 @@ Semantic Versioning. The plugin version lives in
   an ordinary role removal. Both hold across all ten presets today; both fail
   loudly if a future preset breaks them.
 
-### Fixed
 
 - **Doctor Check 6 failed six of the ten presets.** Its git-hook clause was
   written unconditionally ("Missing installed hook ⇒ fail"), but `ba-po`,

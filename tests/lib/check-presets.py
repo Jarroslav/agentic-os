@@ -180,6 +180,44 @@ if _catalog.is_dir():
     if _dupes:
         print("  AMBIGUOUS blueprint id(s) across stages: %s" % ", ".join(_dupes)); fail = 1
 
+# (3c) REVERSE orphan check for sdlc_skills: a shipped skill a user could ask
+#      for by name, that no preset claims, never surfaces at install — the user
+#      cannot discover it without already knowing it exists. This is check (1b)
+#      pointed the other way, and it needs a different opt-out.
+#
+#      (1b) reads its registry from VARIABLES.md, so an ID opts OUT of the check
+#      by simply not being registered. Skills resolve from the filesystem, so
+#      every new skill is orphaned-by-default the moment it lands and there is
+#      no "just don't register it" escape. That is why the exemption has to be
+#      DECLARED, and why it keys on frontmatter rather than a hardcoded list
+#      here — a list in this file would drift from the skills it describes,
+#      which is the failure (1b)'s own comment records for hooks/migration-notice.
+#
+#      The predicate is "allowed to be unclaimed", NOT "forbidden from being
+#      claimed": qa-planner declares itself internal AND is claimed by qa, which
+#      is fine. An exclusion rule would fail it.
+#
+#      Keying on `discoverable: false` (not on the "Not for: direct user
+#      invocation" prose) is deliberate: descriptions are YAML-folded, so that
+#      clause line-wraps mid-phrase and a naive match finds only one of the
+#      three internal skills.
+SDLC_SKILL_DIR = PLUGIN.parent / "agentic-sdlc" / "skills"
+if SDLC_SKILL_DIR.is_dir():
+    claimed_skills = {s for p in presets.values() for s in p.get("sdlc_skills", [])}
+    for d in sorted(SDLC_SKILL_DIR.iterdir()):
+        skill_md = d / "SKILL.md"
+        if not skill_md.is_file() or d.name in claimed_skills:
+            continue
+        head = skill_md.read_text(encoding="utf-8").split("---")
+        frontmatter = head[1] if len(head) > 2 else ""
+        if re.search(r"^discoverable:\s*false\s*$", frontmatter, re.M):
+            continue                       # declared internal — may be unclaimed
+        print("  ORPHANED skill (shipped, in no preset, not declared internal): "
+              "%s — add it to a preset's sdlc_skills, or declare "
+              "`discoverable: false` if the pipeline invokes it rather than a "
+              "user" % d.name)
+        fail = 1
+
 # (4) QA preset invariants
 qa = presets["qa"]
 if qa["default_hitl"] != "strict":
