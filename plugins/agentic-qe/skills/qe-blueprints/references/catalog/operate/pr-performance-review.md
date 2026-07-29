@@ -2,6 +2,8 @@
 
 Turn every pull-request diff into a line-anchored performance assessment — a four-level verdict plus prioritized fixes — so regressions get caught at review time instead of surfacing as production incidents or expensive load-test findings.
 
+> **The performance lens only.** It does not replace the review gate: `blind-code-reviewer` owns pre-commit correctness review and the `code-review` skill owns lens routing. This adds a per-PR performance opinion and is advisory — it never gates a merge.
+
 ## When to use this
 
 - **Reach for it when** you run a JVM-language (Java/Kotlin) backend where performance defects slip past reviewers who focus on logic and style; the repo documents its hot paths and non-functional targets so severity can be judged in context; the team wants automatic pre-merge feedback on every change at low average cost; and the project is mature enough (settled architecture, PR workflow, merged history) to pattern-match against.

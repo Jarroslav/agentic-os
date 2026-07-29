@@ -2,6 +2,8 @@
 
 Turn a manual test case (and its linked story) into an executed, self-healed automation script delivered as a merge request, so engineers review near-ready code instead of writing every script by hand.
 
+> **Case-driven.** For contract-versus-schema drift checks generated from an API contract rather than from a written test case, use `api-schema-validation`.
+
 ## When to use this
 
 - **Reach for it when** a backlog of manual cases with explicit steps and expected results awaits automation; an automation repo with recognizable conventions (framework config, sample specs, step libraries, page objects, PR template, CI) already exists; the team wants generated scripts arriving as reviewable MRs with the test already run and green; and the app under test exposes stable hooks (accessible roles, test-id attributes) discoverable from the live DOM.
