@@ -6,6 +6,42 @@ Semantic Versioning and its own release tag (`agentic-qe-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`threat-model` contradicted the enforced standard.** The blueprint told the
+  threat generator to "enumerate scenarios across all six categories" per
+  boundary. `guides/standards/threat-modeling.md` — which the `security`
+  preset's `threat-modeler` agent is graded against — says the opposite: threats
+  are enumerated per DFD element and *each element type admits only its own
+  categories* (external entity → spoofing/repudiation only; data flow and data
+  store → tampering/disclosure/DoS only; only a process admits all six), with a
+  counted self-check of `per-element-type constraint violations = 0`.
+
+  Two authorities gave conflicting rules for one job, and the looser one sat
+  outside the enforced path where nothing could catch it — worse than a name
+  collision, which at least gets resolved. The blueprint now states the
+  element-type constraint, and carries an explicit precedence note: in a repo
+  running `agentic-os` the standard wins, the agent owns execution, and the
+  blueprint covers what the contract does not — standing up the practice across
+  a team (role tiering, connector wiring, adoption signals).
+
+### Changed
+
+- **Seam sentences on seven blueprints whose descriptions competed.** Selection
+  quality degrades as descriptions overlap, so each contested pair now says
+  plainly which one to reach for: `risk-based-selection` (budget-constrained,
+  per-test, defect history) vs `change-impact-scoping` (diff-triggered,
+  suite/area, dependency graph); `product-risk` (planning-time, no diff);
+  `pr-performance-review` (performance lens only, advisory, does not replace the
+  review gate); `project-context` (tracker/wiki-sourced — **not** the
+  `.agentic/guides/` tree, whose fixed output paths a parallel doc tree would
+  break); and `api-schema-validation` vs `test-scripts` (contract-driven vs
+  case-driven).
+
+  No blueprint was merged or retired. Both decisions were deliberately deferred
+  until blueprint access is measured — the retirement test worth applying is
+  whether an asset is ever actually read, not whether two files look similar.
+
 ### Added
 
 - **The blueprint index is now CI-checked against the catalog.**

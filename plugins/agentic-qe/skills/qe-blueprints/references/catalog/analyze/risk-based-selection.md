@@ -2,6 +2,8 @@
 
 Turn a cycle's change set, defect history, incident records, and a metadata-rich test catalog into a ranked, time-budgeted regression subset with a written justification per test — so scoping is fast, defensible, and auditable instead of gut-feel.
 
+> **Not `change-impact-scoping`.** That one starts from a diff and answers *what did this change put at risk*, at suite/area granularity. This one starts from a **time budget** and answers *which individual tests earn a slot*, ranked per test from defect and incident history. Diff-triggered scoping → that blueprint; budget-constrained selection → this one.
+
 ## When to use this
 
 - **Reach for it when** full regression is too slow or costly per release; scoping is done by intuition and can't be justified after the fact; you need a subset that fits a stated execution-time budget with a rationale on every row; change/defect/incident signals live in queryable systems and the catalog carries component, priority, and duration metadata.

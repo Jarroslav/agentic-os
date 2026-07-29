@@ -2,6 +2,8 @@
 
 Turn a product description plus your documented test scope into a scored, deduplicated risk register with coverage gaps and ranked test focus areas, so effort lands where failure hurts most.
 
+> **Not a change-triggered scoper.** This runs at **planning time from the product**, not from a diff — it produces a scored risk register and ordered focus areas before a change exists. For scoping regression around a specific change, use `change-impact-scoping`.
+
 ## When to use this
 
 - **Reach for it when** sprint or release planning needs the test strategy re-aligned to real product risk; you suspect test effort is misallocated or critical areas have zero coverage; you are about to design new suites and want uncovered critical risks to drive them; a readable test-scope artifact (strategy doc, suite list, coverage map) exists to compare against.

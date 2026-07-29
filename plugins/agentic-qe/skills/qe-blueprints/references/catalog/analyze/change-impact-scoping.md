@@ -2,6 +2,8 @@
 
 Turn a change set — diff, commits, linked work items — into a tiered impact report and a prioritized regression scope, so the team knows what to test, why, and what risk remains in whatever gets skipped.
 
+> **Not `risk-based-selection`.** This one starts from a **diff** and answers *what did this change put at risk*, at suite/area granularity, from the dependency graph. That one starts from a time budget and ranks individual tests from defect history. If you have a change set, start here; if you have a budget and a catalog, start there.
+
 ## When to use this
 
 - **Reach for it when** a merge request, hotfix, or dependency upgrade needs a regression decision and running everything is too slow or expensive; when scope selection lives in one engineer's head and produces inconsistent, undocumented picks; when you need an auditable record of what was tested and which risks were knowingly accepted; when release go/no-go calls need a risk statement tied to the specific change.

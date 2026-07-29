@@ -2,6 +2,8 @@
 
 Turn a contract fragment, the backing table schema, and one exemplar integration test into framework-native response-shape and database-state checks plus a severity-tagged drift report, delivered as a reviewable pull request.
 
+> **Driven by the contract file, not by a manual test case.** `test-scripts` turns a written test case into an automated script; this turns a contract plus table schema into response-shape and database-state checks with a drift report. Different starting artifact, different deliverable.
+
 ## When to use this
 
 - **Reach for it when** responses have quietly diverged from the published contract and production is where you find out; when no test asserts what the database holds after an endpoint runs; when contract, response, and persistence layers each get tested differently or not at all — and you already have a versioned contract file, a working integration suite with one exemplar, and read access to the database.

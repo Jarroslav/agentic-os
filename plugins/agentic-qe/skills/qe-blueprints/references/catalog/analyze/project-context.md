@@ -2,6 +2,8 @@
 
 Turn scattered project sources — tracker items, wiki pages, repo files, optional diagram PDF exports — into one short, template-shaped context document in which every claim links back to its source, so new contributors onboard fast and AI coding sessions load trustworthy canonical context.
 
+> **Not the in-repo guide tree.** For `.agentic/guides/`, the tree every agentic-sdlc skill consumes, use the `repo-guides` skill — its output paths are a fixed contract and a parallel doc tree breaks it. This blueprint produces a **tracker/wiki-sourced** context artifact for humans and ad-hoc AI sessions.
+
 ## When to use this
 
 - **Reach for it when** project knowledge is split across tracker, wiki, READMEs, and chat and new joiners lose days rebuilding the picture; when an AI agent needs a single loadable context file before touching a repo; when test design needs a grounded input pack (domain, personas, critical flows, environments, risks); when specs or architecture notes have drifted and you want a fresh evidence-linked snapshot; or when you want the minimal variant — one agent, local repo only, one grounded file, zero connectors.
