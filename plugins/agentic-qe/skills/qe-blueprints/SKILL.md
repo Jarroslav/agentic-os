@@ -190,6 +190,34 @@ Run the skills checklist from `references/method/design-checklists.md` against e
 
 Skill recommendations come only from the curated starter-pack table in the platform guide, cross-referenced against the blueprint's connectors. If custom skills are needed, flag the skill-authoring helper.
 
+**Record which blueprint was used — governed repos only.** After a successful
+scaffold, append one line to `.agentic/state/qe-blueprint-usage.jsonl`:
+
+```json
+{"blueprint": "test-cases", "stage": "design", "platform": "claude-code", "at": "2026-07-29"}
+```
+
+Skip this entirely when `.agentic/agentic-os/install.json` is absent — an
+ungoverned repo has no `.agentic/` and this skill does not create one to leave
+a log in.
+
+Why it exists: a 28-document catalog accumulates documents nobody reaches for,
+and the only honest test of whether one earns its place is whether it is ever
+actually used. Comparing two files and judging them similar is not that test.
+This is the evidence that decides retire-versus-keep, and whether two
+overlapping blueprints should merge.
+
+Constraints, because this is telemetry in someone else's repo: **local only,
+never transmitted**, and `.agentic/state/` is already gitignored by every
+install, so it is never committed. One line per scaffold, no free text, no
+repo identifiers, no content from the run — a blueprint id, its stage, the
+target platform, and a date. Nothing here should be worth reading for any
+purpose other than counting.
+
+To read it: `sort .agentic/state/qe-blueprint-usage.jsonl | uniq -c` over the
+`blueprint` field, or any JSON tool. A blueprint with no lines after real usage
+is the candidate for retirement — not the one that merely looks like another.
+
 ## Architecture rules
 
 **One orchestrator, always thin.** Every multi-agent scaffold has exactly one orchestrator file: a thin coordinator on the standard tier whose tool list contains only leaf role names — no connectors, no domain reasoning. Orchestrators are never pinned to the premium tier.
