@@ -28,7 +28,8 @@ Multi-scope rules:
 
 ## Frontmatter contract
 
-The tooling reads exactly four keys. Emit no others.
+The tooling reads exactly four keys. Emit no others — with one conditional
+fifth, below.
 
 | Key           | Content |
 |---------------|---------|
@@ -40,6 +41,21 @@ The tooling reads exactly four keys. Emit no others.
 Keys such as `autonomy`, `risk`, or `pattern` are banned: the runtime ignores them, so they are inert noise that fakes enforcement.
 
 > Rationale: a `risk: high` line does nothing at run time. The same intent written as safety prose in the body is text the model actually follows. Put behavioral constraints where they execute.
+
+**`write_scope` — emit it only in a governed repo, where it does execute.**
+When `.agentic/agentic-os/install.json` is present, `write_scope` is not inert:
+`write_scope_guard.py` parses it from the canonical contract and blocks writes
+outside it at the tool call. That is the same rationale as above applied in the
+other direction — the key earns its place precisely because something reads it.
+
+Its value is the blueprint role table's **Writes** column, expressed as globs.
+The information already exists; this is a rename, not a new decision. A
+write-capable role that omits it is not "open by default" in any useful sense —
+the guard simply never fires for it, so the role is the one agent in the repo
+running unbounded. Emit it for every role whose Writes column is non-empty.
+
+In an ungoverned repo, omit it: nothing reads it there, and the four-key rule
+stands.
 
 Tool rules:
 

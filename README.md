@@ -128,12 +128,14 @@ This repo is a **marketplace** (Claude Code and Cursor) hosting three plugins:
   pipeline, open
   [`plugins/agentic-sdlc/sdlc.html`](plugins/agentic-sdlc/sdlc.html) in a
   browser.
-- **`agentic-qe`** — a standalone, tool-agnostic catalog of Quality
-  Engineering AI blueprints (28, organized by STLC stage) plus two skills:
-  `qe-blueprints` scaffolds a ready-to-fill agent framework from a chosen
-  blueprint, and `eval-harness` generates a two-layer evaluation framework
-  for skills and agents. Independent of the governance flow — no
-  `/agentic-init` required.
+- **`agentic-qe`** — a tool-agnostic catalog of Quality Engineering AI
+  blueprints (28, organized by STLC stage) plus two skills: `qe-blueprints`
+  scaffolds a ready-to-fill agent framework from a chosen blueprint, and
+  `eval-harness` generates a two-layer evaluation framework for skills and
+  agents. `/agentic-init` is never required — but when the governance layer
+  *is* present, `qe-blueprints` detects it and adapts, writing contracts where
+  the write-scope guard and instruction gate can see them instead of alongside
+  the installer's own files. Composes when governed, stands alone when not.
 
 There's also **`mcp/`** — a read-only MCP server that serves this same
 governance/SDLC/QE methodology to hosts that don't speak the Claude Code or
@@ -156,8 +158,9 @@ per-role examples and the full tool list.
 **agentic-sdlc** plus **superpowers**: `agentic-os` is the installer/governance
 layer, `agentic-sdlc` is the SDLC orchestrator, and `/agentic-init` wires them
 together and registers missing dependencies in Phase 3 if any are absent.
-**agentic-qe** is optional and stands alone — install it if you want the QE
-blueprint catalog and scaffolder, with or without the other two.
+**agentic-qe** is optional and installs with or without the other two: alone it
+is the QE blueprint catalog and scaffolder, and inside a governed repo it
+detects the install journal and writes into the governed paths instead.
 
 **Why separate plugins, not one?** The governance layer and the pipeline have
 different lifecycles and different audiences: agentic-os scaffolds *into your

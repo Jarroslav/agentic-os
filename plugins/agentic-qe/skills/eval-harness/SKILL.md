@@ -16,6 +16,15 @@ Bootstrap repo-wide evaluation for skill and agent instruction files. Two layers
 
 Both layers read the same spec, `eval/evals.json`, colocated inside each target's directory. A spec with contracts and no behavioral cases is valid. Each judge case runs N repetitions, so flakiness surfaces as a pass rate instead of a binary verdict.
 
+> **`eval/` here is not `evals/` in the agentic-os marketplace repo**, and the
+> near-collision is deliberate to name rather than rename. This skill writes
+> `<target>/eval/evals.json` into *your* repo. The marketplace repo's own CI
+> (`tests/lib/check-skill-contract.py`) separately requires `<skill>/evals/evals.json`
+> for the skills it *ships*. Different scope, different owner, no conflict —
+> except when you point this skill at the marketplace repo itself, where you
+> will end up with both. In that one case keep the plugin's `evals/` as the
+> shipped contract and treat the generated `eval/` as local scaffolding.
+
 Blast radius: **R2** — this skill writes harness code, spec files, and config into the repo. Judge runs place outbound model calls; automation wiring is opt-in and confirmed first. It never creates real credential files and never gates merges on paid model runs.
 
 ## Inputs
