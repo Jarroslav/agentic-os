@@ -235,6 +235,16 @@ python3 "$ROOT/tests/lib/check-governance-promises.py" "$ROLE_WORK/ba-po" \
   && ok "ba-po governance promises all resolve" || bad "ba-po governance promises all resolve"
 python3 "$ROOT/tests/lib/check-governance-promises.py" "$OPS_WORK" \
   && ok "devops governance promises all resolve" || bad "devops governance promises all resolve"
+# Every scaffold must tell an agent to check ownership BEFORE starting work, not only
+# how to look an owner up once it has decided to ask. Blind-graded architect runs showed
+# an installed agent picking up an out-of-scope request (red-test triage, owned by the QA
+# preset) and planning to do it, because nothing cued the check — every routing sentence
+# in the layer is reactive. The literal is asserted across three different preset unions
+# so a preset-conditional render cannot drop it for some roles.
+for _own_target in "$FRESH" "$ROLE_WORK/ba-po" "$OPS_WORK"; do
+  assert "ownership check cued before work ($(basename "$_own_target"))" \
+    "grep -q 'Check ownership before starting work' '$_own_target/CLAUDE.md' && grep -q 'agent-registry.md' '$_own_target/CLAUDE.md'"
+done
 # The machine copy of the ticket integration must agree with the guide it points at.
 # `enabled: true` beside an adapter of `none` claims a surface that does not exist,
 # and a reader hitting the two cannot tell which one is lying. ba-po solo renders the

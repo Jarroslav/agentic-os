@@ -741,10 +741,17 @@ if project_path.exists():
         "configured": "MCP status: configured. Verify with `cursor-agent mcp list` or `claude mcp list` before using connected business data.",
         "unavailable": "MCP status: unavailable. Continue without MCP and retry setup later; do not block requirements work.",
     }[MCP_STATE]
-    project_body += ("\n\nFirst Portfolio tasks:\n\n"
-                     "- Turn this Power BI insight into a customer-ready requirement.\n"
-                     "- Convert this Excel analysis into acceptance criteria.\n"
-                     "- Prepare clarification questions for the customer and delivery team.\n")
+    # SKILL.md Phase 7 asks for "three first-task prompts appropriate to the role
+    # set", and names the Excel/Power BI examples for `ba-po` specifically. Emitting
+    # them for every preset put business-analysis prompts into developer, qa, devops
+    # and architect scaffolds, where blind-graded candidates repeatedly and correctly
+    # flagged them as wrong-preset content. Scope them to the roles the spec names;
+    # the harness does not invent prompts for the others.
+    if {"ba-po", "portfolio"} & set(PRESET_NAMES):
+        project_body += ("\n\nFirst tasks:\n\n"
+                         "- Turn this Power BI insight into a customer-ready requirement.\n"
+                         "- Convert this Excel analysis into acceptance criteria.\n"
+                         "- Prepare clarification questions for the customer and delivery team.\n")
     project_path.write_text(project_body + "\n")
     JOURNAL["files"][".agentic/guides/project.md"]["sha256"] = sha(project_path)
 

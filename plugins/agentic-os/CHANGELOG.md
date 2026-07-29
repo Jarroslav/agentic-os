@@ -7,6 +7,28 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
+### Added
+
+- **Agents now check ownership before starting work, not only when asked to
+  route.** Every routing sentence in the governance layer was reactive — "to
+  find who handles X, consult the registry" — so an agent handed an
+  in-domain-sounding request it did not own would simply start on it. Blind
+  A/B grading of the `architect` preset caught this: asked to triage a flaky
+  e2e test (owned by the QA preset's `test-failure-triage`), the installed
+  agent planned the triage itself and never consulted the registry.
+
+  The managed `CLAUDE.md` block gains a **Check ownership before starting
+  work** section, applying to every agent, spawned or not, with the three
+  branches spelled out: another asset owns it → hand it there naming the path;
+  nothing owns it → say so and escalate; two rows match → that is a tie, and
+  ties are escalated. It names the trap directly — being *able* to do the work
+  is not the same as *owning* it.
+
+  Re-running the same graded scenario against the fix: the agent enumerates all
+  six registry rows, reports zero matches, and escalates rather than
+  improvising. `run-matrix` asserts the cue renders across three preset unions
+  so a conditional render cannot drop it for some roles.
+
 ### Fixed
 
 - **The scaffolded ticket integration no longer claims a surface that isn't
