@@ -424,6 +424,104 @@ for b in problems:
 sys.exit(1 if problems else 0)
 PY
 
+echo "== T9 role removal (agentic-uninstall) =="
+# The round-trip invariant, as a live differential rather than a golden:
+#   install(a,b) → uninstall(b)  ==  install(a)
+# The golden manifest is directory-level and cannot see a file deleted inside
+# .agentic/, and a golden for a differential property hides regressions behind a
+# re-record. Both trees are built in this run and diffed by check-roundtrip.py.
+#
+# Both trees MUST share a directory basename: the installer derives the project
+# name from it, so differently-named trees diverge in every governance heading
+# for reasons that have nothing to do with removal.
+roundtrip() { # <label> <install-presets> <remove> <reference-presets>
+  local label="$1" full="$2" drop="$3" rest="$4"
+  local d; d="$WORK/rt-$(echo "$label" | tr -cd 'a-z0-9')"
+  mkdir -p "$d/1" "$d/2"
+  bash "$ROOT/tests/fixtures/make-fresh.sh" "$d/1/repo" >/dev/null 2>&1
+  bash "$ROOT/tests/fixtures/make-fresh.sh" "$d/2/repo" >/dev/null 2>&1
+  python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$d/1/repo" --presets "$full" >/dev/null
+  python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$d/2/repo" --presets "$rest" >/dev/null
+  python3 "$ROOT/tests/lib/refuninstall.py" "$PLUGIN" "$d/1/repo" --remove "$drop" \
+      --assume-delete >/dev/null 2>&1
+  if python3 "$ROOT/tests/lib/check-roundtrip.py" "$d/1/repo" "$d/2/repo" --label "$label"; then
+    PASS=$((PASS+1)); else FAIL=$((FAIL+1)); fi
+}
+
+# T9a — the headline invariant.
+roundtrip "T9a round-trip developer,qa − qa" "developer,qa" "qa" "developer"
+
+# T9b — hook/settings subtraction. T9a cannot reach it: developer∪qa minus qa
+# frees 9 IDs, none of them hooks, so .claude/settings.json is a no-op there.
+# Dropping developer from portfolio,developer frees the whole git layer.
+roundtrip "T9b hook and settings subtraction" "portfolio,developer" "developer" "portfolio"
+
+# T9f — a shared ID must survive. agents/dispatcher and commands/dispatch are
+# listed by both qa and portfolio; a naive "delete what the removed preset
+# lists" implementation takes them and breaks the remaining role.
+roundtrip "T9f shared-ID retention" "qa,portfolio" "qa" "portfolio"
+
+# T9c — the repo's own pre-commit hook survives. This is the commit-blocking
+# hazard: .githooks/pre-commit runs the gate script as its FIRST action and
+# chains pre-commit.local only afterwards, so getting this wrong blocks every
+# commit in the repo AND silences the team's hook. refinstall does not touch
+# .git/hooks (an out-of-tree Phase 3 side effect), so install it explicitly.
+MAT9="$WORK/t9c"
+bash "$ROOT/tests/fixtures/make-mature.sh" "$MAT9" >/dev/null 2>&1
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$MAT9" --presets developer,portfolio >/dev/null 2>&1
+( cd "$MAT9" && bash scripts/install-git-hooks.sh >/dev/null 2>&1 )
+assert "T9c our hook installed, theirs displaced to .local" \
+  '[ -f "$MAT9/.git/hooks/pre-commit.local" ] && grep -q "agentic-os:" "$MAT9/.git/hooks/pre-commit"'
+python3 "$ROOT/tests/lib/refuninstall.py" "$PLUGIN" "$MAT9" --remove developer \
+    --assume-delete >/dev/null 2>&1
+assert "T9c team hook restored, no orphaned .local" \
+  'grep -q "TEAM-PRECOMMIT-RAN" "$MAT9/.git/hooks/pre-commit" && [ ! -f "$MAT9/.git/hooks/pre-commit.local" ]'
+assert "T9c commits still work after removal" \
+  '( cd "$MAT9" && echo x > t9c.txt && git add t9c.txt && git commit -qm t9c ) >/dev/null 2>&1'
+
+# T9d — never-touch. A file the user edited is not deleted by a removal; it is
+# kept by default and its journal owner flips to user.
+D9="$WORK/t9d"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$D9" >/dev/null 2>&1
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$D9" --presets developer,qa >/dev/null
+echo "LOCAL EDIT" >> "$D9/.agentic/agents/test-case-generator.md"
+python3 "$ROOT/tests/lib/refuninstall.py" "$PLUGIN" "$D9" --remove qa >/dev/null 2>&1
+assert "T9d user-edited file survives with its edit" \
+  'grep -q "LOCAL EDIT" "$D9/.agentic/agents/test-case-generator.md"'
+assert "T9d kept file flips to owner:user, clean qa files still removed" \
+  'python3 -c "
+import json,sys
+j=json.load(open(\"$D9/.agentic/agentic-os/install.json\"))
+e=j[\"files\"].get(\".agentic/agents/test-case-generator.md\")
+sys.exit(0 if e and e[\"owner\"]==\"user\"
+         and \".agentic/agents/test-case-syncer.md\" not in j[\"files\"]
+         and j[\"answers\"][\"presets\"]==[\"developer\"] else 1)"'
+
+# T9e — the whole layer comes out and the repo is installable again with a
+# DIFFERENT role, byte-identical to a virgin install of it.
+E9="$WORK/t9e"; mkdir -p "$E9/1" "$E9/2"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$E9/1/repo" >/dev/null 2>&1
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$E9/2/repo" >/dev/null 2>&1
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$E9/1/repo" --presets developer >/dev/null
+python3 "$ROOT/tests/lib/refuninstall.py" "$PLUGIN" "$E9/1/repo" --all --assume-delete >/dev/null 2>&1
+assert "T9e --all leaves no .agentic/ or .claude/ residue" \
+  '[ ! -d "$E9/1/repo/.agentic" ] && [ ! -d "$E9/1/repo/.claude" ]'
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$E9/1/repo" --presets qa >/dev/null
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$E9/2/repo" --presets qa >/dev/null
+if python3 "$ROOT/tests/lib/check-roundtrip.py" "$E9/1/repo" "$E9/2/repo" \
+     --label "T9e reinstall after --all matches a virgin install"; then
+  PASS=$((PASS+1)); else FAIL=$((FAIL+1)); fi
+
+# T9g — --dry-run writes nothing at all.
+G9="$WORK/t9g"
+bash "$ROOT/tests/fixtures/make-fresh.sh" "$G9" >/dev/null 2>&1
+python3 "$ROOT/tests/lib/refinstall.py" "$PLUGIN" "$G9" --presets developer,qa >/dev/null
+G9SUM="$WORK/t9g.sum"
+( cd "$G9" && find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum ) > "$G9SUM"
+python3 "$ROOT/tests/lib/refuninstall.py" "$PLUGIN" "$G9" --remove qa --dry-run --assume-delete >/dev/null 2>&1
+assert "T9g --dry-run mutates nothing" \
+  '( cd "$G9" && find . -path ./.git -prune -o -type f -print0 | sort -z | xargs -0 shasum ) | diff -q - "$G9SUM" >/dev/null'
+
 echo
 echo "MATRIX: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]

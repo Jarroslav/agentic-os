@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T07:40:18Z",
+ "attested_at": "2026-07-29T08:00:15Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -89,7 +89,7 @@
    "max_run": 0
   },
   "ROADMAP.md": {
-   "sha256": "dbd10212a1462a5ac8be4a78799541cbf8d8b2a6338e0de78561879997dcb561",
+   "sha256": "d0eea4b35a0039b91193632b8d367d54befa6e7b05540426999b35a339e3feaa",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "b742202dc9ea158e1ccbddf35b205cab32aa848085a30b159f35c994fbbf4a48",
+   "sha256": "7bc13a82ea5f98de2326948e0004a52864be0ab7f39ed7137aa338d9fc9832eb",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "1882d9590e012e532efb9d6b4d111f6d8ced1a70b6fd8eb9274627ea10f4e665",
+   "sha256": "755395a62464938cdebc3265e0459d24bffa8e23c83476d9cf912702956ce941",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -701,7 +701,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-uninstall/SKILL.md": {
-   "sha256": "4773733e8c2adffa7a837d5627cf03e514cff79014ed811c2610c3cf0782d4a7",
+   "sha256": "66b74142708013e8dbcbc39f58be7cb43bb51c9da71e6c1eef3312b712d41a61",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2698,6 +2698,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "tests/lib/check-roundtrip.py": {
+   "sha256": "18bbf2c9de036718aa41d46d5cb9cb9be35e135354f55deeb80499bb9d5ccd27",
+   "line": 0.0588,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "tests/lib/check-rule-markers.py": {
    "sha256": "44a3c4dcb2f8c02c8e59385721f7e21a9148a1a4e05d4ce69350f8a0265a762e",
    "line": 0.0244,
@@ -2740,6 +2746,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "tests/lib/refuninstall.py": {
+   "sha256": "22e48cee50e784c9126122c00eaf65ab0dfa99414be31452cddd3d9cf40da40d",
+   "line": 0.0217,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "tests/lib/render_rule.py": {
    "sha256": "61abbd0ed4841fab84ccb687f0155ac0984eb45608b1930e98bac03ca964cfeb",
    "line": 0.0,
@@ -2747,7 +2759,7 @@
    "max_run": 0
   },
   "tests/run-matrix.sh": {
-   "sha256": "e442e2b3f109e6de83ea092644e72cbd21119494ccf7e805e37685cc1adb6141",
+   "sha256": "292d6ad3c92bde1823a035352d6956b356545e92e6279cf70e22477b274bceec",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

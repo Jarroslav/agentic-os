@@ -49,11 +49,23 @@ Semantic Versioning. The plugin version lives in
 
   Served over MCP as a seventh workflow prompt.
 
-  **Scope note:** the skill spec and its evals ship here so the bucket rules can
-  be reviewed; the deterministic proof (`tests/lib/refuninstall.py`,
-  `check-roundtrip.py`, and the `T9` matrix rows that assert the invariant
-  directly) follows in its own change. Until then the invariant is specified and
-  eval-graded, not machine-asserted — see `ROADMAP.md`.
+- **The invariant is machine-asserted, not just claimed.**
+  `tests/lib/refuninstall.py` is the reference executor (the same role
+  `refinstall.py` plays for init), `tests/lib/check-roundtrip.py` is the
+  differential comparator, and `T9a`–`T9g` build both trees in the same run and
+  diff them — tree, journal, scorecard and out-of-tree hooks. No golden to
+  re-record: `tests/golden/fresh-developer-manifest.txt` is directory-level and
+  cannot see a file deleted inside `.agentic/`.
+
+  Writing the harness corrected the spec twice, which is the point of having
+  one. The settings rule originally said to collapse matcher groups and event
+  keys left empty; a fresh install *keeps* them, because the installer's prune
+  reaches each group through its `"matcher"` branch and filters in place — so
+  collapsing them produced a settings file no install can produce. And `--all`
+  originally rewrote the journal after emptying the layer, resurrecting the
+  directory it had just removed, and left an un-wired `settings.json` husk that
+  a later install merged into instead of starting clean. `T9b` and `T9e` caught
+  both.
 
 - **Doctor Check 6 now detects the commit-blocking hazard.** `.githooks/pre-commit`
   runs `python3 .claude/hooks/precommit_review_gate.py precommit || exit $?` as
