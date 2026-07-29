@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T10:28:00Z",
+ "attested_at": "2026-07-29T10:33:59Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "9e3db9d12d1f56910b070cbe0317edf4bf443468141c0a48a4bee31699d0e597",
+   "sha256": "d28fa0bfb2d34e8218ef07779c40554e08b05f443b49683056ff7741299b6a91",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1091,7 +1091,7 @@
    "max_run": 0
   },
   "plugins/agentic-qe/CHANGELOG.md": {
-   "sha256": "b3b33a7f14f464fc8e4ffff6903d73d70db540eb367e7e6bcec39a8ff2a72e89",
+   "sha256": "70b28d4624bd22c139c42ff9d84542ee0e42d47ade948470bd480845963b9ab9",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1223,14 +1223,14 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/SKILL.md": {
-   "sha256": "91652825d64761a81d64415f48129f15aed6902e3e6581d4c2e108028f3fc544",
+   "sha256": "da30e70660dea989d097e0b567b33b1d545582695a50eb3c5b84eb501aa02eb1",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/evals/evals.json": {
-   "sha256": "d05ee28b8fffcfacba17ac116e7324cfef28c1a5dd41014296636c713f09ba16",
-   "line": 0.05,
+   "sha256": "6c03b2506536d18d3773f7c0ddd4fd5318f5bdadf660f7e394fee926b5221e61",
+   "line": 0.0423,
    "shingle": 0.0,
    "max_run": 0
   },
