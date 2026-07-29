@@ -60,9 +60,19 @@ the mature-repo handling described in the README's
 `skills/agentic-init/SKILL.md` Phase 4). `{{ROLE_PRESETS_ACTIVE}}` records
 the installed set in the scaffolded governance docs.
 
-Role changes are additive in the current lifecycle. Removing a role is not
-automatic because its files may have been edited by the user; removal requires
-an explicit future migration flow.
+Adding a role is additive and idempotent, as above. **Removing one is
+`/agentic-uninstall`** (`skills/agentic-uninstall/SKILL.md`) — and it is not a
+delete, because the union means most of a role's IDs belong to other roles too.
+It recomputes what an install of the *remaining* presets would produce and
+converges the repo to that, so the result equals a fresh narrower install:
+
+    install(developer,qa) → uninstall(qa)  ==  install(developer)
+
+Only IDs absent from the remaining union are removed; a file the user edited is
+never deleted without an explicit choice, and one that was adopted rather than
+scaffolded is never touched at all. Because the recomputation also re-renders
+the union-derived values (`{{ROLE_PRESETS_ACTIVE}}`, the per-role guide rows,
+the ai-policy enforcement rows), files that are *kept* can still change.
 
 ## Validation
 

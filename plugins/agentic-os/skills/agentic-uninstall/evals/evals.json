@@ -1,0 +1,89 @@
+{
+  "skill_name": "agentic-uninstall",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/agentic-uninstall qa",
+      "expected_output": "Resolves the remaining union from journal.answers.presets minus qa, classifies every journaled file, and removes only what no remaining role claims — the five QA agent contracts and the two QA guides — while retaining the ~33 shared templates developer still lists. Re-renders CLAUDE.md's managed block, PATTERNS.md, ai-policy.md and agent-registry.md because ROLE_PRESETS_ACTIVE and the QA guide rows changed. Asks before lowering HITL from strict. Ends with a doctor re-run and a per-file report.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "set-difference-not-deletion",
+          "description": "Templates listed by qa but also listed by developer are retained; only IDs absent from the remaining union are removed."
+        },
+        {
+          "name": "retained-files-rerendered",
+          "description": "CLAUDE.md, PATTERNS.md, ai-policy.md and agent-registry.md are re-rendered even though they are kept, because union-derived values inside them changed."
+        },
+        {
+          "name": "journal-entries-deleted",
+          "description": "Removed files lose their journal.files entry outright rather than being tombstoned, so doctor Check 1 stays green and the journal matches a fresh narrower install."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "/agentic-uninstall qa --dry-run",
+      "expected_output": "Prints the full plan — per-bucket classification, the files that would be removed, the ones retained and which remaining role claims them, the .claude/settings.json diff and any git-hook actions — and writes nothing at all.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "no-mutations",
+          "description": "No file is created, modified or deleted; the journal, the scorecard and .git/hooks/ are untouched."
+        },
+        {
+          "name": "plan-is-complete",
+          "description": "The dry run shows the same decisions a real run would make, including the settings diff and out-of-tree hook actions, not just a file list."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "/agentic-uninstall developer. This repo has presets portfolio and developer, and .agentic/agents/blind-code-reviewer.md has local edits.",
+      "expected_output": "The git layer leaves the union, so the settings entries wiring the removed hooks are dropped BEFORE those hook scripts are deleted, .git/hooks/pre-commit is removed and any pre-commit.local restored. The hand-edited contract is not deleted: it raises a keep/delete/set-aside prompt defaulting to keep, and keeping it flips its journal owner to user.",
+      "files": [".agentic/agentic-os/install.json", ".claude/settings.json", ".claude/hooks/"],
+      "assertions": [
+        {
+          "name": "unwire-before-delete",
+          "description": "Settings are written first so no window exists where a hook is wired but its script is missing, which would exit 2 on every event and block all tool use."
+        },
+        {
+          "name": "user-edited-never-auto-deleted",
+          "description": "The modified file defaults to keep and is only removed on an explicit choice; keeping it flips owner to user and is reported as a divergence."
+        },
+        {
+          "name": "foreign-hook-restored",
+          "description": "A pre-commit.local displaced at install time is moved back to pre-commit, so the repo's own hook runs again."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "/agentic-uninstall qa. The repo's journal has adoption.mode == \"adopt-existing\".",
+      "expected_output": "Refuses to delete anything. Runs the classification and prints what would be removed if the files were ours, converges only the recomputed answers and the journal/scorecard/settings bookkeeping, and resolves every path from journal.adoption rather than a hardcoded .agentic/.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "adopted-is-immutable",
+          "description": "Entries with origin adopted-existing or owner user are never rendered, replaced, regenerated or deleted — the same rule agentic-upgrade already states."
+        },
+        {
+          "name": "reports-rather-than-refusing-silently",
+          "description": "The run explains why nothing was deleted and what it would have removed, instead of exiting with no output."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "/agentic-uninstall qa. This repo was installed with qa only, so removing it empties the preset list.",
+      "expected_output": "Stops and explains that removing the last role is the whole-layer case, which must be asked for explicitly with --all. Nothing is changed.",
+      "files": [".agentic/agentic-os/install.json"],
+      "assertions": [
+        {
+          "name": "last-preset-needs-explicit-all",
+          "description": "An empty remaining union is not silently treated as a full uninstall; the run stops and names the --all flag."
+        }
+      ]
+    }
+  ]
+}

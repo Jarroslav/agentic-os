@@ -605,6 +605,7 @@
       successSign('ph-check-circle', 'Doctor reports <code style="font-family:ui-monospace,monospace;word-break:break-all">passed: true</code> in <code style="font-family:ui-monospace,monospace;word-break:break-all">.agentic/agentic-os/doctor.json</code>') +
       successSign('ph-folder-simple-plus', 'A new <code style="font-family:ui-monospace,monospace">.agentic/</code> folder appears — guides, policies, install journal') +
       successSign('ph-git-diff', '<strong>Nothing is committed for you</strong> — <code style="font-family:ui-monospace,monospace">git status</code> shows the files; you review and commit') +
+      successSign('ph-arrow-u-up-left', '<strong>Reversible</strong> — <code style="font-family:ui-monospace,monospace">/agentic-uninstall ' + esc(cur.id) + '</code> drops the role again, <code style="font-family:ui-monospace,monospace">--all</code> removes the layer, <code style="font-family:ui-monospace,monospace">--dry-run</code> previews either') +
       '</div>' +
       checkSection(cur.id, checklist.filter(function (i) { return i.step === 3; })) + '</section>' +
 

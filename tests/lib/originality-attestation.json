@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T07:03:12Z",
+ "attested_at": "2026-07-29T07:40:18Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -83,13 +83,13 @@
    "max_run": 0
   },
   "README.md": {
-   "sha256": "891d1b652fb56d4de2a39788c9de0a1fc37f253717c9df2dca681d32bb2628b9",
+   "sha256": "72a3760f38b7dfb4676d2a0c9f645c5e3ae84ac446e2eae2489109a75652136f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "ROADMAP.md": {
-   "sha256": "89422785a45d236e466e6eca258c5f7278627f62dabc6b33514964688f8b6992",
+   "sha256": "dbd10212a1462a5ac8be4a78799541cbf8d8b2a6338e0de78561879997dcb561",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -119,7 +119,7 @@
    "max_run": 0
   },
   "docs/setup/app.js": {
-   "sha256": "dde74f4aa1569186dd302571d3a47b4dfd52e40db6609ce4198bec765d26f5a8",
+   "sha256": "9dc8eeb91f1ad01f993d57ebf9db99fca2f5a0d879aa7ff6da53b87fe6002252",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -161,7 +161,7 @@
    "max_run": 0
   },
   "mcp/README.md": {
-   "sha256": "61d13c15740fe29f97a111c12f0b241298e35e9fd41c62536a95b7f7160de530",
+   "sha256": "243c2188591c91c35d22cea435581eb4499fc6bcdd97f75e220c07f73c696511",
    "line": 0.0064,
    "shingle": 0.0,
    "max_run": 0
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "a21fc692fc1fe77ec8a0fcfbc8f904815c331ccfa87b634cd0407c80cc7bc002",
+   "sha256": "b742202dc9ea158e1ccbddf35b205cab32aa848085a30b159f35c994fbbf4a48",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -245,7 +245,7 @@
    "max_run": 0
   },
   "mcp/src/prompts.ts": {
-   "sha256": "ed50f524ff8bd06596887e0959b81e46a0b15567a1c1cbb9485ac6ffc48d000a",
+   "sha256": "7bcd128cb8a722bbda5b062a44c41a86e0be749dc46b7719871f6013d621d981",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -347,7 +347,7 @@
    "max_run": 0
   },
   "mcp/tests/contract.test.ts": {
-   "sha256": "6ea4121d7ce8081712f46c8731a93298f2ed1001cde02fa2b65621267d1892d9",
+   "sha256": "65eb727605d47774ad3819e1608f7260210b516465b98428d0117a178543b94a",
    "line": 0.0076,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "167f0945b3c3a3c0e652725c88f05f2e26a33a07dc69a05690a1c4b0efc8caed",
+   "sha256": "1882d9590e012e532efb9d6b4d111f6d8ced1a70b6fd8eb9274627ea10f4e665",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -521,8 +521,8 @@
    "max_run": 0
   },
   "plugins/agentic-os/presets/README.md": {
-   "sha256": "99eee64dd96cccceeb947a58eeb194db786127f1225f3dcbed4a71fd01f597d6",
-   "line": 0.0192,
+   "sha256": "5ebe6397ac3d7e6d351c495512eee97f95aef4ec76178393377b4fda6e890a6e",
+   "line": 0.0167,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -690,6 +690,24 @@
   },
   "plugins/agentic-os/skills/agentic-init/evals/evals.json": {
    "sha256": "4d9532c74848e060423d08e0a6f704fab41021b8af0fda44d9cb7ccfa4798cc8",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/skills/agentic-uninstall/README.md": {
+   "sha256": "d0cbd1fee237dc04c978165256766e4ee6df7d0615de2f6b4365674c728d2735",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/skills/agentic-uninstall/SKILL.md": {
+   "sha256": "4773733e8c2adffa7a837d5627cf03e514cff79014ed811c2610c3cf0782d4a7",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/skills/agentic-uninstall/evals/evals.json": {
+   "sha256": "0abd95f807af85670fc5a49814e4aa077a62f82fbce51f547737d1957f07b37e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

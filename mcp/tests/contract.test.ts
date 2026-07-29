@@ -66,10 +66,10 @@ describe('protocol contract', () => {
     })).rejects.toThrow();
   });
 
-  it('exposes the six workflow prompts', async () => {
+  it('exposes the seven workflow prompts', async () => {
     const { prompts } = await client.listPrompts();
     expect(prompts.map(p => p.name).sort()).toEqual([
-      'agentic-doctor', 'agentic-init', 'agentic-upgrade',
+      'agentic-doctor', 'agentic-init', 'agentic-uninstall', 'agentic-upgrade',
       'qe-blueprint-scaffold', 'sdlc-start', 'sdlc-task',
     ]);
   });

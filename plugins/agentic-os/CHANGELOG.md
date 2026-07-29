@@ -7,21 +7,53 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
-Groundwork for role removal. Designing the inverse of `/agentic-init` surfaced
-two defects in the git layer that only removal would ever trigger — both are
-fixed here, ahead of the feature that would have hit them.
-
-### Fixed
-
-- **Doctor Check 6 failed six of the ten presets.** Its git-hook clause was
-  written unconditionally ("Missing installed hook ⇒ fail"), but `ba-po`,
-  `data`, `design`, `pm-delivery`, `portfolio` and `security` carry no
-  `githooks/pre-commit` — a repo installed with only those roles reported a
-  failure for a hook it was never meant to have. The clause is now conditional
-  on `.githooks/pre-commit` being present in `journal.files`; when it is not,
-  `git_hook` reports `passed: true` and says why in its `detail`.
-
 ### Added
+
+- **`/agentic-uninstall` — the installer's inverse.** Adding a role was
+  additive and idempotent; removing one was not possible, which made "pick the
+  roles you need" only half true and left `presets/README.md` promising a
+  migration flow that did not exist. This is that flow.
+
+  It is deliberately **not** a deleter. Presets are additive unions of shared
+  template IDs, so deleting what a role lists would break the roles that stay —
+  removing `qa` from a `developer,qa` repo frees only 9 of 45 IDs, and four
+  presets (`architect`, `devops`, `pm-delivery`, `portfolio`) sole-own nothing
+  at all. Instead the skill recomputes what an install of the *remaining*
+  presets would produce and converges the repo to it, so:
+
+      install(developer,qa) → uninstall(qa)  ==  install(developer)
+
+  Everything else follows from that invariant. Journal entries for removed
+  files are deleted rather than tombstoned (a tombstone would make the journal
+  differ from a narrower fresh install's, and doctor Check 1 only verifies that
+  journaled files exist). Files that are *kept* can still be re-rendered,
+  because `ROLE_PRESETS_ACTIVE`, the per-role guide rows and the ai-policy
+  enforcement rows all shrink with the union. `HITL_MODE` is asked rather than
+  recomputed, since removing the only `strict` preset would otherwise relax a
+  repo's governance silently.
+
+  Two hazards get explicit handling. `.claude/settings.json` is un-merged
+  subtractively — entries are dropped only when byte-equal to ours, emptied
+  matcher groups and event keys collapse, and the write happens **before** the
+  hook scripts it wires are deleted, so a crash can never leave a hook wired to
+  a missing script (which doctor Check 5 describes as exiting 2 on every event
+  and blocking all tool use). And a `pre-commit.local` displaced at install
+  time is moved back, so a repo's own hook survives the removal — out-of-tree
+  state `git status` would never have shown.
+
+  `--dry-run` prints the whole plan and writes nothing. `--all` removes the
+  layer entirely, leaving the repo installable with any role as if it had never
+  been scaffolded. In `adopt-existing` mode nothing is deleted at all: adopted
+  files are immutable by `agentic-upgrade`'s own rule, so the run reports what
+  it would have done instead.
+
+  Served over MCP as a seventh workflow prompt.
+
+  **Scope note:** the skill spec and its evals ship here so the bucket rules can
+  be reviewed; the deterministic proof (`tests/lib/refuninstall.py`,
+  `check-roundtrip.py`, and the `T9` matrix rows that assert the invariant
+  directly) follows in its own change. Until then the invariant is specified and
+  eval-graded, not machine-asserted — see `ROADMAP.md`.
 
 - **Doctor Check 6 now detects the commit-blocking hazard.** `.githooks/pre-commit`
   runs `python3 .claude/hooks/precommit_review_gate.py precommit || exit $?` as
@@ -44,6 +76,16 @@ fixed here, ahead of the feature that would have hit them.
   across presets would make the commit-blocking state above reachable through
   an ordinary role removal. Both hold across all ten presets today; both fail
   loudly if a future preset breaks them.
+
+### Fixed
+
+- **Doctor Check 6 failed six of the ten presets.** Its git-hook clause was
+  written unconditionally ("Missing installed hook ⇒ fail"), but `ba-po`,
+  `data`, `design`, `pm-delivery`, `portfolio` and `security` carry no
+  `githooks/pre-commit` — a repo installed with only those roles reported a
+  failure for a hook it was never meant to have. The clause is now conditional
+  on `.githooks/pre-commit` being present in `journal.files`; when it is not,
+  `git_hook` reports `passed: true` and says why in its `detail`.
 
 ## [0.13.0] — Agent contracts get the gate skills already had
 
