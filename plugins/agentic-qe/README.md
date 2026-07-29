@@ -15,8 +15,16 @@ R2/R3 step sits behind a **human review gate**, model choice is expressed as
 **tiers** (economy / standard / premium), and grounding rules forbid inventing
 facts absent from the source inputs.
 
-This plugin is part of the [`agentic-os`](../../README.md) marketplace and
-installs alongside `agentic-os` (governance) and `agentic-sdlc` (pipeline).
+This plugin is part of the [`agentic-os`](../../README.md) marketplace. It
+**composes when the governance layer is present and stands alone when it is
+not** — `/agentic-init` is never required.
+
+Alone, it scaffolds agent frameworks into your AI tool's own directory
+(`.claude/`, `.cursor/`, `.github/`). In a repo that has run `/agentic-init`, it
+detects the install journal and adapts: contracts go to the canonical agents
+directory so the write-scope guard and instruction gate actually cover them,
+the context file is appended outside the installer's managed block, and a write
+refused by a guarded path is reported rather than routed around.
 
 ---
 

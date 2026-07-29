@@ -113,6 +113,34 @@ Unrecognized tool → default to Claude Code and say so explicitly.
 
 **Brownfield gate:** if the target dir already exists, list its contents and ask add-vs-overwrite immediately, then wait. Silent overwrite is forbidden. Promising to ask later is not compliance.
 
+**Governed-repo detection.** Check for `.agentic/agentic-os/install.json`. It
+decides where contracts go, and getting it wrong corrupts a governed install.
+
+*Ungoverned (no journal)* — everything below is unchanged. This skill stands
+alone, and that is the common case.
+
+*Governed (journal present)* — `agentic-os` owns `.claude/agents/<name>.md` as
+**thin derived pointers** to canonical contracts, journaled with
+`template: "derived"`. A full contract written there collides with a file the
+installer manages, and `/agentic-upgrade` would later reconcile it against a
+template it never came from. So:
+
+| | Ungoverned | Governed |
+|---|---|---|
+| Agent contract | `.claude/agents/<name>.md` | **`.agentic/agents/<name>.md`** — or `journal.adoption.canonical_agents_dir` when `journal.adoption.mode == "adopt-existing"`; never a hardcoded path |
+| `.claude/agents/` | written here | **not written** — `/agentic-init` synthesises the pointer |
+| Context file | repo-root `CLAUDE.md` | appended to `CLAUDE.md` **strictly outside** the `<!-- agentic-os:begin … -->` / `<!-- agentic-os:end -->` markers. Content inside them is the installer's managed block, replaced wholesale on upgrade — anything written there is silently lost |
+| Frontmatter | `name`, `description`, `tools`, `model` | the same plus **`write_scope`** (see the architecture rules) |
+
+**A governed contract starts ungraded, and that is fail-closed by design.**
+`instruction_gate.py` blocks the spawn of any agent holding a canonical contract
+with no scorecard entry. Do not fabricate one. After Step 5: if the repo
+installed `agents/instruction-auditor`, hand the new contracts to it and let it
+grade them into `docs/audits/instruction-scorecard.json`. If it is not
+installed, say plainly in the Step 6 summary that the contracts are ungraded,
+will not spawn until graded, and that `/agentic-doctor` reports the remedy.
+Blocked is the correct outcome here; silently ungoverned is not.
+
 ### Step 3 — Scope and automation (R0)
 
 Collect scope and automation level:
@@ -144,8 +172,17 @@ Before writing anything, show a compact scaffold plan:
 ### Step 5 — Scaffold (R2)
 
 1. Detect OS from shell hints; ask only when ambiguous. Run `scripts/scaffold.sh` (macOS/Linux) or `scripts/scaffold.ps1` (Windows) to create `agents/` and `skills/` under the target dir (plus `rules/` for Cursor).
-2. Fill each generated file from `references/templates/` per the architecture and safety rules below. Every agent file ships a numbered baseline instruction skeleton — never an empty section.
+2. Fill each generated file from `references/templates/` per the architecture and safety rules below. Every agent file ships a numbered baseline instruction skeleton — never an empty section. **In a governed repo, write contracts to the canonical dir and leave `.claude/agents/` alone** (Step 2).
 3. While generating the context file, append the per-run artifacts dir to the repo `.gitignore`. Intermediate outputs must never be committed.
+
+**If a write is refused, stop — do not route around it.** A governed repo may
+guard paths via `guarded_write_paths.py`, which is fail-closed: it exits 2 and
+the write does not happen. That is the repo's policy working, not an obstacle.
+Report the exact refused path, name `{{GUARDED_WRITE_PATHS}}` as where the rule
+lives, and let the human decide whether to unguard it or place the file
+elsewhere. Never retry the same write, never fall back to a different directory
+to evade the guard, and never continue as though the file exists — a summary
+listing files that were never written is worse than a failed run.
 
 ### Step 6 — Verify and summarize (R0)
 

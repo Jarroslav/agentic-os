@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T08:00:15Z",
+ "attested_at": "2026-07-29T08:37:40Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -83,7 +83,7 @@
    "max_run": 0
   },
   "README.md": {
-   "sha256": "72a3760f38b7dfb4676d2a0c9f645c5e3ae84ac446e2eae2489109a75652136f",
+   "sha256": "fae85fd0876e3707fdf649dfe82aa2d64ffea4b88f5addacf9c67b19ba5f8dce",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "7bc13a82ea5f98de2326948e0004a52864be0ab7f39ed7137aa338d9fc9832eb",
+   "sha256": "6df6bb95046b397e3dec2fe3890f867936ccd2ca9e55729c552b080dc7a9ef85",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1091,14 +1091,14 @@
    "max_run": 0
   },
   "plugins/agentic-qe/CHANGELOG.md": {
-   "sha256": "fe7f7339824d30f0ac1ed0abc14dd630fcc604b0fbc4906f30235e33855a948c",
+   "sha256": "ba273fabeae633f3a3307bf8f810126ff23eb2d9d66670faa82dcb2fdbe8bfad",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-qe/README.md": {
-   "sha256": "817889e648e017bd15c8969ff56c4de25e914518936e8efa364476ec052b880f",
-   "line": 0.0286,
+   "sha256": "9a7b2491a38e83af7e6475a4108a229acd963f614022d9732506ebbb523f7aba",
+   "line": 0.0238,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1109,7 +1109,7 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/eval-harness/SKILL.md": {
-   "sha256": "fc4fed4f8cc608845942b28c8ba08ab9f5d83c782841a0252c47381dd3595374",
+   "sha256": "0d58f1a89cec121f44be0204124df8b194ddf412ae87ef50678350e5b5e6654c",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1223,7 +1223,7 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/SKILL.md": {
-   "sha256": "c3941ac5df61e7c5aace3e905ff101a470049c660dc6ae465730a48fde235caf",
+   "sha256": "91652825d64761a81d64415f48129f15aed6902e3e6581d4c2e108028f3fc544",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1469,8 +1469,8 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/qe-blueprints/references/templates/agent-file.md": {
-   "sha256": "3386e6146fc0afed39e810b24dd86a5a4ead3aa6bf0b334a3116ead96c8e1501",
-   "line": 0.0136,
+   "sha256": "965088f9eb45f3de995bf4239602b25fe9fabe869b8b4f6fe4912841b8419227",
+   "line": 0.0127,
    "shingle": 0.0,
    "max_run": 0
   },
