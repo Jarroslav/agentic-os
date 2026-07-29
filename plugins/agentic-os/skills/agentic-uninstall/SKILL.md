@@ -36,6 +36,7 @@ P_old  = journal.answers.presets      (legacy singular `preset` is read and norm
 P_new  = P_old − removed              (order preserved)
 U_old  = ∪ templates(P_old)           G_old = ∪ generated(P_old)
 U_new  = ∪ templates(P_new)           G_new = ∪ generated(P_new)
+S_new  = ∪ sdlc_skills(P_new)         B_new = ∪ qe_blueprints(P_new)
 ```
 
 Resolve unions from `PLUGIN/presets/roles/*.json`, the same way
@@ -126,8 +127,13 @@ ordinary B4/B5 removal.
 upgrade's Agent-registry section: `head_current` (through and including the
 `<!-- generated-agent-rows -->` marker row), `generated_rows` (the contiguous
 run after it), `tail_current`. Two additions specific to removal:
-- re-render **and re-prune** the head under `U_new`, using init Phase 4 step 4's
-  hand-off (b) row-pruning;
+- re-render **and re-prune** the head under `U_new`, **`S_new` and `B_new`**,
+  using init Phase 4 step 4's hand-off (b) row-pruning. The cross-plugin sets
+  matter as much as the template one: a role that leaves takes its skill- and
+  blueprint-owned rows with it, and a row naming an asset no remaining preset
+  selects is a promise the repo can no longer keep. Miss either set and the
+  round-trip invariant fails, because a fresh install of the remaining presets
+  would not have written those rows;
 - drop `generated_rows` whose slot has left `G_new`, or doctor Check 8f ("no
   stale rows") fails.
 Reassemble all three; if the tail is empty or is not one of the two expected

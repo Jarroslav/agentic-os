@@ -80,6 +80,10 @@ PRESET_SDLC_SKILLS = {
     s for name in PRESET_NAMES
     for s in available_presets[name].get("sdlc_skills", [])
 }
+PRESET_QE_BLUEPRINTS = {
+    b for name in PRESET_NAMES
+    for b in available_presets[name].get("qe_blueprints", [])
+}
 
 # SKILL.md Phase 4 step 1, first installer-side conditional: these two are
 # scaffolded whenever `hooks/settings-fragment` is in the union EVEN IF no preset
@@ -673,6 +677,11 @@ if registry_path.exists():
         # sdlc_skills, not template IDs.
         for skill in re.findall(r"agentic-sdlc `([a-z0-9-]+)` skill", line):
             missing_selected_asset |= skill not in PRESET_SDLC_SKILLS
+        # Blueprint-owned rows: same contract, different sibling plugin. The
+        # cell shape ``the agentic-qe `<id>` blueprint`` prunes against the
+        # union's qe_blueprints.
+        for bp in re.findall(r"agentic-qe `([a-z0-9-]+)` blueprint", line):
+            missing_selected_asset |= bp not in PRESET_QE_BLUEPRINTS
         if missing_selected_asset:
             continue
         registry_lines.append(line)

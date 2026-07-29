@@ -55,5 +55,12 @@
     "qa-gates",
     "feature-verification",
     "requirements-intake"
+  ],
+  "qe_blueprints": [
+    "qa-knowledge-base",
+    "test-cases",
+    "test-scripts",
+    "flaky-debugging",
+    "bug-reports"
   ]
 }

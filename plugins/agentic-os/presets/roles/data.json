@@ -1,6 +1,6 @@
 {
   "name": "data",
-  "description": "Data-engineering pipeline design: raw → cleaned → consumable layering with counted row-math equations, force-tested data-quality checks, per-dataset lineage, proposed-only classifications — writes only under docs/data/, dispatcher-routed, recommend-only queries, no code-writing agents.",
+  "description": "Data-engineering pipeline design: raw \u2192 cleaned \u2192 consumable layering with counted row-math equations, force-tested data-quality checks, per-dataset lineage, proposed-only classifications \u2014 writes only under docs/data/, dispatcher-routed, recommend-only queries, no code-writing agents.",
   "templates": [
     "hooks/subagent-gate",
     "hooks/session-bootstrap",
@@ -34,5 +34,8 @@
   "sdlc_skills": [
     "requirements-intake",
     "role-memory"
+  ],
+  "qe_blueprints": [
+    "db-performance"
   ]
 }

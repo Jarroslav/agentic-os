@@ -220,9 +220,9 @@ means requirements, customer conversations, stories, and acceptance criteria;
 it installs no code-writing agents. A `ba-po`-only install must not scaffold
 developer instructions or agents. A later run may add roles; union the new
 selection with the existing journal and preserve user-owned files.
-Union rules (per `PLUGIN/presets/README.md`): `templates`, `generated`, and
-`sdlc_skills` are set-unioned (shared IDs are identical strings —
-presets never fork content); `default_hitl` resolves strictest-wins
+Union rules (per `PLUGIN/presets/README.md`): `templates`, `generated`,
+`sdlc_skills`, and `qe_blueprints` are set-unioned (shared IDs are identical
+strings — presets never fork content); `default_hitl` resolves strictest-wins
 (`strict > gated-autonomous > autonomous`); every orchestration style in the
 union installs, the pre-filled default style comes from the first preset
 listed, and `strict` HITL forces the `dispatcher` default.
@@ -351,8 +351,12 @@ when nothing was adopted), `{{SKILLS_CANONICAL_DIR}}` and
 5. Announce: **newly registered plugins require a session restart**;
    `/agentic-doctor` reports them as `pending-restart` until they appear in
    `installed_plugins.json`.
-6. Record the union's `sdlc_skills` in the journal (informational —
-   they run from the `agentic-sdlc` plugin itself; nothing is copied).
+6. Record the union's `sdlc_skills` and `qe_blueprints` in the journal
+   (informational — both run from their own plugin; nothing is copied).
+   `agentic-qe` is an optional dependency: if a preset in the union names
+   blueprints and the plugin is absent, offer to register it and carry on
+   either way — the blueprints are methodology references, so their absence
+   degrades guidance rather than breaking the install.
 7. Journal `phase: "dependencies"`.
 
 ## Phase 4 — Scaffold
@@ -555,7 +559,11 @@ Ordered steps:
      command ID is in the union; skill-owned rows (Owning asset of the form
      ``the agentic-sdlc `<name>` skill``) go unless `<name>` is in the
      union's `sdlc_skills` set (the union of every installed preset's
-     `sdlc_skills` array). Never prune the
+     `sdlc_skills` array); blueprint-owned rows (Owning asset of the form
+     ``the agentic-qe `<id>` blueprint``) go unless `<id>` is in the union's
+     `qe_blueprints` set, by the same rule and for the same reason — a row
+     naming an asset this install did not select is a promise the repo cannot
+     keep. Never prune the
      `blind-code-reviewer` or `instruction-auditor` rows when their agents
      install. **Never prune the `<!-- generated-agent-rows -->` marker row**
      (the one with an empty "Owning asset" cell, below the curated rows) —

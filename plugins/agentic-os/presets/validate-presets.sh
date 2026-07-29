@@ -19,7 +19,8 @@ registered = set(re.findall(
     r"/[a-z0-9][a-z0-9-]*)`", vars_md))
 
 REQUIRED = ("name", "description", "templates", "generated",
-            "default_hitl", "default_orchestration", "sdlc_skills")
+            "default_hitl", "default_orchestration", "sdlc_skills",
+            "qe_blueprints")
 HITL = {"strict", "gated-autonomous", "autonomous"}
 ORCH = {"pipeline", "dispatcher"}
 

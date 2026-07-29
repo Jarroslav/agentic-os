@@ -1,6 +1,6 @@
 {
   "name": "design",
-  "description": "Design/UX: emotion-annotated journey maps, step+emotion problem framings, decision-closing workshops, negative-AC acceptance criteria, agent-ready context+spec handoff pair — writes only under docs/design/, dispatcher-routed, no code, no visual-asset generation, no code-writing agents.",
+  "description": "Design/UX: emotion-annotated journey maps, step+emotion problem framings, decision-closing workshops, negative-AC acceptance criteria, agent-ready context+spec handoff pair \u2014 writes only under docs/design/, dispatcher-routed, no code, no visual-asset generation, no code-writing agents.",
   "templates": [
     "hooks/subagent-gate",
     "hooks/session-bootstrap",
@@ -35,5 +35,6 @@
     "product-owner",
     "requirements-intake",
     "role-memory"
-  ]
+  ],
+  "qe_blueprints": []
 }

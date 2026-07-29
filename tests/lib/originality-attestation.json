@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T08:37:40Z",
+ "attested_at": "2026-07-29T08:57:03Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "6df6bb95046b397e3dec2fe3890f867936ccd2ca9e55729c552b080dc7a9ef85",
+   "sha256": "ac4025692381458fc86a28ee0e91712f0e55895704a696c97321e88a2629596b",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "755395a62464938cdebc3265e0459d24bffa8e23c83476d9cf912702956ce941",
+   "sha256": "583d583226a59e03c7c634adc3d312e03415fc32295d3247c69999f7edcf80d0",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -515,14 +515,14 @@
    "max_run": 0
   },
   "plugins/agentic-os/manifest/dependencies.json": {
-   "sha256": "43f543f405a6aa4cca678487c995f103a0402a45ce67884e50088ae3f522661b",
+   "sha256": "f3c7ed0ab4cca8f068c8b4f1d79c91067899b4e6e2d9d930a6f9c79ea1868a23",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/README.md": {
-   "sha256": "5ebe6397ac3d7e6d351c495512eee97f95aef4ec76178393377b4fda6e890a6e",
-   "line": 0.0167,
+   "sha256": "0bf1643eca64fb44579a4c863f45c75438bdf8e61464f38df0aed3c9a32f6e2a",
+   "line": 0.0141,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -587,67 +587,67 @@
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/architect.json": {
-   "sha256": "570c77ad768969921eef18c40661042a6066d35c71379b423718a8c0643ae8d5",
+   "sha256": "c0a0af7b18496020897734335edef8de85a58c755d08306afc7ae3c76430757f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/ba-po.json": {
-   "sha256": "3c67950d6265b612a454fb9050e76626351b74f3a2c9583ef1db4548f493060b",
+   "sha256": "95931fb6348f95b56ac1c40d59a8f5f3e69328855b62f8248d8cc55cd67a684e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/data.json": {
-   "sha256": "96fe43c49e6dd3a5e19ea3eb8ac46ece9504f1ba98617ee7c11f2a66bc915e27",
+   "sha256": "79243990007dab720d0e52dd68ebaf15e2c2e0d50fae8258770ac01030697981",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/design.json": {
-   "sha256": "928e137aed5ea6f8f4f1b602a8ef9909735dc1c93944f031d99502cb7b842543",
+   "sha256": "5ea128c8c04f0a0417420fdcfabc898fc191acfd1ca08033d3ea63a1bd02adbe",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/developer.json": {
-   "sha256": "801b07bfbe88b3ccc176f1047bab64734c98d11f29c506bf2b9643f96cebb6b1",
+   "sha256": "56aa87cf47348461cb9554bb409e81399b16a3e85123b3fc3baa63d77275e17c",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/devops.json": {
-   "sha256": "ac289374a244f5ab8867ddecf1bbc8fb74b752e5a9cab3cd64fe0d42cb0dab81",
+   "sha256": "32e277eb80e58ec6aaa2fb03ddff8ebc724dad0c45945aac0bc62311ee3c958e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/pm-delivery.json": {
-   "sha256": "c68341eb4ac86aeb1bb5b8a0096437d5d801c6528ca95f2c11d3eee692e26a74",
+   "sha256": "8b6c540f104eb0b662cfda1852f57fbf135d608dde514df9f576cc88576622bf",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/portfolio.json": {
-   "sha256": "587e0e25cf40cf8ca597096db019884e0e116ef992792e7a3b43e7ae6c896a5c",
+   "sha256": "337f3e5c9526fe7e1b4b4d2a8b7135f8aa7b686dd32805fcd5ca7f488831a819",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/qa.json": {
-   "sha256": "7694295691e8b9f58e425a1c010dc7efb83760993c49a7071ed6c4f577e1f16b",
+   "sha256": "6cecb06c1230e672f34fd8e1e43d1c041b683a3667bdc785142cbfd5b00dae72",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/roles/security.json": {
-   "sha256": "fe881a657d998901741bc43d6af11381dd3ad29885a2b33afb1443a4a1ab6c2f",
+   "sha256": "f813c839718ad809feddde00c50867a2981e46f10a9cb836e2a5fd00f723ef32",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-os/presets/validate-presets.sh": {
-   "sha256": "39f1e6558a55e852947e2d5060062cd76ba32e9fb33f846c0a2a680ecc99c0e2",
+   "sha256": "e31d4a7cb2e5bd15f267327e5a1529ea5c67c0e87994cd1cf055082eec68cb5f",
    "line": 0.0606,
    "shingle": 0.0,
    "max_run": 0
@@ -683,7 +683,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-init/SKILL.md": {
-   "sha256": "52fc9e9c3dbc131dc8560948b62e411bd701405ef1ff4c20ebe46ff0e28737b4",
+   "sha256": "a10a0b81890609006661a85eefb9125bddf2e84b5dede4188d5ec752a8d3acb5",
    "line": 0.0013,
    "shingle": 0.0,
    "max_run": 0
@@ -701,7 +701,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-uninstall/SKILL.md": {
-   "sha256": "66b74142708013e8dbcbc39f58be7cb43bb51c9da71e6c1eef3312b712d41a61",
+   "sha256": "922154e43aad85b3d285f40a13fbea0315ab071f578e2c78e6c5cd50f67d5d20",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -857,7 +857,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/governance/agent-registry.md.tmpl": {
-   "sha256": "d1674951392f4644a05fdaa276a87e5560d45b25a1ad76a33d0d23ec17816390",
+   "sha256": "bb43407f747e2720c0172848683c64b88a633093135427222e3ff8d69a4eac43",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2675,8 +2675,8 @@
    "max_run": 0
   },
   "tests/lib/check-presets.py": {
-   "sha256": "000d641b467d2b5f37ff781fa8dedcc50c7a83678e50ee30cb39c18ad5404670",
-   "line": 0.0157,
+   "sha256": "e2f97ec15ec4f27766f75f6e808af2ef7f844803f38e6bdfd23d6e02875cf3a5",
+   "line": 0.0138,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2741,8 +2741,8 @@
    "max_run": 0
   },
   "tests/lib/refinstall.py": {
-   "sha256": "a5708cc964055985c879a43e211cd8fabf564bf0824da287fc4fbd6a4c09c1eb",
-   "line": 0.0065,
+   "sha256": "12cb382902db70252250739131888d1d5d0b1766e7b77d81b45dbdc99ad7ef90",
+   "line": 0.0064,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2759,7 +2759,7 @@
    "max_run": 0
   },
   "tests/run-matrix.sh": {
-   "sha256": "292d6ad3c92bde1823a035352d6956b356545e92e6279cf70e22477b274bceec",
+   "sha256": "264ee2227dbfc8e9afe0d9fd0957cbee0e79317e3579141f4c8321ff6b53baf9",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

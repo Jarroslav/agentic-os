@@ -1,6 +1,6 @@
 {
   "name": "security",
-  "description": "Threat modeling: DFD-first STRIDE analysis, likelihood×impact risk register with proposed-only severities, mitigation-to-risk traceability — writes only under docs/security/, dispatcher-routed, no code-writing agents.",
+  "description": "Threat modeling: DFD-first STRIDE analysis, likelihood\u00d7impact risk register with proposed-only severities, mitigation-to-risk traceability \u2014 writes only under docs/security/, dispatcher-routed, no code-writing agents.",
   "templates": [
     "hooks/subagent-gate",
     "hooks/session-bootstrap",
@@ -35,5 +35,8 @@
   "sdlc_skills": [
     "requirements-intake",
     "role-memory"
+  ],
+  "qe_blueprints": [
+    "security-triage"
   ]
 }

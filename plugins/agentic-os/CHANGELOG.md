@@ -9,6 +9,33 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- **`qe_blueprints` — a second cross-plugin composition field.** `agentic-qe`
+  shipped as an island: no preset referenced it, it held no reference to the
+  governance layer, and `agentic-sdlc` did not know it existed. A user
+  installing `--presets qa` got the SDLC quality skills and never learned the
+  28 QE blueprints were there.
+
+  Presets now name blueprints the same way they name SDLC skills, and the field
+  behaves identically: **nothing is copied into the target repo.** It is
+  journaled, and it prunes agent-registry rows whose Owning asset names it —
+  ``the agentic-qe `<id>` blueprint``, mirroring
+  ``the agentic-sdlc `<name>` skill``. A blueprint id is the filename stem under
+  `references/catalog/<stage>/`; `check-presets.py` now enforces that stems stay
+  unique across stages, so an id can never be ambiguous, and resolves every
+  entry against the catalog so a typo cannot ship silently.
+
+  `agentic-qe` joins `manifest/dependencies.json` as **optional**. Blueprints
+  are methodology references, so a repo without the plugin gets weaker guidance
+  rather than a broken install — and `agentic-qe` stays installable on its own,
+  which was always the point of it standing alone.
+
+  The uninstall algebra gains `S_new` and `B_new` terms alongside `U_new`/`G_new`.
+  Without them a removed role would leave its skill- and blueprint-owned rows
+  behind, and the round-trip law `install(a,b) → uninstall(b) == install(a)`
+  would fail — a fresh install of the remaining presets never writes those rows.
+  `check-presets.py`'s two cross-plugin resolvers are now one table, so a third
+  composition axis is a row rather than another hardcoded sibling path.
+
 - **`/agentic-uninstall` — the installer's inverse.** Adding a role was
   additive and idempotent; removing one was not possible, which made "pick the
   roles you need" only half true and left `presets/README.md` promising a
