@@ -25,6 +25,13 @@ seed that makes that possible.
 **Blast radius: R2** (writes repo guide files). No file is written until the user
 approves at the Phase 4 gate. Phase 1 is strictly read-only.
 
+> **Methodology owner.** How qa knowledge is gathered, structured and kept current is defined by the `qa-knowledge-base`
+> blueprint in `agentic-qe`
+> (`skills/qe-blueprints/references/catalog/analyze/qa-knowledge-base.md`). This skill
+> executes; the blueprint is the authority on method. If the two ever disagree,
+> the blueprint wins and this file is what gets corrected — one source of truth,
+> so two agents cannot follow two different sets of practices.
+
 ## When to use
 
 - First-time QA setup in a repo, before any pipeline run.

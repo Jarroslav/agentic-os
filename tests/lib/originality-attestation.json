@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-29T08:57:03Z",
+ "attested_at": "2026-07-29T09:04:10Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -41,8 +41,8 @@
    "max_run": 0
   },
   ".github/workflows/ci.yml": {
-   "sha256": "702df8175ca48bf5d28ba0470ab786e3fc7db1fedb942ae42fa064e1ef40f5c2",
-   "line": 0.0435,
+   "sha256": "376230c2bbd57cfd86f1908818b152ec3818574518c44730556b64be0b69a914",
+   "line": 0.0405,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "ac4025692381458fc86a28ee0e91712f0e55895704a696c97321e88a2629596b",
+   "sha256": "3d137fb48ea6429f1fe64da013c3bcb8845a7826665d33e113a43d291fec1d36",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1091,7 +1091,7 @@
    "max_run": 0
   },
   "plugins/agentic-qe/CHANGELOG.md": {
-   "sha256": "ba273fabeae633f3a3307bf8f810126ff23eb2d9d66670faa82dcb2fdbe8bfad",
+   "sha256": "d5fecd66f1510bcb91ba9528820b3a65ec154c2f50288fa8ec612a8e543c4441",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1529,7 +1529,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "02da56bc6f0877cc46d60bda3be439cff1665f2c97b95a3d390614c33da4c9ec",
+   "sha256": "24d61f76d1de16bc03e48289f2da423114575ae1fa9730099921048ee4d0958a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1997,9 +1997,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/SKILL.md": {
-   "sha256": "0cbfe16745ae350611eaf76b5ac6e844cd1cdf5652b2a8e9edbd26b6d0da6d8d",
-   "line": 0.0444,
-   "shingle": 0.015,
+   "sha256": "7c808a5d34c24ea23b0ef4c8d2618d9cea23eea750964b7041e8b6d95eff41a9",
+   "line": 0.0426,
+   "shingle": 0.0144,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/evals/evals.json": {
@@ -2069,8 +2069,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-e2e-generator/SKILL.md": {
-   "sha256": "44bcb3e87cf4080953543cdf8cc02c1972c2acafff3cce4499de1e7be86c451e",
-   "line": 0.0051,
+   "sha256": "921143c2c131cf1f58cf51256b0415258a813a4a92feac9865f9bb64dd86c54b",
+   "line": 0.005,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2141,9 +2141,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-foundation/SKILL.md": {
-   "sha256": "c9c108d2f1fb348b86c5707df3e10613b00eaf107220d184edd404b496abae36",
-   "line": 0.0531,
-   "shingle": 0.018,
+   "sha256": "258633bec054e1d84180331b68949b4ea1f520e16f42787eb62554f63f18fbcf",
+   "line": 0.0504,
+   "shingle": 0.0171,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/qa-foundation/evals/evals.json": {
@@ -2177,9 +2177,9 @@
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/qa-planner/SKILL.md": {
-   "sha256": "d5343562bdd8c5a978f0ce74058e706e9b7f4eeef38634a42023fa57aa576346",
-   "line": 0.0846,
-   "shingle": 0.0078,
+   "sha256": "b6f5651eaed51ffc2530ac051dd9f5237d6098f4faca9b820dc0a8ccaa0c7940",
+   "line": 0.0809,
+   "shingle": 0.0075,
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/qa-planner/evals/evals.json": {
@@ -2525,7 +2525,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/test-heal/SKILL.md": {
-   "sha256": "ccb89fa806621c15f4b2886256b013b917cab4fb88f73a4d78880117fcea51fc",
+   "sha256": "2ba40b9f23bbbcd9aa6c9880713c3aef46740f1f24359e5702c66c7cd5b05aa5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2677,6 +2677,12 @@
   "tests/lib/check-presets.py": {
    "sha256": "e2f97ec15ec4f27766f75f6e808af2ef7f844803f38e6bdfd23d6e02875cf3a5",
    "line": 0.0138,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/lib/check-qe-catalog.py": {
+   "sha256": "0db58d2ae4bbc883c4b9aa450689c670bf6c29f2918e93776d12ea1e2841003b",
+   "line": 0.0652,
    "shingle": 0.0,
    "max_run": 0
   },

@@ -4,6 +4,26 @@ Notable changes to the `agentic-sdlc` plugin, as distributed here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); this plugin
 uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
+## [Unreleased]
+
+### Changed
+
+- **The five QA skills now name their methodology owner.** `qa-foundation`,
+  `qa-planner`, `qa-case-generator`, `qa-e2e-generator` and `test-heal` each
+  restated method the `agentic-qe` blueprint catalog also defines —
+  `qa-case-generator` against `design/test-cases.md`, `test-heal` against
+  `execute/flaky-debugging.md`, and so on — with no cross-reference in either
+  direction. Two sets of practices for one job is the divergence the no-forking
+  rule exists to prevent, and it is how two agents end up following different
+  guidance for the same task.
+
+  Each skill now cites the blueprint that owns its method and states precedence
+  plainly: the skill executes, the blueprint is the authority, and where they
+  disagree the blueprint wins and the skill is what gets corrected.
+  **No skill's runtime behaviour changes** — these are executable pipeline steps
+  and they still run exactly as before. The catalog is the source of truth for
+  *method*, not a replacement for the code that does the work.
+
 ## [0.4.1]
 
 ### Added

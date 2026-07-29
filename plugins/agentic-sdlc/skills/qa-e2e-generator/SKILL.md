@@ -27,6 +27,13 @@ is resumable.
 > Unit-test generation is out of scope. Do not auto-invoke from the main SDLC
 > orchestrator; a human (or a QA workflow) starts this explicitly.
 
+> **Methodology owner.** How automated scripts are structured and scoped is defined by the `test-scripts`
+> blueprint in `agentic-qe`
+> (`skills/qe-blueprints/references/catalog/build/test-scripts.md`). This skill
+> executes; the blueprint is the authority on method. If the two ever disagree,
+> the blueprint wins and this file is what gets corrected — one source of truth,
+> so two agents cannot follow two different sets of practices.
+
 ## Invocation
 
 ```
