@@ -6,6 +6,8 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-29
+
 ### Fixed
 
 - **Five pipeline-only skills now declare `discoverable: false`.**

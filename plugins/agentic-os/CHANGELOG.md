@@ -7,6 +7,8 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-07-29
+
 ### Fixed
 
 - **An installed skill an agent cannot route to is worse than an absent one.**
