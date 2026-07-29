@@ -39,7 +39,7 @@ terms (HITL, gate, preset…) are one-liners in the [Glossary](#glossary).
 |-----------|--------------------------|----------------------------------|
 | **Governed agents in my repo** — scoped writes, blind pre-commit review, role presets, stack agents | **agentic-os** + **agentic-sdlc** + [**superpowers**](https://github.com/anthropics/claude-plugins-official) (≥ **6.1.0** — enforced by `/agentic-init`; see `plugins/agentic-os/manifest/dependencies.json`) | Choose roles: `/agentic-init --presets ba-po` → `/agentic-doctor` |
 | **SDLC pipeline on top** — spec → plan → TDD → QA (`/sdlc-start`, `/sdlc-autonomous`, …) | Same three plugins (pipeline skills ship in **agentic-sdlc**) | After init: `/sdlc-start <task>` or run **sdlc-doctor** |
-| **QE AI blueprints** — scaffold a QE agent framework from a catalog, or set up evals for skills/agents | **agentic-qe** (standalone — no `/agentic-init` needed) | Ask e.g. *"scaffold the bug-reporting blueprint for Claude Code"* or *"set up evals for my skills"* |
+| **QE AI blueprints** — 28 QE methodology blueprints, scaffold an agent framework from one, or set up evals for skills/agents | **agentic-qe** (works alone — no `/agentic-init` needed; composes with the other two when they are installed) | Ask e.g. *"scaffold the bug-reporting blueprint for Claude Code"* or *"set up evals for my skills"* |
 
 **Five-minute flow (any editor):**
 

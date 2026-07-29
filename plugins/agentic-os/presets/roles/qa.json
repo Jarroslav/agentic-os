@@ -1,6 +1,6 @@
 {
   "name": "qa",
-  "description": "QA-first strict-HITL: dispatcher routing, test-case generation/automation/sync agents with real-ID and existing-coverage gates, failure triage with flaky protocol, adapter-driven work-item creation. Tests are recommend-only.",
+  "description": "QA-first strict-HITL: dispatcher routing, test-case generation/automation/sync agents with real-ID and existing-coverage gates, failure triage with flaky protocol, adapter-driven work-item creation. Tests are recommend-only. Methodology comes from the agentic-qe blueprint catalog (test-cases, flaky-debugging and the QA knowledge base), which the QA skills cite as the authority.",
   "templates": [
     "hooks/precommit-review-gate",
     "hooks/subagent-gate",

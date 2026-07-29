@@ -39,6 +39,7 @@
         { say: 'Plan QA coverage for the payments epic', get: 'Risk-ranked test plan', skill: 'qa-planner' },
         { say: 'Generate test cases for work item 1234', get: 'Cases with real IDs, checked against existing coverage', skill: 'test-case agents' },
         { say: 'Triage the failing login test', get: 'Flaky-or-real verdict via the flaky protocol', skill: 'test-failure-triage' },
+        { say: 'Scaffold a QE agent framework for regression triage', get: 'A ready-to-fill agent set from the matching QE blueprint', skill: 'qe-blueprints' },
         { say: 'Turn ticket 872 into requirements', get: 'Structured requirements + open questions', skill: 'requirements-intake' }
       ],
       skills: [
@@ -46,7 +47,8 @@
         { name: 'qa-planner', desc: 'Plan test coverage for an epic or feature' },
         { name: 'qa-gates', desc: 'Lint / type / test gates before hand-off' },
         { name: 'feature-verification', desc: 'Verify a built feature against requirements' },
-        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' }
+        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'qe-blueprints', desc: '28 QE methodology blueprints — the authority your QA skills cite' }
       ] },
     { id: 'ba-po', label: 'BA / Product Owner', longLabel: 'Business Analysts & POs', icon: 'ph-note-pencil', guided: true, sdlc: false,
       time: '~45–60 min', presets: 'ba-po + portfolio', hitl: 'gated-autonomous', orch: 'dispatcher',

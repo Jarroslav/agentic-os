@@ -9,6 +9,14 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- **QE is discoverable from the QA role.** The composition work is worth nothing
+  if a QA user never learns the catalog exists, which was the actual adoption
+  blocker. The `qa` role on the setup guide now lists `qe-blueprints` among its
+  skills and carries a phrase for invoking it, the `qa` preset description names
+  the catalog as where its methodology comes from, and the README's plugin table
+  no longer presents `agentic-qe` as a separate thing you would have to already
+  know about — it works alone *and* composes.
+
 - **`qe_blueprints` — a second cross-plugin composition field.** `agentic-qe`
   shipped as an island: no preset referenced it, it held no reference to the
   governance layer, and `agentic-sdlc` did not know it existed. A user
