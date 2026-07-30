@@ -33,10 +33,10 @@
     "screenshots": [],
     "defaultPrompt": [
       "Build the SDLC knowledge foundation for this repository",
-      "Draft a product story using the product-owner skill",
-      "Start SDLC for this task using the sdlc-start skill",
-      "Run SDLC autonomously on this task using the sdlc-autonomous skill",
-      "Create an MR for these changes using the mr-creator skill"
+      "Draft a product story using the story-author skill",
+      "Start SDLC for this task using the sdlc-guided skill",
+      "Run SDLC autonomously on this task using the sdlc-auto skill",
+      "Create an MR for these changes using the mr-submit skill"
     ]
   }
 }

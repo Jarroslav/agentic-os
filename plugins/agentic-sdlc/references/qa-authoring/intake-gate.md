@@ -61,7 +61,7 @@ Two documents are mandatory. Both live under `.agentic/guides/testing/`:
 | QA strategy | `.agentic/guides/testing/qa-strategy.md` |
 | QA health | `.agentic/guides/testing/qa-health.md` |
 
-Either one missing → halt and direct the user to run `qa-foundation`, which
+Either one missing → halt and direct the user to run `qa-baseline`, which
 builds these files. Do not attempt to synthesize them.
 
 ---
@@ -160,14 +160,14 @@ test_mgmt_adapter = { system: string, adapter_name: string, sync_command: string
 | Condition | Outcome | How the user clears it |
 | --- | --- | --- |
 | Prior run matches `$TICKET_ID`, user picks Cancel | exit | prints `Operation cancelled by user` |
-| `.agentic/guides/testing/qa-strategy.md` absent | halt | run `qa-foundation` |
-| `.agentic/guides/testing/qa-health.md` absent | halt | run `qa-foundation` |
+| `.agentic/guides/testing/qa-strategy.md` absent | halt | run `qa-baseline` |
+| `.agentic/guides/testing/qa-health.md` absent | halt | run `qa-baseline` |
 | `## Conventions` / `## Test Style` absent or empty in qa-strategy.md | halt | add a `## Conventions` section (test format, manual-test sections, API-test sections, placeholder format) |
 | `## Work Item Adapter` missing or `**Status**: not configured` | halt | add the section, or run `/repo-guides` |
 | `## Test Management Adapter` missing or not configured | continue | none — `test_mgmt_adapter = null`, sync skipped downstream |
 
 > Recovery is always "fix the cause, re-run from here." Missing docs → run
-> `qa-foundation`. Missing convention section or adapter → edit the guide files.
+> `qa-baseline`. Missing convention section or adapter → edit the guide files.
 > The gate is idempotent: re-running after a fix re-validates from the top.
 
 ---

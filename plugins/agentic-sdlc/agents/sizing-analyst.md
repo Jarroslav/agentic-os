@@ -6,7 +6,7 @@ description: >
   directly vs. brainstorm first vs. split before planning). It never designs or writes code —
   it reads what earlier phases already learned about the codebase, scores independently against
   a calibrated rubric, and writes its verdict to disk for the caller to pick up. Use it from
-  complexity-scoring, or directly from sdlc-task / a lightweight pipeline variant, whenever their
+  effort-sizing, or directly from sdlc-brief / a lightweight pipeline variant, whenever their
   own fast-path routing can't decide with confidence.
 
   Not for: tasks the orchestrator's cheap heuristics already sized confidently — dispatching
@@ -17,7 +17,7 @@ description: >
 
 
   <example>
-  Context: complexity-scoring's cheap heuristics can't agree on whether a request is a quick fix
+  Context: effort-sizing's cheap heuristics can't agree on whether a request is a quick fix
   or needs upfront design discussion.
   user: "Add a retry policy to the outbound webhook sender, but also make it configurable per
   tenant and backward compatible with the existing at-least-once contract."
@@ -32,7 +32,7 @@ description: >
 
 
   <example>
-  Context: sdlc-task is about to route a freshly-intake requirement and the task description reads
+  Context: sdlc-brief is about to route a freshly-intake requirement and the task description reads
   as "similar to the billing export job, but different."
   user: "Build something like the nightly billing export, but for usage metering instead."
   assistant: "That framing is a known ambiguity trigger, so I'll call the sizing-analyst agent to

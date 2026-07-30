@@ -5,7 +5,7 @@
 # completed Skill tool call, looks at the run-state artifacts other skills in
 # this plugin leave on disk (docs/superpowers/tasks/*/.state.json,
 # docs/superpowers/runs/*/meta.json, per-stage markdown files, decisions.jsonl
-# gate ledgers), and — if an sdlc-task, sdlc-light, or sdlc-pipeline run looks
+# gate ledgers), and — if an sdlc-brief, sdlc-direct, or sdlc-engine run looks
 # active — prints one advisory line naming the current stage and what is
 # still outstanding.
 #
@@ -187,7 +187,7 @@ decision_on_line() {
 
 # gate_approved GATE_ID FILE -> true iff FILE exists, at least one line
 # mentions GATE_ID, and at least one such line also contains "approve".
-# Coarse substring match by design (mirrors decision-router's own ledger
+# Coarse substring match by design (mirrors gate-arbiter's own ledger
 # writer, which never emits "approve" as a substring of a non-approval verdict).
 gate_approved() {
   local gate_id=$1 file=$2
@@ -225,7 +225,7 @@ review_resolved() {
 # Stage sequences
 # ---------------------------------------------------------------------------
 
-# Branch A: sdlc-task flow, 11 stages, first unmet condition wins.
+# Branch A: sdlc-brief flow, 11 stages, first unmet condition wins.
 run_task_flow() {
   local dir=$1 slug=$2 decisions=$3
 
@@ -268,7 +268,7 @@ run_task_flow() {
   fi
 }
 
-# Branch B: sdlc-light flow, 10 stages; no spec.md step; the qa-checklist and
+# Branch B: sdlc-direct flow, 10 stages; no spec.md step; the qa-checklist and
 # qa-test-review steps only apply when a QA foundation file is present.
 run_light_flow() {
   local dir=$1 slug=$2 decisions=$3
@@ -276,16 +276,16 @@ run_light_flow() {
   [[ -f ".agentic/guides/testing/qa-strategy.md" ]] && qa_foundation=true
 
   [[ -f "$dir/technical-analysis.md" ]] || \
-    emit_nudge "sdlc-light Stage 1 for '$slug' — technical-analysis.md is missing."
+    emit_nudge "sdlc-direct Stage 1 for '$slug' — technical-analysis.md is missing."
 
   [[ -f "$dir/plan.md" ]] || \
-    emit_nudge "sdlc-light Stage 2 for '$slug' — clarification/plan.md has not been written yet."
+    emit_nudge "sdlc-direct Stage 2 for '$slug' — clarification/plan.md has not been written yet."
   gate_approved "plan.approved" "$decisions" || \
-    emit_nudge "sdlc-light Stage 2 for '$slug' — plan.md exists but the plan.approved gate is still pending."
+    emit_nudge "sdlc-direct Stage 2 for '$slug' — plan.md exists but the plan.approved gate is still pending."
 
   if [[ "$qa_foundation" == true ]]; then
     [[ -f "$dir/qa-checklist.md" ]] || \
-      emit_nudge "sdlc-light Stage 3 for '$slug' — qa-checklist.md has not been produced yet."
+      emit_nudge "sdlc-direct Stage 3 for '$slug' — qa-checklist.md has not been produced yet."
   fi
 
   local impl_settled=false
@@ -297,31 +297,31 @@ run_light_flow() {
     impl_settled=true
   fi
   [[ "$impl_settled" == true ]] || \
-    emit_nudge "sdlc-light Stage 4 for '$slug' — implementation is still in progress."
+    emit_nudge "sdlc-direct Stage 4 for '$slug' — implementation is still in progress."
 
   if [[ "$qa_foundation" == true ]]; then
     [[ -f "$dir/qa-test-review.md" ]] || \
-      emit_nudge "sdlc-light Stage 5 for '$slug' — qa-test-review.md is still pending."
+      emit_nudge "sdlc-direct Stage 5 for '$slug' — qa-test-review.md is still pending."
   fi
 
   review_resolved "$decisions" || \
-    emit_nudge "sdlc-light Stage 6 for '$slug' — code review is not resolved yet."
+    emit_nudge "sdlc-direct Stage 6 for '$slug' — code review is not resolved yet."
 
   [[ -f "$dir/qa-report.md" ]] || \
-    emit_nudge "sdlc-light Stage 7 for '$slug' — qa-report.md has not been generated yet."
+    emit_nudge "sdlc-direct Stage 7 for '$slug' — qa-report.md has not been generated yet."
 
   local phase
   phase=$(extract_str "$(read_json_file "$dir/.state.json")" "phase")
   if [[ "$phase" != "maintenance" ]]; then
     if [[ "$qa_foundation" == true ]]; then
-      emit_nudge "sdlc-light Stage 9 for '$slug' — handoff to maintenance has not landed."
+      emit_nudge "sdlc-direct Stage 9 for '$slug' — handoff to maintenance has not landed."
     else
-      emit_nudge "sdlc-light Stage 8 for '$slug' — handoff to maintenance has not landed."
+      emit_nudge "sdlc-direct Stage 8 for '$slug' — handoff to maintenance has not landed."
     fi
   fi
 }
 
-# Branch C: sdlc-pipeline (heavy run), phases 0-11. Phases 4 and 5 also weigh
+# Branch C: sdlc-engine (heavy run), phases 0-11. Phases 4 and 5 also weigh
 # an artifact + approval gate; every other phase is a fixed advisory line.
 run_pipeline_phase() {
   local dir=$1 phase=$2
@@ -329,7 +329,7 @@ run_pipeline_phase() {
 
   case "$phase" in
     0)
-      emit_nudge "Stage 0 (requirements-intake) for run '$dir' — normalizing input into requirements.md before advancing to Stage 1."
+      emit_nudge "Stage 0 (story-intake) for run '$dir' — normalizing input into requirements.md before advancing to Stage 1."
       ;;
     1)
       emit_nudge "Stage 1 (codebase-scout) for run '$dir' — mapping the affected surface before advancing to Stage 2."
@@ -353,22 +353,22 @@ run_pipeline_phase() {
       emit_nudge "Stage 5 for run '$dir' — planning is still in progress."
       ;;
     6)
-      emit_nudge "Stage 6 (qa-planner --checklist) for run '$dir' — drafting qa-checklist.md before advancing to Stage 7."
+      emit_nudge "Stage 6 (qa-scoping --checklist) for run '$dir' — drafting qa-checklist.md before advancing to Stage 7."
       ;;
     7)
       emit_nudge "Stage 7 (test-driven-development) for run '$dir' — implementation under way before advancing to Stage 8."
       ;;
     8)
-      emit_nudge "Stage 8 (qa-planner --review-tests) for run '$dir' — reviewing written tests before advancing to Stage 9."
+      emit_nudge "Stage 8 (qa-scoping --review-tests) for run '$dir' — reviewing written tests before advancing to Stage 9."
       ;;
     9)
       emit_nudge "Stage 9 (code-review-orchestrator) for run '$dir' — full-diff code review gate before advancing to Stage 10."
       ;;
     10)
-      emit_nudge "Stage 10 (qa-gates / feature-verification) for run '$dir' — gate checks and functional verification before advancing to Stage 11."
+      emit_nudge "Stage 10 (gate-runner / acceptance-check) for run '$dir' — gate checks and functional verification before advancing to Stage 11."
       ;;
     11)
-      emit_nudge "Stage 11 (qa-planner --update, guide-sync) for run '$dir' — closing out qa-health.md and repo guides."
+      emit_nudge "Stage 11 (qa-scoping --update, guide-sync) for run '$dir' — closing out qa-health.md and repo guides."
       ;;
     *)
       : # unrecognized or missing phase — no nudge
@@ -395,10 +395,10 @@ case "$SKILL_NAME" in
   *test-driven-development*) IMPL_JUST_COMPLETED=true ;;
 esac
 case "$SKILL_NAME" in
-  *qa-planner*) QA_REVIEW_STARTING=true ;;
+  *qa-scoping*) QA_REVIEW_STARTING=true ;;
 esac
 case "$SKILL_NAME" in
-  *decision-router*|*code-review-orchestrator*) REVIEW_GATE_STARTING=true ;;
+  *gate-arbiter*|*code-review-orchestrator*) REVIEW_GATE_STARTING=true ;;
 esac
 
 TASK_STATE_FILE=""
@@ -419,11 +419,11 @@ if [[ -n "$TASK_STATE_FILE" ]]; then
   [[ -z "$SLUG" ]] && SLUG=$(basename "$TASK_DIR")
 
   FLOW=$(extract_str "$TASK_JSON" "flow")
-  [[ -z "$FLOW" ]] && FLOW="sdlc-task"
+  [[ -z "$FLOW" ]] && FLOW="sdlc-brief"
 
   DECISIONS_FILE="$TASK_DIR/decisions.jsonl"
 
-  if [[ "$FLOW" == "sdlc-light" ]]; then
+  if [[ "$FLOW" == "sdlc-direct" ]]; then
     run_light_flow "$TASK_DIR" "$SLUG" "$DECISIONS_FILE"
   else
     run_task_flow "$TASK_DIR" "$SLUG" "$DECISIONS_FILE"

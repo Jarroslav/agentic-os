@@ -7,9 +7,9 @@ description: >-
   tests for PROJ-123", "qa-e2e-generator PROJ-123", "write end-to-end tests
   for this ticket", "automate e2e for <ticket>", "build a Playwright suite
   from this story". Standalone orchestrator — NOT auto-invoked by
-  sdlc-pipeline. Requires a prior QA foundation (qa-strategy.md) and a
+  sdlc-engine. Requires a prior QA foundation (qa-strategy.md) and a
   configured ticket adapter (project.md). Top-of-pyramid only: no unit tests.
-  Not for: manual/functional case writing (qa-case-generator), unit tests, or auto-invocation by sdlc-pipeline.
+  Not for: manual/functional case writing (qa-case-generator), unit tests, or auto-invocation by sdlc-engine.
 version: 0.1.0
 license: Apache-2.0
 allowed-tools: Read, Write, Bash, Glob, Grep, Agent, AskUserQuestion, TaskCreate, TaskUpdate, Skill
@@ -183,7 +183,7 @@ Gate checks — halt on any failure:
 
 | Condition | Halt message |
 |---|---|
-| `qa-strategy.md` missing | `ERROR: qa-strategy.md not found — run qa-foundation` |
+| `qa-strategy.md` missing | `ERROR: qa-strategy.md not found — run qa-baseline` |
 | `project.md` missing | `ERROR: project.md not found — run /repo-guides` |
 | No `## Work Item Adapter` section, or `**Status**:` ≠ `configured` | `ERROR: no ticket adapter configured in project.md's ## Work Item Adapter section — run /repo-guides` |
 
@@ -278,7 +278,7 @@ The external side-effect. Only after finalization:
 1. Roll up metadata:
    `${CLAUDE_PLUGIN_ROOT}/skills/qa-e2e-generator/scripts/qa-assemble-meta.sh "$RUN_DIR/e2e"`
 2. Dispatch `mr`, which composes and opens the merge request through the
-   adapter (handing off to the `mr-creator` skill — no source-control platform
+   adapter (handing off to the `mr-submit` skill — no source-control platform
    hardcoded).
 3. Append the `handoff` event.
 
@@ -308,7 +308,7 @@ The external side-effect. Only after finalization:
 ## Non-goals
 
 - No unit-test generation.
-- No auto-invocation from `sdlc-pipeline`.
+- No auto-invocation from `sdlc-engine`.
 - No destructive git actions without explicit confirmation.
 - No whole-codebase scanning without approval.
 - No placeholder values in `env-config.json`.

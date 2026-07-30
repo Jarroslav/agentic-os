@@ -77,7 +77,7 @@ agent contract; the `PreToolUse(Bash)` review-gate hook
 → installed as `.githooks/pre-commit`, so the gate holds even outside the
 harness that spawned the review.
 
-## 3. The decision-router — autonomy as a resolution strategy, not a toggle
+## 3. The gate-arbiter — autonomy as a resolution strategy, not a toggle
 
 **What**: every judgment gate (spec approval, code review, QA drift, feature
 verification) resolves through the same four-step state machine: HITL mode
@@ -101,9 +101,9 @@ merge went through because a human approved it, a deterministic check passed,
 or a subagent guessed.
 
 **Implementation**:
-[`skills/decision-router/SKILL.md`](../plugins/agentic-sdlc/skills/decision-router/SKILL.md);
+[`skills/gate-arbiter/SKILL.md`](../plugins/agentic-sdlc/skills/gate-arbiter/SKILL.md);
 the state machine is diagrammed in
-[`plugins/agentic-sdlc/README.md`](../plugins/agentic-sdlc/README.md#decision-router-autonomous-gates).
+[`plugins/agentic-sdlc/README.md`](../plugins/agentic-sdlc/README.md#gate-arbiter-autonomous-gates).
 
 ## 4. The HITL escalation ladder
 

@@ -143,7 +143,7 @@ rows later if `mr-watch` or an external integration begins emitting matching eve
 
 - **Not an adapter declaration.** The adapter lives in `project.md` under `## Work Item Adapter`
   (MR/PR skills read `## Review Adapter`). This file is purely the event to state mapping.
-- **Transitions only, never creation.** Tickets are created by `product-owner` through the
+- **Transitions only, never creation.** Tickets are created by `story-author` through the
   `prepare_story` lifecycle intent. The hook moves existing tickets and nothing more.
 - **Base pipeline stops at review.** Post-merge, QA, and release states are out of scope
   unless matching events are emitted.
@@ -156,5 +156,5 @@ rows later if `mr-watch` or an external integration begins emitting matching eve
   it distinct from `integration/external-integrations.md`.
 - `repo-audit-guides` — surveys repo docs and assistant setup before knowledge planting.
 - `BUNDLE.md` — documents the `ticket-sync` hook that consumes this mapping.
-- `product-owner` (`prepare_story`) owns ticket creation; `mr-watch` is a likely future
+- `story-author` (`prepare_story`) owns ticket creation; `mr-watch` is a likely future
   emitter of downstream transition events.

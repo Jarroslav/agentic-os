@@ -2,7 +2,7 @@
 
 This project's QA knowledge foundation has not been built yet.
 
-Run the `agentic-sdlc:qa-foundation` skill (`/sdlc:qa-init`) to generate it: it
+Run the `agentic-sdlc:qa-baseline` skill (`/sdlc:qa-init`) to generate it: it
 discovers test files, coverage reports, and CI gates in this repo, asks about
 external test repos and test-case management, and replaces this stub with a real
 `qa-strategy.md` (plus `qa-health.md`) under `.agentic/guides/testing/`.

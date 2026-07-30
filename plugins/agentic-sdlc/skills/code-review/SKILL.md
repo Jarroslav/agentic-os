@@ -8,7 +8,7 @@ description: >-
   driving the review. Resolves a review scope, materializes a diff, hands it to
   the review orchestrator, and renders the machine verdict. Read-only (R0):
   reports findings, never edits source, never applies fixes, never commits.
-  Not for: pipeline-managed review gates (code-review-orchestrator via decision-router), editing code, or applying the fixes it recommends.
+  Not for: pipeline-managed review gates (code-review-orchestrator via gate-arbiter), editing code, or applying the fixes it recommends.
 
 ---
 
@@ -34,13 +34,13 @@ You never modify tracked source and never apply a fix the orchestrator recommend
 
 ## Relationship to the pipeline
 
-Managed SDLC entry flows (`sdlc-start`, `sdlc-autonomous`, `sdlc-task`,
-`sdlc-pipeline`) route the review gate through `decision-router`, which records the
+Managed SDLC entry flows (`sdlc-guided`, `sdlc-auto`, `sdlc-brief`,
+`sdlc-engine`) route the review gate through `gate-arbiter`, which records the
 verdict to a gate ledger and may escalate. This skill is the standalone
 front-door: it calls `code-review-orchestrator` **directly**, bypassing
-`decision-router` entirely — no gate ledger, no escalation.
+`gate-arbiter` entirely — no gate ledger, no escalation.
 
-Two shared decision-router gate ids exist for this review; keep both verbatim:
+Two shared gate-arbiter gate ids exist for this review; keep both verbatim:
 
 | Gate id | Round | Used by this skill? |
 |---|---|---|
@@ -236,5 +236,5 @@ findings, apply fixes, edit source, or commit review artifacts.
 - PR/MR review by number (`gh pr diff <n>`) — a future cascade; git-native only for v1.
 - Applying fixes or present-and-act — this skill is present-only.
 - Editing source, patching findings, or auto-committing review artifacts.
-- Routing through `decision-router` — only the SDLC entry flows do that.
+- Routing through `gate-arbiter` — only the SDLC entry flows do that.
 - Modifying `code-review-orchestrator` or inventing a competing review method.

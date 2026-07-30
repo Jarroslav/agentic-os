@@ -1,7 +1,7 @@
 <!--
   TEMPLATE — version-control standards scaffold.
   Instantiate to: .agentic/guides/standards/git-workflow.md
-  Consumed by:     mr-creator skill (commit + branch conventions; ticket enforcement)
+  Consumed by:     mr-submit skill (commit + branch conventions; ticket enforcement)
   Companion:       .agentic/guides/project.md (MR/PR adapter — do not duplicate it here)
 
   FILL-IN CONTRACT (obey while generating; delete these comments from the output):
@@ -48,7 +48,7 @@ Four steps per change:
 
 ## Commit messages
 
-Machine-parsed format (mr-creator depends on this shape):
+Machine-parsed format (mr-submit depends on this shape):
 
 ```
 [type]([scope]): [subject]
@@ -73,7 +73,7 @@ Examples:
 | Reference the issue/ticket               | Use past tense                     |
 | Give enough context in the body          | Leave the reason unstated          |
 
-> Ticket references: the mr-creator skill enforces the ticket-ID format at commit time.
+> Ticket references: the mr-submit skill enforces the ticket-ID format at commit time.
 > Document the project's expected reference style in `[Details]`.
 
 ## Pull requests

@@ -194,7 +194,7 @@ if _catalog.is_dir():
 #      which is the failure (1b)'s own comment records for hooks/migration-notice.
 #
 #      The predicate is "allowed to be unclaimed", NOT "forbidden from being
-#      claimed": qa-planner declares itself internal AND is claimed by qa, which
+#      claimed": qa-scoping declares itself internal AND is claimed by qa, which
 #      is fine. An exclusion rule would fail it.
 #
 #      Keying on `discoverable: false` (not on the "Not for: direct user

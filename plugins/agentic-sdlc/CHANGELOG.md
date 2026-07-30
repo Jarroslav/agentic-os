@@ -6,6 +6,47 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING: skills are named for their role in the pipeline.** Two naming
+  defects drove this. `sdlc-task` and `sdlc-light` are both lightweight
+  human-in-the-loop flows, and each had to explicitly disclaim the other in its
+  own `description:` — the frontmatter was working around the names. And six
+  skills marked `discoverable: false` carried names that read like public entry
+  points, so the internal/public boundary existed only in frontmatter.
+
+  The five entry points now form a ceremony ladder over one shared engine, and
+  the rest group into families that pair with the agents already named that way:
+
+  | Was | Is | |
+  |---|---|---|
+  | `sdlc-light` | `sdlc-direct` | straight to plan, no spec |
+  | `sdlc-task` | `sdlc-brief` | writes a brief spec |
+  | `sdlc-start` | `sdlc-guided` | full pipeline, human-guided gates |
+  | `sdlc-autonomous` | `sdlc-auto` | full pipeline, autonomous gates |
+  | `sdlc-pipeline` | `sdlc-engine` | the engine the four delegate to |
+  | `sdlc-status` | `sdlc-runs` | inspects and resumes runs |
+  | `sdlc-doctor` | `sdlc-preflight` | prerequisite check before a run |
+  | `requirements-intake` | `story-intake` | pairs with the `story-proxy` agent |
+  | `product-owner` | `story-author` | pairs with `story-intake` |
+  | `mr-creator` | `mr-submit` | pairs with `mr-watch` |
+  | `decision-router` | `gate-arbiter` | pairs with `gate-runner` |
+  | `qa-gates` | `gate-runner` | pairs with `gate-arbiter` |
+  | `complexity-scoring` | `effort-sizing` | pairs with the `sizing-analyst` agent |
+  | `feature-verification` | `acceptance-check` | checks against acceptance criteria |
+  | `qa-planner` | `qa-scoping` | pairs with `qa-baseline` |
+  | `qa-foundation` | `qa-baseline` | pairs with `qa-scoping` |
+
+  Literals derived from a skill name moved with it: the `sdlc-stage-guard`
+  runtime globs, the `.state.json` `flow` values **and the flow default**, the
+  `gate-runner.retry` / `acceptance-check.retry` loop ids, ledger `actor`
+  values, and `feature-verification-plan.json` → `acceptance-check-plan.json`.
+
+  Literals that name a *concept* rather than a skill are deliberately unchanged:
+  gate ids (`spec.approved`, `feature.verification`, …), the `mode` enum whose
+  `task` member is a mode and not `sdlc-task`, `verification-evidence.json`,
+  and every `.agentic/` path that lands in a user's repository.
+
 ### Fixed
 
 - **The adapter contract disagreed with its own implementation, in both

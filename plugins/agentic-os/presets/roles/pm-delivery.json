@@ -31,10 +31,10 @@
   "default_hitl": "gated-autonomous",
   "default_orchestration": "dispatcher",
   "sdlc_skills": [
-    "mr-creator",
+    "mr-submit",
     "mr-watch",
-    "sdlc-status",
-    "requirements-intake",
+    "sdlc-runs",
+    "story-intake",
     "release-manager"
   ],
   "qe_blueprints": [

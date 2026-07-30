@@ -94,7 +94,7 @@ Load `references/plan-and-generate.md` for orchestration and `references/writing
 | `references/templates/guides/standards/git-workflow.md.template` | `.agentic/guides/standards/git-workflow.md` |
 | `references/templates/guides/testing/testing-patterns.md.template` | `.agentic/guides/testing/testing-patterns.md` |
 
-> `testing/` is seeded here but owned going forward by **qa-foundation** — do not fight it for that subtree after handoff. `integration/ticket-flow.md` (Step D, below) is read by the ticket-sync hook and is separate from `integration/external-integrations.md`.
+> `testing/` is seeded here but owned going forward by **qa-baseline** — do not fight it for that subtree after handoff. `integration/ticket-flow.md` (Step D, below) is read by the ticket-sync hook and is separate from `integration/external-integrations.md`.
 
 **Steps A–D — schema-strict config files (same generation phase):**
 
@@ -155,13 +155,13 @@ Write `.agentic/runs/<branch>.json` (R1, local-only state; never present it as a
   "status": "completed",
   "outcome": "...",
   "artifacts": ["..."],
-  "next_step": "sdlc-start or product-owner"
+  "next_step": "sdlc-guided or story-author"
 }
 ```
 
 ### Phase 7 — handoff
 
-Offer the next step (yes/no/other). Point the user at `sdlc-start` or `product-owner`.
+Offer the next step (yes/no/other). Point the user at `sdlc-guided` or `story-author`.
 
 ## Outputs
 
@@ -192,8 +192,8 @@ Offer the next step (yes/no/other). Point the user at `sdlc-start` or `product-o
 ## Cross-references
 
 - **Consumes:** repo-audit-guides audit report (`# Repo Knowledge Audit`).
-- **Feeds:** `sdlc-start` and `product-owner` (handoff via `next_step`); `requirements-intake` and `product-owner` read `## Work Item Adapter`; MR/PR skills read `## Review Adapter`; the ticket-sync Stop/SubagentStop hook reads `integration/ticket-flow.md`; every agentic-sdlc skill reads the guide tree.
-- **Ongoing sync:** the **guide-sync** agent keeps the guide tree current on post-merge runs — this skill is one-time setup, harvester is continuous upkeep. `testing/` upkeep belongs to **qa-foundation**.
+- **Feeds:** `sdlc-guided` and `story-author` (handoff via `next_step`); `story-intake` and `story-author` read `## Work Item Adapter`; MR/PR skills read `## Review Adapter`; the ticket-sync Stop/SubagentStop hook reads `integration/ticket-flow.md`; every agentic-sdlc skill reads the guide tree.
+- **Ongoing sync:** the **guide-sync** agent keeps the guide tree current on post-merge runs — this skill is one-time setup, harvester is continuous upkeep. `testing/` upkeep belongs to **qa-baseline**.
 - **Kept separate:** the agentic-os `/agentic-init` skill at `plugins/agentic-os/skills/agentic-init/` is a sibling — do NOT modify it or its templates.
 
 ## Non-goals

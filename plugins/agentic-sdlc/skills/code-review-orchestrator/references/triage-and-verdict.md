@@ -8,7 +8,7 @@ same inputs, same verdict.
 > Scope note. This reference owns the fold logic only. The verdict JSON shape
 > lives in `verdict-schema.md`; diff handling, round sequencing, and safe-fail
 > live in `SKILL.md`; human escalation of `low` / `decision_needed` verdicts
-> lives in `decision-router`. Do not re-derive those rules here.
+> lives in `gate-arbiter`. Do not re-derive those rules here.
 
 ## Inputs
 
@@ -205,7 +205,7 @@ Set `decision` to `request-changes` if **any** condition holds; otherwise
 
 > `low` confidence is the only mechanism that escalates ambiguity — there is no
 > ambiguity `risk_flag`. Any `decision_needed` must force `low` so the
-> `decision-router` routes the verdict to a human.
+> `gate-arbiter` routes the verdict to a human.
 
 ## Verdict fields, at a glance
 
@@ -219,5 +219,5 @@ confidence `high | medium | low`. Authoritative shapes: `verdict-schema.md`.
 - Does not define lens internals or how each lens produces its raw output.
 - Does not define the verdict JSON schema (see `verdict-schema.md`).
 - Does not cover diff handling, round sequencing, or safe-fail (see `SKILL.md`).
-- Does not define human-escalation routing (see `decision-router`).
+- Does not define human-escalation routing (see `gate-arbiter`).
 - Produces no `minor` severity and emits no non-blocking finding in `findings[]`.

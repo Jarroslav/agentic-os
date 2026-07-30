@@ -40,7 +40,7 @@ Every agent ends with `## Summary / ## Why / ## Blocking / ## Non-blocking /
 - **Non-empty `## Escalate to human`** ⇒ present each decision to the user
   via AskUserQuestion with the listed options, and wait. You never pick an
   option yourself. In autonomous runs, judgment gates go through
-  agentic-sdlc's decision-router; anything flagged {{ESCALATE_ON}} always
+  agentic-sdlc's gate-arbiter; anything flagged {{ESCALATE_ON}} always
   reaches the human.
 - Missing/malformed contract ⇒ treat as Blocking (the hook already blocks it).
 

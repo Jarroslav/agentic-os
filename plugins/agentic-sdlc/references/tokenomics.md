@@ -19,17 +19,17 @@ costs on the others.
 
 | Mechanism | Where | Factor bounded | How |
 |---|---|---|---|
-| Heuristics-first complexity routing | `sdlc-pipeline` Phase 3 | Tasks, ModelPrice | Cheap signals resolve routing without dispatching the `sizing-analyst` subagent when the answer is obvious. |
-| Cheapest-first gate resolution | `decision-router` | Attempts, ModelPrice | Deterministic checks and fast-paths run before any stand-in subagent; a model is the last resort, never the first. |
-| Loop-cap registry (`meta.json.loops`) | `sdlc-pipeline` § Loop accounting | **Attempts** | Every retry/fix-up/revision loop has a named ID, a counter in run state, and a hard cap; at cap the run halts with a resume command instead of silently paying for another round. Caps: `gate-catalog.md` § Loop caps. |
-| Deterministic evidence validation | `sdlc-pipeline` Phase 7 | Attempts, ModelPrice | Malformed or missing task evidence produces an exact fix instruction — never a model-judged review round. |
-| Deferred code review | `sdlc-pipeline` Phase 9 | AgentTurns, ModelPrice | Model review runs exactly twice (review + findings-only check) against the *complete* diff, not once per task. |
-| ArtifactRefs summaries | `sdlc-pipeline` § Artifact summaries | **ContextSize** | Gates receive ~2 KB extracts + sha-256 signatures (~6 KB/gate budget), never full artifact bodies. |
-| `memory_brief` single load | `sdlc-pipeline` Phase 0 | ContextSize, AgentTurns | Memory is read once (~6 KB cap) and propagated; never re-read mid-run. |
-| Run isolation / no cross-run adoption | `sdlc-pipeline` § Constraints | Attempts | Stale sibling artifacts can't masquerade as phase output — the class of "implemented against the wrong spec" rework is structurally excluded. |
+| Heuristics-first complexity routing | `sdlc-engine` Phase 3 | Tasks, ModelPrice | Cheap signals resolve routing without dispatching the `sizing-analyst` subagent when the answer is obvious. |
+| Cheapest-first gate resolution | `gate-arbiter` | Attempts, ModelPrice | Deterministic checks and fast-paths run before any stand-in subagent; a model is the last resort, never the first. |
+| Loop-cap registry (`meta.json.loops`) | `sdlc-engine` § Loop accounting | **Attempts** | Every retry/fix-up/revision loop has a named ID, a counter in run state, and a hard cap; at cap the run halts with a resume command instead of silently paying for another round. Caps: `gate-catalog.md` § Loop caps. |
+| Deterministic evidence validation | `sdlc-engine` Phase 7 | Attempts, ModelPrice | Malformed or missing task evidence produces an exact fix instruction — never a model-judged review round. |
+| Deferred code review | `sdlc-engine` Phase 9 | AgentTurns, ModelPrice | Model review runs exactly twice (review + findings-only check) against the *complete* diff, not once per task. |
+| ArtifactRefs summaries | `sdlc-engine` § Artifact summaries | **ContextSize** | Gates receive ~2 KB extracts + sha-256 signatures (~6 KB/gate budget), never full artifact bodies. |
+| `memory_brief` single load | `sdlc-engine` Phase 0 | ContextSize, AgentTurns | Memory is read once (~6 KB cap) and propagated; never re-read mid-run. |
+| Run isolation / no cross-run adoption | `sdlc-engine` § Constraints | Attempts | Stale sibling artifacts can't masquerade as phase output — the class of "implemented against the wrong spec" rework is structurally excluded. |
 | Fresh-context task subagents | Phase 7 via `superpowers:subagent-driven-development` | ContextSize | Each implementation task starts from a compact plan slice, not the orchestrator's accumulated history. |
 | Parallelism-safety rules | `references/parallelism-safety.md` | **Parallelism** | Parallel dispatch is a bounded, rule-checked decision, not an orchestrator default. |
-| Mode routing (hitl / autonomous / task) | `references/mode-routing.md` | Tasks | `sdlc-task` gives user-classified small work a short pipeline instead of the full 13 phases. |
+| Mode routing (hitl / autonomous / task) | `references/mode-routing.md` | Tasks | `sdlc-brief` gives user-classified small work a short pipeline instead of the full 13 phases. |
 | Model-tier routing (`economy`/`standard`/`premium`) | `references/model-routing.md` | **ModelPrice** | Dispatches resolve a tier mapped in host config; every default is `inherit`, and no model ID ever ships in the plugin. |
 
 ## What deliberately does NOT exist

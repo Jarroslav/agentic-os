@@ -17,10 +17,10 @@
       "test -f .agents/plugins/marketplace.json",
       "test -f plugins/agentic-sdlc/.codex-plugin/plugin.json",
       "test -f plugins/agentic-sdlc/skills/repo-guides/SKILL.md",
-      "test -f plugins/agentic-sdlc/skills/sdlc-start/SKILL.md",
-      "test -f plugins/agentic-sdlc/skills/sdlc-autonomous/SKILL.md",
-      "test -f plugins/agentic-sdlc/skills/sdlc-status/SKILL.md",
-      "test -f plugins/agentic-sdlc/skills/sdlc-doctor/SKILL.md",
+      "test -f plugins/agentic-sdlc/skills/sdlc-guided/SKILL.md",
+      "test -f plugins/agentic-sdlc/skills/sdlc-auto/SKILL.md",
+      "test -f plugins/agentic-sdlc/skills/sdlc-runs/SKILL.md",
+      "test -f plugins/agentic-sdlc/skills/sdlc-preflight/SKILL.md",
       "test ! -d plugins/agentic-sdlc/commands"
     ]
   },
@@ -29,7 +29,7 @@
       "id": "plugin-install-smoke",
       "title": "The plugin lands and its entry points are reachable",
       "purpose": "Show that agentic-sdlc provisions into a throwaway workspace and that its skills can be found, while starting no pipeline work at all.",
-      "userInput": "This workspace just had the agentic-sdlc plugin provisioned into it from a local marketplace. Have a look at what arrived. Tell me whether the plugin is reachable, whether the repo-guides skill is there, and whether the four run controls -- sdlc-start, sdlc-autonomous, sdlc-status, sdlc-doctor -- are present. I also want to know they are skills, not slash commands. Do not start an SDLC run of any kind; I am only asking you to look.",
+      "userInput": "This workspace just had the agentic-sdlc plugin provisioned into it from a local marketplace. Have a look at what arrived. Tell me whether the plugin is reachable, whether the repo-guides skill is there, and whether the four run controls -- sdlc-guided, sdlc-auto, sdlc-runs, sdlc-preflight -- are present. I also want to know they are skills, not slash commands. Do not start an SDLC run of any kind; I am only asking you to look.",
       "successChecklist": [
         "Says the plugin is installed, and can say how it got there.",
         "Finds the repo-guides skill inside the plugin.",

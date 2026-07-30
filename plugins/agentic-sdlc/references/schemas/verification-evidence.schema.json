@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "feature-verification evidence (verification-evidence.json / evidence/verification/<feature-id>.json)",
+  "title": "acceptance-check evidence (verification-evidence.json / evidence/verification/<feature-id>.json)",
   "type": "object",
   "required": [
     "schema",

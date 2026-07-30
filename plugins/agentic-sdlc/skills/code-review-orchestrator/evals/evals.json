@@ -52,7 +52,7 @@
     {
       "id": 4,
       "prompt": "Resolve gate_id=code-review.final for a diff with no story or spec artifact attached at all. The blind and edge-case lenses find nothing blocking. Produce the verdict.",
-      "expected_output": "business_review stays empty because there is nothing to audit, the acceptance lens is not dispatched, confidence is low so decision-router escalates the round, and any real blind/edge-case findings are still reported rather than discarded.",
+      "expected_output": "business_review stays empty because there is nothing to audit, the acceptance lens is not dispatched, confidence is low so gate-arbiter escalates the round, and any real blind/edge-case findings are still reported rather than discarded.",
       "files": [],
       "assertions": [
         {
@@ -61,7 +61,7 @@
         },
         {
           "name": "missing-spec-forces-escalation",
-          "description": "confidence is low specifically because acceptance could not run, which is how a no-spec round reaches a human via decision-router."
+          "description": "confidence is low specifically because acceptance could not run, which is how a no-spec round reaches a human via gate-arbiter."
         }
       ]
     },
@@ -116,7 +116,7 @@
     {
       "id": 8,
       "prompt": "Resolve gate_id=code-review.final with run_dir=docs/superpowers/tasks/2026-08-03-checkout-fix/ and a valid non-empty diff. The lenses complete and a verdict is produced. Persist it and hand control back — do not present it to the user as a chat message.",
-      "expected_output": "The verdict JSON is written to docs/superpowers/tasks/2026-08-03-checkout-fix/code-review-final.json. Nothing is echoed to the user as a standalone message, and the orchestrator's turn ends by returning control to decision-router rather than stopping after producing the verdict.",
+      "expected_output": "The verdict JSON is written to docs/superpowers/tasks/2026-08-03-checkout-fix/code-review-final.json. Nothing is echoed to the user as a standalone message, and the orchestrator's turn ends by returning control to gate-arbiter rather than stopping after producing the verdict.",
       "files": [],
       "assertions": [
         {
@@ -125,7 +125,7 @@
         },
         {
           "name": "handoff-continues-the-flow",
-          "description": "Producing and persisting the verdict does not end the turn on its own — control returns to decision-router so the pipeline can record, escalate, or ask."
+          "description": "Producing and persisting the verdict does not end the turn on its own — control returns to gate-arbiter so the pipeline can record, escalate, or ask."
         }
       ]
     },

@@ -55,12 +55,12 @@ Thin front doors. They read what the user wants and dispatch; they hold no phase
 
 | Skill | Role |
 |-------|------|
-| `sdlc-start` | Interactive, human-in-the-loop full run. Delegates to `sdlc-pipeline`. |
-| `sdlc-autonomous` | Hands-off full run. Delegates to `sdlc-pipeline`. |
-| `sdlc-task` | Lightweight inline path for small, user-classified tasks — runs directly, no full orchestrator. |
-| `sdlc-light` | Lightweight entry alongside `sdlc-task` for small work that bypasses the heavy pipeline. |
-| `sdlc-status` | Inspect or resume runtime state of a run. |
-| `sdlc-doctor` | Check the environment and setup for the package. |
+| `sdlc-guided` | Interactive, human-in-the-loop full run. Delegates to `sdlc-engine`. |
+| `sdlc-auto` | Hands-off full run. Delegates to `sdlc-engine`. |
+| `sdlc-brief` | Lightweight inline path for small, user-classified tasks — runs directly, no full orchestrator. |
+| `sdlc-direct` | Lightweight entry alongside `sdlc-brief` for small work that bypasses the heavy pipeline. |
+| `sdlc-runs` | Inspect or resume runtime state of a run. |
+| `sdlc-preflight` | Check the environment and setup for the package. |
 
 ### Orchestrator and support skills
 
@@ -68,10 +68,10 @@ Durable workflow lives here — these are the pieces that write artifacts and mo
 
 | Skill | Role |
 |-------|------|
-| `sdlc-pipeline` | The canonical full-run orchestrator. Both `sdlc-start` and `sdlc-autonomous` delegate to it. |
-| `decision-router` | Resolves every judgment gate; records each verdict to the audit ledgers. |
-| `qa-gates` | Runs the host project's quality gates in sequence and returns a structured report. |
-| `mr-creator` | Commits with ticket references, pushes, and opens the MR/PR. Adapter-driven. |
+| `sdlc-engine` | The canonical full-run orchestrator. Both `sdlc-guided` and `sdlc-auto` delegate to it. |
+| `gate-arbiter` | Resolves every judgment gate; records each verdict to the audit ledgers. |
+| `gate-runner` | Runs the host project's quality gates in sequence and returns a structured report. |
+| `mr-submit` | Commits with ticket references, pushes, and opens the MR/PR. Adapter-driven. |
 | `mr-watch` | Monitors an open MR/PR and handles what blocks the merge. |
 
 ### Agents
@@ -109,45 +109,45 @@ backend are never hardcoded — their adapters resolve from `.agentic/guides/`.
 
 `references/qa-authoring/` is the shared reference for QA authoring; this file
 (`references/architecture.md`) is the shared reference for structure and vocabulary. `sdlc.html` is a
-shipped static picture of the pipeline that `sdlc-pipeline` runs.
+shipped static picture of the pipeline that `sdlc-engine` runs.
 
 ## Two roads in, one engine
 
 There is exactly one full-run orchestrator, reached two ways:
 
-- `sdlc-start` → interactive, prompts at each gate → `sdlc-pipeline`.
-- `sdlc-autonomous` → unattended, resolves gates without prompting → `sdlc-pipeline`.
+- `sdlc-guided` → interactive, prompts at each gate → `sdlc-engine`.
+- `sdlc-auto` → unattended, resolves gates without prompting → `sdlc-engine`.
 
-Small work skips the engine entirely. `sdlc-task` and `sdlc-light` carry the lightweight inline path
+Small work skips the engine entirely. `sdlc-brief` and `sdlc-direct` carry the lightweight inline path
 themselves: no complexity scoring, no per-task subagents, no evidence files — brainstorm-lite through
-QA on the current branch. `sdlc-status` and `sdlc-doctor` touch no phase workflow; they read state
+QA on the current branch. `sdlc-runs` and `sdlc-preflight` touch no phase workflow; they read state
 and report.
 
 > The only behavioral difference between interactive and autonomous is *how gates resolve*. Same
-> phases, same artifacts, same engine — the `decision-router` swaps human prompts for deterministic
+> phases, same artifacts, same engine — the `gate-arbiter` swaps human prompts for deterministic
 > checks and stand-in agents.
 
 ## How a heavy run flows
 
-1. **Intake.** The entry-point skill parses intent and hands off to `sdlc-pipeline`. The engine loads
+1. **Intake.** The entry-point skill parses intent and hands off to `sdlc-engine`. The engine loads
    role memory once at the start so prior context carries in.
 2. **Requirements.** Free-form text, a ticket reference (resolved through the adapter in
    `.agentic/guides/`), or a greenfield idea is normalized into `requirements.md`.
 3. **Routing.** `sizing-analyst` produces a score. Light work goes straight to
    `superpowers:writing-plans`; heavier work runs `superpowers:brainstorming` first. The plan lands
    in `plan.md`.
-4. **`plan.approved`.** The `decision-router` resolves the gate — user in interactive mode, a
+4. **`plan.approved`.** The `gate-arbiter` resolves the gate — user in interactive mode, a
    deterministic check or `story-proxy` in autonomous mode.
 5. **Implementation.** Work proceeds test-first via `superpowers:test-driven-development`, fanning
    out through `superpowers:subagent-driven-development` where tasks are independent. Evidence is
    captured per task.
 6. **`code-review.final`.** Model-heavy review is deferred until the implementation is fully done,
    then `lead-proxy` returns a verdict that resolves the gate.
-7. **QA.** `qa-gates` runs the host runner's lint → build → tests in sequence and writes
+7. **QA.** `gate-runner` runs the host runner's lint → build → tests in sequence and writes
    `qa-report.md`.
 8. **`feature.verification`.** For user-visible surfaces, functional verification (including browser
    verification) confirms the change before delivery.
-9. **Delivery (on request).** `mr-creator` commits, pushes, and opens the MR/PR; `mr-watch` then
+9. **Delivery (on request).** `mr-submit` commits, pushes, and opens the MR/PR; `mr-watch` then
    watches it. Autonomous mode never opens an MR/PR on its own.
 10. **Harvest.** After structural branch changes, `guide-sync` is dispatched to refresh the
     guides under `.agentic/guides/`.
@@ -172,7 +172,7 @@ responsibility:
 
 | Capability | Owns |
 |------------|------|
-| `mr-creator` | commit, push, MR/PR creation |
+| `mr-submit` | commit, push, MR/PR creation |
 | `mr-watch` | monitoring CI, reviewer feedback, rebases, and conflicts on an open MR/PR |
 | `guide-sync` | updating the guides after structural branch changes |
 | `repo-guides` | generating the initial host-project guides into `.agentic/guides/` |
@@ -187,7 +187,7 @@ Generation happens once; harvesting is incremental and event-triggered.
 Hooks are host-level configuration, not a pipeline primitive. They fire deterministically on
 lifecycle events, carry no judgment, and never resolve a gate. Their job is to surface run notices
 and enforce mechanical guardrails around the workflow — staying at R0–R1. Keep decision logic in
-skills, agents, and the `decision-router`; keep hooks dumb and predictable.
+skills, agents, and the `gate-arbiter`; keep hooks dumb and predictable.
 
 ## Shipped versus roadmap
 
@@ -206,8 +206,8 @@ Package boundary        plugins/agentic-sdlc
 Host knowledge          .agentic/guides/
 Run artifacts / ledgers .agentic/  docs/superpowers/  decisions.jsonl  events.jsonl
 
-Entry-point skills      sdlc-start  sdlc-autonomous  sdlc-task  sdlc-light  sdlc-status  sdlc-doctor
-Orchestrator / support  sdlc-pipeline  decision-router  qa-gates  mr-creator  mr-watch
+Entry-point skills      sdlc-guided  sdlc-auto  sdlc-brief  sdlc-direct  sdlc-runs  sdlc-preflight
+Orchestrator / support  sdlc-engine  gate-arbiter  gate-runner  mr-submit  mr-watch
 Agents                  sizing-analyst  codebase-scout  lead-proxy
                         story-proxy  guide-sync
 Knowledge skills        repo-guides (generates guides)  repo-audit-guides (audits)  role-memory

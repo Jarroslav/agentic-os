@@ -19,7 +19,7 @@ On-demand, multi-lens review of a diff or PR — standalone, outside any managed
 
 - Getting the plugin's review quality — severity-grouped findings, business/standards review rows, risk flags — on demand.
 
-Not for: editing or fixing code, auto-committing, or reviewing by PR/MR number — all out of scope in this version. For a review inside a managed flow, use `sdlc-start`, `sdlc-autonomous`, or `sdlc-task` (they route the review gate through `decision-router`) instead of this standalone skill.
+Not for: editing or fixing code, auto-committing, or reviewing by PR/MR number — all out of scope in this version. For a review inside a managed flow, use `sdlc-guided`, `sdlc-auto`, or `sdlc-brief` (they route the review gate through `gate-arbiter`) instead of this standalone skill.
 
 ## How To Ask
 

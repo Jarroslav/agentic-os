@@ -28,10 +28,10 @@
   "default_hitl": "gated-autonomous",
   "default_orchestration": "dispatcher",
   "sdlc_skills": [
-    "sdlc-status",
+    "sdlc-runs",
     "repo-audit-guides",
     "role-memory",
-    "requirements-intake"
+    "story-intake"
   ],
   "qe_blueprints": [
     "execution-reporting"

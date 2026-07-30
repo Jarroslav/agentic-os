@@ -205,7 +205,7 @@ Approve / Customize / Cancel?
 | Customize | Edit scope, re-render the plan, re-ask. |
 | Cancel | Halt. No writes. |
 
-Route this decision through the `decision-router` judgment gate (`plan.approved`) and
+Route this decision through the `gate-arbiter` judgment gate (`plan.approved`) and
 record the verdict, with prior context, to `decisions.jsonl` and `events.jsonl`.
 Re-check: if any `ask user` item is still open when the keyword arrives, treat the
 approval as incomplete — resolve the questions first.

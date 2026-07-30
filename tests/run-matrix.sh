@@ -375,7 +375,7 @@ for a in dispatcher blind-code-reviewer security-reviewer instruction-auditor pr
   grep -q "$a.md" "$ALL_WORK/.agentic/guides/agent-registry.md" || bad "ten-preset registry missing agent row $a"
 done
 ok "registry carries every agent row"
-for s in product-owner requirements-intake mr-creator mr-watch sdlc-status repo-audit-guides; do
+for s in story-author story-intake mr-submit mr-watch sdlc-runs repo-audit-guides; do
   grep -q "agentic-sdlc \`$s\` skill" "$ALL_WORK/.agentic/guides/agent-registry.md" || bad "ten-preset registry missing skill row $s"
 done
 ok "registry carries every skill-owned row"
@@ -392,8 +392,8 @@ if grep -q "agentic-sdlc \`mr-watch\` skill" "$DEV_ONLY/.agentic/guides/agent-re
 else
   ok "developer-only registry pruned unowned skill rows"
 fi
-grep -q "agentic-sdlc \`mr-creator\` skill" "$DEV_ONLY/.agentic/guides/agent-registry.md" \
-  && ok "developer-only registry kept its own skill row (mr-creator)" || bad "developer-only registry kept its own skill row (mr-creator)"
+grep -q "agentic-sdlc \`mr-submit\` skill" "$DEV_ONLY/.agentic/guides/agent-registry.md" \
+  && ok "developer-only registry kept its own skill row (mr-submit)" || bad "developer-only registry kept its own skill row (mr-submit)"
 # The blueprint half of the same negative: developer names static-analysis and
 # no other preset's blueprints, so every qa/pm-delivery/devops row must be gone.
 # Without this a field that pruned nothing would still pass the positive check.

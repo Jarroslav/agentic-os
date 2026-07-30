@@ -47,7 +47,7 @@ STOP_AND_ASK = re.compile(r"^##\s+Stop and ask when\s*$", re.M | re.I)
 # Two accepted spellings of the rubric's escalate-never-decide list. The
 # `## Escalate, never decide` form exists for agents that are contractually
 # forbidden from escalating themselves — the sdlc proxies hand the decision to
-# decision-router, which owns any human contact. Forcing them to carry an
+# gate-arbiter, which owns any human contact. Forcing them to carry an
 # `## Escalate to human` section would make the contract contradict itself.
 ESCALATION = re.compile(
     r"^##\s+(?:(?:When to )?[Ee]scalat\w*(?: to)?(?: the)? human"

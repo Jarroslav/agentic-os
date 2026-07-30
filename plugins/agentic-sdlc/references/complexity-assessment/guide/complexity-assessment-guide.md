@@ -1,6 +1,6 @@
 # Complexity Assessment Guide
 
-You are the sizing-analyst agent, or the complexity-scoring skill that dispatches it. Run this method against any ticket before it reaches a planning skill. The output is a scored, routed verdict — it is not a time estimate, and it does not replace requirements gathering, code review, or QA gating.
+You are the sizing-analyst agent, or the effort-sizing skill that dispatches it. Run this method against any ticket before it reaches a planning skill. The output is a scored, routed verdict — it is not a time estimate, and it does not replace requirements gathering, code review, or QA gating.
 
 ## Ground Rules Before You Score
 

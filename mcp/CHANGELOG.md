@@ -8,6 +8,24 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.3.0]
+
+### Changed
+- **BREAKING: two published prompt names changed.** `sdlc-start` is now
+  `sdlc-guided` and `sdlc-task` is now `sdlc-brief`, following the skill renames
+  in `agentic-sdlc`. A client calling either old name gets an unknown-prompt
+  error; the prompt bodies and arguments are otherwise identical. The prompt set
+  is asserted in `tests/contract.test.ts`, so this break is tested rather than
+  incidental.
+
+  The `agentic-os://skills/agentic-sdlc/sdlc-pipeline` resource URI is likewise
+  now `.../sdlc-engine`, and `agentic-os://skills/agentic-sdlc/qa-gates` is
+  `.../gate-runner`. Resource URIs are derived from paths under `plugins/`, so
+  every renamed skill's URI moved with it.
+
+- **Served content refreshed** for the `agentic-sdlc` skill renames and the
+  adapter-contract reconciliation.
+
 ## [0.2.11]
 
 ### Changed

@@ -44,9 +44,9 @@ Non-blocking / Escalate to human) is defined in each agent contract and parsed
 **fail-closed** by `.claude/hooks/subagent_gate.py`: a missing contract is
 treated as Blocking.
 
-## How agentic-sdlc's decision-router consumes these flags
+## How agentic-sdlc's gate-arbiter consumes these flags
 
-At every judgment gate the decision-router resolves a verdict:
+At every judgment gate the gate-arbiter resolves a verdict:
 
 - **HITL mode** (`strict` / `gated-autonomous` for the gate in question): it
   short-circuits to the human — AskUserQuestion, no autonomous stand-in.

@@ -41,14 +41,34 @@
     "playwright-cli": "optional host-provided skill for Playwright runs (qa-e2e-generator/SKILL.md:262)"
   },
   "legacy_commands": {
-    "/sdlc:start": "sdlc-start",
-    "/sdlc:autonomous": "sdlc-autonomous",
-    "/sdlc:status": "sdlc-status",
-    "/sdlc:doctor": "sdlc-doctor",
-    "/sdlc:qa-init": "qa-foundation",
-    "/sdlc:story": "product-owner"
+    "/sdlc:start": "sdlc-guided",
+    "/sdlc:autonomous": "sdlc-auto",
+    "/sdlc:status": "sdlc-runs",
+    "/sdlc:doctor": "sdlc-preflight",
+    "/sdlc:qa-init": "qa-baseline",
+    "/sdlc:story": "story-author"
   },
-  "banned_names": {},
+  "banned_names": {
+    "sdlc-light": "renamed to sdlc-direct",
+    "sdlc-task": "renamed to sdlc-brief",
+    "sdlc-start": "renamed to sdlc-guided",
+    "sdlc-autonomous": "renamed to sdlc-auto",
+    "sdlc-pipeline": "renamed to sdlc-engine",
+    "sdlc-status": "renamed to sdlc-runs",
+    "sdlc-doctor": "renamed to sdlc-preflight",
+    "requirements-intake": "renamed to story-intake",
+    "product-owner": "renamed to story-author",
+    "mr-creator": "renamed to mr-submit",
+    "decision-router": "renamed to gate-arbiter",
+    "qa-gates": "renamed to gate-runner",
+    "complexity-scoring": "renamed to effort-sizing",
+    "feature-verification": "renamed to acceptance-check",
+    "qa-planner": "renamed to qa-scoping",
+    "qa-foundation": "renamed to qa-baseline",
+    "## MR Adapter": "renamed to ## Review Adapter",
+    "## Ticket Adapter": "renamed to ## Work Item Adapter",
+    "Comment Template": "removed: declared but never read"
+  },
   "frozen_literals": {
     "verification-evidence.json": "names the artifact, not the skill that writes it",
     "spec.approved": "gate id \u2014 frozen by commit b8374ae",

@@ -48,8 +48,8 @@
     "repo-audit-guides",
     "repo-guides",
     "role-memory",
-    "sdlc-start",
-    "decision-router"
+    "sdlc-guided",
+    "gate-arbiter"
   ],
   "qe_blueprints": [
     "change-impact-scoping",

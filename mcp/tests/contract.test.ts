@@ -70,7 +70,7 @@ describe('protocol contract', () => {
     const { prompts } = await client.listPrompts();
     expect(prompts.map(p => p.name).sort()).toEqual([
       'agentic-doctor', 'agentic-init', 'agentic-uninstall', 'agentic-upgrade',
-      'qe-blueprint-scaffold', 'sdlc-start', 'sdlc-task',
+      'qe-blueprint-scaffold', 'sdlc-brief', 'sdlc-guided',
     ]);
   });
 
@@ -544,7 +544,7 @@ describe('list_sdlc_phases', () => {
   it('points at the document it parsed', async () => {
     const res = await client.callTool({ name: 'list_sdlc_phases', arguments: {} });
     const { source_uri } = res.structuredContent as { source_uri: string };
-    expect(source_uri).toBe('agentic-os://skills/agentic-sdlc/sdlc-pipeline');
+    expect(source_uri).toBe('agentic-os://skills/agentic-sdlc/sdlc-engine');
     const doc = await client.readResource({ uri: source_uri });
     expect(String(doc.contents[0]?.text)).toContain('## Phase map');
   });

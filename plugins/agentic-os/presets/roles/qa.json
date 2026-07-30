@@ -50,11 +50,11 @@
   "default_hitl": "strict",
   "default_orchestration": "dispatcher",
   "sdlc_skills": [
-    "qa-foundation",
-    "qa-planner",
-    "qa-gates",
-    "feature-verification",
-    "requirements-intake",
+    "qa-baseline",
+    "qa-scoping",
+    "gate-runner",
+    "acceptance-check",
+    "story-intake",
     "qa-case-generator",
     "qa-e2e-generator"
   ],

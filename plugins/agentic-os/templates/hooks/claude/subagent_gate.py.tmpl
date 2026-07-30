@@ -10,7 +10,7 @@
 #   - '## Escalate to human' non-empty               -> exit 2, instructing the
 #     parent to call AskUserQuestion with the listed options before proceeding.
 #   - SubagentStop with any contract section missing -> exit 2 (fail-closed:
-#     malformed output is treated as Blocking, mirroring decision-router's
+#     malformed output is treated as Blocking, mirroring gate-arbiter's
 #     malformed-JSON escalation).
 #   - Ordinary Stop with no contract at all          -> exit 0 (a conversational
 #     turn is not a gate report; strictness applies to subagent completions).

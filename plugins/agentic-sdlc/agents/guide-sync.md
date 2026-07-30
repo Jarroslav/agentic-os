@@ -196,7 +196,7 @@ Follow the report with the handoff block:
 
 ```
 ✅ guide-sync complete.
-**Recommended next step**: invoke the `sdlc-start` skill
+**Recommended next step**: invoke the `sdlc-guided` skill
 ```
 
 with reply options `yes / proceed`, `no / skip`, `other`.

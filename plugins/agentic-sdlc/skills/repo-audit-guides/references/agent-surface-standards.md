@@ -132,7 +132,7 @@ Criteria:
 - **Parallel agents are coordinated.** Concurrent subagents need disjoint ownership or an explicit
   coordination rule; overlapping write scopes are a conflict waiting to happen.
 - **Never a covert approval bypass.** A subagent must not stand in for a human-in-the-loop
-  decision gate. Judgment gates route through the decision-router and, when authority is unclear,
+  decision gate. Judgment gates route through the gate-arbiter and, when authority is unclear,
   escalate; a subagent that auto-approves what a gate should hold — e.g. `spec.approved`,
   `plan.approved`, `qa.drift`, `code-review.final`, `requirements.ambiguous` — defeats the gate.
   Flag it.

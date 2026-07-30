@@ -1,6 +1,6 @@
 # qa-e2e-generator
 
-Turns one work-item ticket into runnable end-to-end automation — UI and/or API — matched to your project's established test conventions, then hands the scripts off as a merge request. A seven-agent pipeline handles validation, context gathering, planning, generation, self-healing execution, review, and handoff. On-demand and per-ticket; not a phase of `sdlc-autonomous` or `sdlc-standard`.
+Turns one work-item ticket into runnable end-to-end automation — UI and/or API — matched to your project's established test conventions, then hands the scripts off as a merge request. A seven-agent pipeline handles validation, context gathering, planning, generation, self-healing execution, review, and handoff. On-demand and per-ticket; not a phase of `sdlc-auto` or `sdlc-standard`.
 
 ## Use It For
 
@@ -31,8 +31,8 @@ Hard prerequisites — the skill refuses without them:
 
 | Requirement | Where | If missing |
 | --- | --- | --- |
-| Documented test framework | `.agentic/guides/testing/qa-strategy.md` | run `qa-foundation` (framework may be external) |
-| QA strategy docs | `.agentic/guides/testing/` | run `qa-foundation` to create the doc root |
+| Documented test framework | `.agentic/guides/testing/qa-strategy.md` | run `qa-baseline` (framework may be external) |
+| QA strategy docs | `.agentic/guides/testing/` | run `qa-baseline` to create the doc root |
 | Work-item adapter | `.agentic/guides/project.md`, `## Work Item Adapter` section | configure it, or run `/repo-guides` |
 | Working `bash` + `jq` | PATH | on Windows use Git Bash or WSL; install `jq` separately if absent |
 | Clear acceptance criteria | the ticket | improve the AC and re-run (confidence < 50% halts) |

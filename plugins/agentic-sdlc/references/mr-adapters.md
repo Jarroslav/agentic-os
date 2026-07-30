@@ -21,7 +21,7 @@ The chosen adapter is recorded in exactly one place:
 - **File:** `.agentic/guides/project.md`
 - **Section header:** `## Review Adapter`
 
-That section is the single source of truth. `mr-creator` writes and reads it; `mr-watch` and the
+That section is the single source of truth. `mr-submit` writes and reads it; `mr-watch` and the
 review skills read it before invoking any operation.
 
 ### Declaration fields
@@ -33,7 +33,7 @@ review skills read it before invoking any operation.
 | `**Instructions**` | *(optional)* usage notes the skill passes through when invoking the adapter |
 | `**Body Template**` | *(optional)* overrides the built-in MR/PR body template |
 
-Omit `**Body Template**` to fall back to `mr-creator`'s built-in template — never restate the
+Omit `**Body Template**` to fall back to `mr-submit`'s built-in template — never restate the
 default.
 
 ## Two ways to declare an adapter
@@ -189,6 +189,6 @@ comment: invoke tool post_comment   (id={{ID}}, body={{BODY}})
 ## Cross-references
 
 - `.agentic/guides/project.md` — where adapters are declared and read.
-- `mr-creator` — owns the default MR/PR body template and consumes the adapter.
+- `mr-submit` — owns the default MR/PR body template and consumes the adapter.
 - `mr-watch` and the review skills — invoke the operation set.
 - Remote inference relies on `git remote get-url origin`.

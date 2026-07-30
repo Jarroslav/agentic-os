@@ -59,7 +59,7 @@ ID = r"([a-z][a-z0-9]*(?:[-:][a-z0-9]+)+)"
 
 # A reference is marked when the surrounding words say it names a component.
 # The verb alternations are case-folded because prose starts sentences with them
-# ("Call `decision-router` ..."); the identifier itself stays strictly lowercase.
+# ("Call `gate-arbiter` ..."); the identifier itself stays strictly lowercase.
 MARKED = [
     re.compile(r"`" + ID + r"`\s+(?i:skill|agent|blueprint)\b"),
     re.compile(r"\b(?i:skill|agent|blueprint)s?\s+`" + ID + r"`"),
@@ -386,8 +386,13 @@ def check_banned(root: Path, policy: dict) -> None:
 # --------------------------------------------------------------------------
 
 def self_test() -> None:
-    got = marked_refs("hand off to the `mr-creator` skill when ready")
-    report(got.count("mr-creator") >= 1, "self-test",
+    # Every fixture below uses a deliberately synthetic name. A fixture that
+    # names a real skill is rewritten by any repo-wide rename sweep, and because
+    # this file is exempt from the scan, nothing would catch the damage — an
+    # earlier draft had `_edit_distance("qa-planner", ...)` silently rewritten
+    # into a comparison of a string with itself, which passes vacuously.
+    got = marked_refs("hand off to the `example-skill` skill when ready")
+    report(got.count("example-skill") >= 1, "self-test",
            "extracts a marked skill reference (%r)" % got)
 
     report(marked_refs("this is a `breaking-change` in the API") == [],
@@ -396,12 +401,9 @@ def self_test() -> None:
     report(marked_refs("the `code` block and `status` field") == [],
            "self-test", "single words without a hyphen are never extracted")
 
-    report(marked_refs("Call `decision-router` with the gate id") == ["decision-router"],
+    report(marked_refs("Call `other-example` with the gate id") == ["other-example"],
            "self-test", "an imperative hand-off is a reference")
 
-    # A synthetic name on purpose: a fixture naming a real skill goes stale the
-    # day that skill is renamed, and this file is exempt from the scan that
-    # would otherwise catch it.
     rows = registry_rows("| x | the agentic-sdlc `example-skill` skill | y |")
     report(rows == [("agentic-sdlc", "example-skill", "skill")], "self-test",
            "registry row yields (plugin, name, kind) (%r)" % rows)
@@ -414,15 +416,15 @@ def self_test() -> None:
            == [("a", "b"), ("b", "c")], "self-test",
            "diagram edges yield their endpoints")
 
-    report(appjs_refs("{ say: 'x', skill: 'sdlc-start' },\n{ name: 'qa-gates' }")
-           == ["sdlc-start", "qa-gates"], "self-test",
+    report(appjs_refs("{ say: 'x', skill: 'example-skill' },\n{ name: 'other-example' }")
+           == ["example-skill", "other-example"], "self-test",
            "setup-site entries yield their skill names")
 
-    report(SLASH_CMD.findall("run /sdlc:start now") == ["/sdlc:start"],
+    report(SLASH_CMD.findall("run /sdlc:example now") == ["/sdlc:example"],
            "self-test", "legacy slash commands are extracted")
 
-    report(_edit_distance("qa-planner", "qa-scoping") > 2
-           and _edit_distance("qa-gates", "qa-gate") == 1,
+    report(_edit_distance("example-skill", "other-example") > 2
+           and _edit_distance("example-skill", "example-skil") == 1,
            "self-test", "edit distance drives the did-you-mean hint")
 
     # The shape guard: an extractor that stops matching must fail, not pass.
