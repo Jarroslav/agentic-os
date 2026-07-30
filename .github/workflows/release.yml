@@ -83,6 +83,32 @@ jobs:
       - name: Acceptance matrix (T1-T8)
         run: bash tests/run-matrix.sh
 
+      # Mirrors ci.yml: six suites that exist, pass, and were invoked by no
+      # automation at all until now.
+
+      - name: SDLC stage-guard hook tests
+        run: bash plugins/agentic-sdlc/hooks/test-sdlc-stage-guard
+
+      - name: Ticket-sync hook tests
+        run: bash plugins/agentic-sdlc/hooks/test-ticket-sync
+
+      - name: Cursor plugin packaging check
+        run: python3 tests/cursor/check-cursor-packaging.py
+
+      - name: Cursor e2e install smoke test
+        run: |
+          TARGET="${{ runner.temp }}/cursor-fresh-install" \
+            bash tests/cursor/run-cursor-e2e.sh
+
+      - name: Role preset validation
+        run: bash plugins/agentic-os/presets/validate-presets.sh
+
+      - name: QA e2e generator smoke test
+        run: |
+          bash plugins/agentic-sdlc/skills/qa-e2e-generator/scripts/qa-e2e-smoke-test.sh \
+            | tee /tmp/qa-e2e-smoke.log
+          grep -qx 'SMOKE TEST PASSED' /tmp/qa-e2e-smoke.log
+
       - name: Validate JSON manifests & presets
         run: python3 tests/lib/check-manifests.py
 
@@ -91,6 +117,20 @@ jobs:
 
       - name: Agent contract check
         run: python3 tests/lib/check-agent-contract.py
+
+      # Static whole-repo checks, no PR-diff dependency -- same class as
+      # check-manifests/check-skill-contract/check-agent-contract/
+      # check-html-refs/check-skill-refs, all of which this job already
+      # mirrors from ci.yml. Omitted until now: an oversight, not a
+      # deliberate exclusion (unlike check-changelog.py, whose only real mode
+      # needs --base <ref>, meaningless on a tag push).
+      - name: QE catalog index check
+        run: python3 tests/lib/check-qe-catalog.py
+
+      - name: Rule-provenance marker check
+        run: |
+          python3 tests/lib/check-rule-markers.py --self-test
+          python3 tests/lib/check-rule-markers.py
 
       - name: Neutrality & PII scan
         run: |
