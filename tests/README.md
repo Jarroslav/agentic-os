@@ -6,23 +6,24 @@ Run everything:
 bash tests/t0/run.sh                 # hook units (rendered templates, exit-code contracts)
 bash tests/t0/run-output-contract.sh # output-contract parser (subagent_gate)
 bash tests/run-matrix.sh             # T1–T8 acceptance matrix
-bash tests/cursor/run-cursor-e2e.sh  # Cursor packaging + fresh-install smoke (see tests/cursor/README.md)
+bash plugins/agentic-sdlc/hooks/test-sdlc-stage-guard        # stage/phase advisory-nudge hook units
+bash plugins/agentic-sdlc/hooks/test-ticket-sync              # ticket-sync hook units (needs jq)
+bash plugins/agentic-os/presets/validate-presets.sh           # every preset template ID resolves to a real file
+python3 tests/cursor/check-cursor-packaging.py                # Cursor manifests resolve to real skills/ (+ agents/ for sdlc)
+TARGET=/path/to/scratch bash tests/cursor/run-cursor-e2e.sh    # Cursor fresh-install smoke — see tests/cursor/README.md; TARGET required outside CI
 cd mcp && npm ci && npm run check:drift && npm run build && npm test  # MCP server
 ```
 
 `run-matrix.sh` re-runs the **output-contract** suite as T7, but not the hook
-unit suite — so it is not a single green/red gate on its own. CI runs all three
-commands above, plus two marketplace-wide checks that run standalone (they
-cover both plugins, so they live outside the agentic-os-scoped matrix):
-
-```bash
-python3 tests/lib/check-manifests.py       # manifests parse, per-plugin version sync, canonical author/owner
-python3 tests/lib/check-skill-contract.py  # every skill ships SKILL.md + README.md + evals/evals.json in shape
-python3 tests/lib/check-neutrality.py      # no PII / org names ship (hashed denylist + shape patterns)
-python3 tests/lib/check-html-refs.py       # every source path a shipped HTML page cites resolves
-python3 tests/lib/check-provenance.py --verify-attestation  # originality policy: the tree still matches its recorded measurements
-python3 tests/lib/check-changelog.py --self-test  # plugin content may not change without a changelog entry (CI adds --base <PR base>)
-```
+unit suite — so it is not a single green/red gate on its own. CI runs every
+command above (`tests/cursor/run-cursor-e2e.sh` included — see
+`.github/workflows/ci.yml`'s `gate` job for the exact steps and their order,
+which is the authoritative list; this file previously duplicated a stale
+subset of it by hand and drifted, twice), plus the standalone
+`tests/lib/check-*.py` scripts — manifests, skill/agent contract shape, the QE
+catalog index, `<!-- agentic-os:rules -->` marker provenance, changelog
+presence, neutrality, run-artifact schemas, shipped HTML references,
+markdown/anchor link integrity, skill cross-references, and originality.
 
 ## Originality check
 
