@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-30T16:12:43Z",
+ "attested_at": "2026-07-30T16:31:37Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "2e1a9b9acacfc35078ed63152088f9d30b98b2cc3dd4c0ee3de2ce34b16d0df7",
+   "sha256": "074b3e7f9c3569b5b4302f804c1385ff3b5f5aa0d290aadd954145f01c386f5f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1529,7 +1529,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "d2e1a5b32173e31fd692538ac60c77319bd4932fb08d8aaa8694d78afc19835d",
+   "sha256": "341d6e2dd13e5c59b381e7804656487164348e608c0e01c942d1b0cefa841ff8",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1595,13 +1595,13 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/hooks/sdlc-stage-guard": {
-   "sha256": "af396343882a7db06a0bcaf990b8a1f272c01c6e8f1b3c8ac03e0bc873fa98c2",
-   "line": 0.0095,
+   "sha256": "7faffba5a2d04c06efe2b46a1a287b02646ded175a5fa85daf04f1461be10212",
+   "line": 0.0091,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/hooks/test-sdlc-stage-guard": {
-   "sha256": "d46387ee327089b8ca1482078e5e41b2a0898f9b89ace8c8c117ca8c3c4fe207",
+   "sha256": "86b9d60c862fd08c1f0337ba392808b164322900faba19176790641f1911c5a9",
    "line": 0.08,
    "shingle": 0.0,
    "max_run": 0

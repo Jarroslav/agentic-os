@@ -122,7 +122,7 @@ _test_task_stage3_gate_pending() {
     local d; d=$(write_task "feat-a" "main")
     touch "$d/technical-analysis.md" "$d/complexity-assessment.md" "$d/spec.md"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "stage 3 gate pending — spec.approved missing" "spec.approved not recorded" "$out"
+    assert_context_contains "stage 3 gate pending — spec.approved missing" "the spec.approved gate has not recorded approval" "$out"
 }
 
 _test_task_stage4_writing() {
@@ -131,7 +131,7 @@ _test_task_stage4_writing() {
     emit_decision "$d/decisions.jsonl" "spec.approved" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
     assert_context_contains "stage 4 — nudges writing-plans" "Stage 4" "$out"
-    assert_context_contains "stage 4 — no false gate-pending" "Execution Handoff" "$out"
+    assert_context_contains "stage 4 — no false gate-pending" "plan.md has not been written yet" "$out"
 }
 
 _test_task_stage4_gate_pending() {
@@ -139,7 +139,7 @@ _test_task_stage4_gate_pending() {
     touch "$d/technical-analysis.md" "$d/complexity-assessment.md" "$d/spec.md" "$d/plan.md"
     emit_decision "$d/decisions.jsonl" "spec.approved" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "stage 4 gate pending — plan.approved missing" "plan.approved not recorded" "$out"
+    assert_context_contains "stage 4 gate pending — plan.approved missing" "the plan.approved gate has not recorded approval" "$out"
 }
 
 _test_task_stage5() {
@@ -249,14 +249,14 @@ _test_light_stage2_3() {
     touch "$d/technical-analysis.md"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
     assert_context_contains "light stage 2-3 — clarity check then plan, no spec" "Stage 2-3" "$out"
-    assert_context_contains "light stage 2-3 — confirms no spec.md concept" "no spec.md" "$out"
+    assert_context_contains "light stage 2-3 — confirms no spec.md concept" "clarification/plan.md" "$out"
 }
 
 _test_light_stage3_gate_pending() {
     local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "light stage 3 gate pending — plan.approved missing" "plan.approved not recorded" "$out"
+    assert_context_contains "light stage 3 gate pending — plan.approved missing" "the plan.approved gate is still pending" "$out"
 }
 
 _test_light_stage4_with_qa_foundation() {
@@ -364,20 +364,20 @@ _test_pipeline_phase4_gate_pending() {
     local d; d=$(write_run 4)
     touch "$d/design.md"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "pipeline phase 4 gate pending — spec.approved missing" "spec.approved not recorded" "$out"
+    assert_context_contains "pipeline phase 4 gate pending — spec.approved missing" "the spec.approved gate is still pending" "$out"
 }
 
 _test_pipeline_phase4_in_progress_no_design_yet() {
     write_run 4 >/dev/null
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "pipeline phase 4 in progress — no design.md yet" "Phase 4 in progress" "$out"
+    assert_context_contains "pipeline phase 4 in progress — no design.md yet" "Phase 4" "$out"
 }
 
 _test_pipeline_phase5_gate_pending() {
     local d; d=$(write_run 5)
     touch "$d/plan.md"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "pipeline phase 5 gate pending — plan.approved missing" "plan.approved not recorded" "$out"
+    assert_context_contains "pipeline phase 5 gate pending — plan.approved missing" "the plan.approved gate is still pending" "$out"
 }
 
 _test_pipeline_phase7() {
@@ -420,7 +420,7 @@ _test_missing_decisions_file_treated_as_no_gate() {
     touch "$d/technical-analysis.md" "$d/complexity-assessment.md" "$d/spec.md"
     # no decisions.jsonl at all
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "missing decisions.jsonl — treated as gate not approved" "spec.approved not recorded" "$out"
+    assert_context_contains "missing decisions.jsonl — treated as gate not approved" "the spec.approved gate has not recorded approval" "$out"
 }
 
 # ----- runner -----

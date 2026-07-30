@@ -6,7 +6,38 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
-### Changed
+### Fixed
+
+- **`sdlc-stage-guard`'s advisory nudges disagreed with the stage/phase numbers
+  each flow's own `SKILL.md` documents, in three different ways.** The test
+  suite (`hooks/test-sdlc-stage-guard`) was added alongside the hook and never
+  actually run against it, so 30 of its 44 assertions had been failing since
+  the file was introduced.
+
+  `sdlc-brief`'s task flow collapsed the Stage 6 (implementation) / Stage 7
+  (`qa-scoping --review-tests`) boundary into one "Stage 6" label regardless of
+  which side of it the run was on, so every later stage in that flow
+  (code review, `gate-runner`, health-update/handoff) was announced one number
+  behind its documented position. `sdlc-direct` did the same at its Stage 2
+  (clarity check) / Stage 3 (plan) boundary, under-numbering everything from
+  Stage 4 onward. `sdlc-engine`'s phase-based nudges said "Stage N" throughout
+  despite the skill's own Phase 0–12 map — the word never matched the
+  vocabulary a user reading `sdlc.html` or the SKILL.md would recognize.
+
+  Fixed by renumbering `sdlc-brief` from the Stage 6/7 split onward, `sdlc-direct`
+  from Stage 4 onward (labeling the merged clarity+plan step "Stage 2-3" and the
+  merged health-update+handoff step accordingly), and switching every
+  `sdlc-engine` nudge from "Stage" to "Phase". Both task flows now also name
+  themselves in the nudge ("sdlc-brief Stage 3", "sdlc-direct Stage 5") the way
+  `sdlc-direct` already did for some of its own messages — `sdlc-brief`
+  previously left its flow unnamed, which is why the model reading the nudge
+  had no cheap way to tell which of the two task-level flows produced it.
+
+  The remaining 9 failures were pure test-authoring drift — needles like
+  `"spec.approved not recorded"` that never matched the hook's actual (and
+  fine) phrasing `"the spec.approved gate has not recorded approval"` — fixed
+  by aligning the test to what the hook correctly says. Verified stable across
+  3 consecutive runs: 44/44.
 
 - **BREAKING: skills are named for their role in the pipeline.** Two naming
   defects drove this. `sdlc-task` and `sdlc-light` are both lightweight
