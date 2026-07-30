@@ -31,9 +31,9 @@
   "default_hitl": "gated-autonomous",
   "default_orchestration": "dispatcher",
   "sdlc_skills": [
-    "product-owner",
-    "requirements-intake",
-    "complexity-scoring",
+    "story-author",
+    "story-intake",
+    "effort-sizing",
     "role-memory"
   ],
   "qe_blueprints": [

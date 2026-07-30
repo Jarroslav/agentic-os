@@ -94,14 +94,14 @@ Load `references/plan-and-generate.md` for orchestration and `references/writing
 | `references/templates/guides/standards/git-workflow.md.template` | `.agentic/guides/standards/git-workflow.md` |
 | `references/templates/guides/testing/testing-patterns.md.template` | `.agentic/guides/testing/testing-patterns.md` |
 
-> `testing/` is seeded here but owned going forward by **qa-foundation** — do not fight it for that subtree after handoff. `integration/ticket-flow.md` (Step D, below) is read by the ticket-sync hook and is separate from `integration/external-integrations.md`.
+> `testing/` is seeded here but owned going forward by **qa-baseline** — do not fight it for that subtree after handoff. `integration/ticket-flow.md` (Step D, below) is read by the ticket-sync hook and is separate from `integration/external-integrations.md`.
 
 **Steps A–D — schema-strict config files (same generation phase):**
 
-- **A — `.agentic/guides/project.md`.** Exactly five sections: `## Project Identity`, `## Work Item Tracker`, `## Ticket Adapter`, `## Source Control And Review`, `## MR Adapter`. `## Ticket Adapter` allows ONLY `**Status**`, `**Adapter**`, `**Lookup**`, `**Create**`, `**Output**` — `**Underlying command**`, `**Multi-turn follow-up**`, `**Notes**` are schema violations. `## MR Adapter` fields: `**Status**`, `**Adapter**`, `**Instructions**`, `**Body Template**`. `**Status**` values: `configured | not configured`. Review artifact type: `MR | PR`. Keep project.md schema-pure.
+- **A — `.agentic/guides/project.md`.** Exactly five sections: `## Project Identity`, `## Work Item Tracker`, `## Work Item Adapter`, `## Source Control And Review`, `## Review Adapter`. `## Work Item Adapter` allows ONLY `**Status**`, `**Adapter**`, `**Lookup**`, `**Create**`, `**Output**` — `**Underlying command**`, `**Multi-turn follow-up**`, `**Notes**` are schema violations. `## Review Adapter` fields: `**Status**`, `**Adapter**`, `**Instructions**`, `**Body Template**`. `**Status**` values: `configured | not configured`. Review artifact type: `MR | PR`. Keep project.md schema-pure.
 - **B — `.agentic/guides/standards/git-workflow.md`** (also a guide-set member). Required sections: Branch Naming Convention, Commit Message Format, Merge Strategy, Anti-Patterns, Troubleshooting — real project keys substituted for placeholders.
 - **C — `.agentic/guides/quality-gates.md`.** One `###` per gate, ordered fastest-to-slowest. Per gate: **Run**, **Pass**, **Fail**, optional **Auto-fix**, optional **Skip if**.
-- **D — `.agentic/guides/integration/ticket-flow.md`** (optional). Runs ONLY when project.md carries `**Status**: configured` in the Ticket Adapter; otherwise silent skip — the hook is a no-op without the file. User decline ⇒ no file, logged in the Phase 5 report.
+- **D — `.agentic/guides/integration/ticket-flow.md`** (optional). Runs ONLY when project.md carries `**Status**: configured` in the Work Item Adapter; otherwise silent skip — the hook is a no-op without the file. User decline ⇒ no file, logged in the Phase 5 report.
 
 **quality-gate candidate resolution** — for each type (lint, format, type-check, test, secret-scan, license-check, static-analysis): 1 candidate ⇒ confirm yes/no/modify; multiple ⇒ propose the best (prefer `Makefile` targets over raw tool commands) and let the user choose.
 
@@ -136,7 +136,7 @@ Run the checks; on any failure, list them and ask the user. Never silently auto-
 - guides ≤ 400 lines; entrypoint ≤ 300 lines
 - no `[PLACEHOLDER]` / `[PLACEHOLDER?]` remains
 - `git check-ignore -v .agentic/runs/` resolves
-- project.md Ticket Adapter carries no forbidden fields (schema check)
+- project.md Work Item Adapter carries no forbidden fields (schema check)
 - reject filler tokens `Review reminder`, `Foundation reminder`, `Operating reminder`
 - every Adapter value is a skill/MCP invocation, not an internal CLI — grep for `--` flags and binary paths (e.g. `assistants chat`) and reject them
 - managed regions have matching `start`/`end` marker pairs
@@ -155,13 +155,13 @@ Write `.agentic/runs/<branch>.json` (R1, local-only state; never present it as a
   "status": "completed",
   "outcome": "...",
   "artifacts": ["..."],
-  "next_step": "sdlc-start or product-owner"
+  "next_step": "sdlc-guided or story-author"
 }
 ```
 
 ### Phase 7 — handoff
 
-Offer the next step (yes/no/other). Point the user at `sdlc-start` or `product-owner`.
+Offer the next step (yes/no/other). Point the user at `sdlc-guided` or `story-author`.
 
 ## Outputs
 
@@ -192,8 +192,8 @@ Offer the next step (yes/no/other). Point the user at `sdlc-start` or `product-o
 ## Cross-references
 
 - **Consumes:** repo-audit-guides audit report (`# Repo Knowledge Audit`).
-- **Feeds:** `sdlc-start` and `product-owner` (handoff via `next_step`); `requirements-intake` and `product-owner` read `## Ticket Adapter`; MR/PR skills read `## MR Adapter`; the ticket-sync Stop/SubagentStop hook reads `integration/ticket-flow.md`; every agentic-sdlc skill reads the guide tree.
-- **Ongoing sync:** the **guide-sync** agent keeps the guide tree current on post-merge runs — this skill is one-time setup, harvester is continuous upkeep. `testing/` upkeep belongs to **qa-foundation**.
+- **Feeds:** `sdlc-guided` and `story-author` (handoff via `next_step`); `story-intake` and `story-author` read `## Work Item Adapter`; MR/PR skills read `## Review Adapter`; the ticket-sync Stop/SubagentStop hook reads `integration/ticket-flow.md`; every agentic-sdlc skill reads the guide tree.
+- **Ongoing sync:** the **guide-sync** agent keeps the guide tree current on post-merge runs — this skill is one-time setup, harvester is continuous upkeep. `testing/` upkeep belongs to **qa-baseline**.
 - **Kept separate:** the agentic-os `/agentic-init` skill at `plugins/agentic-os/skills/agentic-init/` is a sibling — do NOT modify it or its templates.
 
 ## Non-goals

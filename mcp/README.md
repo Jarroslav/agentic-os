@@ -106,7 +106,7 @@ preset; `list_presets` shows all ten with their human-in-the-loop mode.
 | **QA** | "What QE blueprints do you have for the execution stage?" | `list_qe_blueprints` | the QE catalog (28 blueprints across 6 STLC stages) — e.g. `coverage-analysis`, `flaky-debugging` — to scaffold a test framework from |
 | **Architect** | "How does the blind pre-commit review gate work?" | `search_methodology` → `get_document` | the governance doc itself — the instruction-quality rubric, review gates, and patterns |
 | **DevOps** | "What does the devops role set up, and how does MR-watch fix CI?" | `list_presets`, `get_document` | the devops preset (git hooks, PR pipeline gate) and the `mr-watch` skill that monitors merge requests and auto-fixes CI until they merge |
-| **BA / PO** | "How do I turn a ticket into requirements with agentic-sdlc?" | `search_methodology`, `get_document` | the `requirements-intake` / `product-owner` method — a story with acceptance criteria and an early complexity read (no code) |
+| **BA / PO** | "How do I turn a ticket into requirements with agentic-sdlc?" | `search_methodology`, `get_document` | the `story-intake` / `story-author` method — a story with acceptance criteria and an early complexity read (no code) |
 | **PM / delivery** | "What's the PR-gate and status workflow for a delivery manager?" | `list_presets`, `get_document` | the pm-delivery preset — ticket/MR adapters, a PR pipeline gate, `mr-watch`, and status conventions |
 | **Portfolio** | "What cross-project oversight does the portfolio role give?" | `list_presets`, `get_document` | run status, repo/knowledge-health audits, and durable cross-session memory — read/report-only, no git footprint |
 | **Security** | "What does the security preset enforce when I threat-model a feature?" | `list_presets`, `get_document` | the threat-modeler contract + threat-modeling guide — DFD-first STRIDE with per-element constraints, severities `proposed — owner confirmation pending`, writes only `docs/security/` |
@@ -202,8 +202,8 @@ Ready-made entry points your assistant can offer by name:
 | `agentic-doctor` | Verify an existing agentic-os install is healthy |
 | `agentic-upgrade` | Upgrade the installed templates to a newer version |
 | `agentic-uninstall` | Remove a role preset — or the whole layer — by converging to what a narrower install would produce |
-| `sdlc-start` | Run the governed SDLC pipeline on a task, stopping at human gates |
-| `sdlc-task` | Lightweight SDLC flow for a small (XS/S/M) task |
+| `sdlc-guided` | Run the governed SDLC pipeline on a task, stopping at human gates |
+| `sdlc-brief` | Lightweight SDLC flow for a small (XS/S/M) task |
 | `qe-blueprint-scaffold` | Scaffold a fill-in-ready QE agent framework from a blueprint |
 
 ## Changelog

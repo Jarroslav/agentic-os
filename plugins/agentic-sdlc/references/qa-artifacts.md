@@ -1,7 +1,7 @@
 # QA Artifacts
 
-`qa-planner` writes two documents. This file is the shape both must take, so
-that `sdlc-pipeline`, `qa-planner --review-tests` and the Phase 7 reviewer can
+`qa-scoping` writes two documents. This file is the shape both must take, so
+that `sdlc-engine`, `qa-scoping --review-tests` and the Phase 7 reviewer can
 read them without guessing.
 
 Both are markdown because humans read them at a gate. Both put the part that
@@ -10,7 +10,7 @@ after the first table has still seen everything that matters.
 
 ## qa-checklist.md
 
-Written to `<run_dir>/qa-checklist.md` by `qa-planner --checklist`, before any
+Written to `<run_dir>/qa-checklist.md` by `qa-scoping --checklist`, before any
 implementation begins.
 
 ```markdown
@@ -81,7 +81,7 @@ qa-strategy.md configures no adapter.)*
 
 ## qa-test-review.md
 
-Written to `<run_dir>/qa-test-review.md` by `qa-planner --review-tests`, after
+Written to `<run_dir>/qa-test-review.md` by `qa-scoping --review-tests`, after
 the tests exist.
 
 ```markdown

@@ -92,7 +92,7 @@ Derive candidate areas from, in order of confidence:
 1. **Linked commits / change requests** attached to the ticket — the strongest signal for touched paths.
 2. **Explicit file or module paths** named in the description, AC, or comments.
 3. **Component / area labels** on the ticket and its subtasks.
-4. **QA foundation knowledge** — if `qa-foundation` has recorded test locations and a coverage map under `.agentic/`, cross-reference the candidate areas against it to locate the existing (or missing) tests for each area.
+4. **QA foundation knowledge** — if `qa-baseline` has recorded test locations and a coverage map under `.agentic/`, cross-reference the candidate areas against it to locate the existing (or missing) tests for each area.
 
 > Ground the mapping. Only record a code area you can trace to fetched content or
 > repo files — never invent a path because it "seems related." Unmapped is an

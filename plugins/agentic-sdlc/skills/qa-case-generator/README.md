@@ -1,6 +1,6 @@
 # qa-case-generator
 
-Turn a work-item ticket into a planned, written, reviewed, and optionally synced suite of functional test cases. Standalone — invoke it directly against an existing ticket; it is not wired into the `sdlc-autonomous` or `sdlc-standard` pipelines.
+Turn a work-item ticket into a planned, written, reviewed, and optionally synced suite of functional test cases. Standalone — invoke it directly against an existing ticket; it is not wired into the `sdlc-auto` or `sdlc-standard` pipelines.
 
 ## Use It For
 
@@ -69,7 +69,7 @@ Example: a payments ticket trips the risk keywords, boosting coverage to **14 ca
 
 Hard preconditions — the skill stops if any fail:
 
-- **QA foundation present.** `.agentic/guides/testing/qa-strategy.md` and `qa-health.md` (same directory) must exist. If not, run `qa-foundation` first — it creates `.agentic/guides/testing/`.
+- **QA foundation present.** `.agentic/guides/testing/qa-strategy.md` and `qa-health.md` (same directory) must exist. If not, run `qa-baseline` first — it creates `.agentic/guides/testing/`.
 - **Work-item adapter declared** in `.agentic/guides/project.md` (examples: `gh`, `glab`). No ticket backend is hardcoded. If missing, configure via `/repo-guides`.
 - **Clear acceptance criteria.** If the ticket's AC are vague or missing, the skill asks you to fix the ticket, then re-run.
 
@@ -81,7 +81,7 @@ Troubleshooting:
 
 | Error | Cause | Fix |
 |---|---|---|
-| `"Run qa-foundation first"` | QA docs missing | Run `qa-foundation` |
+| `"Run qa-baseline first"` | QA docs missing | Run `qa-baseline` |
 | `"No ticket adapter configured"` | Adapter undeclared | Declare it in `.agentic/guides/project.md` (or `/repo-guides`) |
 | `"AC too vague"` | Acceptance criteria unclear/missing | Tighten the ticket, re-run |
 | `"Ticket not found"` | Bad ID or credentials | Check the ID and adapter auth |

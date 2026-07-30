@@ -12,7 +12,7 @@ A read-only fallback exists but is not the contract: the orchestrator may recons
 
 ## Consumers
 
-Authors wiring up code-review gate resolution: the `code-review-orchestrator` and the callers that feed it — `sdlc-task`, `sdlc-pipeline`, and the standalone `code-review` wrapper.
+Authors wiring up code-review gate resolution: the `code-review-orchestrator` and the callers that feed it — `sdlc-brief`, `sdlc-engine`, and the standalone `code-review` wrapper.
 
 ## Gates and output files
 

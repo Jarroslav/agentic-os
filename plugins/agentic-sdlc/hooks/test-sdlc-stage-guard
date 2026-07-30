@@ -148,7 +148,7 @@ _test_task_stage5() {
     emit_decision "$d/decisions.jsonl" "spec.approved" "approve"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "stage 5 — nudges qa-planner --checklist" "Stage 5" "$out"
+    assert_context_contains "stage 5 — nudges qa-scoping --checklist" "Stage 5" "$out"
 }
 
 _test_task_stage6() {
@@ -175,11 +175,11 @@ _test_task_stage7() {
     touch "$d/technical-analysis.md" "$d/complexity-assessment.md" "$d/spec.md" "$d/plan.md" "$d/qa-checklist.md"
     emit_decision "$d/decisions.jsonl" "spec.approved" "approve"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
-    # qa-test-review.md still absent; the qa-planner dispatch is the transition
-    # signal (sdlc-task writes no evidence file for inline implementation).
-    local stdin='{"tool_name":"Skill","tool_input":{"skill":"qa-planner"},"tool_response":{"result":"ok"}}'
+    # qa-test-review.md still absent; the qa-scoping dispatch is the transition
+    # signal (sdlc-brief writes no evidence file for inline implementation).
+    local stdin='{"tool_name":"Skill","tool_input":{"skill":"qa-scoping"},"tool_response":{"result":"ok"}}'
     local out; out=$(printf '%s' "$stdin" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "stage 7 — nudges qa-planner --review-tests" "Stage 7" "$out"
+    assert_context_contains "stage 7 — nudges qa-scoping --review-tests" "Stage 7" "$out"
 }
 
 _test_task_stage8_unresolved() {
@@ -209,7 +209,7 @@ _test_task_stage9() {
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     emit_decision "$d/decisions.jsonl" "code-review.final" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "stage 9 — nudges qa-gates" "Stage 9" "$out"
+    assert_context_contains "stage 9 — nudges gate-runner" "Stage 9" "$out"
 }
 
 _test_task_stage10_11() {
@@ -235,17 +235,17 @@ _test_task_complete_is_silent() {
 _test_light_flow_defaults_to_task_labeling_when_flow_absent() {
     write_task "feat-a" "main" >/dev/null   # no flow field
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "no flow field — defaults to sdlc-task labeling" "sdlc-task Stage 1" "$out"
+    assert_context_contains "no flow field — defaults to sdlc-brief labeling" "sdlc-brief Stage 1" "$out"
 }
 
 _test_light_stage1() {
-    write_task "feat-a" "main" "sdlc-light" >/dev/null
+    write_task "feat-a" "main" "sdlc-direct" >/dev/null
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "light stage 1 — nudges codebase-scout" "sdlc-light Stage 1" "$out"
+    assert_context_contains "light stage 1 — nudges codebase-scout" "sdlc-direct Stage 1" "$out"
 }
 
 _test_light_stage2_3() {
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
     assert_context_contains "light stage 2-3 — clarity check then plan, no spec" "Stage 2-3" "$out"
@@ -253,7 +253,7 @@ _test_light_stage2_3() {
 }
 
 _test_light_stage3_gate_pending() {
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
     assert_context_contains "light stage 3 gate pending — plan.approved missing" "plan.approved not recorded" "$out"
@@ -261,25 +261,25 @@ _test_light_stage3_gate_pending() {
 
 _test_light_stage4_with_qa_foundation() {
     write_qa_foundation
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "light stage 4 — nudges qa-planner --checklist" "Stage 4" "$out"
+    assert_context_contains "light stage 4 — nudges qa-scoping --checklist" "Stage 4" "$out"
 }
 
 _test_light_stage4_skipped_without_qa_foundation() {
     # no qa-strategy.md at all — Stage 4 (checklist) never happens, falls to Stage 5
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "light stage 4 skipped (no qa-foundation) — falls straight to stage 5" "Stage 5" "$out"
+    assert_context_contains "light stage 4 skipped (no qa-baseline) — falls straight to stage 5" "Stage 5" "$out"
 }
 
 _test_light_stage5_with_qa_foundation() {
     write_qa_foundation
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md" "$d/qa-checklist.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
@@ -288,7 +288,7 @@ _test_light_stage5_with_qa_foundation() {
 
 _test_light_stage5_impl_completion_advances_to_stage6() {
     write_qa_foundation
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md" "$d/qa-checklist.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     local stdin='{"tool_name":"Skill","tool_input":{"skill":"superpowers:test-driven-development"},"tool_response":{"result":"ok"}}'
@@ -298,17 +298,17 @@ _test_light_stage5_impl_completion_advances_to_stage6() {
 
 _test_light_stage6_with_qa_foundation() {
     write_qa_foundation
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md" "$d/qa-checklist.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
-    local stdin='{"tool_name":"Skill","tool_input":{"skill":"qa-planner"},"tool_response":{"result":"ok"}}'
+    local stdin='{"tool_name":"Skill","tool_input":{"skill":"qa-scoping"},"tool_response":{"result":"ok"}}'
     local out; out=$(printf '%s' "$stdin" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "light stage 6 — nudges qa-planner --review-tests" "Stage 6" "$out"
+    assert_context_contains "light stage 6 — nudges qa-scoping --review-tests" "Stage 6" "$out"
 }
 
 _test_light_stage7_unresolved() {
     write_qa_foundation
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md" "$d/qa-checklist.md" "$d/qa-test-review.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
@@ -317,17 +317,17 @@ _test_light_stage7_unresolved() {
 
 _test_light_stage8() {
     write_qa_foundation
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md" "$d/qa-checklist.md" "$d/qa-test-review.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     emit_decision "$d/decisions.jsonl" "code-review.final" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "light stage 8 — nudges qa-gates" "Stage 8" "$out"
+    assert_context_contains "light stage 8 — nudges gate-runner" "Stage 8" "$out"
 }
 
 _test_light_stage9_10_with_qa_foundation() {
     write_qa_foundation
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md" "$d/qa-checklist.md" "$d/qa-test-review.md" "$d/qa-report.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     emit_decision "$d/decisions.jsonl" "code-review.final" "approve"
@@ -336,17 +336,17 @@ _test_light_stage9_10_with_qa_foundation() {
 }
 
 _test_light_stage10_without_qa_foundation() {
-    local d; d=$(write_task "feat-a" "main" "sdlc-light")
+    local d; d=$(write_task "feat-a" "main" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md" "$d/qa-report.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     emit_decision "$d/decisions.jsonl" "code-review.final" "approve"
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "light stage 10 (no qa-foundation) — handoff only, no health-update mention" "Stage 10" "$out"
+    assert_context_contains "light stage 10 (no qa-baseline) — handoff only, no health-update mention" "Stage 10" "$out"
 }
 
 _test_light_complete_is_silent() {
     write_qa_foundation
-    local d; d=$(write_task "feat-a" "maintenance" "sdlc-light")
+    local d; d=$(write_task "feat-a" "maintenance" "sdlc-direct")
     touch "$d/technical-analysis.md" "$d/plan.md" "$d/qa-checklist.md" "$d/qa-test-review.md" "$d/qa-report.md"
     emit_decision "$d/decisions.jsonl" "plan.approved" "approve"
     emit_decision "$d/decisions.jsonl" "code-review.final" "approve"
@@ -357,7 +357,7 @@ _test_light_complete_is_silent() {
 _test_pipeline_phase1() {
     write_run 1 >/dev/null
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "pipeline phase 1 — nudges requirements-intake" "Phase 1" "$out"
+    assert_context_contains "pipeline phase 1 — nudges story-intake" "Phase 1" "$out"
 }
 
 _test_pipeline_phase4_gate_pending() {
@@ -412,7 +412,7 @@ _test_task_takes_priority_over_run() {
     write_task "feat-a" "main" >/dev/null
     write_run 7 >/dev/null
     local out; out=$(printf '%s' "$POST_STDIN" | bash "$HOOK" 2>&1 || true)
-    assert_context_contains "active task takes priority over a run dir" "sdlc-task Stage 1" "$out"
+    assert_context_contains "active task takes priority over a run dir" "sdlc-brief Stage 1" "$out"
 }
 
 _test_missing_decisions_file_treated_as_no_gate() {

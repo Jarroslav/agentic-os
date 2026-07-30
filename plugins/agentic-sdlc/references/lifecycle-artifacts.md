@@ -32,7 +32,7 @@ A heavy-pipeline run claims a run id and writes under it:
     events.jsonl                 # phase transitions + side effects (append-only)
     task-evidence/               # one folder per implementation task
       <task-id>/                 #   commands run, output, diffs, gate results
-    verification-evidence.json   # feature-verification output (per feature)
+    verification-evidence.json   # acceptance-check output (per feature)
   guides/                        # adapters: ticket + MR/PR backends, standards
   memory/<role>/                 # role-memory: durable, cross-run
 docs/superpowers/
@@ -55,10 +55,10 @@ from the code that shipped.
 | `spec.md` | superpowers:brainstorming (heading shape) → orchestrator | R2 | After requirements intake, before `spec.approved` | Planner, reviewers, gate summaries |
 | `plan.md` | superpowers:writing-plans (heading shape) → orchestrator | R2 | After `spec.approved`, before `plan.approved` | Implementer, `qa.drift` check |
 | `design.md` | superpowers planning skill (heading shape) | R2 | When a design pass is warranted | Implementer, reviewers |
-| `decisions.jsonl` | decision-router | R1 | Every judgment gate | Auditors, resume logic |
-| `events.jsonl` | orchestrator + any R3 actor | R1 | Every phase transition and side effect | Auditors, `sdlc-status` |
+| `decisions.jsonl` | gate-arbiter | R1 | Every judgment gate | Auditors, resume logic |
+| `events.jsonl` | orchestrator + any R3 actor | R1 | Every phase transition and side effect | Auditors, `sdlc-runs` |
 | `task-evidence/<task-id>/` | orchestrator during implementation | R1 | Per task, as work lands | code-review, `code-review.final` |
-| `verification-evidence.json` | feature-verification | R1 | After QA gates, per user-visible feature | `code-review.final`, reviewers |
+| `verification-evidence.json` | acceptance-check | R1 | After QA gates, per user-visible feature | `code-review.final`, reviewers |
 
 > `spec.md`, `plan.md`, `decisions.jsonl`, `events.jsonl`,
 > `verification-evidence.json`, and the `task-evidence` folder name are integration
@@ -80,7 +80,7 @@ and will go stale if it tries.
 Two ledgers under the run dir are the audit spine. Both are append-only JSONL —
 one object per line, never rewritten.
 
-- `decisions.jsonl` — the decision-router writes one record per judgment gate
+- `decisions.jsonl` — the gate-arbiter writes one record per judgment gate
   (`spec.approved`, `plan.approved`, `qa.drift`, `code-review.final`,
   `requirements.ambiguous`, …). Each record carries the gate id, the structured
   verdict, and the prior context that fed the decision. In `hitl` mode the verdict
@@ -102,7 +102,7 @@ Evidence is captured while work is fresh, not reconstructed at review time.
   the commands it ran, their output, the diff, and gate results. Deferred model-heavy
   code review reads these folders at the end rather than re-running the work.
 - `verification-evidence.json` — for changes touching UI or any externally visible
-  surface, feature-verification reuses existing e2e coverage when present, generates
+  surface, acceptance-check reuses existing e2e coverage when present, generates
   focused browser checks when coverage is missing, and records screenshots plus
   console and network errors here, one file per feature.
 
@@ -127,12 +127,12 @@ Not everything under `.agentic/` is scoped to a single run.
 
 | Path | Lifetime | Owner |
 |------|----------|-------|
-| `.agentic/runs/<run-id>/` | One run | Orchestrator + decision-router |
+| `.agentic/runs/<run-id>/` | One run | Orchestrator + gate-arbiter |
 | `.agentic/memory/<role>/` | Across runs | role-memory (durable facts, prefs, episodic log) |
 | `.agentic/guides/` | Across runs | repo-guides (planted) / repo-audit-guides (audited) |
 
 Adapters live in `.agentic/guides/`. No ticket or MR/PR backend is hardcoded — the
-mr-creator and requirements intake read their backend from the guides tree, so the
+mr-submit and requirements intake read their backend from the guides tree, so the
 same run artifacts work against Jira, Azure DevOps, GitLab, GitHub, or a custom CLI
 without touching the pipeline. `repo-guides` plants that tree; `repo-audit-guides`
 audits a repo's readiness before planting; `role-memory` keeps per-role state that

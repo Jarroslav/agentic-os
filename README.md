@@ -38,7 +38,7 @@ terms (HITL, gate, preset…) are one-liners in the [Glossary](#glossary).
 | Your goal | Install from marketplace | First command in *your* project |
 |-----------|--------------------------|----------------------------------|
 | **Governed agents in my repo** — scoped writes, blind pre-commit review, role presets, stack agents | **agentic-os** + **agentic-sdlc** + [**superpowers**](https://github.com/anthropics/claude-plugins-official) (≥ **6.1.0** — enforced by `/agentic-init`; see `plugins/agentic-os/manifest/dependencies.json`) | Choose roles: `/agentic-init --presets ba-po` → `/agentic-doctor` |
-| **SDLC pipeline on top** — spec → plan → TDD → QA (`/sdlc-start`, `/sdlc-autonomous`, …) | Same three plugins (pipeline skills ship in **agentic-sdlc**) | After init: `/sdlc-start <task>` or run **sdlc-doctor** |
+| **SDLC pipeline on top** — spec → plan → TDD → QA (`/sdlc-guided`, `/sdlc-auto`, …) | Same three plugins (pipeline skills ship in **agentic-sdlc**) | After init: `/sdlc-guided <task>` or run **sdlc-preflight** |
 | **QE AI blueprints** — 28 QE methodology blueprints, scaffold an agent framework from one, or set up evals for skills/agents | **agentic-qe** (works alone — no `/agentic-init` needed; composes with the other two when they are installed) | Ask e.g. *"scaffold the bug-reporting blueprint for Claude Code"* or *"set up evals for my skills"* |
 
 **Five-minute flow (any editor):**
@@ -48,7 +48,7 @@ terms (HITL, gate, preset…) are one-liners in the [Glossary](#glossary).
 3. Run `/agentic-init --presets <role[,role...]>` (or `/agentic-init` for the full role-selection interview).
 4. Run `/agentic-doctor` — expect `passed: true` in `.agentic/agentic-os/doctor.json`.
 5. `git status` — review scaffolded files; nothing is committed for you.
-6. If you use the SDLC pipeline, run **sdlc-doctor** — expect `passed: true` in
+6. If you use the SDLC pipeline, run **sdlc-preflight** — expect `passed: true` in
    `.agentic/agentic-sdlc/doctor.json`.
 
 **Safe first try:** use the [throwaway repo walkthrough](#try-it-in-two-minutes-throwaway-repo) before touching a real project.
@@ -62,7 +62,7 @@ Complete this **before** `/agentic-init` in the repo you want to equip:
 | 1 | **Claude Code** or **Cursor** | Editor running with plugin support |
 | 2 | **`python3`** on PATH | `python3 --version` — enforcement hooks are Python |
 | 3 | **`git`** | Target directory is a git repo (`git status`) |
-| 4 | **`node`** on PATH | `node --version` — checked by **sdlc-doctor** when using **agentic-sdlc** |
+| 4 | **`node`** on PATH | `node --version` — checked by **sdlc-preflight** when using **agentic-sdlc** |
 | 5 | **`superpowers`** plugin ≥ **6.1.0** | [Install superpowers](#install-superpowers) |
 | 6 | **`agentic-os`** custom marketplace added | [Install](#install) for your editor |
 | 7 | **`agentic-os`** + **`agentic-sdlc`** plugins installed | Both cards/skills visible after reload |
@@ -73,7 +73,7 @@ Complete this **before** `/agentic-init` in the repo you want to equip:
 | Check | When | Output |
 |-------|------|--------|
 | `/agentic-doctor` | After `/agentic-init` or `/agentic-upgrade` | `.agentic/agentic-os/doctor.json` — manifest, hooks, dependencies, scorecard |
-| **sdlc-doctor** skill | Before `/sdlc-start` or other SDLC skills | `.agentic/agentic-sdlc/doctor.json` — superpowers, `node`, `git` |
+| **sdlc-preflight** skill | Before `/sdlc-guided` or other SDLC skills | `.agentic/agentic-sdlc/doctor.json` — superpowers, `node`, `git` |
 
 > **Cursor users:** this plugin is **not** in Browse Marketplace → All (curated
 > public plugins only). You add a **custom marketplace** and install from the
@@ -121,7 +121,7 @@ This repo is a **marketplace** (Claude Code and Cursor) hosting three plugins:
 - **`agentic-os`** — the product: the `/agentic-init`, `/agentic-doctor`, and
   `/agentic-upgrade` skills plus the template library, generators, and role
   presets they scaffold from.
-- **`agentic-sdlc`** — the SDLC pipeline and the **decision-router** that
+- **`agentic-sdlc`** — the SDLC pipeline and the **gate-arbiter** that
   resolves every judgment gate (ask the human in HITL mode; deterministic →
   fast-path → stand-in subagent → escalate in autonomous mode) with a full
   `decisions.jsonl` audit trail. For an interactive visual map of the whole
@@ -182,8 +182,8 @@ Splitting them keeps each independently versioned, upgraded, and installable.
 - **`python3`** on your PATH — enforcement hooks are Python scripts.
 - **`git`** — the target repo must be a git repository (`/agentic-init` can
   `git init` if it is not).
-- **`node`** on your PATH — required when using **agentic-sdlc**; **sdlc-doctor**
-  runs `node --version` and `git --version` (`plugins/agentic-sdlc/skills/sdlc-doctor/SKILL.md`).
+- **`node`** on your PATH — required when using **agentic-sdlc**; **sdlc-preflight**
+  runs `node --version` and `git --version` (`plugins/agentic-sdlc/skills/sdlc-preflight/SKILL.md`).
 - **`superpowers`** ≥ **6.1.0** and **`agentic-sdlc`** ≥ **0.4.4** — required
   by `/agentic-init` (`plugins/agentic-os/manifest/dependencies.json`).
 - Optional: **`gh`** (GitHub CLI) for GitHub ticket/MR adapters.
@@ -223,7 +223,7 @@ Fallback marketplace (same plugin family):
 2. Install superpowers in Claude Code and enable **“Automatically import agent
    configs from other tools”**, then reload Cursor.
 
-Confirm version ≥ 6.1.0 on the plugin card or via **sdlc-doctor** after equip.
+Confirm version ≥ 6.1.0 on the plugin card or via **sdlc-preflight** after equip.
 
 ### Claude Code
 
@@ -316,8 +316,8 @@ Then:
 /agentic-uninstall qa    # drop a role (--all for the whole layer, --dry-run to preview)
 ```
 
-If you use SDLC skills (`/sdlc-start`, `/sdlc-autonomous`, …), also run
-**sdlc-doctor** — it writes `.agentic/agentic-sdlc/doctor.json` and checks
+If you use SDLC skills (`/sdlc-guided`, `/sdlc-auto`, …), also run
+**sdlc-preflight** — it writes `.agentic/agentic-sdlc/doctor.json` and checks
 superpowers, `node`, and `git`.
 
 #### Cursor troubleshooting
@@ -329,7 +329,7 @@ superpowers, `node`, and `git`.
 | Skills page shows hundreds of items, not `agentic-init` | Search for `agentic-init`, or open the plugin card under Customize → Plugins. |
 | `/agentic-init` not recognized | Plugins not loaded — reload window; confirm both plugins show as installed. |
 | Init or sdlc doctor fails on superpowers | Install superpowers ≥ **6.1.0** ([Install superpowers](#install-superpowers)), then reload. |
-| sdlc-doctor fails on node | Install **Node.js** (`node --version` on PATH). |
+| sdlc-preflight fails on node | Install **Node.js** (`node --version` on PATH). |
 
 ### Portfolio and MCP (Cursor or Claude Code)
 
@@ -463,7 +463,7 @@ The install sets how much agents may do before a human must weigh in:
 - **`gated-autonomous`** — pipelines run, but judgment gates and the
   `escalate_on` risk flags (default: security, breaking-change, migration,
   spend) stop them for a human decision.
-- **`autonomous`** — the agentic-sdlc decision-router resolves gates with
+- **`autonomous`** — the agentic-sdlc gate-arbiter resolves gates with
   deterministic checks, fast-paths, and stand-in reviewers, escalating to you
   only on low confidence, a matching risk flag, or malformed agent output.
 
@@ -488,7 +488,7 @@ pointers):
 ```
 .agentic/agents/            canonical agent contracts (single source of truth)
 .agentic/guides/            policy/, standards/, agent-registry.md, project.md
-.agentic/agentic-sdlc/      config.json (decision-router wiring)
+.agentic/agentic-sdlc/      config.json (gate-arbiter wiring)
 .claude/hooks/             the enforcement hooks
 .claude/agents/, commands/ thin pointers + orchestration commands
 .githooks/pre-commit       the review gate's git-level twin
@@ -540,7 +540,7 @@ After install, what you reach for depends on the preset(s) you chose:
   writes emotion-annotated journeys, step+emotion framings, decision-closing
   workshop logs, and the agent-ready `context.md` + `spec.md` handoff pair
   only under `docs/design/`; negative acceptance criteria are carried
-  verbatim, and story drafting hands off to `product-owner`.
+  verbatim, and story drafting hands off to `story-author`.
 
 > **If you don't write code** (pm-delivery, ba-po, portfolio, security, data,
 > design): everything you
@@ -592,7 +592,7 @@ Not unless you ask it to. `/agentic-init` scaffolds files and shows you a
 settings diff before merging it — it never runs `git add` or `git commit`, so
 the working tree is yours to review. The SDLC pipeline stops at a review-ready
 branch and never opens a PR by itself. Two bundled skills *do* write to git,
-and only when you invoke them by name: `mr-creator` (commits, pushes, opens the
+and only when you invoke them by name: `mr-submit` (commits, pushes, opens the
 PR) and `mr-watch` (pushes review fix-ups with `--force-with-lease`).
 
 **What if my stack isn't one of the six curated profiles?**
@@ -669,7 +669,7 @@ One-liners for the jargon used above, no forward references required:
   agents, hooks, and skills get installed.
 - **Scaffold** — the set of files `/agentic-init` writes into your repo
   (contracts, hooks, policies, guides); nothing is committed for you.
-- **Doctor** — a read-only verifier (`/agentic-doctor`, sdlc-doctor) that
+- **Doctor** — a read-only verifier (`/agentic-doctor`, sdlc-preflight) that
   checks an install actually works and writes a pass/fail report.
 - **Adapter** — a small config declaring which ticket/MR tool you use (GitHub,
   GitLab, Jira, Azure DevOps…), so no vendor is hardcoded.
@@ -681,7 +681,7 @@ One-liners for the jargon used above, no forward references required:
   each request to one owning agent, one step at a time; pipeline runs the
   staged multi-agent flow.
 - **Skill** — a packaged, invocable capability of a plugin (e.g.
-  `/agentic-init`, `sdlc-start`, `mr-watch`).
+  `/agentic-init`, `sdlc-guided`, `mr-watch`).
 
 ## Testing & development
 

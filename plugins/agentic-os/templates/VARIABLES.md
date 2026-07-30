@@ -143,7 +143,7 @@ this template, and the generated copy belongs under
 `.agentic/guides/standards/mcp-onboarding.md`.
 
 `guides/ba-po-operating-model` is the role-specific BA/PO entrypoint. It
-delegates to the existing product-owner, requirements-intake, and adapter
+delegates to the existing story-author, story-intake, and adapter
 contracts; it does not define a second orchestration system.
 | `{{APP_START_COMMAND}}` | Command to launch the app for verification | stack-fact record (`variable_defaults.APP_START_COMMAND`) |
 | `{{BASE_URL}}` | Local base URL for feature verification | stack-fact record (`variable_defaults.BASE_URL`), fallback `http://localhost:3000` |

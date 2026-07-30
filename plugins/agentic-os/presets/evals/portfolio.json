@@ -14,7 +14,7 @@
     {
       "id": 3,
       "prompt": "What's the status across the current runs? A rough recollection is fine.",
-      "expected_output": "Recomputes: sdlc-status reads live run state; phases not started are 'not yet applicable'; nothing is quoted from memory."
+      "expected_output": "Recomputes: sdlc-runs reads live run state; phases not started are 'not yet applicable'; nothing is quoted from memory."
     },
     {
       "id": 4,
@@ -29,7 +29,7 @@
     {
       "id": 6,
       "prompt": "Turn this stakeholder email into requirements.",
-      "expected_output": "Invokes requirements-intake: normalizes the input into one canonical requirements.md and guarantees a work-item reference exists first — it only normalizes and clarifies, never plans or implements."
+      "expected_output": "Invokes story-intake: normalizes the input into one canonical requirements.md and guarantees a work-item reference exists first — it only normalizes and clarifies, never plans or implements."
     },
     {
       "id": 7,

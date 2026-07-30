@@ -10,7 +10,7 @@ description: >-
   says "watch the MR", "monitor MR", "keep an eye on the PR", "babysit this PR",
   "monitor MR !123", or when an MR-creator skill hands off a freshly opened
   request for hands-off management. Blast radius R3.
-  Not for: creating the MR/PR (mr-creator), one-shot status checks, or reviewing code quality (code-review) — it is a persistent unblocking loop.
+  Not for: creating the MR/PR (mr-submit), one-shot status checks, or reviewing code quality (code-review) — it is a persistent unblocking loop.
 
 ---
 
@@ -27,7 +27,7 @@ one.
 ## When to invoke
 
 - User asks to watch, monitor, or keep an eye on an open MR/PR.
-- `mr-creator` (or any request-opening skill) hands off the URL it just created.
+- `mr-submit` (or any request-opening skill) hands off the URL it just created.
 
 ## Inputs
 
@@ -44,7 +44,7 @@ request ID:
 
 All platform I/O is indirected — never call a platform CLI directly.
 
-- Read the adapter from `.agentic/guides/project.md`, section `## MR Adapter`.
+- Read the adapter from `.agentic/guides/project.md`, section `## Review Adapter`.
   Use the declared adapter only when its status is `configured`.
 - The operation contract lives in `references/mr-adapters.md`. Read it to learn
   how each named operation maps onto the configured adapter (CLI, MCP server, or

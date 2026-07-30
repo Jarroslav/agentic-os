@@ -8,7 +8,7 @@ const DEFAULT_MAX = 40_000;
 
 const inputShape = {
   uri: z.string().describe(
-    'An agentic-os:// URI, e.g. agentic-os://skills/agentic-sdlc/qa-gates ' +
+    'An agentic-os:// URI, e.g. agentic-os://skills/agentic-sdlc/gate-runner ' +
     'or agentic-os://file/agentic-sdlc/agents/guide-sync.md. ' +
     'Get these from search_methodology.',
   ),

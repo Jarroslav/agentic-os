@@ -3,7 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Content } from '../content.js';
 import { pathToUri } from '../resources.js';
 
-const SOURCE = 'plugins/agentic-sdlc/skills/sdlc-pipeline/SKILL.md';
+const SOURCE = 'plugins/agentic-sdlc/skills/sdlc-engine/SKILL.md';
 
 const outputShape = {
   phases: z.array(z.object({

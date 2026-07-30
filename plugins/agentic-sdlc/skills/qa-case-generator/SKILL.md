@@ -55,7 +55,7 @@ side-effect) only in phase 6, always behind the human review gate.
 | Functional tests only | No unit/integration/coverage output |
 | Not auto-invoked | Other pipeline skills must not call this skill |
 | Sync needs consent | Phase 6 runs only after explicit user yes |
-| QA docs required | Halt to `qa-foundation` if guides absent |
+| QA docs required | Halt to `qa-baseline` if guides absent |
 | Clear criteria required | Halt below 50% AC confidence |
 
 ## Inputs
@@ -63,10 +63,10 @@ side-effect) only in phase 6, always behind the human review gate.
 | Input | Source | Missing → |
 | --- | --- | --- |
 | Work-item id | CLI arg (`PROJ-123`) | Halt with usage error |
-| QA strategy | `.agentic/guides/testing/qa-strategy.md` | Halt → `qa-foundation` |
-| QA health | `.agentic/guides/testing/qa-health.md` | Halt → `qa-foundation` |
-| Ticket backend adapter | Adapter config validated in phase 1 | Halt → `qa-foundation` |
-| Test-management adapter | Adapter config (phase 1) | Halt → `qa-foundation` |
+| QA strategy | `.agentic/guides/testing/qa-strategy.md` | Halt → `qa-baseline` |
+| QA health | `.agentic/guides/testing/qa-health.md` | Halt → `qa-baseline` |
+| Ticket backend adapter | Adapter config validated in phase 1 | Halt → `qa-baseline` |
+| Test-management adapter | Adapter config (phase 1) | Halt → `qa-baseline` |
 
 > Adapters are config-driven, not hardcoded. The ticket backend and the
 > test-management sync target are both read from adapter config validated in
@@ -113,7 +113,7 @@ exist, back them up before regenerating. Never halts.
 
 Confirm `.agentic/guides/testing/qa-strategy.md`, `qa-health.md`, and the
 adapter config all exist. If QA docs or the adapter are absent, **halt** and
-direct the user to the `qa-foundation` skill.
+direct the user to the `qa-baseline` skill.
 
 ### 2 — AC quality check
 
@@ -223,7 +223,7 @@ actually occurred.
 
 | Shortcut | Corrective rule |
 | --- | --- |
-| "Docs probably exist, just generate" | Phase 1 halts on absent QA docs — direct to `qa-foundation` |
+| "Docs probably exist, just generate" | Phase 1 halts on absent QA docs — direct to `qa-baseline` |
 | "I'll pick an intuitive multiplier" | Use the coverage formula and the listed multipliers exactly |
 | "I'll save cases wherever is handy" | Write only to `docs/superpowers/qa-tasks/<date>-<slug>/manual/` |
 | "The user clearly wants it synced" | Phase 6 requires explicit consent captured in phase 5 |

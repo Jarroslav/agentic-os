@@ -39,7 +39,7 @@
     {
       "id": 8,
       "prompt": "Draft a user story for the export feature with acceptance criteria.",
-      "expected_output": "Routes appropriately: story drafting is not the developer flow's job — hands off to the product-owner skill (or notes the ba-po preset owns it) rather than improvising a story format."
+      "expected_output": "Routes appropriately: story drafting is not the developer flow's job — hands off to the story-author skill (or notes the ba-po preset owns it) rather than improvising a story format."
     }
   ]
 }

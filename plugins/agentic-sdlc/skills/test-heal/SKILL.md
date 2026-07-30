@@ -1,8 +1,8 @@
 ---
 name: test-heal
 description: |-
-  Repairs failing tests whose failure is the test's own fault — and only those. Consumes a failure triage (test_issue | environment_issue | flaky | application_issue), fixes test code, fixtures, selectors, and waits, never application code, and never re-runs the suite itself: it applies fixes, sanity-checks that they parse, commits once, and hands a machine-readable Loop Decision back to the orchestrator, which owns re-running qa-gates. application_issue failures are returned untouched as pipeline fix-up work.
-  Not for: application-code fixes (returned untouched as pipeline fix-up work), triaging failures (the triage is its input), or re-running suites (the orchestrator owns qa-gates).
+  Repairs failing tests whose failure is the test's own fault — and only those. Consumes a failure triage (test_issue | environment_issue | flaky | application_issue), fixes test code, fixtures, selectors, and waits, never application code, and never re-runs the suite itself: it applies fixes, sanity-checks that they parse, commits once, and hands a machine-readable Loop Decision back to the orchestrator, which owns re-running gate-runner. application_issue failures are returned untouched as pipeline fix-up work.
+  Not for: application-code fixes (returned untouched as pipeline fix-up work), triaging failures (the triage is its input), or re-running suites (the orchestrator owns gate-runner).
 version: 0.1.0
 license: Apache-2.0
 discoverable: false
@@ -12,9 +12,9 @@ authors:
 
 # test-heal
 
-Called by `sdlc-pipeline` Phase 10 (autonomous mode) when `qa-gates` fails on
+Called by `sdlc-engine` Phase 10 (autonomous mode) when `gate-runner` fails on
 test-side causes. Heal and re-run are deliberately separate responsibilities:
-this skill edits and commits, `qa-gates` re-runs — a healer that re-runs its
+this skill edits and commits, `gate-runner` re-runs — a healer that re-runs its
 own work can mask its own failures.
 
 > **Methodology owner.** How flake causes are isolated and classified is defined by the `flaky-debugging`
@@ -27,7 +27,7 @@ own work can mask its own failures.
 ## Inputs
 
 - `run_dir` — the active run directory
-- `gate_plan` — the runner/commands `qa-gates` detected (never re-detect here)
+- `gate_plan` — the runner/commands `gate-runner` detected (never re-detect here)
 - `failures` — the failing tests with output excerpts from `qa-report.md`
 - `branch` — the active feature branch (all edits stay on it)
 
@@ -90,7 +90,7 @@ outcome: needs_rerun | converged | capped
 ```
 
 - `needs_rerun` — fixes were committed; the orchestrator re-invokes
-  `qa-gates` (counted against loop `qa-gates.retry`, cap 2, per
+  `gate-runner` (counted against loop `gate-runner.retry`, cap 2, per
   `references/gate-catalog.md`).
 - `converged` — nothing left that this skill may fix (all remaining failures
   are `application_issue`/environment); the orchestrator routes them onward.

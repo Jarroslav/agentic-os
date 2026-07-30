@@ -10,8 +10,8 @@ cost model (`references/tokenomics.md`) without ever hardcoding a vendor.
 
 | Tier | Meant for | Examples of work |
 |---|---|---|
-| `economy` | Mechanical, format-bound, low-judgment | requirements mirror sync, artifact summarization for ArtifactRefs, `qa-planner --update` health refresh, work-item history rows, MR description drafting |
-| `standard` | Judgment within a bounded contract | `sizing-analyst`, `codebase-scout`, `story-proxy`, `lead-proxy`, `code-review-orchestrator` (and its review lenses), qa-planner checklist/review modes |
+| `economy` | Mechanical, format-bound, low-judgment | requirements mirror sync, artifact summarization for ArtifactRefs, `qa-scoping --update` health refresh, work-item history rows, MR description drafting |
+| `standard` | Judgment within a bounded contract | `sizing-analyst`, `codebase-scout`, `story-proxy`, `lead-proxy`, `code-review-orchestrator` (and its review lenses), qa-scoping checklist/review modes |
 | `premium` | Escalated judgment on flagged risk | any `standard` role when the gate context carries a risk flag in `escalate_on` (e.g. `security`, `breaking-change`) or `complexity.json.score >= 25` |
 
 ## Resolution rule

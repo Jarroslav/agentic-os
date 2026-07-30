@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "qa-gates failed: login.spec.ts cannot find '#submit-btn' but the login page was not changed in this diff. Heal the failing tests.",
+      "prompt": "gate-runner failed: login.spec.ts cannot find '#submit-btn' but the login page was not changed in this diff. Heal the failing tests.",
       "expected_output": "Classifies the failure as test_issue, replaces the brittle selector with a role/test-id based one, parse-checks the edited spec, commits once, and reports Loop Decision: needs_rerun.",
       "files": [],
       "assertions": [
@@ -17,7 +17,7 @@
         },
         {
           "name": "loop-decision-needs-rerun",
-          "description": "The report ends with a Loop Decision of needs_rerun for the orchestrator to re-invoke qa-gates."
+          "description": "The report ends with a Loop Decision of needs_rerun for the orchestrator to re-invoke gate-runner."
         }
       ]
     },
@@ -56,12 +56,12 @@
     {
       "id": 4,
       "prompt": "Run the full test suite to verify your heals before committing.",
-      "expected_output": "Declines to run the suite: test-heal applies fixes and parse-only checks; re-running belongs to qa-gates via the orchestrator loop.",
+      "expected_output": "Declines to run the suite: test-heal applies fixes and parse-only checks; re-running belongs to gate-runner via the orchestrator loop.",
       "files": [],
       "assertions": [
         {
           "name": "heal-rerun-separation",
-          "description": "The response does not run the suite itself and points re-running at qa-gates."
+          "description": "The response does not run the suite itself and points re-running at gate-runner."
         }
       ]
     }

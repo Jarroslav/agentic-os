@@ -6,6 +6,87 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING: skills are named for their role in the pipeline.** Two naming
+  defects drove this. `sdlc-task` and `sdlc-light` are both lightweight
+  human-in-the-loop flows, and each had to explicitly disclaim the other in its
+  own `description:` — the frontmatter was working around the names. And six
+  skills marked `discoverable: false` carried names that read like public entry
+  points, so the internal/public boundary existed only in frontmatter.
+
+  The five entry points now form a ceremony ladder over one shared engine, and
+  the rest group into families that pair with the agents already named that way:
+
+  | Was | Is | |
+  |---|---|---|
+  | `sdlc-light` | `sdlc-direct` | straight to plan, no spec |
+  | `sdlc-task` | `sdlc-brief` | writes a brief spec |
+  | `sdlc-start` | `sdlc-guided` | full pipeline, human-guided gates |
+  | `sdlc-autonomous` | `sdlc-auto` | full pipeline, autonomous gates |
+  | `sdlc-pipeline` | `sdlc-engine` | the engine the four delegate to |
+  | `sdlc-status` | `sdlc-runs` | inspects and resumes runs |
+  | `sdlc-doctor` | `sdlc-preflight` | prerequisite check before a run |
+  | `requirements-intake` | `story-intake` | pairs with the `story-proxy` agent |
+  | `product-owner` | `story-author` | pairs with `story-intake` |
+  | `mr-creator` | `mr-submit` | pairs with `mr-watch` |
+  | `decision-router` | `gate-arbiter` | pairs with `gate-runner` |
+  | `qa-gates` | `gate-runner` | pairs with `gate-arbiter` |
+  | `complexity-scoring` | `effort-sizing` | pairs with the `sizing-analyst` agent |
+  | `feature-verification` | `acceptance-check` | checks against acceptance criteria |
+  | `qa-planner` | `qa-scoping` | pairs with `qa-baseline` |
+  | `qa-foundation` | `qa-baseline` | pairs with `qa-scoping` |
+
+  Literals derived from a skill name moved with it: the `sdlc-stage-guard`
+  runtime globs, the `.state.json` `flow` values **and the flow default**, the
+  `gate-runner.retry` / `acceptance-check.retry` loop ids, ledger `actor`
+  values, and `feature-verification-plan.json` → `acceptance-check-plan.json`.
+
+  Literals that name a *concept* rather than a skill are deliberately unchanged:
+  gate ids (`spec.approved`, `feature.verification`, …), the `mode` enum whose
+  `task` member is a mode and not `sdlc-task`, `verification-evidence.json`,
+  and every `.agentic/` path that lands in a user's repository.
+
+### Fixed
+
+- **The adapter contract disagreed with its own implementation, in both
+  directions.** The reference declared a `**Comment Template**` field and six
+  template tokens (`{{SUMMARY}}`, `{{CHANGES}}`, `{{SEVERITY}}`,
+  `{{DESCRIPTION}}`, `{{IMPACT}}`, `{{FIX}}`) that nothing in the repository
+  read, while omitting `**Instructions**`, which `/agentic-init` writes into
+  every `project.md` and `mr-creator` reads back. Configuring an adapter by
+  following the spec meant writing a dead field and missing a live one. The dead
+  surface is gone, `**Instructions**` is documented, and the field table now
+  matches the one `repo-guides` enforces.
+
+- **`diff` and `inline-comment` are marked as declared-but-unused.** No shipped
+  skill invokes them. They stay in the contract — they complete the documented
+  operation set and pin the `RIGHT` diff side — but the reference no longer
+  implies something calls them.
+
+- **One status value, spelled one way.** The work-item intake gate wrote
+  `**Status**: not_configured` while the section it reads is written
+  `not configured` by the installer and by every other consumer. The underscore
+  spelling never matched what was on disk. (The unrelated `sync_status` enum in
+  `qa-case-generator` keeps its `not_configured` member — that is a JSON value,
+  not this field.)
+
+### Changed
+
+- **The two adapter sections are named for what they govern.** `## MR Adapter`
+  used GitLab's noun for a section the spec itself always describes as "MR/PR",
+  and `## Ticket Adapter` used a tracker-flavoured noun while its own reference
+  file is `work-item-adapters.md` and its ledger events are `work_item.*`. Both
+  named a vendor's term for a deliberately vendor-neutral indirection. They are
+  now `## Review Adapter` and `## Work Item Adapter`.
+
+  This changes the section headers in `.agentic/guides/project.md`. Re-run
+  `/agentic-init` to re-render the file, or rename the two headings by hand —
+  the fields inside them are unchanged. The `{{MR_ADAPTER}}` and
+  `{{TICKET_ADAPTER}}` installer variables keep their names; they are a separate
+  registry with its own three-way test coupling, and renaming them buys nothing
+  here.
+
 ## [0.5.0] — 2026-07-29
 
 ### Fixed

@@ -17,55 +17,55 @@
       tagline: 'Governed pipeline delivery — spec → plan → tested code → review-ready MR, with generated stack agents.',
       note: 'After init, stack writer agents (schema / API / component) are generated for your repo and independently audited before they can run. Blind pre-commit review guards every commit.',
       phrases: [
-        { say: '/sdlc-start add bulk export to reports', get: 'Requirements → spec → plan → tested code → review-ready MR', skill: 'sdlc-start' },
-        { say: 'Verify the feature on this branch', get: 'Build checked against its own requirements', skill: 'feature-verification' },
-        { say: 'Create an MR for this branch', get: 'Review-ready merge request with description', skill: 'mr-creator' },
-        { say: '/sdlc-autonomous', get: 'Pipeline runs; decision-router escalates only on risk', skill: 'decision-router' }
+        { say: '/sdlc-guided add bulk export to reports', get: 'Requirements → spec → plan → tested code → review-ready MR', skill: 'sdlc-guided' },
+        { say: 'Verify the feature on this branch', get: 'Build checked against its own requirements', skill: 'acceptance-check' },
+        { say: 'Create an MR for this branch', get: 'Review-ready merge request with description', skill: 'mr-submit' },
+        { say: '/sdlc-auto', get: 'Pipeline runs; gate-arbiter escalates only on risk', skill: 'gate-arbiter' }
       ],
       skills: [
-        { name: 'sdlc-start', desc: 'Idea or ticket through the full governed pipeline' },
-        { name: 'sdlc-task', desc: 'Run a single scoped task through the pipeline' },
-        { name: 'sdlc-autonomous', desc: 'Autonomous mode — gates resolved by the decision-router' },
-        { name: 'qa-gates', desc: 'Lint / type / test gates before hand-off' },
-        { name: 'feature-verification', desc: 'Verify a built feature against requirements' },
-        { name: 'mr-creator', desc: 'Draft a review-ready merge request' },
-        { name: 'decision-router', desc: 'Resolves judgment gates; escalates on risk flags' }
+        { name: 'sdlc-guided', desc: 'Idea or ticket through the full governed pipeline' },
+        { name: 'sdlc-brief', desc: 'Run a single scoped task through the pipeline' },
+        { name: 'sdlc-auto', desc: 'Autonomous mode — gates resolved by the gate-arbiter' },
+        { name: 'gate-runner', desc: 'Lint / type / test gates before hand-off' },
+        { name: 'acceptance-check', desc: 'Verify a built feature against requirements' },
+        { name: 'mr-submit', desc: 'Draft a review-ready merge request' },
+        { name: 'gate-arbiter', desc: 'Resolves judgment gates; escalates on risk flags' }
       ] },
     { id: 'qa', label: 'QA Engineer', longLabel: 'QA Engineers', icon: 'ph-flask', guided: false, sdlc: false,
       time: '~20–30 min', presets: 'qa', hitl: 'strict HITL', orch: 'dispatcher',
       tagline: 'Strict human-in-the-loop test design: case generation, automation authoring and failure triage — tests are recommend-only.',
       note: 'Strict HITL by design: agents author test cases and code and recommend commands — humans and CI run them. Real-ID and existing-coverage gates stop invented test cases.',
       phrases: [
-        { say: 'Plan QA coverage for the payments epic', get: 'Risk-ranked test plan', skill: 'qa-planner' },
+        { say: 'Plan QA coverage for the payments epic', get: 'Risk-ranked test plan', skill: 'qa-scoping' },
         { say: 'Generate test cases for work item 1234', get: 'Cases with real IDs, checked against existing coverage', skill: 'test-case agents' },
         { say: 'Triage the failing login test', get: 'Flaky-or-real verdict via the flaky protocol', skill: 'test-failure-triage' },
         { say: 'Scaffold a QE agent framework for regression triage', get: 'A ready-to-fill agent set from the matching QE blueprint', skill: 'qe-blueprints' },
-        { say: 'Turn ticket 872 into requirements', get: 'Structured requirements + open questions', skill: 'requirements-intake' }
+        { say: 'Turn ticket 872 into requirements', get: 'Structured requirements + open questions', skill: 'story-intake' }
       ],
       skills: [
-        { name: 'qa-foundation', desc: 'Scaffold the QA strategy for the repo' },
-        { name: 'qa-planner', desc: 'Plan test coverage for an epic or feature' },
-        { name: 'qa-gates', desc: 'Lint / type / test gates before hand-off' },
-        { name: 'feature-verification', desc: 'Verify a built feature against requirements' },
-        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'qa-baseline', desc: 'Scaffold the QA strategy for the repo' },
+        { name: 'qa-scoping', desc: 'Plan test coverage for an epic or feature' },
+        { name: 'gate-runner', desc: 'Lint / type / test gates before hand-off' },
+        { name: 'acceptance-check', desc: 'Verify a built feature against requirements' },
+        { name: 'story-intake', desc: 'Idea or ticket → structured requirements' },
         { name: 'qe-blueprints', desc: '28 QE methodology blueprints — the authority your QA skills cite' }
       ] },
     { id: 'ba-po', label: 'BA / Product Owner', longLabel: 'Business Analysts & POs', icon: 'ph-note-pencil', guided: true, sdlc: false,
       time: '~45–60 min', presets: 'ba-po + portfolio', hitl: 'gated-autonomous', orch: 'dispatcher',
       tagline: 'Requirements, stories, complexity scoring and portfolio memory — no code-writing agents installed.',
-      note: 'The assistant proposes — you approve every ticket or repo change. product-owner runs automatically at requirements gates; no slash command needed for daily work.',
+      note: 'The assistant proposes — you approve every ticket or repo change. story-author runs automatically at requirements gates; no slash command needed for daily work.',
       phrases: [
-        { say: 'Turn ADO work item 1234 into requirements', get: 'Structured requirements doc + open questions', skill: 'requirements-intake' },
+        { say: 'Turn ADO work item 1234 into requirements', get: 'Structured requirements doc + open questions', skill: 'story-intake' },
         { say: 'Draft a user story for bulk export with Given/When/Then AC', get: 'Story + acceptance criteria in team format', skill: 'ba-po preset' },
-        { say: 'Is the payments epic too big for one sprint?', get: 'Size/risk score + split recommendation', skill: 'complexity-scoring' },
+        { say: 'Is the payments epic too big for one sprint?', get: 'Size/risk score + split recommendation', skill: 'effort-sizing' },
         { say: 'Remember: Q3 scope excludes legacy API', get: 'Saved — next session already knows', skill: 'role-memory' }
       ],
       skills: [
-        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
-        { name: 'product-owner', desc: 'Resolves ambiguous requirements at gates — runs automatically' },
-        { name: 'complexity-scoring', desc: 'Story/epic sizing before delivery' },
+        { name: 'story-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'story-author', desc: 'Resolves ambiguous requirements at gates — runs automatically' },
+        { name: 'effort-sizing', desc: 'Story/epic sizing before delivery' },
         { name: 'role-memory', desc: 'Cross-session decisions and context' },
-        { name: 'sdlc-status', desc: 'Pipeline/run visibility (read-only, via portfolio)' },
+        { name: 'sdlc-runs', desc: 'Pipeline/run visibility (read-only, via portfolio)' },
         { name: 'repo-audit-guides', desc: 'Documentation health check (via portfolio)' }
       ] },
     { id: 'architect', label: 'Architect', longLabel: 'Architects', icon: 'ph-compass', guided: false, sdlc: true, gen: true,
@@ -76,49 +76,49 @@
         { say: 'Audit project guides for stale content', get: 'Knowledge-health report with a fix list', skill: 'repo-audit-guides' },
         { say: 'Generate architecture guides for this stack', get: 'Evidence-grounded stack guides', skill: 'repo-guides' },
         { say: 'Remember: orders service standardizes on event sourcing', get: 'Decision recorded across sessions', skill: 'role-memory' },
-        { say: '/sdlc-start refactor the auth module', get: 'Governed pipeline with instruction-quality gates', skill: 'sdlc-start' }
+        { say: '/sdlc-guided refactor the auth module', get: 'Governed pipeline with instruction-quality gates', skill: 'sdlc-guided' }
       ],
       skills: [
         { name: 'repo-audit-guides', desc: 'Documentation & knowledge health check' },
         { name: 'repo-guides', desc: 'Generate stack / architecture guides' },
         { name: 'role-memory', desc: 'Cross-session decisions and context' },
-        { name: 'sdlc-start', desc: 'Idea or ticket through the full governed pipeline' },
-        { name: 'decision-router', desc: 'Resolves judgment gates; escalates on risk flags' }
+        { name: 'sdlc-guided', desc: 'Idea or ticket through the full governed pipeline' },
+        { name: 'gate-arbiter', desc: 'Resolves judgment gates; escalates on risk flags' }
       ] },
     { id: 'devops', label: 'DevOps', longLabel: 'DevOps Engineers', icon: 'ph-git-branch', guided: false, sdlc: true,
       time: '~20–30 min', presets: 'devops', hitl: 'gated-autonomous', orch: 'dispatcher',
       tagline: 'Git hooks, quality gates, PR pipeline gate, MR monitoring and read-only incident triage — no code-writing agents.',
-      note: 'Installs the git-hook layer (blind pre-commit review) plus the PR pipeline gate, security reviewer and incident-triage agent. sdlc-doctor is your health check for the whole SDLC layer.',
+      note: 'Installs the git-hook layer (blind pre-commit review) plus the PR pipeline gate, security reviewer and incident-triage agent. sdlc-preflight is your health check for the whole SDLC layer.',
       phrases: [
-        { say: "What's the status of the last pipeline run?", get: 'Run/pipeline health across the repo, read-only', skill: 'sdlc-status' },
+        { say: "What's the status of the last pipeline run?", get: 'Run/pipeline health across the repo, read-only', skill: 'sdlc-runs' },
         { say: 'Triage the checkout latency incident', get: '3 ranked hypotheses + cheapest read-only next diagnostic', skill: 'incident-triage' },
         { say: 'Watch MR 42 and report CI failures', get: 'Pipeline monitored, breakage reported', skill: 'mr-watch' },
-        { say: 'Create an MR for this branch', get: 'Review-ready merge request', skill: 'mr-creator' },
-        { say: 'Run the SDLC doctor', get: 'Health report → .agentic/agentic-sdlc/doctor.json', skill: 'sdlc-doctor' }
+        { say: 'Create an MR for this branch', get: 'Review-ready merge request', skill: 'mr-submit' },
+        { say: 'Run the SDLC doctor', get: 'Health report → .agentic/agentic-sdlc/doctor.json', skill: 'sdlc-preflight' }
       ],
       skills: [
-        { name: 'sdlc-status', desc: 'Pipeline/run visibility (read-only)' },
-        { name: 'sdlc-doctor', desc: 'Health check for the SDLC layer' },
+        { name: 'sdlc-runs', desc: 'Pipeline/run visibility (read-only)' },
+        { name: 'sdlc-preflight', desc: 'Health check for the SDLC layer' },
         { name: 'mr-watch', desc: 'Monitor MR pipelines, report CI failures' },
-        { name: 'mr-creator', desc: 'Draft a review-ready merge request' },
-        { name: 'qa-gates', desc: 'Lint / type / test gates before hand-off' },
-        { name: 'feature-verification', desc: 'Verify a built feature against requirements' }
+        { name: 'mr-submit', desc: 'Draft a review-ready merge request' },
+        { name: 'gate-runner', desc: 'Lint / type / test gates before hand-off' },
+        { name: 'acceptance-check', desc: 'Verify a built feature against requirements' }
       ] },
     { id: 'pm-delivery', label: 'PM / Delivery', longLabel: 'PM & Delivery Managers', icon: 'ph-kanban', guided: true, sdlc: false,
       time: '~45–60 min', presets: 'pm-delivery', hitl: 'gated-autonomous', orch: 'dispatcher',
       tagline: 'Ticket & MR adapters, PR pipeline gate and status conventions for delivery management.',
       note: 'No git-hook layer, no code-writing agents. Ticket and MR adapters are configured after init — your dev lead wires them in .agentic/guides/project.md.',
       phrases: [
-        { say: "What's the status of open pipelines?", get: 'Read-only run/pipeline health', skill: 'sdlc-status' },
-        { say: 'Turn this ticket into requirements', get: 'Structured requirements + open questions', skill: 'requirements-intake' },
+        { say: "What's the status of open pipelines?", get: 'Read-only run/pipeline health', skill: 'sdlc-runs' },
+        { say: 'Turn this ticket into requirements', get: 'Structured requirements + open questions', skill: 'story-intake' },
         { say: 'Watch MR 42 and tell me when CI is green', get: 'Monitoring with status conventions', skill: 'mr-watch' },
-        { say: 'Create an MR for this branch', get: 'Review-ready merge request', skill: 'mr-creator' }
+        { say: 'Create an MR for this branch', get: 'Review-ready merge request', skill: 'mr-submit' }
       ],
       skills: [
-        { name: 'mr-creator', desc: 'Draft a review-ready merge request' },
+        { name: 'mr-submit', desc: 'Draft a review-ready merge request' },
         { name: 'mr-watch', desc: 'Monitor MR pipelines, report CI failures' },
-        { name: 'sdlc-status', desc: 'Pipeline/run visibility (read-only)' },
-        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' }
+        { name: 'sdlc-runs', desc: 'Pipeline/run visibility (read-only)' },
+        { name: 'story-intake', desc: 'Idea or ticket → structured requirements' }
       ] },
     { id: 'security', label: 'Security Engineer', longLabel: 'Security Engineers', icon: 'ph-shield-check', guided: false, sdlc: false,
       time: '~20–30 min', presets: 'security', hitl: 'strict HITL', orch: 'dispatcher',
@@ -128,10 +128,10 @@
         { say: 'Threat-model the checkout service', get: 'DFD (≥2 trust boundaries) + 8–15 STRIDE threats + risk register + mitigations', skill: 'threat-modeler' },
         { say: 'Finalize the severities', get: 'Refusal — severities stay proposed until you confirm each row', skill: 'threat-modeler' },
         { say: 'Review this PR diff for injection bugs', get: 'Routed to the code-level security reviewer', skill: 'security-reviewer' },
-        { say: 'Turn this compliance note into requirements', get: 'Structured requirements doc', skill: 'requirements-intake' }
+        { say: 'Turn this compliance note into requirements', get: 'Structured requirements doc', skill: 'story-intake' }
       ],
       skills: [
-        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'story-intake', desc: 'Idea or ticket → structured requirements' },
         { name: 'role-memory', desc: 'Durable per-role memory across sessions' }
       ] },
     { id: 'data', label: 'Data Engineer', longLabel: 'Data Engineers', icon: 'ph-database', guided: false, sdlc: false,
@@ -142,10 +142,10 @@
         { say: 'Design the orders ingest pipeline', get: 'Layer diagram + row-math equations + DQ test plans + lineage map', skill: 'pipeline-designer' },
         { say: 'All checks passed first run — mark them verified', get: 'Refusal — a check that has never failed has never been tested', skill: 'pipeline-designer' },
         { say: 'Tag the customer table PII', get: 'Proposed-only classification, escalated for your confirmation', skill: 'pipeline-designer' },
-        { say: 'Turn this data request into requirements', get: 'Structured requirements doc', skill: 'requirements-intake' }
+        { say: 'Turn this data request into requirements', get: 'Structured requirements doc', skill: 'story-intake' }
       ],
       skills: [
-        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'story-intake', desc: 'Idea or ticket → structured requirements' },
         { name: 'role-memory', desc: 'Durable per-role memory across sessions' }
       ] },
     { id: 'design', label: 'Designer / UX', longLabel: 'Designers & UX Researchers', icon: 'ph-pen-nib', guided: false, sdlc: false,
@@ -156,11 +156,11 @@
         { say: 'Map the checkout journey', get: 'Journey map with an emotion entry per step', skill: 'experience-designer' },
         { say: 'Log the workshop — no decisions yet', get: 'Refusal — a workshop that closes no decision was a meeting', skill: 'experience-designer' },
         { say: 'Prepare the design handoff', get: 'context.md + spec.md pair, spec cites only recorded decisions', skill: 'experience-designer' },
-        { say: 'Turn the framing into a story', get: 'Story with testable acceptance criteria', skill: 'product-owner' }
+        { say: 'Turn the framing into a story', get: 'Story with testable acceptance criteria', skill: 'story-author' }
       ],
       skills: [
-        { name: 'product-owner', desc: 'Raw idea → story with testable AC' },
-        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' },
+        { name: 'story-author', desc: 'Raw idea → story with testable AC' },
+        { name: 'story-intake', desc: 'Idea or ticket → structured requirements' },
         { name: 'role-memory', desc: 'Durable per-role memory across sessions' }
       ] },
     { id: 'portfolio', label: 'Portfolio / Program', longLabel: 'Portfolio & Program Managers', icon: 'ph-chart-line-up', guided: true, sdlc: false,
@@ -168,16 +168,16 @@
       tagline: 'Run status, knowledge health and durable cross-session memory — read/report-only, no git layer.',
       note: 'Read/report-only: no git hooks, no code-writing agents. Works without MCP — paste a table, attach a CSV, share a screenshot or a Power BI finding.',
       phrases: [
-        { say: 'Turn this Power BI insight into a customer-ready requirement', get: 'Structured requirement, customer-ready wording', skill: 'requirements-intake' },
-        { say: 'Convert this Excel analysis into acceptance criteria', get: 'Acceptance criteria in team format', skill: 'requirements-intake' },
+        { say: 'Turn this Power BI insight into a customer-ready requirement', get: 'Structured requirement, customer-ready wording', skill: 'story-intake' },
+        { say: 'Convert this Excel analysis into acceptance criteria', get: 'Acceptance criteria in team format', skill: 'story-intake' },
         { say: 'Remember: Q3 scope excludes the legacy API', get: 'Saved — next session already knows', skill: 'role-memory' },
         { say: 'Audit project guides for stale content', get: 'Knowledge-health report', skill: 'repo-audit-guides' }
       ],
       skills: [
-        { name: 'sdlc-status', desc: 'Pipeline/run visibility (read-only)' },
+        { name: 'sdlc-runs', desc: 'Pipeline/run visibility (read-only)' },
         { name: 'repo-audit-guides', desc: 'Documentation & knowledge health check' },
         { name: 'role-memory', desc: 'Cross-session decisions and context' },
-        { name: 'requirements-intake', desc: 'Idea or ticket → structured requirements' }
+        { name: 'story-intake', desc: 'Idea or ticket → structured requirements' }
       ] }
   ];
 
@@ -222,7 +222,7 @@
       { step: 3, k: 'init', label: initCmd(r) + ' run' },
       { step: 3, k: 'doctor', label: '/agentic-doctor → passed: true' }
     ];
-    if (r.sdlc) items.push({ step: 3, k: 'sdlcdoc', label: 'sdlc-doctor → passed: true (before pipeline skills)' });
+    if (r.sdlc) items.push({ step: 3, k: 'sdlcdoc', label: 'sdlc-preflight → passed: true (before pipeline skills)' });
     return items.map(function (it) {
       var done = !!checks[r.id + ':' + it.k];
       return Object.assign({}, it, { done: done });
@@ -282,7 +282,7 @@
         check: isWin ? 'python --version' : 'python3 --version', url: 'https://www.python.org/downloads/',
         why: 'The enforcement hooks — the actual guardrails, not just prompts — are small Python scripts. No Python, no enforcement.' },
       { n: '4', name: 'Node.js LTS', hint: 'Pick the LTS build', check: 'node --version', url: 'https://nodejs.org/en/download/',
-        why: 'The SDLC health check (sdlc-doctor) runs on Node. One install; you’ll never touch it directly again.' }
+        why: 'The SDLC health check (sdlc-preflight) runs on Node. One install; you’ll never touch it directly again.' }
     ];
   }
 
@@ -448,7 +448,7 @@
         '<div style="display:flex;flex-direction:column">' + toolRows + '</div>';
     } else {
       var quickCheck = 'git --version && python3 --version && node --version';
-      step1 = '<p class="text-muted" style="font-size:13.5px;margin:0">' + editorName + ', plus <code style="font-family:ui-monospace,monospace">git</code>, <code style="font-family:ui-monospace,monospace">python3</code> (enforcement hooks) and <code style="font-family:ui-monospace,monospace">node</code> (sdlc-doctor) on PATH. Optional: <code style="font-family:ui-monospace,monospace">gh</code> for GitHub ticket/MR adapters.</p>' +
+      step1 = '<p class="text-muted" style="font-size:13.5px;margin:0">' + editorName + ', plus <code style="font-family:ui-monospace,monospace">git</code>, <code style="font-family:ui-monospace,monospace">python3</code> (enforcement hooks) and <code style="font-family:ui-monospace,monospace">node</code> (sdlc-preflight) on PATH. Optional: <code style="font-family:ui-monospace,monospace">gh</code> for GitHub ticket/MR adapters.</p>' +
         cmdBox(quickCheck, 'Copy');
     }
 
@@ -503,7 +503,7 @@
         '<li>Type the verify command — expect <code style="font-family:ui-monospace,monospace;color:var(--color-accent-300)">passed: true</code></li></ol>'
       : '';
     var sdlcNote = cur.sdlc
-      ? '<p class="text-muted" style="font-size:12.5px;margin:0">Before pipeline skills, also run <strong>sdlc-doctor</strong> (checks superpowers, node, git → <code style="font-family:ui-monospace,monospace;word-break:break-all">.agentic/agentic-sdlc/doctor.json</code>).</p>'
+      ? '<p class="text-muted" style="font-size:12.5px;margin:0">Before pipeline skills, also run <strong>sdlc-preflight</strong> (checks superpowers, node, git → <code style="font-family:ui-monospace,monospace;word-break:break-all">.agentic/agentic-sdlc/doctor.json</code>).</p>'
       : '';
     function successSign(icon, html) {
       return '<div style="display:flex;gap:9px;align-items:flex-start;font-size:12.5px;min-width:0;overflow-wrap:anywhere" class="text-muted"><i class="ph ' + icon + '" style="color:var(--color-accent);font-size:15px;flex:none;margin-top:1px"></i><span style="min-width:0">' + html + '</span></div>';

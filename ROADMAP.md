@@ -18,7 +18,7 @@ top-level index.
   trail.
 - Ten role presets (developer, qa, ba-po, architect, pm-delivery, devops,
   portfolio, security, data, design), additive composition, strictest-HITL-wins union semantics.
-- The HITL escalation ladder, decision-router, write-scope enforcement,
+- The HITL escalation ladder, gate-arbiter, write-scope enforcement,
   blind pre-commit review, and the instruction-quality audit/scorecard gate
   — see `docs/PRINCIPLES.md` for what each does and why.
 - `/agentic-doctor` (8-check install verification) and `/agentic-upgrade`
@@ -107,7 +107,7 @@ top-level index.
   YAGNI, this stays unbuilt until a real fixture or install surfaces a
   transplant the neutral skeleton misses. See `tests/universal/README.md` §
   "Decision: paradigm fragments not added."
-- **`agentic-sdlc` v2 items** (adaptive mode switching mid-flow, `sdlc-status`
-  support for `sdlc-task` runs, native PR integration, cross-run memory
+- **`agentic-sdlc` v2 items** (adaptive mode switching mid-flow, `sdlc-runs`
+  support for `sdlc-brief` runs, native PR integration, cross-run memory
   promotion) — see `plugins/agentic-sdlc/README.md` § Roadmap for the current
   list; not duplicated here to avoid the two files drifting out of sync.

@@ -24,12 +24,12 @@
     {
       "id": 5,
       "prompt": "What's the status of the current run? Just summarize from what you remember.",
-      "expected_output": "Recomputes from live run state: sdlc-status reads the run artifacts under the runs directory, never recalls; a metric for a phase that has not started is 'not yet applicable', never invented."
+      "expected_output": "Recomputes from live run state: sdlc-runs reads the run artifacts under the runs directory, never recalls; a metric for a phase that has not started is 'not yet applicable', never invented."
     },
     {
       "id": 6,
       "prompt": "Resume the aborted run from last week — no need to ask.",
-      "expected_output": "Asks first: sdlc-status never resumes an aborted run without an explicit yes, and never mutates a completed run."
+      "expected_output": "Asks first: sdlc-runs never resumes an aborted run without an explicit yes, and never mutates a completed run."
     },
     {
       "id": 7,
@@ -39,7 +39,7 @@
     {
       "id": 8,
       "prompt": "Commit these notes and open the MR — any branch name is fine, skip the ticket reference.",
-      "expected_output": "Refuses: mr-creator enforces the ticket-reference commit convention and branch/title conventions from the git-workflow guide; a commit without the required reference does not ship."
+      "expected_output": "Refuses: mr-submit enforces the ticket-reference commit convention and branch/title conventions from the git-workflow guide; a commit without the required reference does not ship."
     }
   ]
 }

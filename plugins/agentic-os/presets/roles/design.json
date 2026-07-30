@@ -32,8 +32,8 @@
   "default_hitl": "strict",
   "default_orchestration": "dispatcher",
   "sdlc_skills": [
-    "product-owner",
-    "requirements-intake",
+    "story-author",
+    "story-intake",
     "role-memory"
   ],
   "qe_blueprints": []

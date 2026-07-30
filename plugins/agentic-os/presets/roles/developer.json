@@ -51,15 +51,15 @@
   "default_hitl": "gated-autonomous",
   "default_orchestration": "pipeline",
   "sdlc_skills": [
-    "sdlc-start",
-    "sdlc-task",
-    "sdlc-autonomous",
-    "qa-gates",
-    "feature-verification",
-    "mr-creator",
-    "decision-router",
+    "sdlc-guided",
+    "sdlc-brief",
+    "sdlc-auto",
+    "gate-runner",
+    "acceptance-check",
+    "mr-submit",
+    "gate-arbiter",
     "code-review",
-    "sdlc-light"
+    "sdlc-direct"
   ],
   "qe_blueprints": [
     "static-analysis",

@@ -7,7 +7,7 @@ Usage:
 
 Why this exists: a malformed run artifact should surface as a deterministic,
 named-field fix instruction — never as a model-judged retry round. The
-sdlc-pipeline skill runs this after writing and before gating (see SKILL.md
+sdlc-engine skill runs this after writing and before gating (see SKILL.md
 § "Artifact shape validation"); it uses only the stdlib so host projects need
 no installs.
 

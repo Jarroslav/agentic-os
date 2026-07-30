@@ -20,13 +20,13 @@ adaptive-mode roadmap item.
 Rules the table encodes:
 
 - **Nothing skips verification.** Any phase set that reaches implementation
-  keeps Phase 9 (code review) and Phase 10 (qa-gates + feature-verification).
+  keeps Phase 9 (code review) and Phase 10 (gate-runner + acceptance-check).
   A hotfix trades design ceremony for speed, never proof.
 - **Spike ships no code.** Phase 4 runs unconditionally (the spike *is* the
   brainstorm) and its `design.md` is the deliverable; Phase 12 handoff prints
   the findings and opens no MR. No feature branch, no complexity scoring.
 - **Epic decomposes, never implements.** After Phase 1, invoke the
-  `product-owner` skill to break the epic into child stories (each becomes a
+  `story-author` skill to break the epic into child stories (each becomes a
   local work item); the epic run's handoff lists the children. Each child is
   its own full run with its own `run_dir` — which is also why epic children
   are parallel-safe by construction, but still run **sequentially** by
@@ -54,7 +54,7 @@ the same pattern Phase 3 uses:
    goals or acceptance-criteria clusters).
 5. Otherwise `story`.
 
-Then confirm through the `classification.confirm` gate (`decision-router`):
+Then confirm through the `classification.confirm` gate (`gate-arbiter`):
 HITL always puts the candidate + phase-set consequence in front of the user;
 autonomous fast-paths a high-confidence candidate and escalates a low-
 confidence one. **The user's override always wins.** Record the verdict like
@@ -65,7 +65,7 @@ any other gate (decisions.jsonl + `decision.recorded`).
 - `meta.json.classification` — the confirmed classification.
 - `meta.json.phase_set` — the resolved phase list (integers).
 - Phases outside the set are marked `"skipped"` at initialization, so
-  `sdlc-status` and the resume contract stay coherent without special cases.
+  `sdlc-runs` and the resume contract stay coherent without special cases.
 - Runtime never adds a skipped phase back; if work reveals the classification
   was wrong (a "bug" that needs a design), halt and ask — reclassification is
   a human decision, then a new run or an explicit phase-set repair recorded as

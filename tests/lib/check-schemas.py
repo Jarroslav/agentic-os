@@ -42,7 +42,7 @@ VALID = {
     },
     "event-line.schema.json": {
         "schema": 1, "ts": "2026-07-13T12:00:00Z", "event": "phase.started",
-        "run_id": "r", "phase": 0, "actor": "sdlc-pipeline", "summary": "s",
+        "run_id": "r", "phase": 0, "actor": "sdlc-engine", "summary": "s",
         "artifacts": [], "data": {},
     },
     "decision-line.schema.json": {

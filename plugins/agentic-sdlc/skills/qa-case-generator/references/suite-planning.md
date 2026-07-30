@@ -190,4 +190,4 @@ Upstream failures (missing QA docs, weak ACs) belong to earlier stages — you o
 | `SKILL.md` | single source of truth for the coverage formula, multipliers, and priority split — this stage mirrors it |
 | `phase-5-test-case-generation.md` | consumes the approved parameters above |
 | `test-templates.md` | manual + API case structures, applied in Stage 5 |
-| `qa-foundation` | builds the QA docs that Stage 1 validated before you got here |
+| `qa-baseline` | builds the QA docs that Stage 1 validated before you got here |

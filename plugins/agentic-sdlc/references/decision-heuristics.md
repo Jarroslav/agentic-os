@@ -1,6 +1,6 @@
 # Decision heuristics for autonomous-mode gate verdicts
 
-Deterministic rules the autonomous stand-in subagents apply when they resolve SDLC judgment gates with no human in the loop. Each rule collapses a gate into one verdict in the shared vocabulary — `approve` / `request-changes` / `abort` — plus the signals the router needs to decide whether to hand control back to a person. This file supplies only the per-gate logic; the verdict object and the escalation dispatch are owned by `skills/decision-router/SKILL.md` (component name `decision-router`), which invokes the rules below.
+Deterministic rules the autonomous stand-in subagents apply when they resolve SDLC judgment gates with no human in the loop. Each rule collapses a gate into one verdict in the shared vocabulary — `approve` / `request-changes` / `abort` — plus the signals the router needs to decide whether to hand control back to a person. This file supplies only the per-gate logic; the verdict object and the escalation dispatch are owned by `skills/gate-arbiter/SKILL.md` (component name `gate-arbiter`), which invokes the rules below.
 
 > Grounding rule: decide from the artifacts in front of you — requirements, spec, plan, diff, gate reports — and nothing else. Never infer a fact that is not present in those inputs. External lookups (tickets, review backends) resolve through the adapters under `.agentic/guides/`; none is hardcoded here.
 
@@ -101,7 +101,7 @@ Any miss returns `decision: "request-changes"`.
 
 ## Related components
 
-- `skills/decision-router/SKILL.md` — the `decision-router`; owns the verdict schema and the escalation dispatch, and invokes the per-gate rules above.
+- `skills/gate-arbiter/SKILL.md` — the `gate-arbiter`; owns the verdict schema and the escalation dispatch, and invokes the per-gate rules above.
 - `spec-reviewer` — optional host-provided delegate for the spec/plan gates; returns `APPROVED` / `NEEDS WORK`.
 - `code-review-orchestrator` — co-owner of the shared TDD-compliance check.
 

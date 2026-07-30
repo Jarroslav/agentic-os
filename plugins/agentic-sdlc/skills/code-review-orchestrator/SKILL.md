@@ -2,8 +2,8 @@
 name: code-review-orchestrator
 description: >-
   Resolves the SDLC code-review gate with a multi-lens review fan-out and
-  persists one canonical verdict JSON as the hand-off back to decision-router.
-  Invoked inline (Skill tool) by decision-router at gate ids `code-review.final`
+  persists one canonical verdict JSON as the hand-off back to gate-arbiter.
+  Invoked inline (Skill tool) by gate-arbiter at gate ids `code-review.final`
   (full multi-lens pass after implementation evidence) and `code-review.check`
   (narrow re-check of prior blocking findings against a fix-up diff). Trigger
   when the router reaches "code review", "resolve the review gate", "run code
@@ -21,11 +21,11 @@ Replace a single-pass review with a multi-lens orchestration. Materialize the
 diff, gather project context, fan out three independent review lenses as
 subagents, adjudicate standards and security against project guides, triage the
 merged findings, and write exactly one verdict JSON. That file is the whole
-hand-off: `decision-router` reads it back and records the outcome.
+hand-off: `gate-arbiter` reads it back and records the outcome.
 
 > Blast radius: **R1**. The only file this skill writes is the verdict report.
 > No source files. No broad test suites. No end-of-turn — control returns inline
-> to `decision-router`.
+> to `gate-arbiter`.
 
 ## Contract
 
@@ -43,7 +43,7 @@ hand-off: `decision-router` reads it back and records the outcome.
 | risk_flags examples | `security`, `breaking-change`, `public-api` |
 
 Each `findings[]` entry carries a stable ID + a `triage` bucket + a `severity`.
-`decisions.jsonl` is written by `decision-router`, never by this skill.
+`decisions.jsonl` is written by `gate-arbiter`, never by this skill.
 
 ## Inputs
 
@@ -183,20 +183,20 @@ check.
 
 ## Cross-refs
 
-- `decision-router` — caller; reads the verdict back, records to
+- `gate-arbiter` — caller; reads the verdict back, records to
   `decisions.jsonl` and `events.jsonl`, then runs the HITL `AskUserQuestion` or
   the autonomous decision + escalation rule.
-- `sdlc-pipeline` (Phase 9 acts on approve/request-changes; commits the verdict
-  alongside `spec.md`/`plan.md`) and `sdlc-task` — commit the verdict file at
+- `sdlc-engine` (Phase 9 acts on approve/request-changes; commits the verdict
+  alongside `spec.md`/`plan.md`) and `sdlc-brief` — commit the verdict file at
   handoff/artifact stages.
-- `qa-gates` — owns test execution; this skill runs no broad suites, only cheap
+- `gate-runner` — owns test execution; this skill runs no broad suites, only cheap
   read-only Git commands.
 
 ## Non-goals
 
 - Never print/echo the verdict JSON or file contents as a message.
 - Never end the turn after writing — hand control back inline to
-  `decision-router`.
+  `gate-arbiter`.
 - Never run broad test suites (only cheap read-only Git commands).
 - Never re-run the full fan-out on `code-review.check`.
 - Never write source files (exactly one artifact: the verdict report).

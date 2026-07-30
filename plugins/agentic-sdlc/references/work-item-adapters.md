@@ -12,8 +12,8 @@ Load it with:
 ${CLAUDE_PLUGIN_ROOT}/references/work-item-adapters.md
 ```
 
-Read it if you author or maintain `requirements-intake`, `product-owner`,
-`sdlc-pipeline`, or `release-manager` — or if you are writing an adapter for a
+Read it if you author or maintain `story-intake`, `story-author`,
+`sdlc-engine`, or `release-manager` — or if you are writing an adapter for a
 specific project.
 
 > The whole point is decoupling. A skill that hardcodes a ticket API is a skill
@@ -132,7 +132,7 @@ create or update the local item, and append a warning event.
 **Intake — free-form input, no ticket.** Use the local item path as the source.
 The requirements source becomes `local-work-item:<path>`.
 
-**Creation — `product-owner`.** Only create or update an external ticket after
+**Creation — `story-author`.** Only create or update an external ticket after
 the user approves the story file. Before any create attempt, create or update
 the local item and log a create/link event. If no adapter is configured at
 creation time, the story stays approved locally, the ticket is marked not
@@ -162,7 +162,7 @@ Markdown markers and literals used in the local item and requirements:
 ## Declaring an adapter
 
 A project declares its adapter in `.agentic/guides/project.md` or in
-`.agentic/guides/integration/*.md`, under a "Ticket Adapter" block. Minimum
+`.agentic/guides/integration/*.md`, under a "Work Item Adapter" block. Minimum
 fields:
 
 | Field | Meaning |
@@ -197,5 +197,5 @@ tool. The declaration is what the pipeline reads; it does not sniff the backend.
 - `mr-adapters.md` — the same indirection for MR/PR platforms. The `mr` artifact
   kind and the `prepare_for_review` intent are the bridge between the two.
 - `schemas/` — the versioned shapes for the input and receipt objects.
-- Consumers: `requirements-intake` (Lookup contract), `product-owner` (Creation
-  contract), `sdlc-pipeline` (emits intents), `release-manager`.
+- Consumers: `story-intake` (Lookup contract), `story-author` (Creation
+  contract), `sdlc-engine` (emits intents), `release-manager`.

@@ -10,9 +10,9 @@ Each user-facing mode is bound to exactly one entry-point skill. Manual lifecycl
 
 | Mode | Entry skill | Gate resolver | Fits |
 |---|---|---|---|
-| HITL | `sdlc-start` | the user, prompted through `decision-router` | production work, ambiguous requirements, regulated changes |
-| Autonomous | `sdlc-autonomous` | deterministic checks + stand-in agents, with escalation | well-scoped, low-touch tasks |
-| Task | `sdlc-task` | inline, one code-review round | work the user has already sized XS/S/M |
+| HITL | `sdlc-guided` | the user, prompted through `gate-arbiter` | production work, ambiguous requirements, regulated changes |
+| Autonomous | `sdlc-auto` | deterministic checks + stand-in agents, with escalation | well-scoped, low-touch tasks |
+| Task | `sdlc-brief` | inline, one code-review round | work the user has already sized XS/S/M |
 
 ## Choosing a mode
 
@@ -28,9 +28,9 @@ Route by how much human judgment the work needs, not by size alone.
 
 Every judgment gate calls the same helper. Mode picks which resolution path that helper takes; the verdict is recorded to `decisions.jsonl` and `events.jsonl` (R1) regardless of mode.
 
-**HITL** — `decision-router` puts each gate to the user and waits. No deterministic fast-path, no stand-in verdict, no auto-approval. The human is the sole authority on `spec.approved`, `plan.approved`, `code-review.final`, and every other gate.
+**HITL** — `gate-arbiter` puts each gate to the user and waits. No deterministic fast-path, no stand-in verdict, no auto-approval. The human is the sole authority on `spec.approved`, `plan.approved`, `code-review.final`, and every other gate.
 
-**Autonomous** — `decision-router` first tries cheap deterministic checks and fast-path approvals. When judgment is genuinely required it falls back to a stand-in subagent (for example `story-proxy` on product-shaped gates, `lead-proxy` on `code-review.final`), and escalates to the user when the stand-in cannot clear the bar.
+**Autonomous** — `gate-arbiter` first tries cheap deterministic checks and fast-path approvals. When judgment is genuinely required it falls back to a stand-in subagent (for example `story-proxy` on product-shaped gates, `lead-proxy` on `code-review.final`), and escalates to the user when the stand-in cannot clear the bar.
 
 **Task** — no gate machinery beyond a single inline code-review round. Flow runs on the current feature branch without the heavier resolver logic.
 
@@ -93,7 +93,7 @@ Before reusing a branch that already exists, inspect it for unique commits and l
 
 ### Where autonomous stops
 
-Autonomous mode ends at branch-ready. It **recommends** `mr-creator` and stops there — it never opens, watches, or merges an MR/PR itself. Every external side-effect of that kind (R3) stays behind an explicit, human-driven handoff.
+Autonomous mode ends at branch-ready. It **recommends** `mr-submit` and stops there — it never opens, watches, or merges an MR/PR itself. Every external side-effect of that kind (R3) stays behind an explicit, human-driven handoff.
 
 ## Manual lifecycle skills
 
@@ -102,8 +102,8 @@ Invoked directly, outside mode routing:
 | Skill | Routing note |
 |---|---|
 | `repo-guides` | builds `.agentic/guides/`; must run inside its required subagent context |
-| `product-owner` | story drafting and refinement; ticket adapter used only when configured |
-| `mr-creator` | commit + push + MR/PR creation; manual invocation only |
+| `story-author` | story drafting and refinement; ticket adapter used only when configured |
+| `mr-submit` | commit + push + MR/PR creation; manual invocation only |
 | `mr-watch` | watches CI, review feedback, rebases, and conflicts |
 | `guide-sync` | dispatched after structural branch changes |
 
@@ -112,5 +112,5 @@ Invoked directly, outside mode routing:
 ## Out of scope
 
 - Phase order, artifact set, and gate content — fixed and mode-independent, defined elsewhere.
-- MR/PR opening, monitoring, and merging in autonomous mode — explicitly excluded; hand off to `mr-creator` / `mr-watch`.
+- MR/PR opening, monitoring, and merging in autonomous mode — explicitly excluded; hand off to `mr-submit` / `mr-watch`.
 - Upfront guide enforcement and heavy gate machinery in task mode — deliberately omitted.

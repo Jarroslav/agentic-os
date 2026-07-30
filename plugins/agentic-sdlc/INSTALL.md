@@ -124,7 +124,7 @@ then install `agentic-sdlc` exactly as in section 2 for your host.
 
 ## 4. Verify the install
 
-Run the `sdlc-doctor` skill. It checks three prerequisites — `superpowers`,
+Run the `sdlc-preflight` skill. It checks three prerequisites — `superpowers`,
 `node`, `git` — and writes a status file as proof of a healthy environment:
 
 ```
@@ -132,7 +132,7 @@ Run the `sdlc-doctor` skill. It checks three prerequisites — `superpowers`,
 ```
 
 A healthy install shows a green check for all three on every run. Re-run
-`sdlc-doctor` any time you suspect drift (a `node` upgrade, a `superpowers`
+`sdlc-preflight` any time you suspect drift (a `node` upgrade, a `superpowers`
 downgrade, a fresh clone) — it overwrites `doctor.json` fresh each time rather
 than trusting a cached result.
 

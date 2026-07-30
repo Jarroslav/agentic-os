@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "sdlc-pipeline run meta.json",
+  "title": "sdlc-engine run meta.json",
   "type": "object",
   "required": [
     "run_id",

@@ -7,6 +7,26 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
+### Changed
+
+- **Presets and the agent registry follow the `agentic-sdlc` skill renames.**
+  Role presets claim skills by name and `agent-registry.md.tmpl` routes to them
+  by name, so both moved in lockstep with the rename documented in the
+  `agentic-sdlc` changelog. The `agentic-init` and `agentic-uninstall` prune
+  rules parse those registry rows and were updated with them. Role composition,
+  write scopes and gate ids are unchanged.
+
+- **`project.md` renders the two adapter sections under neutral names.**
+  `## MR Adapter` → `## Review Adapter`, `## Ticket Adapter` →
+  `## Work Item Adapter`. The old headings named one vendor's term for an
+  indirection whose entire purpose is to bind no vendor; see the `agentic-sdlc`
+  entry for the full reasoning. Fields inside each section are unchanged, and
+  `{{MR_ADAPTER}}` / `{{TICKET_ADAPTER}}` keep their variable names.
+
+  Existing installs keep working until re-rendered: the sections are read by
+  heading, so re-run `/agentic-init` or rename the two headings in
+  `.agentic/guides/project.md` by hand.
+
 ## [0.14.0] — 2026-07-29
 
 ### Fixed

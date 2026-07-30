@@ -1,8 +1,8 @@
 # BA/PO operating model
 
 This guide is the role-specific entrypoint for business analyst and product
-owner work. It delegates execution to the existing `product-owner`,
-`requirements-intake`, and work-item adapter contracts. It does not replace
+owner work. It delegates execution to the existing `story-author`,
+`story-intake`, and work-item adapter contracts. It does not replace
 those contracts or create a provider-specific workflow.
 
 ## Choose an input path
@@ -13,7 +13,7 @@ those contracts or create a provider-specific workflow.
   then cite the connected source in the story context. Do not request write
   access just to read analysis.
 - **Existing external ticket** — pass the ticket ID or URL to
-  `requirements-intake`; it uses only the adapter declared in
+  `story-intake`; it uses only the adapter declared in
   `.agentic/guides/project.md`.
 
 If MCP is unavailable, denied, or missing the needed tool, continue with the
@@ -26,7 +26,7 @@ work. Counted: `requirements tasks blocked on MCP availability = 0`.
 
 1. Clarify the user, problem, desired outcome, scope, and open questions. A
    broad request gets focused questions before a story is drafted.
-2. Invoke the existing `product-owner` workflow to explore relevant context,
+2. Invoke the existing `story-author` workflow to explore relevant context,
    draft `docs/stories/<date>-<feature>.md`, and run its review loop.
 3. Create or update the canonical local work item under
    `docs/superpowers/work-items/` before any external sync.

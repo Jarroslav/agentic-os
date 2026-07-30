@@ -36,7 +36,7 @@ The orchestrator substitutes these three variables before dispatch:
 | `run_dir` | This run's artifact root | `docs/superpowers/qa-tasks/2026-06-30-proj-123/` |
 
 > `adapter` was resolved upstream in Phase 1 from `.agentic/guides/project.md`, section
-> `## Ticket Adapter`, field `**Adapter**`. It may name an MCP tool or server (e.g. `jira-mcp`),
+> `## Work Item Adapter`, field `**Adapter**`. It may name an MCP tool or server (e.g. `jira-mcp`),
 > a skill, or a curated subset of MCP tools. Honor whatever the field records. Do not assume the
 > backend is MCP, and do not reach for a different integration than the one handed to you.
 

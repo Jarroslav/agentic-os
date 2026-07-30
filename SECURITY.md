@@ -34,7 +34,7 @@ modes. Reports of particular interest:
 - A way for scaffolded content (a generated agent contract, a rendered
   template) to cause command injection, path traversal outside the declared
   `write_scope`, or exfiltration of secrets from the target repo.
-- A way for the decision-router's autonomous mode to escalate to
+- A way for the gate-arbiter's autonomous mode to escalate to
   human-equivalent trust (e.g., resolve a `security`/`breaking-change`
   risk-flagged gate) without actually meeting the documented escalation
   condition.

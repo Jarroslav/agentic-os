@@ -245,4 +245,4 @@ Close Phase 5 with a banner, then hand off to Phase 6. Report:
 - `phase-4-test-suite-planning.md` — defines the plan the parameters come from.
 - `phase-5-test-case-generation.md` — the executable step list this reference backs.
 - `phase-6-user-review-gate.md` — the review gate that consumes this output.
-- `qa-foundation` — recovery skill re-run when Phase 1 validation fails.
+- `qa-baseline` — recovery skill re-run when Phase 1 validation fails.

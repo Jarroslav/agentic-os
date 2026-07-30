@@ -1,7 +1,7 @@
 # Verdict Schema — Code-Review Orchestrator
 
 The orchestrator emits one verdict object per review round. It is a machine
-hand-off, not user-facing prose: `decision-router` reads it, logs it, and routes
+hand-off, not user-facing prose: `gate-arbiter` reads it, logs it, and routes
 on it. Write it to disk; producing the file does **not** end the orchestrator's
 turn.
 
@@ -26,7 +26,7 @@ input.
 
 ## Contract with the router
 
-`decision-router` consumes exactly three fields: `decision`, `confidence`,
+`gate-arbiter` consumes exactly three fields: `decision`, `confidence`,
 `risk_flags`. The remaining review fields (`rationale`, `business_review`,
 `standards_review`, `findings`, `finding_status`) match the prior single-pass
 review contract and are logged verbatim.
@@ -90,7 +90,7 @@ Every raw finding lands in exactly one bucket. Only two of the four reach
 | `defer` | no — counted in `rationale` only | never forces `request-changes` |
 | `dismiss` | no — counted in `rationale` only | none |
 
-Keep `findings[]` blocker-scoped. A downstream fix-up consumer (`sdlc-pipeline`)
+Keep `findings[]` blocker-scoped. A downstream fix-up consumer (`sdlc-engine`)
 must never be handed a pre-existing `defer` item to fix.
 
 ## Populating a full round (`code-review.final`)
@@ -218,6 +218,6 @@ Two related guards:
 
 ## Downstream
 
-- `decision-router` — reads `decision` / `confidence` / `risk_flags`, logs the
+- `gate-arbiter` — reads `decision` / `confidence` / `risk_flags`, logs the
   full object; does not depend on `triage`.
-- `sdlc-pipeline` — the fix-up consumer; reads `findings[]`.
+- `sdlc-engine` — the fix-up consumer; reads `findings[]`.

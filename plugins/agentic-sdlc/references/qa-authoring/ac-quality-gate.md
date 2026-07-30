@@ -4,7 +4,7 @@ Shared QA-authoring reference. The QA generator skills (e.g. `qa-case-generator`
 before their expensive full-context fetch to answer one cheap question: **are the ticket's
 acceptance criteria (AC) good enough to author tests from — or must a human fix the ticket
 first?** Grade AC clarity into a confidence score, map the score to a verdict, and route the
-one genuinely ambiguous band through the decision-router `requirements.ambiguous` gate.
+one genuinely ambiguous band through the gate-arbiter `requirements.ambiguous` gate.
 
 > Run this on a minimal fetch, before you pay for comments, subtasks, and links. Vague AC
 > silently poison every downstream stage — coverage math, risk scoring, generated cases. Catch
@@ -109,7 +109,7 @@ flowchart TD
 ## The `requirements.ambiguous` escalation
 
 The borderline band (`50%`–`69%`) is the only real judgment call — usable enough to consider,
-weak enough that a human might reject it. Route it through the shared decision-router
+weak enough that a human might reject it. Route it through the shared gate-arbiter
 `requirements.ambiguous` gate, which records its verdict to `decisions.jsonl` and
 `events.jsonl` alongside the prior context.
 
@@ -150,7 +150,7 @@ Phase completion block:
 | Trigger | Fix | Restart |
 |---------|-----|---------|
 | `"unclear"` AC (`< 50%`, or gate cancelled) | Human adds AC or rewrites description with testable statements | Re-run — restarts at this stage |
-| Missing QA foundation (upstream env failure) | Run the `qa-foundation` skill | Retry |
+| Missing QA foundation (upstream env failure) | Run the `qa-baseline` skill | Retry |
 
 Re-runs always restart at the stage that failed, not from the top.
 

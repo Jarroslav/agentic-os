@@ -89,7 +89,7 @@ describe('content layer', () => {
 
   it('resolves a folded block scalar (">-") description to real text', () => {
     const qaGates = content.listSkills().find(
-      s => s.plugin === 'agentic-sdlc' && s.skill === 'qa-gates',
+      s => s.plugin === 'agentic-sdlc' && s.skill === 'gate-runner',
     );
     expect(qaGates?.description).toContain(
       "Run the host project's quality gates",

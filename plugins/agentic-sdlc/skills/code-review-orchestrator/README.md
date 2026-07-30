@@ -1,6 +1,6 @@
 # Code Review Orchestrator
 
-Resolves the SDLC code-review gate. It gathers the run's diff and project context, runs three review lenses as parallel subagents, adjudicates coding standards and security against the project's guides, triages every finding into one deduplicated list, and persists a single approve / request-changes verdict as a file that `decision-router` reads back to drive the gate.
+Resolves the SDLC code-review gate. It gathers the run's diff and project context, runs three review lenses as parallel subagents, adjudicates coding standards and security against the project's guides, triages every finding into one deduplicated list, and persists a single approve / request-changes verdict as a file that `gate-arbiter` reads back to drive the gate.
 
 > Supersedes the earlier single-model holistic pass. The multi-lens approach catches more real defects; triage keeps the verdict low-noise.
 
@@ -8,7 +8,7 @@ Resolves the SDLC code-review gate. It gathers the run's diff and project contex
 
 - Resolving the `code-review.final` gate — a full multi-lens review of the run's diff.
 - Resolving the `code-review.check` gate — a targeted re-check of prior findings after a fix-up, never a full re-review.
-- Producing the canonical verdict JSON that `decision-router` records and escalates on.
+- Producing the canonical verdict JSON that `gate-arbiter` records and escalates on.
 
 The review is assembled from independent perspectives, each run as an isolated parallel subagent outside the orchestrator's own context:
 
@@ -23,7 +23,7 @@ Triage then normalizes, dedupes, and classifies each finding into one of `decisi
 
 ## How To Ask
 
-You do not call this skill directly; `decision-router` is its sole invoker, in **both** autonomous and HITL modes.
+You do not call this skill directly; `gate-arbiter` is its sole invoker, in **both** autonomous and HITL modes.
 
 - **Autonomous** — the stored verdict drives the gate directly.
 - **HITL** — the router runs the skill first to perform and store the review, then asks the user to decide, informed by that report.

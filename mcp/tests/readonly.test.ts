@@ -120,7 +120,7 @@ describe('read-only guarantee', () => {
       await client.readResource({
         uri: 'agentic-os://file/agentic-os/presets/roles/qa.json',
       });
-      await client.getPrompt({ name: 'sdlc-start', arguments: {} });
+      await client.getPrompt({ name: 'sdlc-guided', arguments: {} });
     } finally {
       await client.close();
     }

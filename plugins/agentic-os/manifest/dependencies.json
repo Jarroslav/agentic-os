@@ -26,7 +26,7 @@
       },
       "min": "0.1.0",
       "optional": false,
-      "why": "SDLC pipeline + decision-router (HITL/autonomous judgment gates with escalation and audit)."
+      "why": "SDLC pipeline + gate-arbiter (HITL/autonomous judgment gates with escalation and audit)."
     },
     {
       "name": "agentic-qe",

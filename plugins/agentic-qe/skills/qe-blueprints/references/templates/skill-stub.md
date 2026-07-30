@@ -80,7 +80,7 @@ step must leave the placeholder comment intact rather than attempt to fill it.
 
 ## Related material
 
-- Main `qa-sdlc-blueprint` skill document — invokes this template at its
+- Main `qe-blueprints` skill document — invokes this template at its
   skill-scaffolding sub-step (5a).
 - Sibling templates in this directory — same pattern for the other artifact types
   the blueprint scaffolds.

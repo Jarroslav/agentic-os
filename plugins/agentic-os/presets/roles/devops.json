@@ -39,12 +39,12 @@
   "default_hitl": "gated-autonomous",
   "default_orchestration": "dispatcher",
   "sdlc_skills": [
-    "qa-gates",
-    "mr-creator",
+    "gate-runner",
+    "mr-submit",
     "mr-watch",
-    "feature-verification",
-    "sdlc-doctor",
-    "sdlc-status"
+    "acceptance-check",
+    "sdlc-preflight",
+    "sdlc-runs"
   ],
   "qe_blueprints": [
     "apm-analysis",

@@ -262,15 +262,15 @@ for target in (pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])):
     # project.md is the single point of adapter configuration, so read the adapter
     # back out of it rather than re-deriving it — otherwise the check and the
     # scaffold could drift apart in the same way this test exists to catch.
-    # Anchored to the Ticket Adapter section: project.md carries an MR Adapter
+    # Anchored to the Work Item Adapter section: project.md carries a Review Adapter
     # section with an identically-shaped line, and an unanchored match would read
     # `gh` and pass this check for the wrong reason.
     # `[^\n]+`, not `.+`: re.S is needed to span from the heading to the field, but
     # it also lets `.` cross newlines, so a greedy `.+` captures the rest of the
     # file and compares against a value that is never `none`.
-    m = re.search(r"^## Ticket Adapter$.*?^\*\*Adapter\*\*: ([^\n]+)$", project, re.M | re.S)
+    m = re.search(r"^## Work Item Adapter$.*?^\*\*Adapter\*\*: ([^\n]+)$", project, re.M | re.S)
     if not m:
-        problems.append("%s: could not read the Ticket Adapter field" % target.name)
+        problems.append("%s: could not read the Work Item Adapter field" % target.name)
         continue
     adapter = m.group(1).strip()
     want = ticket_integration_enabled(adapter)
@@ -375,7 +375,7 @@ for a in dispatcher blind-code-reviewer security-reviewer instruction-auditor pr
   grep -q "$a.md" "$ALL_WORK/.agentic/guides/agent-registry.md" || bad "ten-preset registry missing agent row $a"
 done
 ok "registry carries every agent row"
-for s in product-owner requirements-intake mr-creator mr-watch sdlc-status repo-audit-guides; do
+for s in story-author story-intake mr-submit mr-watch sdlc-runs repo-audit-guides; do
   grep -q "agentic-sdlc \`$s\` skill" "$ALL_WORK/.agentic/guides/agent-registry.md" || bad "ten-preset registry missing skill row $s"
 done
 ok "registry carries every skill-owned row"
@@ -392,8 +392,8 @@ if grep -q "agentic-sdlc \`mr-watch\` skill" "$DEV_ONLY/.agentic/guides/agent-re
 else
   ok "developer-only registry pruned unowned skill rows"
 fi
-grep -q "agentic-sdlc \`mr-creator\` skill" "$DEV_ONLY/.agentic/guides/agent-registry.md" \
-  && ok "developer-only registry kept its own skill row (mr-creator)" || bad "developer-only registry kept its own skill row (mr-creator)"
+grep -q "agentic-sdlc \`mr-submit\` skill" "$DEV_ONLY/.agentic/guides/agent-registry.md" \
+  && ok "developer-only registry kept its own skill row (mr-submit)" || bad "developer-only registry kept its own skill row (mr-submit)"
 # The blueprint half of the same negative: developer names static-analysis and
 # no other preset's blueprints, so every qa/pm-delivery/devops row must be gone.
 # Without this a field that pruned nothing would still pass the positive check.

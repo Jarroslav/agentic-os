@@ -12,7 +12,7 @@ ordering is the core design bet of this plugin.
 
 > Why stop at a branch instead of a PR? Because "ready for review" and "opened for review" are
 > different claims, and the second one has side effects (notifications, CI runs, reviewer time)
-> that shouldn't fire until something — human or `mr-creator` — actually decides to make them.
+> that shouldn't fire until something — human or `mr-submit` — actually decides to make them.
 
 ## Before you install
 
@@ -42,41 +42,41 @@ because the "inline-and-fast" level splits into a task-sized flow and an even li
 
 | Mode | Entry point | Fits | Pace | Subagents in play |
 |---|---|---|---|---|
-| HITL | `sdlc-start` | Production, regulated changes | User-paced — every gate asks you | Zero during implementation |
-| Autonomous | `sdlc-autonomous` | Greenfield work, batch runs | Model-paced | Dispatched on ambiguity, risk, or boundary conditions |
-| Task (v0.5) | `sdlc-task` | User-classified XS/S/M work | Inline, same session | One (review only) |
-| Light (v0.1) | `sdlc-light` | Simple, unambiguous tasks | Inline, same session | One (review only) |
+| HITL | `sdlc-guided` | Production, regulated changes | User-paced — every gate asks you | Zero during implementation |
+| Autonomous | `sdlc-auto` | Greenfield work, batch runs | Model-paced | Dispatched on ambiguity, risk, or boundary conditions |
+| Task (v0.5) | `sdlc-brief` | User-classified XS/S/M work | Inline, same session | One (review only) |
+| Light (v0.1) | `sdlc-direct` | Simple, unambiguous tasks | Inline, same session | One (review only) |
 
-`sdlc-doctor` and `sdlc-status` aren't modes — they're utility entry points for environment
+`sdlc-preflight` and `sdlc-runs` aren't modes — they're utility entry points for environment
 checks and run inspection, covered below.
 
 ## How a run actually moves
 
-Two orchestrators do the driving. `sdlc-pipeline` runs the heavy, ten-phase flow behind
-`sdlc-start` and `sdlc-autonomous` — the only thing that differs between those two hosts is
-which answer `decision-router` gives at each gate. `sdlc-task` is its own lighter
-six-stage orchestrator, and `sdlc-light` strips it down further still.
+Two orchestrators do the driving. `sdlc-engine` runs the heavy, ten-phase flow behind
+`sdlc-guided` and `sdlc-auto` — the only thing that differs between those two hosts is
+which answer `gate-arbiter` gives at each gate. `sdlc-brief` is its own lighter
+six-stage orchestrator, and `sdlc-direct` strips it down further still.
 
-### The heavy pipeline — `sdlc-pipeline`, Phase 0–9
+### The heavy pipeline — `sdlc-engine`, Phase 0–9
 
 | Phase | Does | Writes |
 |---|---|---|
 | 0 | Environment doctor check, one-time memory load | `.agentic/agentic-sdlc/doctor.json` |
-| 1 | `requirements-intake` normalizes the input | `requirements.md` |
+| 1 | `story-intake` normalizes the input | `requirements.md` |
 | 2 | Branch setup on the current checkout | — |
-| 3 | `complexity-scoring` rates the task 6–36 | `complexity.json` + routing decision |
+| 3 | `effort-sizing` rates the task 6–36 | `complexity.json` + routing decision |
 | 4 | Brainstorming — **skipped when the score is ≤ 14** | `design.md` |
 | 5 | `superpowers:writing-plans` | `plan.md` |
 | 6 | TDD implementation, one commit per task | per-task commits + `evidence/<task-id>.json` |
 | 7 | Three-lens code review | review bundle + `code-review-final.json` |
-| 8 | `qa-gates` + `feature-verification` | `qa-report.md` + verification evidence |
+| 8 | `gate-runner` + `acceptance-check` | `qa-report.md` + verification evidence |
 | 9 | Handoff | branch left review-ready |
 
 > The complexity score is the fork in the road: 6–14 skips straight to planning, 15–36 forces
 > the brainstorming/spec phase first. There's no in-between tier — the gate is binary on
 > that one number.
 
-### The task flow — `sdlc-task`, Stage 0–6
+### The task flow — `sdlc-brief`, Stage 0–6
 
 | Stage | Does | Writes |
 |---|---|---|
@@ -85,14 +85,14 @@ six-stage orchestrator, and `sdlc-light` strips it down further still.
 | 2 | Plan | `plan.md` |
 | 3 | Inline TDD — no subagent dispatch, no per-task evidence file | commits |
 | 4 | Inline code review — one round plus one fix-up pass; a second `request-changes` escalates | — |
-| 5 | Validate — `qa-gates`, plus `feature-verification` only if the task was flagged `--ui` | — |
+| 5 | Validate — `gate-runner`, plus `acceptance-check` only if the task was flagged `--ui` | — |
 | 6 | Handoff | branch left review-ready, `.state.json.phase` moves to `maintenance` |
 
-Both `sdlc-task` and `sdlc-light` additionally expose a `mode: "sync"` entry point (see
+Both `sdlc-brief` and `sdlc-direct` additionally expose a `mode: "sync"` entry point (see
 Reconciliation, below) — call it after someone hand-edits the code post-completion, before a PR
 gets opened.
 
-### Light mode — `sdlc-light` (v0.1)
+### Light mode — `sdlc-direct` (v0.1)
 
 Drops complexity scoring and the spec/brainstorming step entirely. In their place: a capped
 clarifying-question check — if the task is genuinely unclear, Light mode asks a bounded number
@@ -101,7 +101,7 @@ the task flow's inline review and validate stages.
 
 ## Judgment gates
 
-`decision-router` is the single chokepoint every gate calls through — no phase implements its
+`gate-arbiter` is the single chokepoint every gate calls through — no phase implements its
 own approval logic. It resolves a gate in a fixed order:
 
 1. **Mode is `hitl`?** Ask the user directly via the host's question mechanism and stop there.
@@ -166,14 +166,14 @@ you can trade cost against rigor per role rather than per run.
 
 Loaded exactly once, at Phase 0 of the heavy pipeline, capped at a `memory_brief` size of
 ≤ 6KB, and propagated from there into every subagent dispatched later in the run.
-`sdlc-task` Stage 0 explicitly skips this — the lightweight flow runs with no memory load at
+`sdlc-brief` Stage 0 explicitly skips this — the lightweight flow runs with no memory load at
 all. The `role-memory` skill is what actually owns the store: durable facts live under
 `.agents/memory/<role>/`, with an episodic day-by-day log under `.agents/memory/sdlc/daily/`.
 
 ## Reconciling plans with reality
 
-Plans drift the moment someone hand-edits code after "completion." `sdlc-task` and
-`sdlc-light` both expose a `mode: "sync"` entry point for exactly that: it reconciles the live
+Plans drift the moment someone hand-edits code after "completion." `sdlc-brief` and
+`sdlc-direct` both expose a `mode: "sync"` entry point for exactly that: it reconciles the live
 `spec.md` / `plan.md` against whatever changed inline, before a PR gets opened on top of a
 stale plan.
 
@@ -182,17 +182,17 @@ Resume and sync both key off the same state markers:
 - `.state.json.phase = "maintenance"` — set once a task-flow run reaches handoff.
 - `last_sync_commit` — the commit `mode: "sync"` last reconciled against.
 - `meta.json.phases[N]` — per-phase status entries (e.g. `"running"`) on heavy-pipeline runs,
-  what makes resume and `sdlc-status` possible in the first place.
+  what makes resume and `sdlc-runs` possible in the first place.
 
 ## Feature verification is not optional for UI work
 
 A prior release (v0.2) had a real gap: autonomous mode could mark a user-visible feature
 "ready" without anything actually exercising it. From v0.3 onward, Phase 8 unconditionally
-invokes `feature-verification` for any change touching a user-visible surface — there's no
+invokes `acceptance-check` for any change touching a user-visible surface — there's no
 autonomous-mode shortcut around it anymore. The lightweight task flow keeps this opt-in,
 gated behind the `--ui` flag, since not every XS/S task touches a rendered surface.
 
-`feature-verification` reuses existing end-to-end coverage where it exists, generates focused
+`acceptance-check` reuses existing end-to-end coverage where it exists, generates focused
 Playwright coverage where it's missing and generation is feasible, and always captures
 screenshots, console output, and network errors into
 `evidence/verification/<feature>.json`.
@@ -201,37 +201,37 @@ screenshots, console output, and network errors into
 
 | Skill | Kind | Role |
 |---|---|---|
-| `sdlc-start` | Entry point | Begin a HITL run |
-| `sdlc-autonomous` | Entry point | Begin an autonomous run |
-| `sdlc-task` | Entry point + orchestrator | Begin (or sync) a task-flow run |
-| `sdlc-light` | Entry point + orchestrator | Begin (or sync) the lightest flow |
-| `sdlc-status` | Entry point | Inspect or resume a heavy-pipeline run |
-| `sdlc-doctor` | Entry point | Force-refresh the environment check |
-| `sdlc-pipeline` | Orchestrator | Drives Phase 0–9 for both HITL and autonomous hosts |
-| `requirements-intake` | Phase skill | Normalizes input into `requirements.md`, adapter-driven ticket lookup |
-| `complexity-scoring` | Phase skill | Produces the 6–36 score and routing decision |
-| `decision-router` | Cross-cutting | Resolves every gate; owns the audit ledgers |
+| `sdlc-guided` | Entry point | Begin a HITL run |
+| `sdlc-auto` | Entry point | Begin an autonomous run |
+| `sdlc-brief` | Entry point + orchestrator | Begin (or sync) a task-flow run |
+| `sdlc-direct` | Entry point + orchestrator | Begin (or sync) the lightest flow |
+| `sdlc-runs` | Entry point | Inspect or resume a heavy-pipeline run |
+| `sdlc-preflight` | Entry point | Force-refresh the environment check |
+| `sdlc-engine` | Orchestrator | Drives Phase 0–9 for both HITL and autonomous hosts |
+| `story-intake` | Phase skill | Normalizes input into `requirements.md`, adapter-driven ticket lookup |
+| `effort-sizing` | Phase skill | Produces the 6–36 score and routing decision |
+| `gate-arbiter` | Cross-cutting | Resolves every gate; owns the audit ledgers |
 | `code-review-orchestrator` | Phase skill | Three-lens fan-out + adjudication for the heavy pipeline |
 | `code-review` | Entry point | Standalone front door for "review my changes" — resolves scope and lenses, then delegates to `code-review-orchestrator`. Also used inline by the task flow |
-| `qa-gates` | Phase skill | Runs the project's own lint/build/test gates |
-| `test-heal` | Support skill | Repairs failing or flaking tests surfaced by `qa-gates` |
-| `feature-verification` | Phase skill | Mandatory verification for user-visible changes |
+| `gate-runner` | Phase skill | Runs the project's own lint/build/test gates |
+| `test-heal` | Support skill | Repairs failing or flaking tests surfaced by `gate-runner` |
+| `acceptance-check` | Phase skill | Mandatory verification for user-visible changes |
 | `role-memory` | Support skill | Reads/writes `.agents/memory/<role>/` |
-| `mr-creator` | Handoff skill | Commits, pushes, opens the PR/MR — adapter-driven |
+| `mr-submit` | Handoff skill | Commits, pushes, opens the PR/MR — adapter-driven |
 | `mr-watch` | Handoff skill | Watches an open PR/MR to green |
 | `repo-guides` | Prerequisite | Builds `.agentic/guides/*`; must run before the pipeline can |
-| `product-owner` | Support skill | Turns a raw idea into a structured story |
+| `story-author` | Support skill | Turns a raw idea into a structured story |
 
 ### Agent catalog
 
-These are the stand-ins `decision-router` dispatches when a gate can't fast-path and isn't in
+These are the stand-ins `gate-arbiter` dispatches when a gate can't fast-path and isn't in
 HITL mode:
 
 | Agent | Stands in for | Resolves |
 |---|---|---|
 | `story-proxy` | Product owner | `requirements.ambiguous`, `spec.clarification` |
 | `lead-proxy` | Tech lead | `spec.approved`, `plan.approved`, `qa.drift`, `feature.verification` |
-| `sizing-analyst` | — | Feeds the 6–36 score and routing decision into `complexity-scoring` |
+| `sizing-analyst` | — | Feeds the 6–36 score and routing decision into `effort-sizing` |
 | `guide-sync` | — | Updates `.agentic/guides/*` after a change lands, so the next run starts current |
 
 ## Configuration — `.agentic/agentic-sdlc/config.json`
@@ -247,15 +247,15 @@ HITL mode:
 | `review.max_fix_rounds` | Cap on fix-and-recheck rounds before a review gate escalates |
 | `feature_verification.allow_dynamic_playwright` | Allow generating Playwright coverage on the fly when none exists |
 | `feature_verification.app_start_command` | Command that boots the app under test |
-| `feature_verification.base_url` | Base URL `feature-verification` targets |
+| `feature_verification.base_url` | Base URL `acceptance-check` targets |
 | `feature_verification.command` | Command that runs the verification suite |
 | `integrations.ticket.enabled` | Turn the ticket-backend adapter on or off |
-| `integrations.ticket.adapter` | Which ticket adapter `requirements-intake` loads |
+| `integrations.ticket.adapter` | Which ticket adapter `story-intake` loads |
 | `integrations.github.enabled` | Turn GitHub integration on or off |
 | `integrations.github.command` | Command used for GitHub-side actions |
 | `doctor.ttl_days` | Days before `doctor.json` is considered stale and re-run |
 
-Plan lines written in Phase 5 / `sdlc-task` Stage 2 all follow one format, so tooling can
+Plan lines written in Phase 5 / `sdlc-brief` Stage 2 all follow one format, so tooling can
 parse them: `Test-first: yes/no — <test>`.
 
 ## Invocation markers
@@ -264,7 +264,7 @@ parse them: `Test-first: yes/no — <test>`.
 |---|---|
 | `--greenfield` | Input is an idea, not a ticket — skip ticket lookup |
 | `--escalate-on security,breaking-change` | Override the autonomous escalation list for this run |
-| `--ui` | Flag a task-flow task as touching a user-visible surface — enables `feature-verification` |
+| `--ui` | Flag a task-flow task as touching a user-visible surface — enables `acceptance-check` |
 | `--slug <name>` | Custom directory slug instead of an auto-generated one |
 | `mode: "hitl"` | Explicit HITL dispatch |
 | `mode: "autonomous"` | Explicit autonomous dispatch |
@@ -287,7 +287,7 @@ docs/superpowers/plans/                    plan documents
 .agents/memory/sdlc/daily/                 episodic day-by-day log
 .agents/memory/<role>/                     any other role's memory store
 evidence/<task-id>.json                    per-task TDD evidence (heavy pipeline)
-evidence/verification/<feature>.json       feature-verification evidence
+evidence/verification/<feature>.json       acceptance-check evidence
 <run_dir>/gate-plan.json                   cached gate resolution plan for a run
 ```
 
@@ -298,12 +298,12 @@ Run/task-dir files worth knowing by name: `meta.json`, `requirements.md`, `compl
 ## What's not here yet
 
 - No PR/MR is ever opened or merged by this plugin — every mode's terminal state is a
-  review-ready branch. Use `mr-creator` when you're ready to open one.
+  review-ready branch. Use `mr-submit` when you're ready to open one.
 - No mid-flow mode switching — pick HITL, autonomous, task, or light, and that's the run.
 - The task and light flows deliberately skip: complexity scoring, per-task subagents and
-  evidence files, two-round code review, `feature-verification` (unless `--ui`), and the
+  evidence files, two-round code review, `acceptance-check` (unless `--ui`), and the
   Phase-0 memory load.
-- `sdlc-status` currently covers heavy-pipeline runs only — task/light-flow runs aren't listed
+- `sdlc-runs` currently covers heavy-pipeline runs only — task/light-flow runs aren't listed
   or resumable through it yet.
 - No per-run HTML report generation yet — `sdlc.html` is a static, hand-maintained map of the
   package: the six primitive kinds, the full inventory with a source viewer per entry, the ten
@@ -315,8 +315,8 @@ Run/task-dir files worth knowing by name: `meta.json`, `requirements.md`, `compl
 ## Roadmap (all targeted at v2)
 
 - Mid-flow mode switching.
-- `sdlc-status` support for task/light-flow runs, not just the heavy pipeline.
-- Native PR/MR opening at handoff, instead of handing off to `mr-creator` as a separate step.
+- `sdlc-runs` support for task/light-flow runs, not just the heavy pipeline.
+- Native PR/MR opening at handoff, instead of handing off to `mr-submit` as a separate step.
 - Automatic promotion of recurring lessons out of the daily memory log into curated,
   long-lived memory.
 - A report-builder skill that generates a per-run static HTML report. Not implemented today —
@@ -328,8 +328,8 @@ Run/task-dir files worth knowing by name: `meta.json`, `requirements.md`, `compl
 - `superpowers` (≥ 5.0.7) — brainstorming, plan-writing, subagent-driven-development, and TDD
   sub-skills are borrowed directly, not reimplemented.
 - `repo-guides` — must run before this plugin's first phase.
-- `product-owner` — for turning a raw idea into a story before it ever reaches this pipeline.
-- `mr-creator` / `mr-watch` — handoff and post-handoff monitoring, invoked separately.
+- `story-author` — for turning a raw idea into a story before it ever reaches this pipeline.
+- `mr-submit` / `mr-watch` — handoff and post-handoff monitoring, invoked separately.
 - `guide-sync` — keeps `.agentic/guides/*` current after a change lands.
 
 ## License

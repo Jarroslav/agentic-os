@@ -17,7 +17,7 @@ description: >
 
 
   <example>
-  Context: The requirements-intake phase has just produced a requirements document with concrete
+  Context: The story-intake phase has just produced a requirements document with concrete
   acceptance criteria for a new rate-limiting feature, and the pipeline needs a codebase grounding
   pass before complexity scoring.
   user: "Requirements are in. Task: 'As an API consumer, I want requests over 100/min throttled

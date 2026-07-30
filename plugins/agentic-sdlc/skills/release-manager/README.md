@@ -38,7 +38,7 @@ The skill then runs a five-step sequence:
 
 ## What It Needs
 
-**Config (auto-detected).** If `.agentic/guides/project.md` exists, the ticket adapter and project key are read from it and shown in the report header instead of being prompted. Sections read: `## Ticket Adapter` and `## Work Item Tracker`. A custom adapter declares a `**Lookup**` key inside `## Ticket Adapter` with the placeholders `{{FIX_VERSION}}` and `{{PROJECT_KEY}}`, substituted at runtime. See `references/work-item-adapters.md` for the full declaration format.
+**Config (auto-detected).** If `.agentic/guides/project.md` exists, the ticket adapter and project key are read from it and shown in the report header instead of being prompted. Sections read: `## Work Item Adapter` and `## Work Item Tracker`. A custom adapter declares a `**Lookup**` key inside `## Work Item Adapter` with the placeholders `{{FIX_VERSION}}` and `{{PROJECT_KEY}}`, substituted at runtime. See `references/work-item-adapters.md` for the full declaration format.
 
 **Semver-shaped tags.** Tags must be semver-shaped (with or without a leading `v`) so the sort/previous-tag logic works.
 
