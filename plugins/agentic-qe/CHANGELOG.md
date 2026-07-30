@@ -6,6 +6,15 @@ Semantic Versioning and its own release tag (`agentic-qe-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The skill-authoring stub pointed at a skill that does not exist.** Its
+  "Related material" section named a `qa-sdlc-blueprint` skill as the document
+  that invokes the template; the skill is `qe-blueprints`, and
+  `qa-sdlc-blueprint` appeared nowhere else in the repository. Anyone following
+  the stub went looking for a file that was never there. Found by the new
+  `tests/lib/check-skill-refs.py` on its first run.
+
 ### Added
 
 - **`qe-blueprints` records which blueprint it used, locally.** A 28-document

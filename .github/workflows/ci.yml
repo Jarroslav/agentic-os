@@ -79,6 +79,20 @@ jobs:
           python3 tests/lib/check-html-refs.py --self-test
           python3 tests/lib/check-html-refs.py
 
+      # Names are what hold the package together — presets claim skills by name,
+      # the registry routes by name, and one skill hands off to another in prose.
+      # Nothing resolved those names until this check existed.
+      - name: Skill cross-references resolve
+        run: |
+          python3 tests/lib/check-skill-refs.py --self-test
+          python3 tests/lib/check-skill-refs.py
+
+      # Separate step so the failure reads "a rename is incomplete" rather than
+      # "a reference dangles". Matches bare substrings, including in prose the
+      # check above deliberately ignores.
+      - name: Retired names appear nowhere
+        run: python3 tests/lib/check-skill-refs.py --banned-names
+
       # Originality check. The corpus and its fingerprint store are local to a
       # maintainer's machine and never committed, so a runner cannot repeat the
       # scan — it enforces the recorded result instead. --verify-attestation

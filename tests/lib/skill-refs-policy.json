@@ -1,0 +1,93 @@
+{
+  "_doc": [
+    "Policy for tests/lib/check-skill-refs.py \u2014 the guarantee that every skill,",
+    "agent or blueprint named anywhere in this repo resolves to one that ships.",
+    "",
+    "The checker derives its inventory from disk, never from a list here, so",
+    "adding a skill needs no edit to this file and deleting one immediately turns",
+    "every surviving reference into a failure.",
+    "",
+    "`known_external_refs` is the only allowlist, and it is deliberately small:",
+    "each entry names something that is referenced by design but does not ship",
+    "from this repo. A generic hyphenated word never needs an entry \u2014 the checker",
+    "only inspects *marked* references (a backticked identifier next to the word",
+    "skill/agent/blueprint, or following call/invoke/delegate-to), so ordinary",
+    "prose like `breaking-change` or `edge-case` is invisible to it.",
+    "",
+    "`legacy_commands` records the slash commands that are decoupled from",
+    "directory names on purpose. The checker asserts every `/ns:verb` occurrence",
+    "is a key here and every value resolves to a live skill, which turns an",
+    "undocumented decoupling into a declared, verified one.",
+    "",
+    "`banned_names` is a completeness gate for a rename in flight: it matches",
+    "bare substrings repo-wide (not just marked references), so a retired name",
+    "cannot survive in a sentence the main mode would happily ignore.",
+    "",
+    "`frozen_literals` records identifiers a rename must NOT touch. The checker",
+    "asserts none of them ever appears in `banned_names`, so a later sweep cannot",
+    "'helpfully' rename a gate id or a user-disk path.",
+    "",
+    "The checker exempts its own source, for the same reason check-neutrality.py does: it has to spell out the reference shapes in order to match them, and its self-test fixtures name components that do not ship. Fixtures use obviously-synthetic names so they cannot quietly go stale either."
+  ],
+  "known_external_refs": {
+    "superpowers:brainstorming": "third-party plugin skill (obra/superpowers); a hard prerequisite, not shipped here",
+    "superpowers:writing-plans": "third-party plugin skill",
+    "superpowers:test-driven-development": "third-party plugin skill",
+    "superpowers:subagent-driven-development": "third-party plugin skill",
+    "superpowers:writing-clearly-and-concisely": "third-party plugin skill",
+    "spec-reviewer": "optional host-provided delegate for the spec/plan gates; deliberately external (references/decision-heuristics.md:105)",
+    "report-builder": "V2 roadmap item, explicitly not implemented (references/architecture.md:194)",
+    "general-purpose": "host-provided subagent type, not a shipped agent",
+    "playwright-cli": "optional host-provided skill for Playwright runs (qa-e2e-generator/SKILL.md:262)"
+  },
+  "legacy_commands": {
+    "/sdlc:start": "sdlc-start",
+    "/sdlc:autonomous": "sdlc-autonomous",
+    "/sdlc:status": "sdlc-status",
+    "/sdlc:doctor": "sdlc-doctor",
+    "/sdlc:qa-init": "qa-foundation",
+    "/sdlc:story": "product-owner"
+  },
+  "banned_names": {},
+  "frozen_literals": {
+    "verification-evidence.json": "names the artifact, not the skill that writes it",
+    "spec.approved": "gate id \u2014 frozen by commit b8374ae",
+    "plan.approved": "gate id \u2014 frozen by commit b8374ae",
+    "feature.verification": "gate id \u2014 a phase noun, not a directory name",
+    "qa.drift": "gate id \u2014 frozen by commit b8374ae",
+    ".agentic/guides/": "path that lands in users' repositories",
+    ".agents/memory/": "path that lands in users' repositories"
+  },
+  "scan": {
+    "exclude_globs": [
+      "**/CHANGELOG.md",
+      "mcp/content-index.json",
+      "mcp/dist/**",
+      "tests/golden/**",
+      "tests/lib/skill-refs-policy.json",
+      "tests/lib/originality-attestation.json",
+      "docs/audits/**",
+      "**/package-lock.json",
+      "tests/lib/check-skill-refs.py"
+    ],
+    "suffixes": [
+      ".md",
+      ".json",
+      ".js",
+      ".html",
+      ".py",
+      ".sh",
+      ".ts",
+      ".tmpl",
+      ".template",
+      ".yml",
+      ".yaml",
+      ""
+    ]
+  },
+  "shape_guards": {
+    "min_marked_refs": 100,
+    "min_registry_rows": 10,
+    "min_html_ids": 35
+  }
+}
