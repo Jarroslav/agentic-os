@@ -105,6 +105,11 @@ jobs:
           python3 tests/lib/check-html-refs.py --self-test
           python3 tests/lib/check-html-refs.py
 
+      - name: Doc links resolve
+        run: |
+          python3 tests/lib/check-doc-links.py --self-test
+          python3 tests/lib/check-doc-links.py
+
       - name: Skill cross-references resolve
         run: |
           python3 tests/lib/check-skill-refs.py --self-test

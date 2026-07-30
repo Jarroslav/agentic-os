@@ -79,6 +79,13 @@ jobs:
           python3 tests/lib/check-html-refs.py --self-test
           python3 tests/lib/check-html-refs.py
 
+      # A cross-file markdown anchor that never existed survives a full rename
+      # sweep silently — nothing else in this repo dereferences #fragments.
+      - name: Doc links resolve
+        run: |
+          python3 tests/lib/check-doc-links.py --self-test
+          python3 tests/lib/check-doc-links.py
+
       # Names are what hold the package together — presets claim skills by name,
       # the registry routes by name, and one skill hands off to another in prose.
       # Nothing resolved those names until this check existed.

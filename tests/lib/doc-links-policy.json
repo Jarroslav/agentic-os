@@ -1,0 +1,44 @@
+{
+  "_doc": [
+    "Policy for tests/lib/check-doc-links.py — the guarantee that every relative",
+    "markdown link, markdown anchor fragment, and docs/*.html href resolves to",
+    "something that exists on disk.",
+    "",
+    "There is deliberately no path-exemption list for individual broken links",
+    "here: every false-positive trap this checker had to solve (the",
+    "plugins/agentic-os/templates/ .tmpl remap, output-template placeholders,",
+    "directory-target links, the docs/setup/ hash-router hrefs) is solved by a",
+    "generic rule in code, not a per-path allowlist entry, so a new file in any",
+    "of those shapes needs no edit here to be handled correctly.",
+    "",
+    "`excluded_files` lists whole files this checker deliberately never opens,",
+    "with the reason each is excluded, so the exclusion is a stated decision",
+    "and not a silent gap discoverable only by reading the source.",
+    "",
+    "`shape_guards` catches an extractor that has quietly stopped matching —",
+    "same posture as tests/lib/skill-refs-policy.json's min_marked_refs."
+  ],
+
+  "excluded_files": {
+    "plugins/agentic-sdlc/sdlc.html": "owned by check-html-refs.py; its one src= is a JS template literal inside <script>, not markup — a generic href/src regex here would misfire on sdlc.html",
+    "docs/setup/app.js": "hash-router source; '#'+id strings are client-side view state, not document anchors"
+  },
+
+  "html_pages": ["docs/index.html", "docs/setup/index.html"],
+
+  "scan": {
+    "suffixes": [".md"],
+    "exclude_globs": [
+      "**/CHANGELOG.md",
+      "tests/golden/**",
+      "docs/audits/**",
+      "tests/lib/doc-links-policy.json",
+      "tests/lib/check-doc-links.py"
+    ]
+  },
+
+  "shape_guards": {
+    "min_relative_links": 70,
+    "min_anchor_links": 15
+  }
+}
