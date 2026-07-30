@@ -44,7 +44,7 @@ request ID:
 
 All platform I/O is indirected — never call a platform CLI directly.
 
-- Read the adapter from `.agentic/guides/project.md`, section `## MR Adapter`.
+- Read the adapter from `.agentic/guides/project.md`, section `## Review Adapter`.
   Use the declared adapter only when its status is `configured`.
 - The operation contract lives in `references/mr-adapters.md`. Read it to learn
   how each named operation maps onto the configured adapter (CLI, MCP server, or

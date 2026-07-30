@@ -128,9 +128,9 @@ When drift is detected, route the fix to the same targets: git conventions to `g
 
 1. **Project Identity**
 2. **Work Item Tracker**
-3. **Ticket Adapter**
+3. **Work Item Adapter**
 4. **Source Control And Review**
-5. **MR Adapter**
+5. **Review Adapter**
 
 > The tracker and source-control integrations are adapter-driven. The ticket and MR adapters name how the pipeline talks to whatever backend the project uses — no platform is hardcoded here.
 

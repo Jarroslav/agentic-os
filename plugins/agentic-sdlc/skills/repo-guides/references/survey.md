@@ -87,7 +87,7 @@ All read-only. Absence of a path is itself signal, not an error.
 .agentic/runs/
 .agentic/agentic-sdlc/
 <module>/.agentic/guides/
-.agentic/guides/project.md          (section: ## Ticket Adapter)
+.agentic/guides/project.md          (section: ## Work Item Adapter)
 .mcp.json
 .claude/settings.json               (mcpServers)
 .github/copilot-instructions.md
@@ -212,7 +212,7 @@ Run this **before** asking the user any question about ticket configuration. Res
 
 ### Signal order
 
-1. existing `project.md` `## Ticket Adapter` section
+1. existing `project.md` `## Work Item Adapter` section
 2. grep entrypoints for `jira` / `linear` / `github issues` / `ticket` / `work-item` / MCP or skill names
 3. `.mcp.json` `mcpServers`
 4. `.claude/settings.json` `mcpServers`
@@ -271,7 +271,7 @@ story file.
 
 ### Stale stored config
 
-A stored `## Ticket Adapter` config is **stale** if either:
+A stored `## Work Item Adapter` config is **stale** if either:
 
 - it carries fields **beyond** Status / Adapter / Lookup / Create / Output, or
 - its `Adapter` line embeds a raw CLI command instead of a skill/MCP invocation.

@@ -20,7 +20,7 @@ The instance is authored into the host repo; the plugin-root copy stays canonica
 schema. If the instance is absent, the runtime hook does nothing — it is a clean no-op.
 
 `repo-guides` (Step D) offers to write the instance, but only when the host's
-`.agentic/guides/project.md` already declares a Ticket Adapter under its `## Ticket
+`.agentic/guides/project.md` already declares a Work Item Adapter under its `## Ticket
 Adapter` heading. This mapping consumes that declaration; it does not restate it. The
 `**Adapter**` value you write into the instance MUST match the adapter named in
 `project.md`.
@@ -141,8 +141,8 @@ rows later if `mr-watch` or an external integration begins emitting matching eve
 
 ## Boundaries
 
-- **Not an adapter declaration.** The adapter lives in `project.md` under `## Ticket Adapter`
-  (MR/PR skills read `## MR Adapter`). This file is purely the event to state mapping.
+- **Not an adapter declaration.** The adapter lives in `project.md` under `## Work Item Adapter`
+  (MR/PR skills read `## Review Adapter`). This file is purely the event to state mapping.
 - **Transitions only, never creation.** Tickets are created by `product-owner` through the
   `prepare_story` lifecycle intent. The hook moves existing tickets and nothing more.
 - **Base pipeline stops at review.** Post-merge, QA, and release states are out of scope

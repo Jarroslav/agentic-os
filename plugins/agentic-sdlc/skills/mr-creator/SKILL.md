@@ -4,7 +4,7 @@ description: >-
   Commit with a mandatory ticket reference, push, and open an MR or PR. Commit,
   branch, and title conventions are read from
   `.agentic/guides/standards/git-workflow.md`; the MR/PR adapter (a CLI, MCP
-  server, or custom command) is read from the `## MR Adapter` section of
+  server, or custom command) is read from the `## Review Adapter` section of
   `.agentic/guides/project.md`. No source-control platform is hardcoded. Invoke
   on explicit review-workflow requests — "commit changes", "push changes",
   "create MR", "make merge request", "open a PR", and similar. Every commit is
@@ -44,7 +44,7 @@ Route by request:
 | Source | Provides |
 | --- | --- |
 | `.agentic/guides/standards/git-workflow.md` | Commit pattern, branch pattern, MR title format |
-| `.agentic/guides/project.md` → `## MR Adapter` | Adapter status, adapter handle, instructions, body template |
+| `.agentic/guides/project.md` → `## Review Adapter` | Adapter status, adapter handle, instructions, body template |
 | `references/mr-adapters.md` | Adapter contract + sample configs (check/create operations, auth notes, no-adapter fallback) |
 | Conversation context | Ticket reference, user request type |
 
@@ -75,14 +75,14 @@ From the guide, extract three strings:
 - **Branch pattern** — e.g. `PREFIX-NNN_description`
 - **MR title format** — identical to the commit pattern; both begin with the ticket reference
 
-Then read `.agentic/guides/project.md` and locate the `## MR Adapter` section.
+Then read `.agentic/guides/project.md` and locate the `## Review Adapter` section.
 Read these fields:
 
 | Field | Meaning |
 | --- | --- |
-| `Status` | `configured` or `not configured` |
-| `Adapter` | The CLI, MCP server, or command that exposes the check/create operations |
-| `Instructions` | Extra usage notes for invoking the adapter |
+| `**Status**` | `configured` or `not configured` |
+| `**Adapter**` | The CLI, MCP server, or command that exposes the check/create operations |
+| `**Instructions**` | Extra usage notes for invoking the adapter |
 | `**Body Template**` | Optional MR/PR body template with `{{TITLE}}` / `{{BODY}}` tokens |
 
 **No-adapter fallback.** If `project.md` is absent, or the section reads
@@ -244,7 +244,7 @@ examples: `feat/add-user-profile`, `fix/auth-timeout`, `docs/api-guide`.
 
 | Symptom | Resolution |
 | --- | --- |
-| Adapter reports not configured | Infer from remote, probe CLIs; if both fail ask the user. Persist config by adding `## MR Adapter` to `.agentic/guides/project.md` (see `references/mr-adapters.md`). |
+| Adapter reports not configured | Infer from remote, probe CLIs; if both fail ask the user. Persist config by adding `## Review Adapter` to `.agentic/guides/project.md` (see `references/mr-adapters.md`). |
 | Not authenticated with the platform tool | Run the adapter's auth command — e.g. `glab auth login`, `gh auth login`, `az login`. |
 | No ticket in context | Ask for the number in the guide's pattern, wait, validate, then commit. |
 | On `main` | `git checkout -b <type>/<short-description>` first. |

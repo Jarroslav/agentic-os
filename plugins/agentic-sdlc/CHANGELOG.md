@@ -6,6 +6,46 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The adapter contract disagreed with its own implementation, in both
+  directions.** The reference declared a `**Comment Template**` field and six
+  template tokens (`{{SUMMARY}}`, `{{CHANGES}}`, `{{SEVERITY}}`,
+  `{{DESCRIPTION}}`, `{{IMPACT}}`, `{{FIX}}`) that nothing in the repository
+  read, while omitting `**Instructions**`, which `/agentic-init` writes into
+  every `project.md` and `mr-creator` reads back. Configuring an adapter by
+  following the spec meant writing a dead field and missing a live one. The dead
+  surface is gone, `**Instructions**` is documented, and the field table now
+  matches the one `repo-guides` enforces.
+
+- **`diff` and `inline-comment` are marked as declared-but-unused.** No shipped
+  skill invokes them. They stay in the contract — they complete the documented
+  operation set and pin the `RIGHT` diff side — but the reference no longer
+  implies something calls them.
+
+- **One status value, spelled one way.** The work-item intake gate wrote
+  `**Status**: not_configured` while the section it reads is written
+  `not configured` by the installer and by every other consumer. The underscore
+  spelling never matched what was on disk. (The unrelated `sync_status` enum in
+  `qa-case-generator` keeps its `not_configured` member — that is a JSON value,
+  not this field.)
+
+### Changed
+
+- **The two adapter sections are named for what they govern.** `## MR Adapter`
+  used GitLab's noun for a section the spec itself always describes as "MR/PR",
+  and `## Ticket Adapter` used a tracker-flavoured noun while its own reference
+  file is `work-item-adapters.md` and its ledger events are `work_item.*`. Both
+  named a vendor's term for a deliberately vendor-neutral indirection. They are
+  now `## Review Adapter` and `## Work Item Adapter`.
+
+  This changes the section headers in `.agentic/guides/project.md`. Re-run
+  `/agentic-init` to re-render the file, or rename the two headings by hand —
+  the fields inside them are unchanged. The `{{MR_ADAPTER}}` and
+  `{{TICKET_ADAPTER}}` installer variables keep their names; they are a separate
+  registry with its own three-way test coupling, and renaming them buys nothing
+  here.
+
 ## [0.5.0] — 2026-07-29
 
 ### Fixed

@@ -42,8 +42,8 @@ re-derive any of them from the guide files.
 ### Guide files you read (R0)
 
 - `.agentic/guides/project.md`
-  - `## Ticket Adapter` — informational; the live work-item adapter is the `adapter` input, not this section.
-  - `## MR Adapter` — carries `**Status**` and `**Adapter**` fields. Treat the MR adapter as usable only when `**Status**` is the literal `configured`. Any other status → skip MR-diff sub-steps and drop to commit search.
+  - `## Work Item Adapter` — informational; the live work-item adapter is the `adapter` input, not this section.
+  - `## Review Adapter` — carries `**Status**` and `**Adapter**` fields. Treat the MR adapter as usable only when `**Status**` is the literal `configured`. Any other status → skip MR-diff sub-steps and drop to commit search.
 - `.agentic/guides/testing/qa-strategy.md`
   - `## Test Frameworks`, `## Test Types in Use`, `## Conventions`, plus the "Code Repositories", "Architecture notes", and "Testing guidance" material. These populate four required manifest groups (see [Manifest](#return-contract)).
 
@@ -86,7 +86,7 @@ These are non-negotiable. Violating any one produces an untrustworthy manifest.
    - **test_repo** — `separate` (whether tests live in an external repo) and `root` (the git root of that repo, or `"."` when not separate).
    - **e2e_conventions** — a *structured, unflattened* object (see below).
    - **code repo slugs** — reduce every code-repository URL to its `owner/project` slug for use in remote search commands.
-3. Read `project.md`; note the `## MR Adapter` `**Status**`. If it is not `configured`,
+3. Read `project.md`; note the `## Review Adapter` `**Status**`. If it is not `configured`,
    mark MR-diff sub-steps as skipped for this run.
 
 The conventions object must keep these keys distinct — downstream agents enforce

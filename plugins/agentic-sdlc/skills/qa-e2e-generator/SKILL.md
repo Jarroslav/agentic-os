@@ -51,7 +51,7 @@ Usage: qa-e2e-generator <TICKET-ID>
 | Input | Source | Notes |
 |---|---|---|
 | Ticket id | CLI arg (e.g. `PROJ-123`) | Required. Drives run slug + branch name. |
-| Ticket adapter | `.agentic/guides/project.md` → `## Ticket Adapter` | Must be `configured`. Never a hardcoded backend. |
+| Ticket adapter | `.agentic/guides/project.md` → `## Work Item Adapter` | Must be `configured`. Never a hardcoded backend. |
 | QA strategy | `.agentic/guides/testing/qa-strategy.md` | Produced by the QA-foundation skill. |
 | Git conventions | `.agentic/guides/standards/git-workflow.md` | Branch/commit rules for workspace setup. |
 | Test env URL + auth | Asked at the env-config gate | Written with **actual** values, never placeholders. |
@@ -185,9 +185,9 @@ Gate checks — halt on any failure:
 |---|---|
 | `qa-strategy.md` missing | `ERROR: qa-strategy.md not found — run qa-foundation` |
 | `project.md` missing | `ERROR: project.md not found — run /repo-guides` |
-| No `## Ticket Adapter` section, or `**Status**:` ≠ `configured` | `ERROR: no ticket adapter configured in project.md's ## Ticket Adapter section — run /repo-guides` |
+| No `## Work Item Adapter` section, or `**Status**:` ≠ `configured` | `ERROR: no ticket adapter configured in project.md's ## Work Item Adapter section — run /repo-guides` |
 
-Read the adapter from `.agentic/guides/project.md` `## Ticket Adapter`
+Read the adapter from `.agentic/guides/project.md` `## Work Item Adapter`
 (fields `**Adapter**:`, `**Status**:`; required value `configured`).
 
 ### Phase 2 — AC quality check (agent, R1)

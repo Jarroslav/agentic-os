@@ -92,16 +92,16 @@
     {
       "id": 5,
       "prompt": "Work items live in Jira, code review happens through GitLab merge requests, and our checks run off a Makefile. Capture that in the project guide so the downstream roles can read the adapters straight out of it.",
-      "expected_output": "The skill writes project.md whose Project Context contains only the sections Project Identity, Work Item Tracker, Ticket Adapter, Source Control And Review, and MR Adapter. The Ticket Adapter and MR Adapter blocks are machine-extractable so downstream consumers product-owner, requirements-intake, mr-creator, and mr-watch can read them, and the exact Makefile gate commands are recorded verbatim in quality-gates.md.",
+      "expected_output": "The skill writes project.md whose Project Context contains only the sections Project Identity, Work Item Tracker, Work Item Adapter, Source Control And Review, and Review Adapter. The Work Item Adapter and Review Adapter blocks are machine-extractable so downstream consumers product-owner, requirements-intake, mr-creator, and mr-watch can read them, and the exact Makefile gate commands are recorded verbatim in quality-gates.md.",
       "files": [],
       "assertions": [
         {
           "name": "project-context-uses-exact-schema",
-          "description": "project.md Project Context holds only the five sections Project Identity, Work Item Tracker, Ticket Adapter, Source Control And Review, and MR Adapter."
+          "description": "project.md Project Context holds only the five sections Project Identity, Work Item Tracker, Work Item Adapter, Source Control And Review, and Review Adapter."
         },
         {
           "name": "adapters-extractable-by-consumers",
-          "description": "The Ticket Adapter and MR Adapter blocks are readable by product-owner, requirements-intake, mr-creator, and mr-watch."
+          "description": "The Work Item Adapter and Review Adapter blocks are readable by product-owner, requirements-intake, mr-creator, and mr-watch."
         },
         {
           "name": "gate-commands-recorded-verbatim",

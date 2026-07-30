@@ -33,7 +33,7 @@ Hard prerequisites — the skill refuses without them:
 | --- | --- | --- |
 | Documented test framework | `.agentic/guides/testing/qa-strategy.md` | run `qa-foundation` (framework may be external) |
 | QA strategy docs | `.agentic/guides/testing/` | run `qa-foundation` to create the doc root |
-| Work-item adapter | `.agentic/guides/project.md`, `## Ticket Adapter` section | configure it, or run `/repo-guides` |
+| Work-item adapter | `.agentic/guides/project.md`, `## Work Item Adapter` section | configure it, or run `/repo-guides` |
 | Working `bash` + `jq` | PATH | on Windows use Git Bash or WSL; install `jq` separately if absent |
 | Clear acceptance criteria | the ticket | improve the AC and re-run (confidence < 50% halts) |
 

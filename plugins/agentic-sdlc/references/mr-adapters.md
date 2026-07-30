@@ -19,7 +19,7 @@ skill.
 The chosen adapter is recorded in exactly one place:
 
 - **File:** `.agentic/guides/project.md`
-- **Section header:** `## MR Adapter`
+- **Section header:** `## Review Adapter`
 
 That section is the single source of truth. `mr-creator` writes and reads it; `mr-watch` and the
 review skills read it before invoking any operation.
@@ -30,10 +30,11 @@ review skills read it before invoking any operation.
 |-------|------------------|
 | `**Status**` | `configured` \| `not configured` |
 | `**Adapter**` | adapter name (recognized CLI) or the marker for an explicit block |
+| `**Instructions**` | *(optional)* usage notes the skill passes through when invoking the adapter |
 | `**Body Template**` | *(optional)* overrides the built-in MR/PR body template |
-| `**Comment Template**` | *(optional)* overrides the built-in review-comment template |
 
-Omit a template field to fall back to `mr-creator`'s built-in template — never restate the default.
+Omit `**Body Template**` to fall back to `mr-creator`'s built-in template — never restate the
+default.
 
 ## Two ways to declare an adapter
 
@@ -57,7 +58,7 @@ that only ever opens and checks PRs needs `check`, `create`, `state`, and nothin
 
 Resolution runs top to bottom; the first hit wins.
 
-1. Read `.agentic/guides/project.md` → `## MR Adapter`. If `**Status**` is `configured`, use it.
+1. Read `.agentic/guides/project.md` → `## Review Adapter`. If `**Status**` is `configured`, use it.
 2. Otherwise infer from the remote: `git remote get-url origin`, mapped by hostname.
 3. Otherwise ask the user which tool manages MRs/PRs.
 
@@ -85,9 +86,13 @@ substituted at runtime — **always substitute every token before invoking the c
 | `ci-status` | Report `running` / `passed` / `failed` / `none` for `{{ID}}`. |
 | `discussions` | List unresolved review comments on `{{ID}}`. |
 | `comment` | Post a general comment on `{{ID}}`. |
-| `diff` | Return the line-level diff for `{{ID}}`. |
-| `inline-comment` | Comment on a specific file + line of `{{ID}}`. |
+| `diff` | Return the line-level diff for `{{ID}}`. † |
+| `inline-comment` | Comment on a specific file + line of `{{ID}}`. † |
 | `target-branch` | Return the target branch of `{{ID}}`. |
+
+† Declared for completeness — no shipped skill invokes these two yet. They stay in the contract so
+that the first skill to need line-level review comments inherits a declaration format instead of
+inventing one.
 
 ### Enumerated returns
 
@@ -103,9 +108,8 @@ Substituted at runtime before any command runs.
 
 **Operation tokens:** `{{BRANCH}}`, `{{TITLE}}`, `{{BODY}}`, `{{ID}}`, `{{FILE}}`, `{{LINE}}`, `{{SHA}}`
 
-**Body-template tokens:** `{{SUMMARY}}`, `{{CHANGES}}`
-
-**Comment-template tokens:** `{{SEVERITY}}`, `{{TITLE}}`, `{{DESCRIPTION}}`, `{{IMPACT}}`, `{{FIX}}`
+`**Body Template**` accepts `{{TITLE}}` and `{{BODY}}` from the same set; it defines no tokens of
+its own.
 
 ## Known Adapters (built-in command tables)
 
@@ -146,7 +150,7 @@ project's declaration.
 project uses:
 
 ```
-## MR Adapter
+## Review Adapter
 **Status**: configured
 **Adapter**: custom
 
@@ -159,7 +163,7 @@ target-branch: az repos pr show --id {{ID}} --query targetRefName
 **Custom MCP server** — operations map to named tool invocations with named arguments:
 
 ```
-## MR Adapter
+## Review Adapter
 **Status**: configured
 **Adapter**: custom
 
@@ -185,6 +189,6 @@ comment: invoke tool post_comment   (id={{ID}}, body={{BODY}})
 ## Cross-references
 
 - `.agentic/guides/project.md` — where adapters are declared and read.
-- `mr-creator` — owns the default body/comment templates and consumes the adapter.
+- `mr-creator` — owns the default MR/PR body template and consumes the adapter.
 - `mr-watch` and the review skills — invoke the operation set.
 - Remote inference relies on `git remote get-url origin`.

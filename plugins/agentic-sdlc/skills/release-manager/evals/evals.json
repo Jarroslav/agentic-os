@@ -40,12 +40,12 @@
     {
       "id": 3,
       "prompt": "Validate release v2.5.0 for me. One caveat: there is no ticket integration configured in this project, neither gh nor glab is installed, and the remote is a plain git remote.",
-      "expected_output": "Because `.agentic/guides/project.md` has no `Ticket Adapter` section and neither `gh` nor `glab` is available on a plain git remote, the skill skips ticket retrieval entirely, leaves the ticket set empty, and records in the report header that ticket lookup was skipped. It still analyzes the commit side, listing commits that carry no ticket reference straight from `git log`.",
+      "expected_output": "Because `.agentic/guides/project.md` has no `Work Item Adapter` section and neither `gh` nor `glab` is available on a plain git remote, the skill skips ticket retrieval entirely, leaves the ticket set empty, and records in the report header that ticket lookup was skipped. It still analyzes the commit side, listing commits that carry no ticket reference straight from `git log`.",
       "files": [],
       "assertions": [
         {
           "name": "omits-ticket-stage-when-unconfigured",
-          "description": "With no `Ticket Adapter` section and neither `gh` nor `glab` on a plain git remote, ticket fetching is bypassed, the ticket list is left empty, and the header notes that ticket lookup was skipped."
+          "description": "With no `Work Item Adapter` section and neither `gh` nor `glab` on a plain git remote, ticket fetching is bypassed, the ticket list is left empty, and the header notes that ticket lookup was skipped."
         },
         {
           "name": "still-surfaces-untracked-commits",

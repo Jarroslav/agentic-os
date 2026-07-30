@@ -60,7 +60,7 @@ declaration.
 Auto-detect first, ask second. Silently read `.agentic/guides/project.md`
 (search cwd and each parent up to the repo root). Parse:
 
-- Sections: `## Ticket Adapter`, `## Work Item Tracker`
+- Sections: `## Work Item Adapter`, `## Work Item Tracker`
 - Fields: `adapter_status` (`configured` / `not configured`), `adapter_name`,
   `adapter_lookup`, `ticket_provider`, `project_key`
 
@@ -297,7 +297,7 @@ flag:
   `list-by-fix-version` operation and the placeholder contract
   (`{{FIX_VERSION}}`, `{{PROJECT_KEY}}`, `{{RELEASE_VERSION}}`, `{{SLUG}}`).
 - `.agentic/guides/project.md` — the ticket adapter and work-item tracker
-  declarations (`## Ticket Adapter`, `## Work Item Tracker`), produced and
+  declarations (`## Work Item Adapter`, `## Work Item Tracker`), produced and
   maintained elsewhere in the plugin suite.
 
 ## Non-goals

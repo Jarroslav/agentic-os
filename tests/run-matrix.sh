@@ -262,15 +262,15 @@ for target in (pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])):
     # project.md is the single point of adapter configuration, so read the adapter
     # back out of it rather than re-deriving it — otherwise the check and the
     # scaffold could drift apart in the same way this test exists to catch.
-    # Anchored to the Ticket Adapter section: project.md carries an MR Adapter
+    # Anchored to the Work Item Adapter section: project.md carries a Review Adapter
     # section with an identically-shaped line, and an unanchored match would read
     # `gh` and pass this check for the wrong reason.
     # `[^\n]+`, not `.+`: re.S is needed to span from the heading to the field, but
     # it also lets `.` cross newlines, so a greedy `.+` captures the rest of the
     # file and compares against a value that is never `none`.
-    m = re.search(r"^## Ticket Adapter$.*?^\*\*Adapter\*\*: ([^\n]+)$", project, re.M | re.S)
+    m = re.search(r"^## Work Item Adapter$.*?^\*\*Adapter\*\*: ([^\n]+)$", project, re.M | re.S)
     if not m:
-        problems.append("%s: could not read the Ticket Adapter field" % target.name)
+        problems.append("%s: could not read the Work Item Adapter field" % target.name)
         continue
     adapter = m.group(1).strip()
     want = ticket_integration_enabled(adapter)

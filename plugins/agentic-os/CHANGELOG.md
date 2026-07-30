@@ -7,6 +7,19 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
+### Changed
+
+- **`project.md` renders the two adapter sections under neutral names.**
+  `## MR Adapter` → `## Review Adapter`, `## Ticket Adapter` →
+  `## Work Item Adapter`. The old headings named one vendor's term for an
+  indirection whose entire purpose is to bind no vendor; see the `agentic-sdlc`
+  entry for the full reasoning. Fields inside each section are unchanged, and
+  `{{MR_ADAPTER}}` / `{{TICKET_ADAPTER}}` keep their variable names.
+
+  Existing installs keep working until re-rendered: the sections are read by
+  heading, so re-run `/agentic-init` or rename the two headings in
+  `.agentic/guides/project.md` by hand.
+
 ## [0.14.0] — 2026-07-29
 
 ### Fixed

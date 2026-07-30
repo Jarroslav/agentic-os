@@ -162,7 +162,7 @@ Markdown markers and literals used in the local item and requirements:
 ## Declaring an adapter
 
 A project declares its adapter in `.agentic/guides/project.md` or in
-`.agentic/guides/integration/*.md`, under a "Ticket Adapter" block. Minimum
+`.agentic/guides/integration/*.md`, under a "Work Item Adapter" block. Minimum
 fields:
 
 | Field | Meaning |
