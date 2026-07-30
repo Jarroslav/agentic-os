@@ -8,6 +8,15 @@ Semantic Versioning and its own release tag (`agentic-qe-v<X.Y.Z>`).
 
 ### Fixed
 
+- **`eval-harness/references/python.md` had 7 dead cross-references.** It
+  pointed at `spec-format.md` and `references/providers.md`, neither of which
+  exists — the real files are `eval-spec.md` and `judge-providers.md`
+  (siblings in the same `references/` directory as `python.md` itself, so the
+  correct form drops the `references/` prefix). Found by measurement while
+  auditing the repo's overall link integrity, the same rot class as the
+  `qa-sdlc-blueprint` fix below, just missed by that pass because it's a bare
+  backticked reference rather than markdown link syntax.
+
 - **The skill-authoring stub pointed at a skill that does not exist.** Its
   "Related material" section named a `qa-sdlc-blueprint` skill as the document
   that invokes the template; the skill is `qe-blueprints`, and

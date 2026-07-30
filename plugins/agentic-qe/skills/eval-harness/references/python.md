@@ -3,7 +3,7 @@
 Follow this reference when the host repo is Python and you are installing the
 skill-evaluation harness there. It covers copying the templates, wiring imports,
 installing dependencies, and running both test layers. It does **not** cover spec
-authoring (`spec-format.md`), provider credentials (`references/providers.md`),
+authoring (`eval-spec.md`), provider credentials (`judge-providers.md`),
 or the TypeScript variant of this harness.
 
 Overall blast radius of the install: **R2** — you write files into the target
@@ -69,7 +69,7 @@ needs:
 - OpenAI-compatible endpoints: **nothing** — that path uses stdlib `urllib`
   only.
 
-`references/providers.md` is the authoritative list of packages, providers, and
+`judge-providers.md` is the authoritative list of packages, providers, and
 per-provider env vars; don't duplicate that here.
 
 Record the dependencies in the repo manifest. Suggested: an
@@ -133,7 +133,7 @@ pytest eval/test_runner.py   # unit + repo coverage checks
 
 Needs provider credentials from `.env` (or the process environment if
 python-dotenv is absent). Select the provider with `EVAL_PROVIDER` plus the
-provider-specific vars from `references/providers.md`. Every provider
+provider-specific vars from `judge-providers.md`. Every provider
 implementation ships inside the runner — switching providers is env-only, no
 code change.
 
@@ -176,7 +176,7 @@ and assertions that fail to discriminate are flagged. The margin is
 configurable, defaulting to `0.25`. A stricter bare-baseline flag additionally
 strips reference docs from the baseline side — use it for documentation-heavy
 skills where the references alone might carry the eval. Semantics are
-documented in `spec-format.md`.
+documented in `eval-spec.md`.
 
 ## Quick decision table
 
@@ -190,6 +190,6 @@ documented in `spec-format.md`.
 
 ## Related documents
 
-- `references/providers.md` — provider selection, packages, credential vars.
-- `spec-format.md` — `evals.json` authoring, assertion and baseline semantics.
+- `judge-providers.md` — provider selection, packages, credential vars.
+- `eval-spec.md` — `evals.json` authoring, assertion and baseline semantics.
 - TypeScript harness reference (sibling) — same knob set, different runtime.
