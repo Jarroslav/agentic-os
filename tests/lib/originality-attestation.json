@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-30T16:49:09Z",
+ "attested_at": "2026-07-30T17:50:30Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -41,14 +41,14 @@
    "max_run": 0
   },
   ".github/workflows/ci.yml": {
-   "sha256": "8b7e2a6a7a356b1ef1004cc4e2c865fc364b322985198557819bb11cff8ad315",
-   "line": 0.0353,
+   "sha256": "d390fb7f109594a71e1bec0dc9ede8ec32effc3f73a351617501e679d09fc563",
+   "line": 0.0261,
    "shingle": 0.0,
    "max_run": 0
   },
   ".github/workflows/release.yml": {
-   "sha256": "5adeedc2c5c5aa0eaacf0389e25d1fbfa9fc27084948274b43163729d0fc0ce9",
-   "line": 0.0192,
+   "sha256": "d40cd43681b1b85f88a1d5de5833905bd3e9c8a84aa29a413fb6998245abff33",
+   "line": 0.0167,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "074b3e7f9c3569b5b4302f804c1385ff3b5f5aa0d290aadd954145f01c386f5f",
+   "sha256": "3abd4e436123dcb6f841ea716a7c6005e34ad77d849a689ea9070f9d4143c9c2",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1091,7 +1091,7 @@
    "max_run": 0
   },
   "plugins/agentic-qe/CHANGELOG.md": {
-   "sha256": "b53d298a1832214c4b97984b547bdd187df7384b46feb4e610739d546c587748",
+   "sha256": "1209f9280141f6d174f1f6173a1f92a14e9420ae3ab10d3781e64bb161c5fb33",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1205,7 +1205,7 @@
    "max_run": 0
   },
   "plugins/agentic-qe/skills/eval-harness/references/python.md": {
-   "sha256": "f09821036646bdf6cc099a1c01f65c6eb42f02aa8891bd320db27154116e7133",
+   "sha256": "9f74b8df30837a4c85273ffc7bcf40f83f712e580ecffb749d47074dcba71154",
    "line": 0.0259,
    "shingle": 0.0,
    "max_run": 0
@@ -2537,13 +2537,13 @@
    "max_run": 0
   },
   "tests/README.md": {
-   "sha256": "8c3963f741c388873c2aa44c0a74ee383873c9fcf2b58461c54118ac92dec429",
+   "sha256": "8b054fcc23361823bd00c64aa9c81349b8604f0ad2424f04c58702bd74738dc8",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/cursor/README.md": {
-   "sha256": "9214aeffb62ddb98e7bde4b766120e00c58be1fab9d7a79a24d3eb1b5f1f4d3c",
+   "sha256": "c91877ae4cfece653e42ebc63d49552e82977751b44aec7a2ff35230dd8a09f1",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2555,7 +2555,7 @@
    "max_run": 0
   },
   "tests/cursor/run-cursor-e2e.sh": {
-   "sha256": "64f55baef58ddbae589c1a549ffd6f37d5559242930e395229f35fabb9720e8c",
+   "sha256": "cfb952e9da577a9b0c5094da4e68777d6b4eb70dd15ace61185d1b4466af5c33",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2611,6 +2611,12 @@
   "tests/lib/check-discovery-priors.py": {
    "sha256": "aa6eecf4a2820bf93c1d7d5b3d158943c6b47302d77dc79d4ae0bd87ad50ed92",
    "line": 0.0714,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/lib/check-doc-links.py": {
+   "sha256": "3399be9109635564ab7ef421a7953001c9410338a45f73d7b6a5dac84a53b929",
+   "line": 0.0137,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2743,6 +2749,12 @@
   "tests/lib/check-upgrade.py": {
    "sha256": "f1b67e588bc0e642bd66d50662b83a0dfd039617103fe6b31d7088faf45a52c7",
    "line": 0.0357,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/lib/doc-links-policy.json": {
+   "sha256": "746e839408782d603f63f569167acae620a71959b494ee0a0952cd5f32e11c6d",
+   "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
