@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-30T16:31:37Z",
+ "attested_at": "2026-07-30T16:49:09Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -47,8 +47,8 @@
    "max_run": 0
   },
   ".github/workflows/release.yml": {
-   "sha256": "01654fc67bf9ee32e235116d8ca984b8960455b21048031d65d2ff87a2c37577",
-   "line": 0.0197,
+   "sha256": "5adeedc2c5c5aa0eaacf0389e25d1fbfa9fc27084948274b43163729d0fc0ce9",
+   "line": 0.0192,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -89,7 +89,7 @@
    "max_run": 0
   },
   "ROADMAP.md": {
-   "sha256": "0f0f41ba42e2c5022d9d177e40deb300931544d59c67243def219682998c4c27",
+   "sha256": "8ec37bc17ac96be90e4ac9d837244eece30f0ef50fc9661231de24f3cd0101bd",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -107,7 +107,7 @@
    "max_run": 0
   },
   "docs/PRINCIPLES.md": {
-   "sha256": "cba9916457f8a86b5d6ffe8d1fe306f0088121776096da444d0c2e9875690c5a",
+   "sha256": "01cff3020f74c322a44c61ce4fd4212997ec72c2982e9f95fec80fde6243f9ed",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

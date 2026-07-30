@@ -105,6 +105,14 @@ jobs:
           python3 tests/lib/check-html-refs.py --self-test
           python3 tests/lib/check-html-refs.py
 
+      - name: Skill cross-references resolve
+        run: |
+          python3 tests/lib/check-skill-refs.py --self-test
+          python3 tests/lib/check-skill-refs.py
+
+      - name: Retired names appear nowhere
+        run: python3 tests/lib/check-skill-refs.py --banned-names
+
       # A release publishes plugins/** inside the npm tarball, so the recorded
       # originality result is verified here too — not just on the PR that made it.
       - name: Originality check
