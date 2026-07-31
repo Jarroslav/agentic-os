@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-31T08:26:07Z",
+ "attested_at": "2026-07-31T10:17:51Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -41,8 +41,8 @@
    "max_run": 0
   },
   ".github/workflows/ci.yml": {
-   "sha256": "c2d1aaa62e66f5866ad87db5d44ca84757ecde5583aaff55710cdcc6f750107d",
-   "line": 0.0254,
+   "sha256": "2fb5c530050f9ee70e664d6267e59f0abeafcb65b9f6ab360fb0e01da478ea93",
+   "line": 0.0244,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "0126d80d2024dbb51992bd6fb20f7fd69213d3b2923641c1c97c1b9c73d1795f",
+   "sha256": "30c2b6800c95fa446dbec8203b3e7eccc82610aac5c7c757df5f218283dbd0ec",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1505,19 +1505,19 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/.claude-plugin/plugin.json": {
-   "sha256": "8427c5120ee99be64791cec620cf164c11814a6827332e01b1d46d89507a4eaf",
+   "sha256": "ce63fc493788cfce8f433415d8f70b08a7ddfea345135b754e973769aea2901a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 3
   },
   "plugins/agentic-sdlc/.codex-plugin/plugin.json": {
-   "sha256": "9b4c9d692ce2815ab1e06c840cfb121c78489a477399c52dcd9d9f38c67185fe",
+   "sha256": "52ada8c775487632077e93813160e8ca5cd76fa90bd7326b7c7c1b4df37106fc",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/.cursor-plugin/plugin.json": {
-   "sha256": "666196614b9396714f8883cf1da3863aee377e04de500e263277e4be90b7bead",
+   "sha256": "d991fe9af5e1415e10a933eed31522f7c4a7266559ba5d90b870a92493615213",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1529,7 +1529,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "2ed91e4634baa37b80dcd91a2f7bd06626b25c3c8d627369c917a99d56e99a9d",
+   "sha256": "09199f50835e093a51e1d27e74184edf4d5cbef7ddcba56ac8f7702b6d56bd1e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1612,9 +1612,21 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "plugins/agentic-sdlc/hooks/test-usage-sampler": {
+   "sha256": "f9be8bc47a6885521ebd855ae59a0af4c84662e056a00356260f637db46b85a0",
+   "line": 0.02,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "plugins/agentic-sdlc/hooks/ticket-sync": {
    "sha256": "abbb2d52a297a9949bc860d274f0ad14f085537f9d73d10c10e1ef56cd5d8366",
    "line": 0.0498,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-sdlc/hooks/usage-sampler": {
+   "sha256": "f328cf95c3c2ed61d59e4cbc0b1cebbc90055b39dd2878f060f227a574f2224d",
+   "line": 0.033,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1697,7 +1709,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/references/model-routing.md": {
-   "sha256": "e6a6ccc85bafbbe568d9a3a268e541b7078e78952e59e88325526330e51cd2a0",
+   "sha256": "9caa204731f2bad30281efa55d66f881c98d215124a86b53581f5abf00635355",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1762,6 +1774,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "plugins/agentic-sdlc/references/role-tier-map.json": {
+   "sha256": "99f06983ab10a156f64ae70c03d1957f1adcaaaae131ed5e9a01c3ab2f8bfbc3",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "plugins/agentic-sdlc/references/schemas/complexity.schema.json": {
    "sha256": "54faa0ef767a5abf6c51751e211772f9d79d31d8221fa1accaf2d15d77d1b4d8",
    "line": 0.0,
@@ -1798,6 +1816,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "plugins/agentic-sdlc/references/schemas/role-tier-map.schema.json": {
+   "sha256": "73a63d290be86cdf9c41f1376186685bea54b5ad17c0c81c5d3840384c845ed6",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "plugins/agentic-sdlc/references/schemas/telemetry-record.schema.json": {
    "sha256": "524d8ebe8e7d9315354e1c0f18031908008abec8badf3899eb9212a3477a9c09",
    "line": 0.0,
@@ -1817,7 +1841,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/references/tokenomics.md": {
-   "sha256": "997f905811eea1017262135bbf2ae1ef38c2e9026ec128e7a908ac19c2552fec",
+   "sha256": "81b97fa37522cfe444cb4cb07f76c4782c0b2aee2c9d58eed66f93d5bd3c5a5a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2758,6 +2782,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "tests/lib/check-role-tier-map.py": {
+   "sha256": "448a663f90747672d76f7f7f75f6136c53e56aefd87a9a05e41ed561478ac120",
+   "line": 0.1,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "tests/lib/check-roundtrip.py": {
    "sha256": "18bbf2c9de036718aa41d46d5cb9cb9be35e135354f55deeb80499bb9d5ccd27",
    "line": 0.0588,
@@ -2771,8 +2801,8 @@
    "max_run": 0
   },
   "tests/lib/check-schemas.py": {
-   "sha256": "bbd259cc36b4f445ff3d843e1dd32a43d7885fbcce1abdff1145fa1c2d600425",
-   "line": 0.0633,
+   "sha256": "c31b23b9146c8a2efd4aacc3060baa93a4a1836b80cb7d2dd689976635b65f3a",
+   "line": 0.061,
    "shingle": 0.0,
    "max_run": 0
   },
