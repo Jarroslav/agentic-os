@@ -76,6 +76,9 @@ VALID = {
         "escalated": False, "decision": "approve", "source": "hitl",
         "confidence": "high", "risk_flags": [], "follow_up_count": 0,
     },
+    "role-tier-map.schema.json": {
+        "codebase-scout": "standard", "lead-proxy": "standard",
+    },
 }
 BREAK = {
     "meta.schema.json": lambda d: d.update(status="paused"),          # bad enum
@@ -86,6 +89,7 @@ BREAK = {
     "complexity.schema.json": lambda d: d.update(score=99),           # above maximum
     "verification-evidence.schema.json": lambda d: d.update(result="MAYBE"),
     "telemetry-record.schema.json": lambda d: d.update(source="oracle"),  # bad enum
+    "role-tier-map.schema.json": lambda d: d.update(**{"codebase-scout": "bogus-tier"}),
 }
 
 found = sorted(p.name for p in SCHEMAS.glob("*.schema.json"))
