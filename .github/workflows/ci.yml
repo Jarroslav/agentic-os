@@ -108,6 +108,11 @@ jobs:
       - name: Run-artifact schema check
         run: python3 tests/lib/check-schemas.py
 
+      - name: Telemetry allowlist check
+        run: |
+          python3 tests/lib/check-telemetry-allowlist.py --self-test
+          python3 tests/lib/check-telemetry-allowlist.py
+
       - name: Shipped HTML references resolve
         run: |
           python3 tests/lib/check-html-refs.py --self-test

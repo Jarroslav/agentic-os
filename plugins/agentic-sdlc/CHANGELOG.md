@@ -6,6 +6,32 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Added
+
+- **Observability adapters, with Axiom as the first shipped profile.** Every
+  run already produces a complete governance record — `events.jsonl` (phase
+  transitions, side effects) and `decisions.jsonl` (every gate verdict, its
+  source, confidence, and risk flags) — but it lived and died in a gitignored
+  run directory with no way to see it in aggregate. `references/
+  observability-adapters.md` is a new vendor-neutral contract, mirroring
+  `work-item-adapters.md`'s adapter-declaration shape, that lets a host
+  project export that record to an external backend without this plugin ever
+  naming one or handling a credential.
+
+  New: `scripts/export-run-telemetry.py` (stdlib-only projector; deny-by-
+  default field allowlist — free-form text like `summary`,
+  `verdict.rationale`, and `prior_context` is dropped, never forwarded),
+  `skills/telemetry-export/` (the operator-invoked skill; not a registered
+  hook, so nothing exports by default), `references/schemas/telemetry-
+  record.schema.json`, and `references/profiles/{axiom,otlp-logs}.md` (Axiom
+  ingest specifics plus starter APL queries; a vendor-neutral OTLP-logs
+  alternative). `tests/lib/check-telemetry-allowlist.py` keeps the doc's
+  allowlist tables and the projector's code from drifting apart.
+
+  This plugin still ships zero network calls and zero secrets by default —
+  export only happens when a host declares
+  `.agentic/guides/integration/telemetry-flow.md` and invokes the skill.
+
 ### Fixed
 
 - **`ticket-sync` silently wrote zero receipts on Linux**, even though it

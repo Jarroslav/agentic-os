@@ -41,7 +41,10 @@ costs on the others.
   context savings the subagent architecture already provides.
 - **Token telemetry collectors** — a `usage.sampled` event may be recorded by
   hosts that have usage data, but the plugin ships no collector or dashboard;
-  per-run reporting is a roadmap item (`report-builder`).
+  per-run reporting is a roadmap item (`report-builder`). This is distinct
+  from `references/observability-adapters.md`, which exports the *governance*
+  ledgers (`events.jsonl`, `decisions.jsonl`) to a host-declared backend —
+  that contract carries no token/cost data and does not fill this gap.
 
 ## Review rubric
 

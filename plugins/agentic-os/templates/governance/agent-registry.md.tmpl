@@ -41,6 +41,7 @@ flow for the same task; pick the owner and cite anything else as reference.
 | Commit, push, and open an MR (developer, devops, pm-delivery presets) | the agentic-sdlc `mr-submit` skill | Invoked by name only; every push and MR creation listed per the autonomy matrix. |
 | Watch an open MR/PR until merge (devops, pm-delivery presets) | the agentic-sdlc `mr-watch` skill | Persistent unblocking loop; stops on merge, close, or user stop. |
 | Inspect or resume SDLC runs (devops, pm-delivery, portfolio presets) | the agentic-sdlc `sdlc-runs` skill | Read-only status recompute from live run state; resume needs an explicit yes. |
+| Export run governance telemetry to an observability backend (devops preset) | the agentic-sdlc `telemetry-export` skill | No-op unless a telemetry profile is declared; deny-by-default field allowlist, no credential ever passes through the skill. |
 | Audit repo knowledge/docs health (architect, portfolio presets) | the agentic-sdlc `repo-audit-guides` skill | Read-only; findings labeled and cited, fixes stay human-owned. |
 | Design a test-case set for a feature (qa preset) | the agentic-qe `test-cases` blueprint | Methodology, not a runner: the QA planning skills execute, and the blueprint is the authority on how cases are shaped. |
 | Diagnose a flaky test (qa preset) | the agentic-qe `flaky-debugging` blueprint | Methodology for isolating flake causes; quarantine and re-run decisions stay human-owned. |
