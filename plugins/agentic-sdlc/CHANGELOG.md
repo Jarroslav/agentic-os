@@ -8,6 +8,17 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ### Added
 
+- **`usage.sampled` is now a real event, not just a reserved shape.**
+  `references/model-routing.md` documented this event ("Usage sampling (spec
+  only)") but nothing ever produced one. A new `usage-sampler` SubagentStop
+  hook now samples each subagent's own isolated token usage (confirmed
+  empirically to be a genuinely separate transcript from the parent
+  session's, not an approximation) and appends a normalized `usage.sampled`
+  line to the run's `events.jsonl`, with `role`/`tier` resolved via the new
+  `references/role-tier-map.json`. `report-builder` (aggregating these into a
+  cost report) remains a separate, unimplemented roadmap item — this only
+  covers the collector.
+
 - **Observability adapters, with Axiom as the first shipped profile.** Every
   run already produces a complete governance record — `events.jsonl` (phase
   transitions, side effects) and `decisions.jsonl` (every gate verdict, its

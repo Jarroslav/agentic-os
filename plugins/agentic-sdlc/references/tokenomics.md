@@ -39,12 +39,15 @@ costs on the others.
 - **Per-phase hard session stops** — one checkpoint/resume contract covers
   interruption; a forced stop at every boundary trades user experience for
   context savings the subagent architecture already provides.
-- **Token telemetry collectors** — a `usage.sampled` event may be recorded by
-  hosts that have usage data, but the plugin ships no collector or dashboard;
-  per-run reporting is a roadmap item (`report-builder`). This is distinct
-  from `references/observability-adapters.md`, which exports the *governance*
-  ledgers (`events.jsonl`, `decisions.jsonl`) to a host-declared backend —
-  that contract carries no token/cost data and does not fill this gap.
+- **A `report-builder` dashboard or aggregator** — the `usage-sampler` hook
+  (`hooks/usage-sampler`) now emits real `usage.sampled` events per subagent
+  dispatch, but nothing in the plugin yet aggregates them into a per-run or
+  cross-run cost report; that remains the open `report-builder` roadmap item.
+  This is distinct from `references/observability-adapters.md`, which exports
+  the *governance* ledgers (`events.jsonl`, `decisions.jsonl`) to a
+  host-declared backend — whether `usage.sampled` should flow through that
+  same exporter (once allowlisted) or through a dedicated aggregator is an
+  open question for the `report-builder` spec, not decided here.
 
 ## Review rubric
 

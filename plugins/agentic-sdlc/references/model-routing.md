@@ -40,11 +40,11 @@ exactly that).
 A host that maps only `economy` and leaves the rest `inherit` still gets most
 of the win — the mechanical roles are the volume.
 
-## Usage sampling (spec only)
+## Usage sampling
 
-Hosts that can see token usage MAY append `usage.sampled` semantic events to
-the run ledger so future reporting (the V2 `report-builder` roadmap item) has
-cost data to consume. Shape:
+The `usage-sampler` `SubagentStop` hook (`hooks/usage-sampler`) appends
+`usage.sampled` semantic events to the run ledger so future reporting (the
+`report-builder` roadmap item) has cost data to consume. Shape:
 
 ```json
 {
@@ -56,6 +56,12 @@ cost data to consume. Shape:
             "input_tokens": 0, "output_tokens": 0}
 }
 ```
+
+`role` is resolved from the dispatch's `agent_type`, looked up in
+`references/role-tier-map.json` (the canonical machine-readable copy of the
+table above — kept from drifting apart by `tests/lib/check-role-tier-map.py`).
+An `agent_type` with no entry there is still recorded, as `tier: "unmapped"`,
+never guessed or dropped.
 
 The plugin ships no collector, no pricing table, and no dashboard — pricing is
 vendor-specific and stale on arrival. An optional host-supplied

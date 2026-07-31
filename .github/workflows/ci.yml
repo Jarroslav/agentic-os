@@ -43,6 +43,9 @@ jobs:
       - name: Ticket-sync hook tests
         run: bash plugins/agentic-sdlc/hooks/test-ticket-sync
 
+      - name: Usage-sampler hook tests
+        run: bash plugins/agentic-sdlc/hooks/test-usage-sampler
+
       - name: Cursor plugin packaging check
         run: python3 tests/cursor/check-cursor-packaging.py
 
@@ -107,6 +110,11 @@ jobs:
 
       - name: Run-artifact schema check
         run: python3 tests/lib/check-schemas.py
+
+      - name: Role-tier map drift check
+        run: |
+          python3 tests/lib/check-role-tier-map.py --self-test
+          python3 tests/lib/check-role-tier-map.py
 
       - name: Telemetry allowlist check
         run: |
