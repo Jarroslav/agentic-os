@@ -48,8 +48,19 @@ bail() { exit 0; }
 # ---------------------------------------------------------------------------
 
 # mtime of a file in epoch seconds, across BSD (-f %m) and GNU (-c %Y) stat.
+# `||` on exit status alone is not enough: BSD's `-f` means "format" (so
+# `-f %m` cleanly prints the mtime), but GNU's `-f` means "filesystem status" —
+# a different flag that happens to accept `%m` too, printing a multi-line
+# filesystem-info block to stdout (not suppressed; only stderr is redirected)
+# and exiting nonzero. Because both stat calls share one command substitution,
+# a naive `||` fallback still runs stat -c and simply appends its epoch to that
+# garbage instead of replacing it. Validate the captured value is a clean
+# non-negative integer before accepting it, rather than trusting exit status.
 file_mtime() {
-  stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0
+  m=$(stat -f '%m' "$1" 2>/dev/null)
+  case "$m" in ''|*[!0-9]*) m=$(stat -c '%Y' "$1" 2>/dev/null) ;; esac
+  case "$m" in ''|*[!0-9]*) m=0 ;; esac
+  printf '%s\n' "$m"
 }
 
 # Pull the single-line value that follows a "**Label**:" prefix. First hit wins.

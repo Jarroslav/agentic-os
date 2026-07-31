@@ -59,19 +59,17 @@ top-level index.
   come back as commands for the host to run. See `SECURITY.md` for the
   full two-reader access-control writeup and its one accepted (and
   disclosed) risk.
-- **`mcp/` Phase 3 — publish-ready.** The npm tarball now ships `LICENSE`
-  and `NOTICE` and drops orphaned source maps; `server.json` (MCP Registry)
-  and `manifest.json` (`.mcpb` bundle) exist and are held in three-way
-  version/name/identifier agreement with `package.json` by a test proven to
-  fail on drift; a production-only `.mcpb` bundle builds, unpacks, and
-  serves all 7 tools; and `.github/workflows/release.yml` publishes to npm
-  (with provenance) and then, only on npm success, to the MCP Registry, on
+- **`mcp/` Phase 3 — published, on trusted publishing.** The npm tarball
+  ships `LICENSE` and `NOTICE` and drops orphaned source maps; `server.json`
+  (MCP Registry) and `manifest.json` (`.mcpb` bundle) exist and are held in
+  three-way version/name/identifier agreement with `package.json` by a test
+  proven to fail on drift; a production-only `.mcpb` bundle builds, unpacks,
+  and serves every tool; and `.github/workflows/release.yml` publishes to npm
+  (with provenance, via OIDC trusted publishing — no `NPM_TOKEN` secret
+  exists or is needed) and then, only on npm success, to the MCP Registry, on
   push of an `agentic-os-mcp-v*` tag. `mcp/RELEASE.md` is the maintainer
-  runbook. **This is packaging and automation only — the first actual
-  release (creating the `NPM_TOKEN` secret, confirming the Registry
-  namespace case, and pushing the first tag) is a maintainer action that
-  has not happened yet.** `agentic-os-mcp` remains unpublished until then;
-  see `mcp/README.md`'s Install section.
+  runbook. `agentic-os-mcp` has shipped releases through `0.3.0`; see
+  `mcp/README.md`'s Install section for the live `npx` command.
 
 ## In progress / next
 
@@ -91,12 +89,6 @@ top-level index.
   (`tests/lib/check-presets.py`) but has never been driven through a live
   `/agentic-init` run to confirm the discovery-front-end path degrades
   cleanly with nothing to generate.
-- **`mcp/` Phase 3's first actual release** — pushing the first
-  `agentic-os-mcp-v*` tag once the one-time `NPM_TOKEN` setup and Registry
-  namespace confirmation in `mcp/RELEASE.md` are done. The packaging and
-  the release workflow that this triggers are already shipped — see Shipped
-  above.
-
 ## Deferred, by design
 
 - **Paradigm fragments** for generated agent contracts (pre-written,

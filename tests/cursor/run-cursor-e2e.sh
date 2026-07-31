@@ -15,6 +15,13 @@ set -euo pipefail
 ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 PLUGIN="$ROOT/plugins/agentic-os"
 DEFAULT_TARGET="${TARGET:-$ROOT/../test/agentic-os-cursor-fresh-install}"
+# mkdir -p first: if $(dirname "$DEFAULT_TARGET") doesn't exist (true on every
+# fresh clone and every CI runner), a bare `cd` fails here but does NOT trip
+# set -e — the assignment's exit status comes from the trailing $(basename)
+# command substitution, which still succeeds. Without this line TARGET
+# silently collapses to "/$(basename "$DEFAULT_TARGET")", and make-fresh.sh
+# immediately does `rm -rf "$TARGET"` on it.
+mkdir -p "$(dirname "$DEFAULT_TARGET")"
 TARGET="$(cd "$(dirname "$DEFAULT_TARGET")" && pwd)/$(basename "$DEFAULT_TARGET")"
 
 PASS=0

@@ -32,6 +32,40 @@ jobs:
       - name: Acceptance matrix (T1–T8)
         run: bash tests/run-matrix.sh
 
+      # Six suites below exist, pass, and were invoked by no automation at
+      # all until now. Not hypothetical: validate-presets.sh has a prior
+      # recorded incident (CHANGELOG.md) where it silently failed on all
+      # seven presets, undetected, for exactly this reason.
+
+      - name: SDLC stage-guard hook tests
+        run: bash plugins/agentic-sdlc/hooks/test-sdlc-stage-guard
+
+      - name: Ticket-sync hook tests
+        run: bash plugins/agentic-sdlc/hooks/test-ticket-sync
+
+      - name: Cursor plugin packaging check
+        run: python3 tests/cursor/check-cursor-packaging.py
+
+      # TARGET is always set explicitly here, even though the script's own
+      # fallback is now set -e-safe (see the commit that fixed it) — CI never
+      # relies on the fallback path regardless.
+      - name: Cursor e2e install smoke test
+        run: |
+          TARGET="${{ runner.temp }}/cursor-fresh-install" \
+            bash tests/cursor/run-cursor-e2e.sh
+
+      - name: Role preset validation
+        run: bash plugins/agentic-os/presets/validate-presets.sh
+
+      # The script itself has no formal assertions -- it relies on `set -e`
+      # plus a human reading the echoed output. The grep below is what turns
+      # "didn't crash" into "produced the expected terminal output."
+      - name: QA e2e generator smoke test
+        run: |
+          bash plugins/agentic-sdlc/skills/qa-e2e-generator/scripts/qa-e2e-smoke-test.sh \
+            | tee /tmp/qa-e2e-smoke.log
+          grep -qx 'SMOKE TEST PASSED' /tmp/qa-e2e-smoke.log
+
       - name: Validate JSON manifests & presets
         run: python3 tests/lib/check-manifests.py
 
@@ -78,6 +112,13 @@ jobs:
         run: |
           python3 tests/lib/check-html-refs.py --self-test
           python3 tests/lib/check-html-refs.py
+
+      # A cross-file markdown anchor that never existed survives a full rename
+      # sweep silently — nothing else in this repo dereferences #fragments.
+      - name: Doc links resolve
+        run: |
+          python3 tests/lib/check-doc-links.py --self-test
+          python3 tests/lib/check-doc-links.py
 
       # Names are what hold the package together — presets claim skills by name,
       # the registry routes by name, and one skill hands off to another in prose.

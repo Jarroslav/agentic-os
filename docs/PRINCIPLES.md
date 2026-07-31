@@ -103,7 +103,7 @@ or a subagent guessed.
 **Implementation**:
 [`skills/gate-arbiter/SKILL.md`](../plugins/agentic-sdlc/skills/gate-arbiter/SKILL.md);
 the state machine is diagrammed in
-[`plugins/agentic-sdlc/README.md`](../plugins/agentic-sdlc/README.md#gate-arbiter-autonomous-gates).
+[`plugins/agentic-sdlc/README.md`](../plugins/agentic-sdlc/README.md#judgment-gates).
 
 ## 4. The HITL escalation ladder
 

@@ -6,6 +6,10 @@ expects, and that a fresh target repo scaffolds correctly after an explicit
 
 ## Automated
 
+Runs in CI on every PR and push to `main` (`.github/workflows/ci.yml`'s
+"Cursor plugin packaging check" and "Cursor e2e install smoke test" steps —
+CI always sets `TARGET` explicitly).
+
 ```bash
 bash tests/cursor/run-cursor-e2e.sh
 ```

@@ -8,6 +8,26 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ### Fixed
 
+- **`ticket-sync` silently wrote zero receipts on Linux**, even though it
+  always exited 0 and looked healthy. Its `file_mtime()` helper picked "the
+  newest pipeline run" by shelling out to `stat -f %m FILE`, falling back to
+  `stat -c %Y FILE` on failure. On BSD (macOS) `-f` means "format", so
+  `stat -f %m` cleanly prints the mtime and the fallback never runs. On GNU
+  (Linux) `-f` means "filesystem status" — a different flag that happens to
+  accept `%m` too — so it printed a multi-line filesystem-info block to stdout
+  (only stderr was redirected) and exited nonzero. Because both `stat` calls
+  shared one command substitution, the `||` fallback's real epoch got appended
+  to that garbage rather than replacing it, so the mtime comparison silently
+  evaluated false for every run. No error ever surfaced — the hook just
+  concluded no run existed and took its normal no-op exit path.
+
+  Wiring `hooks/test-ticket-sync` into CI (below) caught this immediately:
+  20/20 locally on macOS, 10/20 on the actual Ubuntu runner. Reproduced and
+  root-caused against real GNU coreutils in a container before fixing.
+  `file_mtime()` now validates the captured value is a clean non-negative
+  integer before accepting it, rather than trusting either `stat` flavor's
+  exit status. Verified 20/20 on both BSD and GNU `stat`.
+
 - **`sdlc-stage-guard`'s advisory nudges disagreed with the stage/phase numbers
   each flow's own `SKILL.md` documents, in three different ways.** The test
   suite (`hooks/test-sdlc-stage-guard`) was added alongside the hook and never
