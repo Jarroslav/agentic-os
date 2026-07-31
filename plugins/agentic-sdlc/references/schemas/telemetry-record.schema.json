@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "telemetry record (NDJSON line emitted by export-run-telemetry.py)",
+  "type": "object",
+  "required": [
+    "_time",
+    "stream",
+    "run_id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_time": {
+      "type": "string"
+    },
+    "stream": {
+      "enum": [
+        "events",
+        "decisions"
+      ]
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "integer"
+    },
+    "event": {
+      "type": "string",
+      "pattern": "^[a-z_][a-z0-9_.-]*$"
+    },
+    "phase": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "actor": {
+      "type": "string"
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gate_id": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "hitl",
+        "autonomous",
+        "task"
+      ]
+    },
+    "escalated": {
+      "type": "boolean"
+    },
+    "decision": {
+      "type": "string"
+    },
+    "source": {
+      "enum": [
+        "hitl",
+        "deterministic",
+        "fast-path",
+        "subagent"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "follow_up_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.:/-]{1,64}$"
+      }
+    }
+  }
+}

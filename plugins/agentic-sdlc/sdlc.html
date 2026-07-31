@@ -416,6 +416,9 @@ const N = [
   {id:"release-manager", kind:"orch", group:"Phase skills", reach:"R2",
    role:"Prepares a release: versions, changelog, tag.",
    src:["skills/release-manager/SKILL.md"]},
+  {id:"telemetry-export", kind:"orch", group:"Phase skills", reach:"R3",
+   role:"Projects a run's governance ledgers into redacted NDJSON for a host-declared observability backend. No-op absent a configured profile.",
+   src:["skills/telemetry-export/SKILL.md", "references/observability-adapters.md"]},
 
   {id:"plan.approved", kind:"gate", group:"Gates", reach:"—",
    role:"A plan is ready and needs sign-off before implementation starts.",
@@ -446,6 +449,9 @@ const N = [
   {id:"ticket-sync", kind:"hook", group:"Hooks", reach:"R1",
    role:"Surfaces run notices against the ticket. Deterministic, fires on lifecycle events.",
    src:["hooks/ticket-sync"]},
+  {id:"usage-sampler", kind:"hook", group:"Hooks", reach:"R1",
+   role:"Samples a completed subagent's own isolated token usage and appends a usage.sampled event to the run ledger. Fail-open; never blocks turn-end.",
+   src:["hooks/usage-sampler"]},
 
   {id:"git", kind:"tool", group:"Tools", reach:"R3",
    role:"Branching, committing, pushing."},

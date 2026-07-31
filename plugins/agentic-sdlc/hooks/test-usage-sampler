@@ -1,0 +1,272 @@
+#!/usr/bin/env bash
+#
+# test-usage-sampler — bash test harness for the usage-sampler SubagentStop hook.
+#
+# Each test runs in its own mktemp sandbox standing in for a repo root. The
+# harness fabricates a pipeline run (meta.json + events.jsonl) and a fixture
+# subagent transcript, invokes the hook with a synthetic SubagentStop event on
+# stdin, then asserts on the usage.sampled line (or absence of one) in the
+# run's events.jsonl.
+#
+# role-tier-map.json is NOT fabricated per-test: the hook resolves it relative
+# to its own on-disk location (this file's sibling ../references/), so tests
+# exercise the real shipped mapping file directly. CLAUDE_PLUGIN_ROOT is
+# explicitly unset so every test run is deterministic regardless of what
+# environment invoked this script.
+#
+# Runs under plain bash 3.2 (no associative arrays); tests are listed
+# explicitly. Prints "=== N passed, M failed ===" and exits 1 on any failure.
+
+unset CLAUDE_PLUGIN_ROOT
+
+HOOK_DIR=$(cd "$(dirname "$0")" && pwd)
+HOOK="$HOOK_DIR/usage-sampler"
+
+PASS=0
+FAIL=0
+
+pass() { PASS=$((PASS + 1)); printf 'ok   - %s\n' "$1"; }
+fail() { FAIL=$((FAIL + 1)); printf 'FAIL - %s\n' "$1"; }
+
+with_tmpdir() {
+  TMP=$(mktemp -d 2>/dev/null || mktemp -d -t usagesampler)
+  cd "$TMP" || exit 1
+}
+
+cleanup_tmp() {
+  cd / 2>/dev/null
+  [ -n "$TMP" ] && rm -rf "$TMP"
+}
+
+# Create a run: meta.json (status + current_phase) and an empty events.jsonl.
+#   $1 = status ("running"/"completed"), $2 = current_phase (integer)
+write_run() {
+  RUN_ID="run-0001"
+  RUN_DIR="docs/superpowers/runs/$RUN_ID"
+  mkdir -p "$RUN_DIR"
+  printf '{"run_id":"%s","status":"%s","current_phase":%s}\n' \
+    "$RUN_ID" "$1" "$2" > "$RUN_DIR/meta.json"
+  : > "$RUN_DIR/events.jsonl"
+}
+
+# Fabricate a subagent transcript ending in a usage-carrying assistant line.
+#   $1 = path, $2 = input_tokens, $3 = output_tokens,
+#   $4 = cache_read_input_tokens, $5 = cache_creation_input_tokens
+write_agent_transcript() {
+  {
+    printf '{"type":"user","message":{"role":"user","content":"hi"}}\n'
+    printf '{"type":"assistant","message":{"role":"assistant","usage":{"input_tokens":%s,"output_tokens":%s,"cache_read_input_tokens":%s,"cache_creation_input_tokens":%s}}}\n' \
+      "$2" "$3" "$4" "$5"
+  } > "$1"
+}
+
+# Fabricate a subagent transcript with no usage block at all.
+write_agent_transcript_no_usage() {
+  printf '{"type":"user","message":{"role":"user","content":"hi"}}\n' > "$1"
+}
+
+# Build the SubagentStop stdin JSON.
+#   $1 = agent_type, $2 = agent_transcript_path
+subagent_stop_stdin() {
+  printf '{"session_id":"s1","transcript_path":"/tmp/parent.jsonl","agent_id":"a1","agent_type":"%s","agent_transcript_path":"%s","hook_event_name":"SubagentStop"}' \
+    "$1" "$2"
+}
+
+# Count usage.sampled lines in a ledger. Missing file counts as 0.
+#
+# NOTE: grep -c already prints "0" (not an error) when there are zero
+# matches, but it also exits 1 in that case. A naive
+# `grep -c ... || echo 0` therefore double-prints ("0\n0") on the very
+# case it's meant to normalize. Only fall back to echo 0 when the file
+# is absent (already guarded above); don't layer `||` onto grep -c.
+usage_event_count() {
+  if [ -f "$1" ]; then
+    grep -c '"event":"usage.sampled"' "$1" 2>/dev/null
+  else
+    echo 0
+  fi
+}
+
+assert_usage_count() {
+  # $1 = label, $2 = ledger path, $3 = expected count
+  got=$(usage_event_count "$2")
+  if [ "$got" -eq "$3" ] 2>/dev/null; then
+    pass "$1 (usage.sampled=$3)"
+  else
+    fail "$1 (expected $3 usage.sampled lines, got $got in $2)"
+  fi
+}
+
+# Extract a JSON string field from a single line ("key":"value").
+line_field() {
+  printf '%s' "$1" | sed -n "s/.*\"$2\":\"\\([^\"]*\\)\".*/\\1/p" | head -n1
+}
+
+# Extract a JSON numeric field from a single line ("key":123).
+line_num_field() {
+  printf '%s' "$1" | sed -n "s/.*\"$2\":\\(-\\{0,1\\}[0-9][0-9]*\\).*/\\1/p" | head -n1
+}
+
+assert_last_usage_field() {
+  # $1 = label, $2 = ledger, $3 = field key, $4 = expected value
+  last=$(grep '"event":"usage.sampled"' "$2" 2>/dev/null | tail -n1)
+  got=$(line_field "$last" "$3")
+  if [ "$got" = "$4" ]; then
+    pass "$1 ($3=$4)"
+  else
+    fail "$1 (expected $3='$4', got '$got')"
+  fi
+}
+
+assert_last_usage_num_field() {
+  # $1 = label, $2 = ledger, $3 = field key, $4 = expected value
+  last=$(grep '"event":"usage.sampled"' "$2" 2>/dev/null | tail -n1)
+  got=$(line_num_field "$last" "$3")
+  if [ "$got" = "$4" ]; then
+    pass "$1 ($3=$4)"
+  else
+    fail "$1 (expected $3=$4, got '$got')"
+  fi
+}
+
+assert_silent_exit() {
+  # $1 = label, $2 = stdin payload
+  printf '%s' "$2" | "$HOOK" >stdout.log 2>&1
+  code=$?
+  if [ "$code" -ne 0 ]; then
+    fail "$1 (expected exit 0, got $code)"
+    return
+  fi
+  if [ -s stdout.log ]; then
+    fail "$1 (expected no stdout, got: $(cat stdout.log))"
+  else
+    pass "$1 (silent exit 0)"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Tests.
+# ---------------------------------------------------------------------------
+
+# (1) No run directory at all -> silent no-op.
+test_no_run_dir() {
+  with_tmpdir
+  write_agent_transcript agent.jsonl 100 20 5 3
+  assert_silent_exit "no run dir" \
+    "$(subagent_stop_stdin "codebase-scout" "$TMP/agent.jsonl")"
+  cleanup_tmp
+}
+
+# (2) Run exists but status is not "running" -> silent, zero events.
+test_run_not_running() {
+  with_tmpdir
+  write_run "completed" 3
+  write_agent_transcript agent.jsonl 100 20 5 3
+  assert_silent_exit "run not running" \
+    "$(subagent_stop_stdin "codebase-scout" "$TMP/agent.jsonl")"
+  assert_usage_count "run not running" "$RUN_DIR/events.jsonl" 0
+  cleanup_tmp
+}
+
+# (3) Mapped role samples correctly: role, tier, tokens, phase, run_id all match.
+test_mapped_role_samples() {
+  with_tmpdir
+  write_run "running" 3
+  write_agent_transcript agent.jsonl 111 22 5 7
+  assert_silent_exit "mapped role samples" \
+    "$(subagent_stop_stdin "codebase-scout" "$TMP/agent.jsonl")"
+  assert_usage_count "mapped role samples" "$RUN_DIR/events.jsonl" 1
+  assert_last_usage_field "mapped role samples" "$RUN_DIR/events.jsonl" "run_id" "run-0001"
+  assert_last_usage_field "mapped role samples" "$RUN_DIR/events.jsonl" "event" "usage.sampled"
+  last=$(grep '"event":"usage.sampled"' "$RUN_DIR/events.jsonl" | tail -n1)
+  data_role=$(printf '%s' "$last" | sed -n 's/.*"role":"\([^"]*\)".*/\1/p')
+  data_tier=$(printf '%s' "$last" | sed -n 's/.*"tier":"\([^"]*\)".*/\1/p')
+  if [ "$data_role" = "codebase-scout" ]; then pass "mapped role samples (data.role=codebase-scout)"; else fail "mapped role samples (data.role expected codebase-scout, got $data_role)"; fi
+  if [ "$data_tier" = "standard" ]; then pass "mapped role samples (data.tier=standard)"; else fail "mapped role samples (data.tier expected standard, got $data_tier)"; fi
+  cleanup_tmp
+}
+
+# (4) Unmapped agent_type is still recorded, tier="unmapped", never dropped.
+test_unmapped_role_recorded() {
+  with_tmpdir
+  write_run "running" 1
+  write_agent_transcript agent.jsonl 50 10 0 0
+  assert_silent_exit "unmapped role recorded" \
+    "$(subagent_stop_stdin "totally-unmapped-test-role" "$TMP/agent.jsonl")"
+  assert_usage_count "unmapped role recorded" "$RUN_DIR/events.jsonl" 1
+  last=$(grep '"event":"usage.sampled"' "$RUN_DIR/events.jsonl" | tail -n1)
+  data_tier=$(printf '%s' "$last" | sed -n 's/.*"tier":"\([^"]*\)".*/\1/p')
+  if [ "$data_tier" = "unmapped" ]; then pass "unmapped role recorded (tier=unmapped)"; else fail "unmapped role recorded (expected tier=unmapped, got $data_tier)"; fi
+  cleanup_tmp
+}
+
+# (5) Plugin-namespaced agent_type has its prefix stripped before lookup.
+test_namespace_prefix_stripped() {
+  with_tmpdir
+  write_run "running" 2
+  write_agent_transcript agent.jsonl 60 15 0 0
+  assert_silent_exit "namespace prefix stripped" \
+    "$(subagent_stop_stdin "agentic-sdlc:codebase-scout" "$TMP/agent.jsonl")"
+  last=$(grep '"event":"usage.sampled"' "$RUN_DIR/events.jsonl" | tail -n1)
+  data_role=$(printf '%s' "$last" | sed -n 's/.*"role":"\([^"]*\)".*/\1/p')
+  data_tier=$(printf '%s' "$last" | sed -n 's/.*"tier":"\([^"]*\)".*/\1/p')
+  if [ "$data_role" = "codebase-scout" ]; then pass "namespace prefix stripped (role=codebase-scout)"; else fail "namespace prefix stripped (expected role=codebase-scout, got $data_role)"; fi
+  if [ "$data_tier" = "standard" ]; then pass "namespace prefix stripped (tier=standard)"; else fail "namespace prefix stripped (expected tier=standard, got $data_tier)"; fi
+  cleanup_tmp
+}
+
+# (6) Transcript with no usage block at all -> silent, zero events.
+test_no_usage_block() {
+  with_tmpdir
+  write_run "running" 4
+  write_agent_transcript_no_usage agent.jsonl
+  assert_silent_exit "no usage block" \
+    "$(subagent_stop_stdin "codebase-scout" "$TMP/agent.jsonl")"
+  assert_usage_count "no usage block" "$RUN_DIR/events.jsonl" 0
+  cleanup_tmp
+}
+
+# (7) agent_transcript_path points at a file that doesn't exist -> silent no-op.
+test_missing_transcript_file() {
+  with_tmpdir
+  write_run "running" 5
+  assert_silent_exit "missing transcript file" \
+    "$(subagent_stop_stdin "codebase-scout" "$TMP/does-not-exist.jsonl")"
+  assert_usage_count "missing transcript file" "$RUN_DIR/events.jsonl" 0
+  cleanup_tmp
+}
+
+# (8) token fields round-trip exactly, including zero values.
+test_token_fields_roundtrip() {
+  with_tmpdir
+  write_run "running" 6
+  write_agent_transcript agent.jsonl 999 0 12 0
+  assert_silent_exit "token fields roundtrip" \
+    "$(subagent_stop_stdin "sizing-analyst" "$TMP/agent.jsonl")"
+  assert_last_usage_num_field "token fields roundtrip" "$RUN_DIR/events.jsonl" "phase" "6"
+  last=$(grep '"event":"usage.sampled"' "$RUN_DIR/events.jsonl" | tail -n1)
+  it=$(printf '%s' "$last" | sed -n 's/.*"input_tokens":\([0-9]*\).*/\1/p')
+  ot=$(printf '%s' "$last" | sed -n 's/.*"output_tokens":\([0-9]*\).*/\1/p')
+  cr=$(printf '%s' "$last" | sed -n 's/.*"cache_read_input_tokens":\([0-9]*\).*/\1/p')
+  cc=$(printf '%s' "$last" | sed -n 's/.*"cache_creation_input_tokens":\([0-9]*\).*/\1/p')
+  [ "$it" = "999" ] && pass "token fields roundtrip (input_tokens=999)" || fail "token fields roundtrip (input_tokens expected 999, got $it)"
+  [ "$ot" = "0" ] && pass "token fields roundtrip (output_tokens=0)" || fail "token fields roundtrip (output_tokens expected 0, got $ot)"
+  [ "$cr" = "12" ] && pass "token fields roundtrip (cache_read_input_tokens=12)" || fail "token fields roundtrip (cache_read_input_tokens expected 12, got $cr)"
+  [ "$cc" = "0" ] && pass "token fields roundtrip (cache_creation_input_tokens=0)" || fail "token fields roundtrip (cache_creation_input_tokens expected 0, got $cc)"
+  cleanup_tmp
+}
+
+# ---------------------------------------------------------------------------
+# Runner — tests listed explicitly (bash 3.2, no arrays required).
+# ---------------------------------------------------------------------------
+test_no_run_dir
+test_run_not_running
+test_mapped_role_samples
+test_unmapped_role_recorded
+test_namespace_prefix_stripped
+test_no_usage_block
+test_missing_transcript_file
+test_token_fields_roundtrip
+
+printf '=== %d passed, %d failed ===\n' "$PASS" "$FAIL"
+[ "$FAIL" -eq 0 ] || exit 1

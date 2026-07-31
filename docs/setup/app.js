@@ -94,7 +94,8 @@
         { say: 'Triage the checkout latency incident', get: '3 ranked hypotheses + cheapest read-only next diagnostic', skill: 'incident-triage' },
         { say: 'Watch MR 42 and report CI failures', get: 'Pipeline monitored, breakage reported', skill: 'mr-watch' },
         { say: 'Create an MR for this branch', get: 'Review-ready merge request', skill: 'mr-submit' },
-        { say: 'Run the SDLC doctor', get: 'Health report → .agentic/agentic-sdlc/doctor.json', skill: 'sdlc-preflight' }
+        { say: 'Run the SDLC doctor', get: 'Health report → .agentic/agentic-sdlc/doctor.json', skill: 'sdlc-preflight' },
+        { say: 'Export this run to our observability backend', get: 'Redacted NDJSON sent to a declared profile (e.g. Axiom); no-op until configured', skill: 'telemetry-export' }
       ],
       skills: [
         { name: 'sdlc-runs', desc: 'Pipeline/run visibility (read-only)' },
@@ -102,7 +103,8 @@
         { name: 'mr-watch', desc: 'Monitor MR pipelines, report CI failures' },
         { name: 'mr-submit', desc: 'Draft a review-ready merge request' },
         { name: 'gate-runner', desc: 'Lint / type / test gates before hand-off' },
-        { name: 'acceptance-check', desc: 'Verify a built feature against requirements' }
+        { name: 'acceptance-check', desc: 'Verify a built feature against requirements' },
+        { name: 'telemetry-export', desc: 'Send run governance telemetry to Axiom/OTLP (opt-in, deny-by-default fields)' }
       ] },
     { id: 'pm-delivery', label: 'PM / Delivery', longLabel: 'PM & Delivery Managers', icon: 'ph-kanban', guided: true, sdlc: false,
       time: '~45–60 min', presets: 'pm-delivery', hitl: 'gated-autonomous', orch: 'dispatcher',

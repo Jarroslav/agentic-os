@@ -1,0 +1,9 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "role-tier-map.json — agent role to cost tier mapping",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": {
+    "enum": ["economy", "standard", "premium"]
+  }
+}

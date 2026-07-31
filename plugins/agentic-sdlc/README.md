@@ -221,6 +221,7 @@ screenshots, console output, and network errors into
 | `mr-watch` | Handoff skill | Watches an open PR/MR to green |
 | `repo-guides` | Prerequisite | Builds `.agentic/guides/*`; must run before the pipeline can |
 | `story-author` | Support skill | Turns a raw idea into a structured story |
+| `telemetry-export` | Support skill | Projects a run's governance ledgers into redacted NDJSON for a host-declared observability backend; no-op absent a configured profile |
 
 ### Agent catalog
 

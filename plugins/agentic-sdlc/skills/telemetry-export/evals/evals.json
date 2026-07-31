@@ -1,0 +1,82 @@
+{
+  "skill_name": "telemetry-export",
+  "version": "0.1.0",
+  "evals": [
+    {
+      "id": 1,
+      "name": "no-flow-file-is-a-silent-no-op",
+      "description": "No telemetry profile has ever been declared for this project. Invoking the skill must not error, must not print an export attempt, and must not append any event to the run ledger.",
+      "prompt": "Export this run's telemetry.",
+      "files": [
+        "docs/superpowers/runs/20260713-1200-demo/events.jsonl",
+        "docs/superpowers/runs/20260713-1200-demo/decisions.jsonl"
+      ],
+      "expected_output": "There is no .agentic/guides/integration/telemetry-flow.md, so the skill stops at step 1 of its procedure. It does not run the projector, does not invoke any command, and does not append telemetry.export_receipt or telemetry.export_warning to events.jsonl. This is the documented warn-and-continue posture matching work-item-adapters.md, not an error.",
+      "assertions": [
+        {
+          "name": "no-projector-invocation",
+          "description": "export-run-telemetry.py is never invoked because the flow file is absent."
+        },
+        {
+          "name": "no-ledger-write",
+          "description": "events.jsonl gains no new line as a result of this invocation."
+        },
+        {
+          "name": "no-error-surfaced",
+          "description": "The skill completes without raising an error or asking the operator anything."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "configured-profile-drops-free-text-fields",
+      "description": "A telemetry-flow.md declares the axiom profile and a working exporter. events.jsonl and decisions.jsonl both contain free-form fields (summary, verdict.rationale, prior_context) alongside structural ones. The exported NDJSON batch must carry the structural fields and must not carry any of the free-text ones.",
+      "prompt": "Export this run's telemetry to the configured backend.",
+      "files": [
+        ".agentic/guides/integration/telemetry-flow.md",
+        "docs/superpowers/runs/20260713-1200-demo/events.jsonl",
+        "docs/superpowers/runs/20260713-1200-demo/decisions.jsonl"
+      ],
+      "expected_output": "The skill reads the declared exporter invocation, runs scripts/export-run-telemetry.py against the run directory, and pipes the resulting NDJSON to that command. Every emitted line carries only fields from the observability-adapters.md allowlist (_time, stream, run_id, event/gate_id, phase, actor, mode, escalated, decision, source, confidence, risk_flags, derived counts). No emitted line contains the literal text of any summary, verdict.rationale, or prior_context value from the source ledgers. On success, a telemetry.export_receipt event is appended to events.jsonl carrying the events_offset/decisions_offset cursor.",
+      "assertions": [
+        {
+          "name": "allowlisted-fields-present",
+          "description": "Exported records carry _time, stream, and run_id on every line, with the stream-specific structural fields from observability-adapters.md."
+        },
+        {
+          "name": "free-text-absent",
+          "description": "No exported line contains the free-form summary, verdict.rationale, or prior_context text from the source ledger lines."
+        },
+        {
+          "name": "receipt-appended-on-success",
+          "description": "events.jsonl gains a telemetry.export_receipt line recording the events_offset and decisions_offset cursor."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "exporter-failure-warns-and-does-not-advance-cursor",
+      "description": "The declared exporter command fails (nonzero exit or timeout). The skill must append a warning event, not a receipt, and must not advance the export cursor so the same batch is retried next time.",
+      "prompt": "Export this run's telemetry; the configured backend is currently unreachable.",
+      "files": [
+        ".agentic/guides/integration/telemetry-flow.md",
+        "docs/superpowers/runs/20260713-1200-demo/events.jsonl"
+      ],
+      "expected_output": "The projector runs and produces an NDJSON batch, but the exporter invocation fails. The skill appends telemetry.export_warning to events.jsonl with a short reason, and does not append telemetry.export_receipt. Because no receipt with advanced offsets was written, the next invocation reprocesses the same batch rather than silently dropping it. The run itself is not blocked or halted by this failure.",
+      "assertions": [
+        {
+          "name": "warning-not-receipt",
+          "description": "events.jsonl gains a telemetry.export_warning line, not a telemetry.export_receipt line."
+        },
+        {
+          "name": "cursor-not-advanced",
+          "description": "The offsets recorded anywhere in the ledger do not reflect this failed attempt as consumed."
+        },
+        {
+          "name": "run-not-blocked",
+          "description": "The failure is swallowed; nothing about the pipeline run itself halts or errors as a result."
+        }
+      ]
+    }
+  ]
+}
