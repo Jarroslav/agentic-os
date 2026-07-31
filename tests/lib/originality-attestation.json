@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-07-31T10:17:51Z",
+ "attested_at": "2026-07-31T10:35:19Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -173,7 +173,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "30c2b6800c95fa446dbec8203b3e7eccc82610aac5c7c757df5f218283dbd0ec",
+   "sha256": "9b9ed6963485704b356523a706022aa68e63e4c9f264c8ffe8d4c09f25ce2021",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -431,7 +431,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "0c81417683185cb8cc8985974432011b8a9ed4e62d1316716e2be9d62af279c8",
+   "sha256": "f45a62c0bd54a2060faa767daa1b0c73d7625174065e0ec77f253d1d423b515f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1523,8 +1523,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/BUNDLE.md": {
-   "sha256": "143937df91bb0e68c326acea18e370a4f8a303ec81a02d65905c271a89befe1f",
-   "line": 0.0104,
+   "sha256": "ae4214266432250557886bfd0ed0039fb08defbed97b71ac9553445044650bf7",
+   "line": 0.0102,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1541,7 +1541,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/README.md": {
-   "sha256": "fd73de768dc74f9fb52a43ce1ef0b189b79ad116b1e3cb7048118943d366f89d",
+   "sha256": "1a6454258b0f7fd7797b83eadb0e7089b0a59f3015e07947f8e6925a962c7fa4",
    "line": 0.0081,
    "shingle": 0.0,
    "max_run": 0
@@ -1625,8 +1625,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/hooks/usage-sampler": {
-   "sha256": "f328cf95c3c2ed61d59e4cbc0b1cebbc90055b39dd2878f060f227a574f2224d",
-   "line": 0.033,
+   "sha256": "e4dd3b11a5088afe7a42e6ed481f81e9be53a231f3c46dbda8f3ba699e7bcedd",
+   "line": 0.0309,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1709,7 +1709,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/references/model-routing.md": {
-   "sha256": "9caa204731f2bad30281efa55d66f881c98d215124a86b53581f5abf00635355",
+   "sha256": "09904c13519eb4bec74238c687b77aee440de224c5418b49a44f5427c9d83893",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1745,8 +1745,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/references/profiles/otlp-logs.md": {
-   "sha256": "7c6c1f12bfe42861c74eb905c13819eef0f54da42ee2f5a05d6619d7beafa5a0",
-   "line": 0.0208,
+   "sha256": "bc6b841a8bf7651b0003ed18846bda8a869f70db98f011b2beeca9abb224427c",
+   "line": 0.0196,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1865,8 +1865,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/sdlc.html": {
-   "sha256": "38b2339fc3f9f2db1955c2d64681d1d2f32da17510c316d387f9bee263ab22c9",
-   "line": 0.0102,
+   "sha256": "a82648c7472094682e5b16d362c6eb6b40163284e073c58bdeea52d0e1bf5ebe",
+   "line": 0.0101,
    "shingle": 0.0034,
    "max_run": 4
   },
