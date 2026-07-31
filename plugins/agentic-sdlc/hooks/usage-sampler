@@ -23,6 +23,12 @@
 #   - Only samples while a run's meta.json reports status "running" --
 #     matches the same "pipeline only fires when status running" principle
 #     sdlc-stage-guard already tests for.
+#   - Deliberately does NOT `set -euo pipefail`, matching ticket-sync's
+#     convention rather than sdlc-stage-guard's. Every command's output is
+#     already defensively checked (via `bail`) before use, so a bare
+#     early-exit-on-failure mode would buy no extra safety here -- and for a
+#     fail-open ledger appender, staying resilient to any single unexpected
+#     command failure is arguably the better default anyway.
 
 RUNS_ROOT="docs/superpowers/runs"
 

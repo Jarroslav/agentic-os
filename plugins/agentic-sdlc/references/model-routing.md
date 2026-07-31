@@ -49,10 +49,10 @@ The `usage-sampler` `SubagentStop` hook (`hooks/usage-sampler`) appends
 ```json
 {
   "schema": 1, "ts": "<ISO>", "event": "usage.sampled",
-  "run_id": "<id>", "phase": 7, "actor": "<dispatching skill>",
+  "run_id": "<id>", "phase": 7, "actor": "usage-sampler",
   "summary": "usage sample for <role>",
   "artifacts": [],
-  "data": {"role": "<subagent-or-skill>", "tier": "economy|standard|premium",
+  "data": {"role": "<subagent-or-skill>", "tier": "economy|standard|premium|unmapped",
             "input_tokens": 0, "output_tokens": 0}
 }
 ```

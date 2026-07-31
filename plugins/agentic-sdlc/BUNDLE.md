@@ -82,6 +82,7 @@ Supporting and standalone skills, invoked on demand rather than embedded in a pi
 | `release-manager` | Cross-references commits against tickets across repos. |
 | `qa-case-generator` | Ticket ID → manual/API test cases. Standalone; never auto-invoked by the pipeline. |
 | `qa-e2e-generator` | Ticket ID → automated E2E scripts via an 11-phase pipeline. Standalone; never auto-invoked by the pipeline. |
+| `telemetry-export` | Projects a run's governance ledgers (`events.jsonl`, `decisions.jsonl`) into redacted NDJSON and hands them to a host-declared observability backend. No-op absent a configured profile in `.agentic/guides/integration/telemetry-flow.md`; never wired as a hook by this bundle itself. |
 
 > `qa-case-generator` and `qa-e2e-generator` sit outside the managed run by design — call them
 > directly for their output, not as a side effect of `sdlc-guided` or `sdlc-auto`.
@@ -108,6 +109,7 @@ instead.
 |---|---|---|
 | `ticket-sync` | Stop / SubagentStop (async) | Transitions the external ticket via the adapter configured in `.agentic/guides/integration/ticket-flow.md`. No mapping file → no-op; `repo-guides` offers to create one when it's missing. |
 | `sdlc-stage-guard` | PostToolUse(Skill) | Informational only. After a skill completes mid-run, injects current stage/phase and next-step guidance. Never blocks a tool call or forces a retry. |
+| `usage-sampler` | SubagentStop (async) | Samples the completed subagent's own isolated token usage and appends a normalized `usage.sampled` event to the run's `events.jsonl`. Only fires while the newest run's `meta.json` reports status `running`; every failure path is swallowed and the hook always exits 0. |
 
 ## Gate resolution order
 

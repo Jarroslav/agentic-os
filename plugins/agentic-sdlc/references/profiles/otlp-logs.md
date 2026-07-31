@@ -15,7 +15,7 @@ fills in.
 ```
 **Status**: configured
 **Profile**: otlp-logs
-**Exporter invocation**: python3 "${CLAUDE_PLUGIN_ROOT}/references/profiles/scripts/ndjson-to-otlp-logs.py" \
+**Exporter invocation**: python3 "./scripts/ndjson-to-otlp-logs.py" \
   --endpoint "${OTEL_LOGS_ENDPOINT}" \
   --header "Authorization=Bearer ${OTEL_TOKEN}"
 **Extra fields**:
@@ -28,7 +28,10 @@ valid OTLP request needs a small translation step. Writing that translator is
 a host-side task; keep it thin (parse NDJSON line, set `body` to the record,
 `timestamp` from `_time`, `attributes` from every other field, `severity` from
 `stream`) and point it at your collector's OTLP/HTTP logs endpoint, typically
-`<collector>/v1/logs`.
+`<collector>/v1/logs`. Place the translator under the host project's own
+scripts directory (the example path above is relative to that, wherever it
+is) — never under `${CLAUDE_PLUGIN_ROOT}`, which is the installed plugin's
+own directory and gets wiped on every plugin upgrade.
 
 ## What a record maps to
 

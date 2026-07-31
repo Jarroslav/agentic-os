@@ -10,7 +10,7 @@ Semantic Versioning. The plugin version lives in
 ### Added
 
 - **`devops` preset picks up the `agentic-sdlc` `telemetry-export` skill.**
-  `agentic-sdlc` 0.6.0 adds an observability-adapter contract that exports a
+  `agentic-sdlc` 0.7.0 adds an observability-adapter contract that exports a
   run's governance ledgers to a host-declared backend (Axiom or a generic
   OTLP-logs profile); see that plugin's changelog for the full contract. This
   entry only covers `agentic-os`'s side: the `devops` role preset now claims
