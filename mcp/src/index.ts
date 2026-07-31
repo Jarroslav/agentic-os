@@ -16,7 +16,7 @@ import { registerRunDoctor } from './tools/run_doctor.js';
 
 export function createServer(content: Content): McpServer {
   const server = new McpServer(
-    { name: 'agentic-os', version: '0.3.0' },
+    { name: 'agentic-os', version: '0.3.1' },
     {
       capabilities: { resources: {}, prompts: {}, tools: {} },
       instructions:

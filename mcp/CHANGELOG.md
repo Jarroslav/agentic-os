@@ -8,6 +8,14 @@ Releases are tagged `agentic-os-mcp-v<X.Y.Z>`.
 
 ## [Unreleased]
 
+## [0.3.1]
+
+### Changed
+- **Served content refreshed** for `agentic-sdlc` 0.7.0: the vendor-neutral
+  observability-adapters contract (Axiom and OTLP-logs export profiles, the
+  `telemetry-export` skill) and the `usage.sampled` telemetry collector (the
+  `usage-sampler` hook, `role-tier-map.json`).
+
 ## [0.3.0]
 
 ### Changed
