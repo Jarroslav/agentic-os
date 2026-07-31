@@ -7,6 +7,19 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
+### Added
+
+- **`devops` preset picks up the `agentic-sdlc` `telemetry-export` skill.**
+  `agentic-sdlc` 0.7.0 adds an observability-adapter contract that exports a
+  run's governance ledgers to a host-declared backend (Axiom or a generic
+  OTLP-logs profile); see that plugin's changelog for the full contract. This
+  entry only covers `agentic-os`'s side: the `devops` role preset now claims
+  `telemetry-export` in its `sdlc_skills`, and `agent-registry.md.tmpl` gained
+  the matching routing row so an installed agent can find its owner (per the
+  0.14.0 fix above — an installed, unrouted skill is worse than an absent
+  one). Role composition, write scopes, and gate ids for every other preset
+  are unchanged.
+
 ### Changed
 
 - **Presets and the agent registry follow the `agentic-sdlc` skill renames.**

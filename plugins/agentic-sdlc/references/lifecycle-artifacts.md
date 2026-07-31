@@ -89,7 +89,12 @@ one object per line, never rewritten.
 - `events.jsonl` — the orchestrator writes one record per phase transition. Any
   actor performing an R3 (external side-effect) step also appends here, so the
   ledger doubles as the side-effect log. R3 steps are always gated, so an R3 event
-  is always preceded by its approving `decisions.jsonl` record.
+  is always preceded by its approving `decisions.jsonl` record. Optionally, when
+  a host has declared a telemetry profile, the `telemetry-export` skill appends
+  `telemetry.export_receipt` or `telemetry.export_warning` after projecting this
+  run's ledgers to an external backend — see `references/observability-adapters.md`.
+  These two event names are themselves excluded from every export, so export
+  never becomes its own trigger.
 
 Resume and status tooling replays these two files to rebuild run state. Keep them
 grounded — a ledger records what happened, never a projection of what should have.

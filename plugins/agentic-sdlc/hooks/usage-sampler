@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+#
+# usage-sampler — SubagentStop hook for the Agentic SDLC pipeline.
+#
+# Purpose: when a subagent dispatch completes during an active pipeline run,
+# sample that subagent's own isolated token usage and append a normalized
+# `usage.sampled` event to the run's events.jsonl. Turns the reserved-but-
+# unimplemented `usage.sampled` event (references/model-routing.md) into a
+# real one.
+#
+# Design constraints (matching ticket-sync/sdlc-stage-guard):
+#   - Pure bash + coreutils (grep/sed/find/cat/tail/stat). No python / jq.
+#   - bash 3.2 compatible; runs on macOS, Linux and Git-Bash on Windows.
+#   - Wired as an async hook: it MUST never block turn-end, so every failure
+#     path is swallowed and the script always `exit 0`. It never prints
+#     anything, unlike sdlc-stage-guard's advisory output.
+#   - Samples ONLY the subagent's own isolated transcript
+#     (agent_transcript_path), never the parent session's shared transcript
+#     (transcript_path) -- verified empirically to be a genuinely separate
+#     file whose trailing usage block is that subagent's own token cost, not
+#     the whole session's running total. See the design spec for how this was
+#     confirmed.
+#   - Only samples while a run's meta.json reports status "running" --
+#     matches the same "pipeline only fires when status running" principle
+#     sdlc-stage-guard already tests for.
+#   - Deliberately does NOT `set -euo pipefail`, matching ticket-sync's
+#     convention rather than sdlc-stage-guard's. Every command's output is
+#     already defensively checked (via `bail`) before use, so a bare
+#     early-exit-on-failure mode would buy no extra safety here -- and for a
+#     fail-open ledger appender, staying resilient to any single unexpected
+#     command failure is arguably the better default anyway.
+
+RUNS_ROOT="docs/superpowers/runs"
+
+# Resolve role-tier-map.json relative to this hook's own installed location,
+# not the caller's cwd, so it works identically however the hook is invoked.
+HOOK_HOME="$(cd "$(dirname "$0")/.." && pwd)"
+ROLE_TIER_MAP="${CLAUDE_PLUGIN_ROOT:-$HOOK_HOME}/references/role-tier-map.json"
+
+# Drain the SubagentStop event JSON from stdin.
+event_json=$(cat)
+
+bail() { exit 0; }
+
+# ---------------------------------------------------------------------------
+# Portable helpers (same idioms as ticket-sync / sdlc-stage-guard).
+# ---------------------------------------------------------------------------
+json_str_field() {
+  # $1 = json string, $2 = key -> value of the first "key":"value" pair.
+  printf '%s' "$1" | sed -n "s/.*\"$2\":\"\\([^\"]*\\)\".*/\\1/p" | head -n1
+}
+
+json_num_field() {
+  # $1 = json string, $2 = key -> value of the first "key":<number> pair.
+  printf '%s' "$1" | sed -n "s/.*\"$2\":[[:space:]]*\\(-\\{0,1\\}[0-9][0-9]*\\).*/\\1/p" | head -n1
+}
+
+# mtime of a file in epoch seconds, across BSD (-f %m) and GNU (-c %Y) stat.
+# See ticket-sync's file_mtime for why both flavors must be tried and
+# validated rather than trusted by exit status alone.
+file_mtime() {
+  m=$(stat -f '%m' "$1" 2>/dev/null)
+  case "$m" in ''|*[!0-9]*) m=$(stat -c '%Y' "$1" 2>/dev/null) ;; esac
+  case "$m" in ''|*[!0-9]*) m=0 ;; esac
+  printf '%s\n' "$m"
+}
+
+json_escape() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
+# ---------------------------------------------------------------------------
+# 1. Parse the SubagentStop event. Bail if the fields we need are absent.
+# ---------------------------------------------------------------------------
+agent_type=$(json_str_field "$event_json" "agent_type")
+agent_transcript=$(json_str_field "$event_json" "agent_transcript_path")
+
+[ -n "$agent_type" ] || bail
+[ -n "$agent_transcript" ] || bail
+[ -f "$agent_transcript" ] || bail
+
+# ---------------------------------------------------------------------------
+# 2. Find the newest run, maxdepth 2 under RUNS_ROOT, and require it to be
+#    actively running.
+# ---------------------------------------------------------------------------
+[ -d "$RUNS_ROOT" ] || bail
+
+newest_meta=""
+newest_mtime=0
+while IFS= read -r meta; do
+  [ -n "$meta" ] || continue
+  m=$(file_mtime "$meta")
+  if [ "$m" -gt "$newest_mtime" ] 2>/dev/null; then
+    newest_mtime=$m
+    newest_meta=$meta
+  fi
+done <<EOF
+$(find "$RUNS_ROOT" -maxdepth 2 -name meta.json 2>/dev/null)
+EOF
+
+[ -n "$newest_meta" ] || bail
+
+RUN_DIR=$(dirname "$newest_meta")
+META_CONTENT=$(cat "$newest_meta" 2>/dev/null)
+
+status=$(json_str_field "$META_CONTENT" "status")
+[ "$status" = "running" ] || bail
+
+run_id=$(json_str_field "$META_CONTENT" "run_id")
+[ -n "$run_id" ] || run_id="unknown"
+
+phase=$(json_num_field "$META_CONTENT" "current_phase")
+
+# ---------------------------------------------------------------------------
+# 3. Sample usage from the SUBAGENT'S OWN isolated transcript tail. Scan the
+#    last 200 lines in reverse (portable "tac" via sed -- no tac/tail -r
+#    needed, both of which differ across BSD and GNU) for the most recent
+#    line carrying a usage object with input_tokens.
+# ---------------------------------------------------------------------------
+input_tokens="" output_tokens="" cache_read="" cache_creation=""
+reversed_tail=$(tail -n 200 "$agent_transcript" 2>/dev/null | sed -n '1!G;h;$p')
+
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  case "$line" in
+    *'"usage"'*) ;;
+    *) continue ;;
+  esac
+  candidate_input=$(json_num_field "$line" "input_tokens")
+  [ -n "$candidate_input" ] || continue
+  input_tokens=$candidate_input
+  output_tokens=$(json_num_field "$line" "output_tokens")
+  cache_read=$(json_num_field "$line" "cache_read_input_tokens")
+  cache_creation=$(json_num_field "$line" "cache_creation_input_tokens")
+  break
+done <<EOF
+$reversed_tail
+EOF
+
+[ -n "$input_tokens" ] || bail
+[ -n "$output_tokens" ] || output_tokens=0
+[ -n "$cache_read" ] || cache_read=0
+[ -n "$cache_creation" ] || cache_creation=0
+
+# ---------------------------------------------------------------------------
+# 4. Resolve role -> tier. Strip a leading "plugin:" namespace prefix, if any.
+# ---------------------------------------------------------------------------
+role=${agent_type##*:}
+
+tier="unmapped"
+if [ -f "$ROLE_TIER_MAP" ]; then
+  tier_line=$(grep "\"$role\"" "$ROLE_TIER_MAP" 2>/dev/null | head -n1)
+  found_tier=$(printf '%s' "$tier_line" | sed -n 's/.*"'"$role"'":[[:space:]]*"\([a-z]*\)".*/\1/p')
+  [ -n "$found_tier" ] && tier=$found_tier
+fi
+
+# ---------------------------------------------------------------------------
+# 5. Build and append the usage.sampled event.
+# ---------------------------------------------------------------------------
+ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+esc_role=$(json_escape "$role")
+esc_run=$(json_escape "$run_id")
+esc_summary=$(json_escape "usage sample for $role")
+
+if [ -n "$phase" ]; then phase_json=$phase; else phase_json=null; fi
+
+event="{\"schema\":1,\"ts\":\"$ts\",\"event\":\"usage.sampled\",\"run_id\":\"$esc_run\",\"phase\":$phase_json,\"actor\":\"usage-sampler\",\"summary\":\"$esc_summary\",\"artifacts\":[],\"data\":{\"role\":\"$esc_role\",\"tier\":\"$tier\",\"input_tokens\":$input_tokens,\"output_tokens\":$output_tokens,\"cache_read_input_tokens\":$cache_read,\"cache_creation_input_tokens\":$cache_creation}}"
+
+printf '%s\n' "$event" >> "$RUN_DIR/events.jsonl" 2>/dev/null
+
+exit 0

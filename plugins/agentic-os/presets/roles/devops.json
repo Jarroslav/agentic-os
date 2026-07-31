@@ -44,7 +44,8 @@
     "mr-watch",
     "acceptance-check",
     "sdlc-preflight",
-    "sdlc-runs"
+    "sdlc-runs",
+    "telemetry-export"
   ],
   "qe_blueprints": [
     "apm-analysis",

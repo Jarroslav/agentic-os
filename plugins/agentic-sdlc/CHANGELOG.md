@@ -6,6 +6,43 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
+### Added
+
+- **`usage.sampled` is now a real event, not just a reserved shape.**
+  `references/model-routing.md` documented this event ("Usage sampling (spec
+  only)") but nothing ever produced one. A new `usage-sampler` SubagentStop
+  hook now samples each subagent's own isolated token usage (confirmed
+  empirically to be a genuinely separate transcript from the parent
+  session's, not an approximation) and appends a normalized `usage.sampled`
+  line to the run's `events.jsonl`, with `role`/`tier` resolved via the new
+  `references/role-tier-map.json`. `report-builder` (aggregating these into a
+  cost report) remains a separate, unimplemented roadmap item — this only
+  covers the collector.
+
+- **Observability adapters, with Axiom as the first shipped profile.** Every
+  run already produces a complete governance record — `events.jsonl` (phase
+  transitions, side effects) and `decisions.jsonl` (every gate verdict, its
+  source, confidence, and risk flags) — but it lived and died in a gitignored
+  run directory with no way to see it in aggregate. `references/
+  observability-adapters.md` is a new vendor-neutral contract, mirroring
+  `work-item-adapters.md`'s adapter-declaration shape, that lets a host
+  project export that record to an external backend without this plugin ever
+  naming one or handling a credential.
+
+  New: `scripts/export-run-telemetry.py` (stdlib-only projector; deny-by-
+  default field allowlist — free-form text like `summary`,
+  `verdict.rationale`, and `prior_context` is dropped, never forwarded),
+  `skills/telemetry-export/` (the operator-invoked skill; not a registered
+  hook, so nothing exports by default), `references/schemas/telemetry-
+  record.schema.json`, and `references/profiles/{axiom,otlp-logs}.md` (Axiom
+  ingest specifics plus starter APL queries; a vendor-neutral OTLP-logs
+  alternative). `tests/lib/check-telemetry-allowlist.py` keeps the doc's
+  allowlist tables and the projector's code from drifting apart.
+
+  This plugin still ships zero network calls and zero secrets by default —
+  export only happens when a host declares
+  `.agentic/guides/integration/telemetry-flow.md` and invokes the skill.
+
 ### Fixed
 
 - **`ticket-sync` silently wrote zero receipts on Linux**, even though it
