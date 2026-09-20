@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-11T11:38:11Z",
+ "attested_at": "2026-09-20T14:11:36Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -41,8 +41,8 @@
    "max_run": 0
   },
   ".github/workflows/ci.yml": {
-   "sha256": "2fb5c530050f9ee70e664d6267e59f0abeafcb65b9f6ab360fb0e01da478ea93",
-   "line": 0.0244,
+   "sha256": "84145ded552aab7058b22ceb8c28f6dd4ac7e2c4fa4dcabf2112495939826b9c",
+   "line": 0.024,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2893,6 +2893,120 @@
   "tests/lib/skill-refs-policy.json": {
    "sha256": "9eb13f0bc5dfe72cd7c2362eb54bd77f346bc0b718095dd547f9bb16d189c8e6",
    "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/READINESS.md": {
+   "sha256": "ee4e29de1b0d8fc0c0ef81634dc084944b4579e49db0a3c450339c85b952b8d8",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/STAGING-AMENDMENT.md": {
+   "sha256": "86c9697e2942d38995a5746388be78a3aa024c5206b19f541ba05806f2b455d3",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/challenge-spec.json": {
+   "sha256": "7d78dbf6c66a025170358cfbac2eebe2251d27f55b943488621fb79d7789a507",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/freeze_definitions.py": {
+   "sha256": "34291e41c90f8d21dbe11b67f585e49b14a37dfa804b6cb58c48cf4a0710bac8",
+   "line": 0.0439,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/frozen-definitions.json": {
+   "sha256": "738302d2a5f980b5061c6ffa95e9427a7f2e7eeb012bb305fef4ee470f59474b",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/hosts.py": {
+   "sha256": "4c268ac6de945c661ccb5468d9922e2f7f049abf5019c9e336504987c9a82f7a",
+   "line": 0.022,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/isolation.py": {
+   "sha256": "1f57438a2d2c05d2a60be5dbbbfa96268b1560e083a97ab8428a5e7be496b871",
+   "line": 0.0213,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/observations.py": {
+   "sha256": "817560864e15c691c36ffa6cdeea7ed15f220b17f7560b2ac8f1bec1c21efde4",
+   "line": 0.0323,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/rubric.json": {
+   "sha256": "43c5708627f075335a7bafab36adf9bb07bb462a87560634eade9ca0803b71f1",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/scenarios.py": {
+   "sha256": "06d97c7bfd30e11765f92c469c7c2fc7d3ab6a41f36b1ff6052d223fa4c8dda8",
+   "line": 0.0117,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/scoring.py": {
+   "sha256": "2fc75bff10007095a0b1f7443179b2059a31fb0fb3e6e18206c0d5d42e2d99cc",
+   "line": 0.0545,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/suite.py": {
+   "sha256": "fbf34d3ac0a166bfac7bb07f8e29f3e4c017d12548e8336b88a0552905147836",
+   "line": 0.0137,
+   "shingle": 0.0028,
+   "max_run": 3
+  },
+  "tests/reliability/test_freeze_definitions.py": {
+   "sha256": "cd66b8f57f5c686d8e299789d95c8168e5321c168efa55ca702da656e20ceab3",
+   "line": 0.0204,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/test_hosts.py": {
+   "sha256": "d4842336cb414cf99a56422fa1c9ccd466fa37f4b86a47f2c61026b058917a47",
+   "line": 0.0267,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/test_isolation.py": {
+   "sha256": "d0c9042e66421eea3fd8590da9c093519c1a0aac2d3e67f1cb44416899d5d50b",
+   "line": 0.0938,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/test_observations.py": {
+   "sha256": "493e14cf82dae5c8d50799d7c7eb80f4c9bdea811ce1d79e8e9268fa5b9b3fc8",
+   "line": 0.0351,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/test_scenarios.py": {
+   "sha256": "ccf0283700a837f70a9dfd0dc3ff2bd5adc08fe0e18f5aee0c890636c4c24c1a",
+   "line": 0.013,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/test_scoring.py": {
+   "sha256": "84645e220c2aa964b6e244de67f14c801a40b1327cd73853121d710df5589ebd",
+   "line": 0.0227,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/test_suite.py": {
+   "sha256": "5e3217b9111714ca47901961ea74472b200a9c93f22e24b6d267037d2a1ae42a",
+   "line": 0.0112,
    "shingle": 0.0,
    "max_run": 0
   },

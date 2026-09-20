@@ -1,0 +1,274 @@
+"""Offline host adapter tests: fake CLIs never contact a model provider."""
+from __future__ import annotations
+
+import importlib.util
+import json
+import os
+from pathlib import Path
+import signal
+import stat
+import sys
+import tempfile
+import time
+import unittest
+from unittest import mock
+
+
+HOSTS_PATH = Path(__file__).with_name("hosts.py")
+if HOSTS_PATH.exists():
+    spec = importlib.util.spec_from_file_location("reliability_hosts", HOSTS_PATH)
+    hosts = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hosts)
+else:
+    hosts = None
+
+
+ISOLATION_LIMITS = hosts._isolation_limits if hosts else None
+
+
+class HostTests(unittest.TestCase):
+    def setUp(self):
+        self.assertIsNotNone(hosts, "host execution adapter has not been implemented")
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.fixture = self.root / "fixture"
+        self.fixture.mkdir()
+        self.traces = self.root / "private-traces"
+        self.plugin = self.root / "plugin source"
+        self.plugin.mkdir()
+        self.executable = self.root / "fake-cli"
+        # Exercise process handling with a simulated certified host. Real hosts
+        # remain fail-closed; the production adapter has no bypass switch.
+        patcher = mock.patch.object(hosts, "_isolation_limits", return_value=[])
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        canary = mock.patch.object(hosts, "_isolation_evidence", return_value={
+            "filesystem_enforced": True, "host_certified": False, "error": None})
+        canary.start()
+        self.addCleanup(canary.stop)
+        env = mock.patch.dict(os.environ, {"RELIABILITY_CLAUDE_MODEL": "claude-fixture-1",
+                                          "RELIABILITY_CODEX_MODEL": "codex-fixture-1"})
+        env.start()
+        self.addCleanup(env.stop)
+
+    def fake(self, body, *, mcp=None):
+        self.executable.write_text(
+            "#!" + sys.executable + "\nimport json, os, sys, time, subprocess, signal\n"
+            "if '--version' in sys.argv:\n print('test-cli 1.0'); sys.exit(0)\n"
+            "if '--help' in sys.argv:\n print('--setting-sources --settings --model --effort --permission-mode --strict-mcp-config --plugin-dir --ignore-user-config --ignore-rules --sandbox --config --ephemeral'); sys.exit(0)\n"
+            "if sys.argv[1:4] == ['mcp', 'list', '--json']:\n"
+            " print(" + repr(json.dumps(mcp or [])) + "); sys.exit(0)\n" + body,
+            encoding="utf-8",
+        )
+        self.executable.chmod(0o700)
+        patcher = mock.patch.object(hosts.shutil, "which", return_value=str(self.executable))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def run_fake(self, host="codex", timeout_seconds=3):
+        return hosts.run_host(host, self.fixture, "Do the task", [self.plugin], self.traces,
+                              timeout_seconds=timeout_seconds)
+
+    def test_inspect_host_reports_executable_and_version_without_running_task(self):
+        self.fake("raise SystemExit('task must not run')\n")
+        result = hosts.inspect_host("claude")
+        self.assertTrue(result["available"])
+        self.assertEqual(result["executable"], str(self.executable))
+        self.assertEqual(result["version"], "test-cli 1.0")
+
+    def test_unsupported_host_and_missing_fixture_are_rejected(self):
+        with self.assertRaises(ValueError):
+            hosts.inspect_host("unknown")
+        with self.assertRaises(ValueError):
+            hosts.build_command("unknown", self.fixture, "prompt", [], self.traces)
+        with self.assertRaises(FileNotFoundError):
+            hosts.run_host("codex", self.root / "missing", "prompt", [], self.traces)
+
+    def test_claude_loads_only_session_plugins_and_uses_structured_output(self):
+        self.fake("pass\n")
+        argv = hosts.build_command("claude", self.fixture, "--literal prompt", [self.plugin], self.traces)
+        self.assertEqual(argv[argv.index("--plugin-dir") + 1], str(self.plugin))
+        self.assertEqual(argv[argv.index("--output-format") + 1], "stream-json")
+        self.assertIn("--verbose", argv)
+        self.assertIn("--strict-mcp-config", argv)
+        self.assertEqual(json.loads(argv[argv.index("--mcp-config") + 1]), {"mcpServers": {}})
+        self.assertEqual(argv[-2:], ["--", "--literal prompt"])
+        self.assertFalse(any("bypass" in arg or "skip-permissions" in arg for arg in argv))
+        self.assertEqual(argv[argv.index("--model") + 1], "claude-fixture-1")
+        self.assertEqual(argv[argv.index("--permission-mode") + 1], "dontAsk")
+        self.assertEqual(argv[argv.index("--setting-sources") + 1], "project,local")
+
+    def test_codex_ignores_user_config_and_pins_model_and_permissions(self):
+        self.fake("pass\n", mcp=[{"name": "unrelated-service", "enabled": True}])
+        argv = hosts.build_command("codex", self.fixture, "Do the task", [self.plugin], self.traces)
+        self.assertIn("--json", argv)
+        self.assertEqual(argv[argv.index("--sandbox") + 1], "workspace-write")
+        self.assertEqual(argv[argv.index("--cd") + 1], str(self.fixture))
+        self.assertIn("--ignore-user-config", argv)
+        self.assertIn("--ignore-rules", argv)
+        self.assertEqual(argv[argv.index("--model") + 1], "codex-fixture-1")
+        self.assertIn('approval_policy="never"', argv)
+        self.assertIn(str(self.plugin), argv[-1])
+        self.assertIn("Do the task", argv[-1])
+        for forbidden in ("danger-full-access",
+                          "--dangerously-bypass-approvals-and-sandbox"):
+            self.assertNotIn(forbidden, argv)
+
+    def test_success_captures_private_raw_traces_and_observed_metadata(self):
+        self.fake("print(json.dumps({'type':'system','subtype':'init','model':'fixture-model'}))\n"
+                  "print(json.dumps({'type':'result','is_error':False,'usage':{'input_tokens':3}}))\n"
+                  "print('routine warning', file=sys.stderr)\n")
+        result = self.run_fake("claude")
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(result["exit_code"], 0)
+        self.assertEqual(result["observed_model"], "fixture-model")
+        self.assertEqual(result["usage"], {"input_tokens": 3})
+        for key in ("raw_stdout_path", "raw_stderr_path"):
+            path = Path(result[key])
+            self.assertTrue(path.is_file())
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+        self.assertEqual(stat.S_IMODE(self.traces.stat().st_mode), 0o700)
+        self.assertIn("routine warning", Path(result["raw_stderr_path"]).read_text())
+
+    def test_usage_without_model_does_not_invent_identity(self):
+        self.fake("print(json.dumps({'type':'turn.completed','usage':{'input_tokens':2,'output_tokens':4}}))\n")
+        result = self.run_fake()
+        self.assertEqual(result["status"], "completed")
+        self.assertIsNone(result["observed_model"])
+        self.assertEqual(result["usage"], {"input_tokens": 2, "output_tokens": 4})
+
+    def test_malformed_trace_lines_do_not_hide_later_metadata(self):
+        self.fake("print('not-json')\nprint('[]')\n"
+                  "print(json.dumps({'type':'assistant','message':{'model':'fixture-model'}}))\n")
+        result = self.run_fake("claude")
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(result["observed_model"], "fixture-model")
+        self.assertIsNone(result["usage"])
+
+    def test_missing_required_flag_fails_closed_before_task_launch(self):
+        marker = self.root / "task-started"
+        self.fake("open(" + repr(str(marker)) + ",'w').close()\n")
+        content = self.executable.read_text().replace("--ignore-rules", "--unsupported-rules")
+        self.executable.write_text(content)
+        result = self.run_fake()
+        self.assertEqual(result["status"], "infrastructure_failed")
+        self.assertFalse(marker.exists())
+
+    def test_real_isolation_limits_block_launch_with_named_channels(self):
+        marker = self.root / "task-started"
+        self.fake("open(" + repr(str(marker)) + ",'w').close()\n")
+        with mock.patch.object(hosts, "_isolation_limits", side_effect=ISOLATION_LIMITS):
+            for host in ("claude", "codex"):
+                result = self.run_fake(host)
+                self.assertEqual(result["status"], "infrastructure_failed")
+                self.assertIn("Host isolation unavailable", result["error"])
+                self.assertIn("policy", result["error"])
+        self.assertFalse(marker.exists())
+
+    def test_failed_filesystem_canary_blocks_even_simulated_host_certification(self):
+        marker = self.root / "task-started"
+        self.fake("open(" + repr(str(marker)) + ",'w').close()\n")
+        with mock.patch.object(hosts, "_isolation_evidence", return_value={
+                "filesystem_enforced": False, "host_certified": False,
+                "error": "Filesystem containment canary failed"}):
+            result = self.run_fake()
+        self.assertEqual(result["status"], "infrastructure_failed")
+        self.assertIn("canary failed", result["error"])
+        self.assertFalse(marker.exists())
+
+    def test_missing_and_alias_models_fail_closed(self):
+        self.fake("raise SystemExit('task must not run')\n")
+        for model in ("", "opus", "opus[1m]"):
+            with mock.patch.dict(os.environ, {"RELIABILITY_CLAUDE_MODEL": model}):
+                self.assertEqual(self.run_fake("claude")["status"], "infrastructure_failed")
+
+    def test_frozen_profile_drift_rejected_before_launch(self):
+        marker = self.root / "task-started"
+        self.fake("open(" + repr(str(marker)) + ",'w').close()\n")
+        profile = hosts.inspect_host("codex")["profile"]
+        with mock.patch.dict(os.environ, {"RELIABILITY_CODEX_MODEL": "changed-model"}):
+            result = hosts.run_host("codex", self.fixture, "task", [], self.traces,
+                                    expected_profile=profile)
+        self.assertEqual(result["status"], "infrastructure_failed")
+        self.assertIn("drifted", result["error"])
+        self.assertFalse(marker.exists())
+
+    def test_auth_failure_inside_structured_event_is_infrastructure_failure(self):
+        self.fake("print(json.dumps({'type':'turn.failed','error':{'message':'Authentication failed'}}))\n")
+        self.assertEqual(self.run_fake()["status"], "infrastructure_failed")
+
+    def test_nonzero_task_failure_is_not_infrastructure_failure(self):
+        self.fake("print('assertion failed in task', file=sys.stderr)\nsys.exit(2)\n")
+        result = self.run_fake()
+        self.assertEqual(result["status"], "product_failed")
+        self.assertEqual(result["exit_code"], 2)
+
+    def test_structured_task_failure_is_detected_even_with_zero_exit(self):
+        for event in ({"type": "result", "is_error": True},
+                      {"type": "turn.failed", "error": {"message": "task failed"}}):
+            with self.subTest(event=event):
+                self.fake("print(" + repr(json.dumps(event)) + ")\n")
+                self.assertEqual(self.run_fake()["status"], "product_failed")
+
+    def test_auth_and_invalid_configuration_are_infrastructure_failures(self):
+        for error in ("Not logged in. Please run login", "Error loading config.toml: invalid TOML"):
+            with self.subTest(error=error):
+                self.fake("print(" + repr(error) + ", file=sys.stderr)\nsys.exit(1)\n")
+                self.assertEqual(self.run_fake()["status"], "infrastructure_failed")
+
+    def test_missing_executable_returns_infrastructure_failure(self):
+        with mock.patch.object(hosts.shutil, "which", return_value=None):
+            self.assertFalse(hosts.inspect_host("codex")["available"])
+            result = self.run_fake()
+        self.assertEqual(result["status"], "infrastructure_failed")
+        self.assertIsNone(result["exit_code"])
+
+    def test_invalid_timeout_is_rejected(self):
+        for timeout in (0, -1, float("inf"), float("nan")):
+            with self.subTest(timeout=timeout), self.assertRaises(ValueError):
+                self.run_fake(timeout_seconds=timeout)
+
+    def test_checkpoint_interrupts_process_and_records_disk_observation(self):
+        checkpoint = self.fixture / "checkpoint.json"
+        self.fake("open(" + repr(str(checkpoint)) + ",'w').write('{}')\ntime.sleep(20)\n")
+        result = hosts.run_host("claude", self.fixture, "Do the task", [self.plugin],
+                                self.traces, timeout_seconds=3, checkpoint_path=checkpoint)
+        self.assertEqual(result["status"], "interrupted")
+        self.assertTrue(result["checkpoint_observed"])
+        self.assertLess(result["elapsed_seconds"], 2)
+
+    def test_checkpoint_text_in_stdout_does_not_trigger_interruption(self):
+        checkpoint = self.fixture / "checkpoint.json"
+        self.fake("print(" + repr(str(checkpoint)) + ")\n")
+        result = hosts.run_host("claude", self.fixture, "Do the task", [self.plugin],
+                                self.traces, timeout_seconds=3, checkpoint_path=checkpoint)
+        self.assertEqual(result["status"], "completed")
+        self.assertFalse(result["checkpoint_observed"])
+
+    def test_setup_probe_obeys_total_timeout_budget(self):
+        self.fake("pass\n")
+        content = self.executable.read_text().replace("print('test-cli 1.0');", "time.sleep(20); print('test-cli 1.0');")
+        self.executable.write_text(content)
+        result = self.run_fake(timeout_seconds=0.3)
+        self.assertEqual(result["status"], "timed_out")
+        self.assertLess(result["elapsed_seconds"], 2)
+
+    @unittest.skipUnless(os.name == "posix", "process groups require POSIX")
+    def test_timeout_kills_descendant_even_when_it_ignores_termination(self):
+        marker = self.root / "descendant-survived"
+        ready = self.root / "descendant-started"
+        child = ("import signal,time,pathlib; signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+                 "pathlib.Path(" + repr(str(ready)) + ").write_text('ready'); "
+                 "time.sleep(1.2); pathlib.Path(" + repr(str(marker)) + ").write_text('bad'); time.sleep(10)")
+        self.fake("subprocess.Popen([sys.executable,'-c'," + repr(child) + "])\ntime.sleep(20)\n")
+        result = self.run_fake("claude", timeout_seconds=0.6)
+        self.assertEqual(result["status"], "timed_out")
+        self.assertLess(result["elapsed_seconds"], 3)
+        self.assertTrue(ready.exists(), "fake descendant did not start before timeout")
+        time.sleep(1.3)
+        self.assertFalse(marker.exists(), "timeout left a descendant running")
+
+
+if __name__ == "__main__":
+    unittest.main()
