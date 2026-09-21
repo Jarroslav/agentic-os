@@ -281,3 +281,10 @@ class CLITests(unittest.TestCase):
                 expected_revision=accepted['result']['revision'])
             self.assertEqual(code, 2)
             self.assertIn('unknown gate identifier', rejected['error']['message'])
+            code, malformed = self.request(
+                'decision.record', root=root, run_id='decision-cli',
+                decision_key='plan.approved', value=True,
+                coordinator_id='coord', lease_epoch=run['lease_epoch'],
+                expected_revision=accepted['result']['revision'])
+            self.assertEqual(code, 2)
+            self.assertIn('allowed decision', malformed['error']['message'])
