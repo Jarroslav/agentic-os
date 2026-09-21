@@ -7,6 +7,13 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
+### Reliability reopening
+
+- Treat the shared lifecycle and messaging runtime as experimental; host identity,
+  trusted completion gates, installer integration, and live certification remain
+  incomplete. Unsupported completion and mailbox access fail closed during the
+  bounded remediation of the lifecycle and communication stages.
+
 ### Added
 
 - Added revision-bound command evidence receipts; failed required checks cannot

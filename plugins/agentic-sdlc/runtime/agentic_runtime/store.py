@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import shutil
 import sqlite3
@@ -46,18 +47,43 @@ class RuntimeStore:
             self.fault("after_commit")
 
     @contextmanager
-    def _connect(self):
+    def _connect(self, *, validate: bool = True):
         db = sqlite3.connect(self.db_path, timeout=30, isolation_level=None)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys=ON")
         try:
+            if validate:
+                self._validate_versions(db)
             yield db
         finally:
             db.close()
 
+    def _validate_versions(self, db):
+        """Reject unknown formats before DDL or mutations, including on reopened handles."""
+        tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if not tables:
+            return
+        if "metadata" not in tables:
+            raise RuntimeError("runtime schema version metadata missing")
+        metadata = dict(db.execute("SELECT key,value FROM metadata"))
+        expected = {"schema_version": SCHEMA_VERSION,
+                    "registry_contract_version": load_registry()["contract_version"]}
+        if any(metadata.get(key) != value for key, value in expected.items()):
+            raise RuntimeError("unsupported runtime schema or registry contract version")
+
     def _initialize(self):
-        with self._connect() as db:
+        # Initialization must be able to repair a process that died between
+        # SQLite DDL statements. All normal/reopened handles validate first.
+        with self._connect(validate=False) as db:
             db.execute("BEGIN IMMEDIATE")
+            tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            if "metadata" in tables:
+                existing_metadata = dict(db.execute("SELECT key,value FROM metadata"))
+                # An empty metadata table is a valid interrupted-initialization
+                # checkpoint. Once a version is recorded, reject mismatches
+                # before changing the schema.
+                if existing_metadata:
+                    self._validate_versions(db)
             db.executescript(
                 """
                 CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -128,6 +154,7 @@ class RuntimeStore:
             )
             db.execute("INSERT OR IGNORE INTO metadata(key,value) VALUES('schema_version',?)", (SCHEMA_VERSION,))
             db.execute("INSERT OR IGNORE INTO metadata(key,value) VALUES('registry_contract_version',?)", (load_registry()["contract_version"],))
+            self._validate_versions(db)
             self._commit(db)
 
     @staticmethod
@@ -190,6 +217,7 @@ class RuntimeStore:
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             try:
                 db.execute("INSERT INTO runs(run_id,state,revision,created_at,updated_at,metadata_json,precondition_json) VALUES(?,?,?,?,?,?,?)",
                            (run_id, "pending", 0, now, now, self._json(dict(metadata or {})), self._json(condition) if condition else None))
@@ -211,6 +239,7 @@ class RuntimeStore:
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             row = db.execute("SELECT revision, lease_epoch, state FROM runs WHERE run_id=?", (run_id,)).fetchone()
             if row is None:
                 raise KeyError("unknown run: " + run_id)
@@ -228,9 +257,12 @@ class RuntimeStore:
     def transition(self, run_id: str, target: str, *, expected_revision: int | None = None,
                    lease_epoch: int | None = None, coordinator_id: str | None = None,
                    reason: str | None = None) -> dict[str, Any]:
+        if target == "completed":
+            raise RuntimeError("completion unavailable: trusted completion gate and host certification are not implemented")
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             row = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             current = db.execute("SELECT state,active_seconds,active_since FROM runs WHERE run_id=?", (run_id,)).fetchone()
             validate_transition(current["state"], target)
@@ -242,6 +274,8 @@ class RuntimeStore:
             seq = db.execute("SELECT COALESCE(MAX(sequence),0)+1 FROM transitions WHERE run_id=?", (run_id,)).fetchone()[0]
             db.execute("UPDATE runs SET state=?,revision=?,updated_at=?,active_seconds=?,active_since=? WHERE run_id=?", (target, revision, now, active, since, run_id))
             db.execute("INSERT INTO transitions VALUES(?,?,?,?,?,?,?)", (run_id, seq, current["state"], target, revision, now, reason))
+            if target == "cancelled":
+                db.execute("UPDATE assignments SET state='cancelled',revision=revision+1,updated_at=? WHERE run_id=? AND state NOT IN ('completed','failed','cancelled')", (now, run_id))
             self._commit(db)
             return self._run(db, run_id)
 
@@ -255,15 +289,25 @@ class RuntimeStore:
             raise ValueError("max_dispatches must be within the registry ceiling")
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             row = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            saved = db.execute("SELECT value FROM counters WHERE run_id=? AND name='dispatch_limit'", (run_id,)).fetchone()
+            effective_limit = min(max_dispatches, saved[0] if saved else default_limit)
+            tightened = saved is None or effective_limit < saved[0]
+            db.execute("INSERT INTO counters VALUES(?,'dispatch_limit',?) ON CONFLICT(run_id,name) DO UPDATE SET value=excluded.value", (run_id, effective_limit))
+            max_dispatches = effective_limit
             if db.execute("SELECT 1 FROM dispatch_reservations WHERE run_id=? AND reservation_id=?", (run_id, reservation_id)).fetchone():
                 count = db.execute("SELECT COALESCE(value,0) FROM counters WHERE run_id=? AND name='dispatches'", (run_id,)).fetchone()[0]
-                db.rollback()
+                if tightened:
+                    db.execute("UPDATE runs SET revision=revision+1,updated_at=? WHERE run_id=?", (self.clock(), run_id))
+                self._commit(db)
                 return {"reserved": True, "reservation_id": reservation_id, "count": count}
             existing = db.execute("SELECT value FROM counters WHERE run_id=? AND name=?", (run_id, "dispatches")).fetchone()
             count = existing[0] if existing else 0
             if max_dispatches is not None and count >= max_dispatches:
-                db.rollback()
+                if tightened:
+                    db.execute("UPDATE runs SET revision=revision+1,updated_at=? WHERE run_id=?", (self.clock(), run_id))
+                self._commit(db)
                 return {"reserved": False, "reservation_id": reservation_id, "count": count}
             db.execute("INSERT INTO counters(run_id,name,value) VALUES(?,?,?) ON CONFLICT(run_id,name) DO UPDATE SET value=value+1", (run_id, "dispatches", 1))
             db.execute("INSERT INTO dispatch_reservations VALUES(?,?,?)", (run_id, reservation_id, self.clock()))
@@ -284,6 +328,7 @@ class RuntimeStore:
             raise ValueError("message exceeds byte limit")
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             row = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             count = db.execute("SELECT COUNT(*) FROM messages WHERE run_id=?", (run_id,)).fetchone()[0]
             if count >= max_messages:
@@ -299,6 +344,7 @@ class RuntimeStore:
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             row = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             seq = db.execute(f"SELECT COALESCE(MAX(sequence),0)+1 FROM {kind} WHERE run_id=?", (run_id,)).fetchone()[0]
             revision = row["revision"] + 1
@@ -314,6 +360,7 @@ class RuntimeStore:
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             row = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             found = db.execute("SELECT * FROM external_actions WHERE run_id=? AND idempotency_key=?", (run_id, idempotency_key)).fetchone()
             if found:
@@ -340,6 +387,7 @@ class RuntimeStore:
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             row = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             if db.execute("SELECT 1 FROM external_actions WHERE run_id=? AND idempotency_key=?", (run_id, idempotency_key)).fetchone() is None:
                 raise KeyError("unknown external intent")
@@ -405,6 +453,7 @@ class RuntimeStore:
         receipt = {"run_id": run_id, "source": name, "sha256": hashlib.sha256(payload).hexdigest(), "bytes": len(payload), "imported_at": self.clock()}
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             if db.execute("SELECT 1 FROM runs WHERE run_id=?", (run_id,)).fetchone() is None:
                 raise KeyError("unknown run: " + run_id)
             existing = db.execute("SELECT sha256,receipt_json FROM migration_receipts WHERE run_id=? AND source=?", (run_id, name)).fetchone()
@@ -429,6 +478,7 @@ class RuntimeStore:
             raise ValueError("depends_on must contain assignment identifiers")
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             if db.execute("SELECT 1 FROM assignments WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone():
                 db.rollback(); raise ValueError("assignment already exists: " + assignment_id)
@@ -469,6 +519,7 @@ class RuntimeStore:
             raise ValueError("invalid assignment state")
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             row = db.execute("SELECT * FROM assignments WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()
             if row is None: raise KeyError("unknown assignment: " + assignment_id)
@@ -507,10 +558,16 @@ class RuntimeStore:
         if message_type not in registry["message_types"]: raise ValueError("unknown message type")
         if not all(isinstance(value, str) and value for value in (message_id, assignment_id, correlation_id, sender, recipient)):
             raise ValueError("message identifiers are required")
+        if type(deadline) not in (int, float) or not math.isfinite(deadline):
+            raise ValueError("message deadline must be finite")
+        reply_seconds = int(registry["policy_defaults"]["question_reply_seconds"])
+        if message_type == "question.request" and deadline > self.clock() + reply_seconds:
+            raise ValueError(f"question deadline exceeds {reply_seconds} seconds")
         encoded = self._json(payload)
         if len(encoded.encode("utf-8")) > int(registry["policy_defaults"]["max_message_bytes"]): raise ValueError("message exceeds byte limit")
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             assignment = db.execute("SELECT * FROM assignments WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()
             if assignment is None: raise KeyError("unknown assignment: " + assignment_id)
@@ -519,6 +576,8 @@ class RuntimeStore:
                 if any(existing[field] != value for field, value in (("run_id", run_id), ("assignment_id", assignment_id), ("assignment_revision", assignment_revision), ("correlation_id", correlation_id), ("sender", sender), ("recipient", recipient), ("message_type", message_type), ("deadline", float(deadline)), ("payload_json", encoded))):
                     raise ValueError("message id reused with different content")
                 db.rollback(); return dict(existing)
+            if assignment["state"] in {"completed", "failed", "cancelled"}:
+                raise RuntimeError("assignment is terminal")
             if assignment["revision"] != assignment_revision: raise RuntimeError("stale assignment message")
             if sender != assignment["worker_id"] and sender != coordinator_id: raise RuntimeError("sender is not assignment owner")
             now = self.clock()
@@ -530,12 +589,16 @@ class RuntimeStore:
             count = db.execute("SELECT COUNT(*) FROM peer_messages WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()[0]
             if count >= int(registry["policy_defaults"]["max_messages_per_worker"]): raise RuntimeError("assignment message budget exhausted")
             if message_type == "question.request":
-                outstanding = db.execute("SELECT COUNT(*) FROM peer_messages q WHERE q.run_id=? AND q.assignment_id=? AND q.message_type='question.request' AND NOT EXISTS (SELECT 1 FROM peer_messages r WHERE r.message_type='question.response' AND r.correlation_id=q.correlation_id)", (run_id, assignment_id)).fetchone()[0]
+                if db.execute("SELECT 1 FROM peer_messages WHERE run_id=? AND correlation_id=?", (run_id, correlation_id)).fetchone():
+                    raise ValueError("question correlation already used in this run")
+                outstanding = db.execute("SELECT COUNT(*) FROM peer_messages q WHERE q.run_id=? AND q.assignment_id=? AND q.message_type='question.request' AND NOT EXISTS (SELECT 1 FROM peer_messages r WHERE r.message_type='question.response' AND r.run_id=q.run_id AND r.correlation_id=q.correlation_id)", (run_id, assignment_id)).fetchone()[0]
                 if outstanding >= int(registry["policy_defaults"]["max_outstanding_questions"]): raise RuntimeError("question budget exhausted")
                 rounds = db.execute("SELECT COUNT(*) FROM peer_messages WHERE run_id=? AND correlation_id=?", (run_id, correlation_id)).fetchone()[0]
                 if rounds >= int(registry["policy_defaults"]["max_question_rounds"]) * 2: raise RuntimeError("question round budget exhausted")
             if message_type == "question.response":
                 request = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND correlation_id=? AND message_type='question.request'", (run_id, correlation_id)).fetchone()
+                if db.execute("SELECT 1 FROM peer_messages WHERE run_id=? AND correlation_id=? AND message_type='question.response'", (run_id, correlation_id)).fetchone():
+                    raise ValueError("question already answered")
                 if request is None:
                     raise ValueError("question response has no request")
                 if request["sender"] != recipient or request["recipient"] != sender: raise RuntimeError("question participants do not match")
@@ -553,6 +616,7 @@ class RuntimeStore:
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             requests = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND message_type='question.request'", (run_id,)).fetchall()
             answered = {r["correlation_id"] for r in db.execute("SELECT correlation_id FROM peer_messages WHERE run_id=? AND message_type='question.response'", (run_id,))}
@@ -572,6 +636,8 @@ class RuntimeStore:
                 for target, _ in graph.get(node, []): visit(target, path + [target])
                 visiting.remove(node); visited.add(node)
             for node in graph: visit(node, [node])
+            eligible = {r[0] for r in db.execute("SELECT assignment_id FROM assignments WHERE run_id=? AND state NOT IN ('completed','failed','cancelled','escalation_required')", (run_id,))}
+            escalated &= eligible
             if escalated:
                 placeholders = ",".join("?" for _ in escalated)
                 db.execute(f"UPDATE assignments SET state='escalation_required',revision=revision+1,updated_at=? WHERE run_id=? AND assignment_id IN ({placeholders}) AND state NOT IN ('completed','failed','cancelled')", (now, run_id, *sorted(escalated)))
@@ -583,8 +649,13 @@ class RuntimeStore:
 
     def receive_peer_messages(self, run_id: str, recipient: str, *, reader_id: str, limit: int = 8,
                               after_message_id: str | None = None) -> list[dict[str, Any]]:
-        if not recipient or not reader_id or reader_id != recipient or type(limit) is not int or limit < 1 or limit > 8:
-            raise ValueError("reader identity must match recipient and limit must be bounded")
+        raise RuntimeError("mailbox delivery unavailable: host-issued identity is not implemented")
+
+    def _inspect_peer_messages(self, run_id: str, recipient: str, *, limit: int = 8,
+                               after_message_id: str | None = None) -> list[dict[str, Any]]:
+        """Internal persistence inspection, NOT authenticated delivery or a public API."""
+        if not recipient or type(limit) is not int or limit < 1 or limit > 8:
+            raise ValueError("recipient required and limit must be bounded")
         with self._connect() as db:
             if db.execute("SELECT 1 FROM runs WHERE run_id=?", (run_id,)).fetchone() is None:
                 raise KeyError("unknown run: " + run_id)
@@ -608,6 +679,7 @@ class RuntimeStore:
             raise ValueError("evidence receipt fields are invalid")
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             if source_revision != run["revision"]: raise RuntimeError("evidence is stale for current revision")
             if exit_status != 0 and required: raise RuntimeError("required verification failed")
