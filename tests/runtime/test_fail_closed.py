@@ -73,6 +73,22 @@ class FailClosedTests(unittest.TestCase):
             self.assertFalse(self.store.reserve_dispatch('r', 'two', max_dispatches=ceiling)['reserved'])
         self.assertTrue(self.store.reserve_dispatch('r', 'one')['reserved'])
 
+    def test_run_cancellation_closes_inflight_dispatch_leases(self):
+        self.assertTrue(self.store.reserve_dispatch('r', 'cancel-me')['reserved'])
+        run = self.store.get_run('r')
+        self.store.start_dispatch('r', 'cancel-me', 'worker',
+                                  expected_revision=run['revision'])
+        run = self.store.get_run('r')
+        cancelled = self.store.transition('r', 'cancelled',
+                                          expected_revision=run['revision'])
+        self.assertEqual(cancelled['state'], 'cancelled')
+        with self.store._connect() as db:
+            lease = db.execute(
+                "SELECT finished_at,outcome FROM dispatch_leases WHERE run_id=? AND reservation_id=?",
+                ('r', 'cancel-me')).fetchone()
+        self.assertIsNotNone(lease['finished_at'])
+        self.assertEqual(lease['outcome'], 'cancelled')
+
     def test_versions_rejected_on_open_and_before_existing_handle_mutation(self):
         for key in ('schema_version', 'registry_contract_version'):
             with sqlite3.connect(self.store.db_path) as db:
