@@ -55,3 +55,7 @@ rejects stale assignments, duplicate content changes, unauthorized senders, and
 payloads over the registry limit.
 `evidence.record` stores command receipts bound to the current run revision and
 rejects stale or failed required checks.
+Setup uses `host.preflight` to report observed Python, SQLite, Git, and host
+launch capabilities; unsupported OS sandboxing is reported explicitly. Peer
+work also exposes `assignment.create`, `assignment.transition`, `message.send`,
+`message.receive`, and `runtime.recover`.
