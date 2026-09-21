@@ -15,6 +15,11 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ### Added
 
+- Added the coordinator-backed `scripts/external-action.py` boundary. Managed
+  ticket synchronization records external intent before adapter execution and
+  reconciles success, failure, timeout, or launch uncertainty through the
+  authoritative SQLite runtime; missing fencing context still fails closed.
+
 - Added a structured host control matrix to preflight output, identifying which
   controls are enforced by the runtime, checked before integration, delegated
   to an adapter, or unsupported at the host boundary.

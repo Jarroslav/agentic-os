@@ -23,3 +23,13 @@ Asynchronous compatibility hooks follow the same boundary: they may append
 legacy ledgers only for unmanaged runs. A managed run without coordinator-fenced
 runtime context must fail closed; it must not perform an external action or
 write a receipt that could be mistaken for authoritative state.
+
+The `scripts/external-action.py` adapter is the managed escape hatch for hooks
+such as `ticket-sync`. It records `external.intent` before invoking the
+declared adapter, reads the post-intent revision, and records
+`external.reconcile` afterwards. A non-zero adapter exit is failed; launch
+errors and timeouts are uncertain and move a running workflow to
+`reconciliation_required`. The helper accepts an argv list for direct callers
+or `--env` for the legacy hook (which executes its configured command through
+`bash -c`), and requires coordinator ID, lease epoch, and expected revision in
+both modes.
