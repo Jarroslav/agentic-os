@@ -116,8 +116,10 @@ Two isolated temporary-database probes against commit `43d2a58` confirmed:
 Stage 5 remains partial: `host.preflight`, canonical dispatch/evidence issuers,
 the strict JSONL adapter, and the shared journal-aware installer
 (`install.plan`, `install.apply`, and `install.remove`) now exist and are
-covered by deterministic tests. Settings-source merging, full upgrade/fleet
-fixtures, and certified host launch controls remain incomplete. Stage 6 remains
+covered by deterministic tests. Preflight now also reports a structured control
+matrix with explicit enforcement boundaries. Settings-source merging, full
+upgrade/fleet fixtures, and certified host launch controls remain incomplete.
+Stage 6 remains
 partial: managed workflow documentation and guarded QA paths
 now route state through SQLite, but remaining workflow call sites and external
 host wiring still require migration and certification. Signed command receipts,

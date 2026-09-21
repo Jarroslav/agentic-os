@@ -279,3 +279,13 @@ boundary; Codex completed the read-only probe and emitted usage. These are
 model/authentication observations only. They do not certify outer filesystem
 isolation, global-instruction exclusion, or plugin-hook execution, so no
 candidate slot was consumed.
+
+## Round 27 — structured host control matrix
+
+The shared runtime preflight now exposes a control matrix with a status,
+enforcement boundary, and evidence description for state protocol,
+coordinator identity, worker tool scope, artifact integrity, OS sandboxing, and
+external effects. Existing capability names remain compatible, while new
+consumers can require the precise control boundary instead of treating one
+aggregate sandbox flag as proof. Unsupported host controls continue to fail
+closed.
