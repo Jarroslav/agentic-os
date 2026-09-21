@@ -103,6 +103,9 @@ class CLITests(unittest.TestCase):
             self.assertTrue(dispatched['result']['reserved'])
             code, status = request('run.status', run_id='run-x')
             self.assertEqual(code, 0, status)
+            code, legacy = request('legacy.export', run_id='run-x', destination=str(pathlib.Path(root) / 'legacy-view'))
+            self.assertEqual(code, 0, legacy)
+            self.assertEqual(json.loads((pathlib.Path(root) / 'legacy-view' / 'meta.json').read_text())['status'], 'running')
             code, waiting = request('run.transition', run_id='run-x', target='waiting_for_user', coordinator_id='c1', lease_epoch=epoch,
                                     expected_revision=status['result']['revision'])
             self.assertEqual(code, 0, waiting)

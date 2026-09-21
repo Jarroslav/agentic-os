@@ -56,6 +56,7 @@ def main():
                   'evidence.record': ({'api_version', 'operation', 'run_id', 'evidence_id', 'kind', 'source_revision', 'command', 'cwd', 'source_hash', 'exit_status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'required', 'host_record', 'root'}),
                   'evidence.ingest': ({'api_version', 'operation', 'event', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
+        fields['legacy.export'] = ({'api_version', 'operation', 'run_id', 'destination'}, {'root'})
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
         if not isinstance(operation, str) or operation not in fields:
             raise ValueError('unknown operation')
@@ -136,6 +137,8 @@ def main():
                 value = ingest_command_event(store, request['event'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'legacy.import':
                 value = store.import_legacy(request['run_id'], request['source'])
+            elif operation == 'legacy.export':
+                value = store.export_legacy(request['run_id'], request['destination']).as_posix()
             else:
                 value = store.export_run(request['run_id']).as_posix()
         result = {'api_version': '1.0.0', 'ok': True, 'result': value}

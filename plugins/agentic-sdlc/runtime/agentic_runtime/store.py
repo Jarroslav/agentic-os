@@ -607,6 +607,57 @@ class RuntimeStore:
             raise
         return destination
 
+    def export_legacy(self, run_id: str, destination: str | os.PathLike[str]) -> Path:
+        """Regenerate legacy JSON/JSONL files as views of authoritative state.
+
+        Existing user files in ``destination`` are preserved; only the three
+        compatibility view files are atomically replaced.  Nothing in these
+        files is read back for lifecycle decisions.
+        """
+        destination = Path(destination)
+        with self._connect() as db:
+            run = self._run(db, run_id)
+            precondition = run.get("precondition") or {}
+            if precondition.get("ownership") != "verified":
+                raise RuntimeError("branch/worktree ownership precondition is required before export")
+            transitions = [dict(row) for row in db.execute(
+                "SELECT * FROM transitions WHERE run_id=? ORDER BY sequence", (run_id,))]
+            decisions = [dict(row) for row in db.execute(
+                "SELECT * FROM decisions WHERE run_id=? ORDER BY sequence", (run_id,))]
+        meta = {
+            "run_id": run["run_id"], "status": run["state"],
+            "revision": run["revision"], "started_at": run["created_at"],
+            "updated_at": run["updated_at"], "task_input": run["metadata"].get("task_input"),
+            "precondition": run["precondition"],
+        }
+        event_lines = []
+        for row in transitions:
+            event_lines.append(self._json({
+                "type": "runtime.transition", "run_id": run_id,
+                "sequence": row["sequence"], "from": row["source"],
+                "to": row["target"], "revision": row["revision"],
+                "at": row["at"], "reason": row["reason"],
+            }))
+        decision_lines = []
+        for row in decisions:
+            decision_lines.append(self._json({
+                "run_id": run_id, "sequence": row["sequence"],
+                "decision_key": row["decision_key"],
+                "value": json.loads(row["value_json"]),
+                "revision": row["revision"], "at": row["at"],
+            }))
+        destination.mkdir(parents=True, exist_ok=True)
+        files = {
+            "meta.json": self._json(meta) + "\n",
+            "events.jsonl": "\n".join(event_lines) + ("\n" if event_lines else ""),
+            "decisions.jsonl": "\n".join(decision_lines) + ("\n" if decision_lines else ""),
+        }
+        for name, content in files.items():
+            temp = destination / ("." + name + ".tmp")
+            temp.write_text(content, encoding="utf-8")
+            os.replace(temp, destination / name)
+        return destination
+
     def import_legacy(self, run_id: str, source: str | os.PathLike[str] | bytes) -> dict[str, Any]:
         if isinstance(source, (str, os.PathLike)):
             path = Path(source)
