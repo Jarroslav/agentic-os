@@ -82,3 +82,12 @@ Active execution exhaustion atomically transitions a running run to
 `waiting_for_user`; it no longer leaves only a transient error. Deterministic
 runtime proof is now 67 tests. These changes still do not certify real host
 dispatch hooks or command capture.
+
+## Round 4 — evidence provenance
+
+Host-signed evidence records are now persisted with each receipt and required
+by trusted completion. A caller-only receipt cannot satisfy a signed completion
+gate, and the schema migration preserves existing databases by adding the new
+column during initialization. Deterministic runtime proof is now 68 tests. The
+remaining evidence gap is extraction from real Claude/Codex traces rather than
+caller-supplied JSON.

@@ -191,9 +191,14 @@ class FailClosedTests(unittest.TestCase):
         self.store.assignment_transition('r', 'a', 'running', expected_assignment_revision=0)
         assignment = self.store.assignment_transition('r', 'a', 'completed', expected_assignment_revision=1)
         run = self.store.get_run('r')
+        evidence_record = sign_dispatch({
+            'record_id': 'evidence-1', 'purpose': 'evidence.record', 'run_id': 'r',
+            'identity': 'worker', 'evidence_id': 'verified', 'source_revision': run['revision'],
+            'source_hash': 'source', 'exit_status': 0, 'issued_at': 99, 'expires_at': 200,
+        }, key)
         evidence = self.store.record_evidence('r', 'verified', kind='host.command',
                                               source_revision=run['revision'], command='true', cwd='/',
-                                              source_hash='source', exit_status=0)
+                                              source_hash='source', exit_status=0, host_record=evidence_record)
         record = sign_dispatch({
             'record_id': 'complete-1', 'purpose': 'run.complete', 'run_id': 'r',
             'identity': 'coordinator', 'gate_decision': 'approved',
@@ -201,6 +206,18 @@ class FailClosedTests(unittest.TestCase):
         }, key)
         completed = self.store.complete_run('r', host_record=record)
         self.assertEqual(completed['state'], 'completed')
+
+    def test_caller_only_evidence_cannot_satisfy_trusted_completion(self):
+        key = b'test-host-key'
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=key)
+        run = self.store.get_run('r')
+        evidence = self.store.record_evidence('r', 'caller-only', kind='test', source_revision=run['revision'],
+                                              command='true', cwd='/', source_hash='claimed', exit_status=0)
+        gate = sign_dispatch({'record_id': 'caller-gate', 'purpose': 'run.complete', 'run_id': 'r',
+                              'identity': 'coordinator', 'gate_decision': 'approved',
+                              'evidence_ids': [evidence['evidence_id']], 'issued_at': 99, 'expires_at': 200}, key)
+        with self.assertRaisesRegex(RuntimeError, 'evidence'):
+            self.store.complete_run('r', host_record=gate)
 
     def test_dispatch_leases_enforce_concurrency_and_timeout_without_refund(self):
         reservations = []
