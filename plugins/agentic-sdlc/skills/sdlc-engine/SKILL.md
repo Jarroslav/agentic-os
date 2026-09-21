@@ -9,8 +9,10 @@ discoverable: false
 
 ## Availability and contract authority
 
-The bundled runtime currently supports contract validation and policy resolution only.
-Managed lifecycle persistence and execution must be available before running this workflow. An unavailable operation blocks the requested managed action with an explicit limitation.
+The bundled runtime supports contract validation, policy resolution, durable lifecycle
+persistence, bounded dispatch, decisions, evidence, reconciliation, and regenerable exports.
+Managed lifecycle operations must be available before running this workflow. An unavailable
+operation blocks the requested managed action with an explicit limitation.
 Do not emulate initialization, dispatch, gate resolution, resume, or transitions by writing
 JSON/JSONL files, and do not report a managed run as started or completed.
 
@@ -84,10 +86,12 @@ and upstream. Do not reset, commit, or discard unrelated changes. Autonomous dir
 requires explicit project policy or must stop. Each mutating worker uses an isolated worktree
 and owns a specific file set; serialize dependent work. SQLite is not a checkout sandbox.
 
-The runtime database `.agentic/state/runtime.sqlite3` is the intended authority once persistence is implemented.
+The runtime database `.agentic/state/runtime.sqlite3` is the authority for lifecycle state.
 Run artifacts at `.agentic/runs/<run-id>/` are regenerable exports, including metadata, events,
 decisions, review reports, and evidence. Human-authored specs, plans, and work-item documents
 remain under `docs/superpowers/`. Never replace those documents with database-only content.
+Legacy `meta.json`, `events.jsonl`, and `decisions.jsonl` files are compatibility views generated
+with `legacy.export`; editing them never changes runtime state.
 Never adopt sibling-run artifacts without explicit provenance and supported reconciliation.
 
 Run states are `pending`, `running`, `waiting_for_user`, `interrupted`,

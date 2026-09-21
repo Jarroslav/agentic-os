@@ -31,7 +31,10 @@ of a command.
 This skill never executes or re-runs a pipeline phase itself. It decides *what*
 should resume and *why*, then delegates the actual execution to `sdlc-engine`.
 
-> Default posture is read-only. The only writes this skill performs on its own
+> Default posture is read-only. When a run has `.agentic/state/runtime.sqlite3`
+> state, read that authoritative state and use `legacy.export` for compatibility
+> views before inspecting legacy files. Never treat an edited compatibility view
+> as authority. The only writes this skill performs on its own
 > are corrective: fixing a stale mutable snapshot to match the append-only
 > event history, and mirroring work-item ledger reconciliation. Anything that
 > restarts pipeline work requires the user to say yes first.
