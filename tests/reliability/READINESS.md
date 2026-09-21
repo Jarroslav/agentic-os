@@ -193,3 +193,11 @@ Claude and Codex both passed the filesystem canary, but neither profile is
 launch-ready: the probe cannot certify authentication, global instruction
 exclusion, or retained plugin-hook behavior under the actual host sandbox.
 Cursor remains static-compatibility-only in this evaluation.
+
+Bounded read-only startup probes then reached both configured hosts. Claude
+reported `model: claude-opus-5` in its init/result trace and stopped at the
+requested budget boundary; Codex completed a read-only prompt with
+`gpt-6-astra` and emitted a normal turn-completed usage record. These probes
+establish model acceptance and an available authentication path only. They are
+outside the 48 scored slots, do not certify filesystem isolation or selected
+plugin-hook execution, and do not authorize candidate scoring.

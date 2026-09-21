@@ -270,3 +270,12 @@ profile and again recorded as infrastructure failures because host isolation
 remains uncertified. The candidate freeze now links to this model-bound
 baseline; candidate execution remains deferred until the isolation and hook
 certification gate passes.
+
+## Round 26 — bounded model-acceptance probes
+
+Read-only startup probes reached Claude with `claude-opus-5` and Codex with
+`gpt-6-astra`. Claude emitted the requested model identity before its budget
+boundary; Codex completed the read-only probe and emitted usage. These are
+model/authentication observations only. They do not certify outer filesystem
+isolation, global-instruction exclusion, or plugin-hook execution, so no
+candidate slot was consumed.
