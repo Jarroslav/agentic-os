@@ -52,7 +52,7 @@ def main():
                   'external.reconcile': ({'api_version', 'operation', 'run_id', 'idempotency_key', 'status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'result', 'root'}),
                   'assignment.create': ({'api_version', 'operation', 'run_id', 'assignment_id', 'worker_id', 'owned_paths', 'context_refs', 'acceptance', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'limits', 'depends_on', 'root'}),
                   'assignment.transition': ({'api_version', 'operation', 'run_id', 'assignment_id', 'target', 'expected_assignment_revision', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'worker_id', 'root'}),
-                  'message.send': ({'api_version', 'operation', 'run_id', 'message_id', 'assignment_id', 'assignment_revision', 'correlation_id', 'sender', 'recipient', 'message_type', 'deadline', 'payload', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
+                  'message.send': ({'api_version', 'operation', 'run_id', 'message_id', 'assignment_id', 'assignment_revision', 'correlation_id', 'sender', 'recipient', 'message_type', 'deadline', 'payload', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'host_record', 'root'}),
                   'runtime.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'message.receive': ({'api_version', 'operation', 'run_id', 'recipient'}, {'reader_id', 'host_record', 'limit', 'after_message_id', 'root'}),
                   'host.preflight': ({'api_version', 'operation'}, {'root', 'required_capabilities'}),
@@ -138,7 +138,7 @@ def main():
             elif operation == 'assignment.transition':
                 value = store.assignment_transition(request['run_id'], request['assignment_id'], request['target'], expected_assignment_revision=request['expected_assignment_revision'], worker_id=request.get('worker_id'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'message.send':
-                value = store.send_peer_message(request['run_id'], message_id=request['message_id'], assignment_id=request['assignment_id'], assignment_revision=request['assignment_revision'], correlation_id=request['correlation_id'], sender=request['sender'], recipient=request['recipient'], message_type=request['message_type'], deadline=request['deadline'], payload=request['payload'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+                value = store.send_peer_message(request['run_id'], message_id=request['message_id'], assignment_id=request['assignment_id'], assignment_revision=request['assignment_revision'], correlation_id=request['correlation_id'], sender=request['sender'], recipient=request['recipient'], message_type=request['message_type'], deadline=request['deadline'], payload=request['payload'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'], host_record=request.get('host_record'))
             elif operation == 'runtime.recover':
                 value = store.recover_timeouts(request['run_id'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'message.receive':

@@ -843,8 +843,11 @@ class RuntimeStore:
             if assignment["state"] in {"completed", "failed", "cancelled"}:
                 raise RuntimeError("assignment is terminal")
             if assignment["revision"] != assignment_revision: raise RuntimeError("stale assignment message")
-            if sender != assignment["worker_id"] and sender != coordinator_id and host_record is None:
-                raise RuntimeError("sender is not assignment owner")
+            if sender != coordinator_id:
+                if host_record is None:
+                    raise RuntimeError("host-issued sender identity is required")
+                if sender != assignment["worker_id"]:
+                    raise RuntimeError("sender is not assignment owner")
             now = self.clock()
             if float(deadline) < now:
                 db.execute("UPDATE assignments SET state='escalation_required',revision=revision+1,updated_at=? WHERE run_id=? AND assignment_id=?", (now, run_id, assignment_id))

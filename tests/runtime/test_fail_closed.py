@@ -13,7 +13,7 @@ class FailClosedTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.now = 100.0
-        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now)
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=b'message-key')
         self.make_run('r')
 
     def make_run(self, name):
@@ -26,6 +26,11 @@ class FailClosedTests(unittest.TestCase):
                     correlation_id='shared', sender='worker', recipient='peer',
                     message_type='question.request', deadline=200, payload={})
         args.update(changes)
+        args.setdefault('host_record', sign_dispatch({
+            'record_id': args['message_id'], 'purpose': 'message.send', 'run_id': run,
+            'assignment_id': args['assignment_id'], 'assignment_revision': args['assignment_revision'],
+            'identity': args['sender'], 'issued_at': 0, 'expires_at': 9999999999,
+        }, b'message-key'))
         return self.store.send_peer_message(run, **args)
 
     def test_completion_denied_even_with_caller_written_evidence(self):
@@ -49,6 +54,15 @@ class FailClosedTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'host-issued'):
                 self.store.receive_peer_messages('r', 'peer', reader_id=reader)
         self.assertEqual(len(self.store._inspect_peer_messages('r', 'peer')), 1)
+
+    def test_unsigned_worker_sender_cannot_publish_peer_message(self):
+        with self.assertRaisesRegex(RuntimeError, 'host-issued sender identity'):
+            self.store.send_peer_message(
+                'r', message_id='unsigned', assignment_id='a', assignment_revision=0,
+                correlation_id='unsigned-correlation', sender='worker', recipient='peer',
+                message_type='task.progress', deadline=200, payload={},
+                coordinator_id='coord', lease_epoch=self.store.get_run('r')['lease_epoch'],
+                expected_revision=self.store.get_run('r')['revision'])
 
     def test_dispatch_ceiling_survives_reopen_and_resume(self):
         self.assertTrue(self.store.reserve_dispatch('r', 'one', max_dispatches=1)['reserved'])
@@ -144,23 +158,27 @@ class FailClosedTests(unittest.TestCase):
         self.store.create_run('rounds')
         self.store.transition('rounds', 'running')
         self.store.create_assignment('rounds', 'peer-task', 'peer', owned_paths=[], context_refs=[], acceptance=[])
+        self.store.create_assignment('rounds', 'worker-task', 'worker', owned_paths=[], context_refs=[], acceptance=[])
         base = dict(assignment_id='peer-task', assignment_revision=0, correlation_id='rounds-correlation',
                     deadline=200, payload={})
-        def reply_record(record_id):
+        def reply_record(record_id, identity='worker', assignment_id='peer-task'):
             return sign_dispatch({'record_id': record_id, 'purpose': 'message.send', 'run_id': 'rounds',
-                                  'assignment_id': 'peer-task', 'assignment_revision': 0,
-                                  'identity': 'worker', 'issued_at': 99, 'expires_at': 200}, b'round-key')
+                                  'assignment_id': assignment_id, 'assignment_revision': 0,
+                                  'identity': identity, 'issued_at': 99, 'expires_at': 200}, b'round-key')
         self.store.send_peer_message('rounds', message_id='q1', sender='peer', recipient='worker',
+                                     host_record=reply_record('q1', 'peer'),
                                      message_type='question.request', **base)
+        response_base = dict(base, assignment_id='worker-task')
         self.store.send_peer_message('rounds', message_id='a1', sender='worker', recipient='peer',
-                                     message_type='question.response', host_record=reply_record('reply-1'), **base)
+                                     message_type='question.response', host_record=reply_record('reply-1', assignment_id='worker-task'), **response_base)
         self.store.send_peer_message('rounds', message_id='q2', sender='peer', recipient='worker',
+                                     host_record=reply_record('q2', 'peer'),
                                      message_type='question.request', **base)
         self.store.send_peer_message('rounds', message_id='a2', sender='worker', recipient='peer',
-                                     message_type='question.response', host_record=reply_record('reply-2'), **base)
+                                     message_type='question.response', host_record=reply_record('reply-2', assignment_id='worker-task'), **response_base)
         with self.assertRaises(ValueError):
             self.store.send_peer_message('rounds', message_id='a3', sender='worker', recipient='peer',
-                                         message_type='question.response', host_record=reply_record('reply-3'), **base)
+                                         message_type='question.response', host_record=reply_record('reply-3', assignment_id='worker-task'), **response_base)
 
     def test_ceiling_tightening_persists_on_denial_and_idempotent_reservation(self):
         for name in ('first', 'second'):
