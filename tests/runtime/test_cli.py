@@ -29,6 +29,10 @@ class CLITests(unittest.TestCase):
         self.assertEqual(code, 0, result)
         self.assertIn('enforcement', result['result'])
         self.assertEqual(result['result']['enforcement']['os_sandbox'], 'unsupported')
+        matrix = result['result']['control_matrix']
+        self.assertEqual(matrix['state_protocol']['boundary'], 'runtime')
+        self.assertEqual(matrix['artifact_integrity']['boundary'], 'before_integration')
+        self.assertEqual(matrix['os_sandbox']['status'], 'unsupported')
 
     def test_host_preflight_blocks_unavailable_required_controls(self):
         code, result = self.request('host.preflight', required_capabilities=['os_sandbox'])
