@@ -9,6 +9,9 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- Added the shared SQLite lifecycle runtime with fenced revisions, durable dispatch reservations,
+  external-action reconciliation, and revision-labelled exports.
+
 - Hardened managed worker enforcement: quoted frontmatter globs are parsed, malformed assignment
   state fails closed, and read-only assignments cannot invoke shell mutation through the scoped
   host hook. The policy documents the host boundary and its sandbox limitation.

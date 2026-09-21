@@ -13,11 +13,15 @@ requests fail with exit status 2 and a structured error. Registry inspection:
 printf '%s\n' '{"api_version":"1.0.0","operation":"registry.get"}' | python3 runtime/run.py
 ```
 
-This stage validates definitions, inputs and policy. Durable run mutations,
-host enforcement and installation operations are subsequent implementation
-stages. An absent operation is an error; it must never fall back to editing
-JSON state. Registry validation alone does not enforce worker permissions or
-provide an operating-system sandbox.
+The lifecycle operations use SQLite as the authoritative state and require a
+branch/worktree ownership precondition before export artifacts are written.
+They fence coordinator mutations with a revision and lease epoch, reserve
+dispatches transactionally, and put uncertain external outcomes into
+reconciliation. JSON exports are revision-labelled views; editing one never
+changes the database. Host enforcement and installation operations remain
+separate capabilities. An absent operation is an error; it must never fall
+back to editing JSON state. Registry validation alone does not enforce worker
+permissions or provide an operating-system sandbox.
 
 Scored evaluation definitions remain frozen independently under
 `tests/reliability/`. Passing contract tests earns no live evaluation points.
@@ -37,3 +41,9 @@ Supported operations use the same `api_version` envelope:
 attempt; it does not change the outcome of the previous attempt. Policy overrides
 can reduce default budgets. Increasing a running budget requires a future recorded
 user-decision operation; changing configuration must not silently reset counters.
+
+Lifecycle requests include `run.start`, `run.status`, `run.resume`, `run.cancel`,
+`task.dispatch`, `decision.record`, `message.deliver`, `external.intent`,
+`external.reconcile`, `legacy.import`, and `run.export`. `legacy.import` records
+the source hash and receipt without replacing the original file. Mutating requests for an owned run carry
+the coordinator identity, current `lease_epoch`, and expected revision; stale ownership or revisions fail atomically.

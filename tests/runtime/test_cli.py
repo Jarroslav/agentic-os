@@ -3,6 +3,7 @@ import json
 import pathlib
 import subprocess
 import sys
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -63,3 +64,79 @@ class CLITests(unittest.TestCase):
         for section, identifier in [('gates', 'invented'), ('phases', '13'), ('unknown', 'x')]:
             code, _ = self.request('contract.lookup', section=section, identifier=identifier)
             self.assertEqual(code, 2)
+
+    def test_run_start_status_dispatch_and_cancel_are_versioned(self):
+        with tempfile.TemporaryDirectory() as root:
+            worktree = pathlib.Path(root) / 'work-x'
+            subprocess.run(['git', 'init', '-q', str(worktree)], check=True)
+            subprocess.run(['git', '-C', str(worktree), 'checkout', '-q', '-b', 'feature/x'], check=True)
+            def request(operation, **payload):
+                payload['root'] = root
+                return self.request(operation, **payload)
+            code, result = request('run.start', task_input='bounded task', coordinator_id='c1',
+                                   branch='feature/x', worktree=str(worktree), run_id='run-x',
+                                   precondition={'ownership': 'verified'})
+            self.assertEqual(code, 0, result)
+            self.assertEqual(result['result']['state'], 'running')
+            epoch = result['result']['lease_epoch']
+            code, status = request('run.status', run_id='run-x')
+            self.assertEqual(code, 0, status)
+            code, dispatched = request('task.dispatch', run_id='run-x', reservation_id='d1', max_dispatches=1, lease_epoch=epoch,
+                                       coordinator_id='c1', expected_revision=status['result']['revision'])
+            self.assertEqual(code, 0, dispatched)
+            self.assertTrue(dispatched['result']['reserved'])
+            code, status = request('run.status', run_id='run-x')
+            self.assertEqual(code, 0, status)
+            code, waiting = request('run.transition', run_id='run-x', target='waiting_for_user', coordinator_id='c1', lease_epoch=epoch,
+                                    expected_revision=status['result']['revision'])
+            self.assertEqual(code, 0, waiting)
+            code, resumed = request('run.transition', run_id='run-x', target='running', coordinator_id='c1', lease_epoch=epoch, expected_revision=waiting['result']['revision'])
+            self.assertEqual(code, 0, resumed)
+            code, cancelled = request('run.cancel', run_id='run-x', coordinator_id='c1')
+            self.assertEqual(code, 0, cancelled)
+            self.assertEqual(cancelled['result']['state'], 'cancelled')
+
+    def test_legacy_import_is_reachable_through_versioned_runtime(self):
+        with tempfile.TemporaryDirectory() as root:
+            source = pathlib.Path(root) / 'legacy.json'
+            source.write_bytes(b'legacy fixture')
+            worktree = pathlib.Path(root) / 'work-import'
+            subprocess.run(['git', 'init', '-q', str(worktree)], check=True)
+            subprocess.run(['git', '-C', str(worktree), 'checkout', '-q', '-b', 'feature/import'], check=True)
+            def request(operation, **payload):
+                payload['root'] = root
+                return self.request(operation, **payload)
+            code, _ = request('run.start', task_input='import', coordinator_id='c1',
+                              branch='feature/import', worktree=str(worktree), run_id='run-import',
+                              precondition={'ownership': 'verified'})
+            self.assertEqual(code, 0)
+            code, result = request('legacy.import', run_id='run-import', source=str(source))
+            self.assertEqual(code, 0, result)
+            self.assertEqual(result['result']['bytes'], len(b'legacy fixture'))
+
+    def test_invalid_resume_and_cancel_do_not_mutate_terminal_runs(self):
+        with tempfile.TemporaryDirectory() as root:
+            worktree = pathlib.Path(root) / 'work'
+            subprocess.run(['git', 'init', '-q', str(worktree)], check=True)
+            subprocess.run(['git', '-C', str(worktree), 'checkout', '-q', '-b', 'feature/work'], check=True)
+            def request(operation, **payload):
+                payload['root'] = root
+                return self.request(operation, **payload)
+            code, started = request('run.start', task_input='done', coordinator_id='c1',
+                                    branch='feature/work', worktree=str(worktree), run_id='run-terminal',
+                                    precondition={'ownership': 'verified'})
+            self.assertEqual(code, 0, started)
+            code, terminal = request('run.transition', run_id='run-terminal', target='completed',
+                                     coordinator_id='c1', lease_epoch=started['result']['lease_epoch'],
+                                     expected_revision=started['result']['revision'])
+            self.assertEqual(code, 0, terminal)
+            revision = terminal['result']['revision']
+            code, result = request('run.resume', run_id='run-terminal', coordinator_id='c2')
+            self.assertEqual(code, 2)
+            self.assertFalse(result['ok'])
+            code, result = request('run.cancel', run_id='run-terminal', coordinator_id='c2')
+            self.assertEqual(code, 2)
+            self.assertFalse(result['ok'])
+            code, status = request('run.status', run_id='run-terminal')
+            self.assertEqual(code, 0, status)
+            self.assertEqual(status['result']['revision'], revision)
