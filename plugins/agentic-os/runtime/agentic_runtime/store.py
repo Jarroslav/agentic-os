@@ -485,6 +485,10 @@ class RuntimeStore:
             raise ValueError("unknown gate identifier")
         if not isinstance(value, Mapping) or value.get("decision") not in {"approve", "request-changes", "abort"}:
             raise ValueError("gate decision must contain an allowed decision")
+        if value.get("source") not in {"hitl", "deterministic", "fast-path", "subagent"}:
+            raise ValueError("gate decision source is required")
+        if value.get("decision") == "approve" and value.get("risk_flags") and value.get("source") != "hitl":
+            raise RuntimeError("risk-bearing approval requires human escalation")
         if value["decision"] == "approve":
             hashes = value.get("artifact_hashes")
             if not isinstance(hashes, Mapping) or not hashes or not all(
