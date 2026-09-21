@@ -22,6 +22,7 @@ import tempfile
 import time
 
 from runtime.agentic_runtime.trace import command_receipt
+from runtime.agentic_runtime.adapter import adapt_json_lines
 
 
 def _isolation_evidence(timeout_seconds: float = 3) -> dict:
@@ -255,6 +256,17 @@ def _trace_metadata(stdout_path: Path) -> dict:
                 if _INFRA_ERROR.search(json.dumps(error)):
                     metadata["infrastructure_failed"] = True
     return metadata
+
+
+def adapt_trace_receipts(stdout_path: Path, key: bytes | str, *, identity: str,
+                         issued_at: float, expires_at: float) -> list[dict]:
+    """Convert retained explicit host events into signed evidence receipts."""
+    try:
+        lines = Path(stdout_path).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError as exc:
+        raise RuntimeError("host trace cannot be read") from exc
+    return adapt_json_lines(lines, key, identity=identity,
+                            issued_at=issued_at, expires_at=expires_at)
 
 
 def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],

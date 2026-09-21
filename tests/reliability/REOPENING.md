@@ -155,4 +155,5 @@ integration work. The issuer-to-SQLite acceptance path is covered by the runtime
 tests, but actual host stream wiring remains unverified. `adapt_command_event`
 now composes the issuer and parser into one adapter-facing operation. The
 stream adapter extracts only explicit receipts and fails closed on malformed
-JSON; host-specific launch wiring is still unverified.
+JSON; host-specific launch wiring is still unverified. The reliability harness
+can adapt retained raw traces through this same strict boundary.

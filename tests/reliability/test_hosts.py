@@ -157,6 +157,16 @@ class HostTests(unittest.TestCase):
         self.assertEqual(result["command_receipts"][0]["evidence_id"], "e1")
         self.assertEqual(result["invalid_command_receipts"], 1)
 
+    def test_retained_trace_can_be_adapted_to_signed_receipts(self):
+        event = {"type": "agentic.command.completed", "evidence_id": "e1", "run_id": "r",
+                 "source_revision": 1, "command": "pytest", "cwd": ".",
+                 "source_hash": "sha256:abc", "exit_status": 0}
+        self.fake("print(json.dumps(" + repr(event) + "))\n")
+        result = self.run_fake("claude")
+        receipts = hosts.adapt_trace_receipts(result["raw_stdout_path"], b"key",
+                                              identity="claude", issued_at=1, expires_at=2)
+        self.assertEqual(receipts[0]["host_record"]["identity"], "claude")
+
     def test_missing_required_flag_fails_closed_before_task_launch(self):
         marker = self.root / "task-started"
         self.fake("open(" + repr(str(marker)) + ",'w').close()\n")
