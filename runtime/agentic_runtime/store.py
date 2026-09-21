@@ -475,6 +475,8 @@ class RuntimeStore:
             return [dict(row) | {"finished_at": now, "outcome": "timed_out"} for row in rows]
 
     def record_decision(self, run_id: str, decision_key: str, value: Any, *, expected_revision: int | None = None, lease_epoch: int | None = None, coordinator_id: str | None = None) -> dict[str, Any]:
+        if not isinstance(decision_key, str) or decision_key not in load_registry()["gates"]:
+            raise ValueError("unknown gate identifier")
         return self._append(run_id, "decisions", (decision_key, self._json(value)), expected_revision, lease_epoch, coordinator_id)
 
     def record_message(self, run_id: str, body: str, *, sender: str | None = None, expected_revision: int | None = None, lease_epoch: int | None = None, coordinator_id: str | None = None, max_messages: int | None = None, max_bytes: int | None = None) -> dict[str, Any]:
