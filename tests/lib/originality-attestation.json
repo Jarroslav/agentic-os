@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:43:36Z",
+ "attested_at": "2026-09-21T15:44:38Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "85289277b552ca26be21875f02c36dd8e954d3141ed4575d5c5478bbbed73fec",
+   "sha256": "00a512e7d24ed433b1d06116d0ed0864b0f85225fa696cff011ae015978571f4",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2195,9 +2195,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/SKILL.md": {
-   "sha256": "bcb34960a6db00955a5d3fe909c6eea00ea8414ca6a350428cd60946812070b7",
-   "line": 0.039,
-   "shingle": 0.0132,
+   "sha256": "01f860fcfb6e78b7355b449679bcf5f5f18619f92e2286fb9ad09b5470657d52",
+   "line": 0.0382,
+   "shingle": 0.0129,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/evals/evals.json": {
@@ -2651,8 +2651,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-runs/SKILL.md": {
-   "sha256": "70c49ebdf30f200a405a2955a845f911f87183c192bd6c33ee8e9bc23fa2af0e",
-   "line": 0.0109,
+   "sha256": "98ee043e83f0c38e1fb4ea04aa577bc9868431ccda684cdd0f6f05901d58853a",
+   "line": 0.0107,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2705,7 +2705,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/telemetry-export/SKILL.md": {
-   "sha256": "03738e3eceb18df71899f7668101dabd9a8458cb158d027a6158bfd7a1e73ae4",
+   "sha256": "cdba6879bd9299bd77d637ba6b8a94e4ee7c30829d035088dc8ebe5fc6a106ad",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3179,7 +3179,7 @@
    "max_run": 0
   },
   "tests/reliability/test_workflow_authority.py": {
-   "sha256": "cb01da925428e34ecd43876d6d5f71b9243c32ae5ad73a3fa60c648f4314914a",
+   "sha256": "52ed7278b4564ae3b4de35d535294d1e6f8c5e55f60ad7d4b290a36deb9849fe",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

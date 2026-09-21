@@ -7,7 +7,7 @@ SKILLS = (
     "sdlc-engine", "sdlc-runs", "sdlc-auto", "gate-arbiter",
     "qa-case-generator", "qa-e2e-generator", "qa-scoping",
     "code-review", "gate-runner", "story-intake", "acceptance-check",
-    "test-heal",
+    "test-heal", "telemetry-export",
 )
 
 
