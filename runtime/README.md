@@ -64,7 +64,9 @@ acceptance criteria, limits, and dependencies. `assignment.create` rejects
 unknown dependencies and cycles; `assignment.transition` requires the current
 assignment revision. `message.send` accepts only registered typed messages and
 rejects stale assignments, duplicate content changes, inconsistent sender labels, and
-payloads over the registry limit.
+payloads over the registry limit. Worker-originated messages also require a
+host-signed dispatch record bound to the assignment revision; only the fenced
+coordinator may publish without a worker dispatch record.
 Question correlations support the registry's bounded request/reply rounds; an
 unanswered or cyclic exchange is escalated by `runtime.recover`.
 `evidence.record` stores receipts bound to a run revision. A host-signed

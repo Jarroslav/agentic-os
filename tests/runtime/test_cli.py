@@ -218,13 +218,18 @@ class CLITests(unittest.TestCase):
 
     def test_mailbox_caller_identity_never_discloses_messages(self):
         from runtime.agentic_runtime.store import RuntimeStore
+        from runtime.agentic_runtime.host import sign_dispatch
         with tempfile.TemporaryDirectory() as root:
-            store = RuntimeStore(root, clock=lambda: 100)
+            key = b'mailbox-message-key'
+            store = RuntimeStore(root, clock=lambda: 100, host_key=key)
             store.create_run('mailbox')
             store.create_assignment('mailbox', 'a', 'worker', owned_paths=[], context_refs=[], acceptance=[])
             store.send_peer_message('mailbox', message_id='secret', assignment_id='a', assignment_revision=0,
                                     correlation_id='c', sender='worker', recipient='victim',
-                                    message_type='task.progress', deadline=110, payload={'private': 'mailbox-content'})
+                                    message_type='task.progress', deadline=110, payload={'private': 'mailbox-content'},
+                                    host_record=sign_dispatch({'record_id': 'send-secret', 'purpose': 'message.send',
+                                        'run_id': 'mailbox', 'assignment_id': 'a', 'assignment_revision': 0,
+                                        'identity': 'worker', 'issued_at': 0, 'expires_at': 200}, key))
             for reader in ('victim', 'attacker'):
                 code, result = self.request('message.receive', root=root, run_id='mailbox', recipient='victim', reader_id=reader)
                 self.assertEqual(code, 2)
