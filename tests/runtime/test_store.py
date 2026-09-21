@@ -151,6 +151,101 @@ class RuntimeStoreTests(unittest.TestCase):
     with self.assertRaises(RuntimeError):
       store.transition("r", "running", expected_revision=run["revision"], lease_epoch=run["lease_epoch"])
 
+  def test_assignments_are_owned_and_dependency_cycles_are_rejected(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    store = RuntimeStore(tmp_path.name)
+    store.create_run("r")
+    run = store.acquire_lease("r", "coord")
+    a = store.create_assignment("r", "a", "worker-a", owned_paths=["src/"], context_refs=["plan"], acceptance=["tests"], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    with self.assertRaises(ValueError):
+      store.create_assignment("r", "b", "worker-b", owned_paths=[], context_refs=[], acceptance=[], depends_on=["missing"], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    b = store.create_assignment("r", "b", "worker-b", owned_paths=[], context_refs=[], acceptance=[], depends_on=["a"], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    a2 = store.create_assignment("r", "a2", "worker-a", owned_paths=[], context_refs=[], acceptance=[], depends_on=["b"], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    self.assertEqual(a["worker_id"], "worker-a")
+    self.assertEqual(b["depends_on"], ["a"])
+    self.assertEqual(a2["depends_on"], ["b"])
+
+  def test_peer_messages_are_typed_correlated_and_stale_rejected(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    store = RuntimeStore(tmp_path.name)
+    store.create_run("r")
+    run = store.acquire_lease("r", "coord")
+    assignment = store.create_assignment("r", "a", "worker-a", owned_paths=[], context_refs=[], acceptance=[], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    message = store.send_peer_message("r", message_id="m1", assignment_id="a", assignment_revision=0, correlation_id="q1", sender="worker-a", recipient="coord", message_type="question.request", deadline=run["updated_at"] + 300, payload={"question": "ready?"}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    self.assertEqual(message["message_id"], "m1")
+    run = store.get_run("r")
+    self.assertEqual(store.send_peer_message("r", message_id="m1", assignment_id="a", assignment_revision=0, correlation_id="q1", sender="worker-a", recipient="coord", message_type="question.request", deadline=message["deadline"], payload={"question": "ready?"}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])["message_id"], "m1")
+    with self.assertRaises(RuntimeError):
+      store.send_peer_message("r", message_id="m2", assignment_id="a", assignment_revision=1, correlation_id="q2", sender="worker-a", recipient="coord", message_type="question.request", deadline=message["deadline"], payload={}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+
+  def test_expired_question_escalates(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    now = [100.0]
+    store = RuntimeStore(tmp_path.name, clock=lambda: now[0])
+    store.create_run("r")
+    run = store.acquire_lease("r", "coord")
+    store.create_assignment("r", "a", "worker-a", owned_paths=[], context_refs=[], acceptance=[], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    with self.assertRaises(RuntimeError):
+      store.send_peer_message("r", message_id="expired", assignment_id="a", assignment_revision=0, correlation_id="q", sender="worker-a", recipient="coord", message_type="question.request", deadline=99, payload={}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    self.assertEqual(store.assignment("r", "a")["state"], "escalation_required")
+
+  def test_recovery_scan_escalates_silent_workers(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    now = [100.0]
+    store = RuntimeStore(tmp_path.name, clock=lambda: now[0])
+    store.create_run("r")
+    run = store.acquire_lease("r", "coord")
+    store.create_assignment("r", "a", "worker-a", owned_paths=[], context_refs=[], acceptance=[], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    store.send_peer_message("r", message_id="q", assignment_id="a", assignment_revision=0, correlation_id="q", sender="worker-a", recipient="coord", message_type="question.request", deadline=101, payload={}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    now[0] = 102
+    run = store.get_run("r")
+    result = store.recover_timeouts("r", coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    self.assertEqual(result["escalated_assignments"], ["a"])
+    self.assertEqual(store.assignment("r", "a")["state"], "escalation_required")
+
+  def test_recipient_can_receive_bounded_peer_messages(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    store = RuntimeStore(tmp_path.name)
+    store.create_run("r")
+    run = store.acquire_lease("r", "coord")
+    store.create_assignment("r", "a", "worker-a", owned_paths=[], context_refs=[], acceptance=[], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    store.send_peer_message("r", message_id="m1", assignment_id="a", assignment_revision=0, correlation_id="c", sender="worker-a", recipient="coord", message_type="task.progress", deadline=run["updated_at"] + 10, payload={"step": 1}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    with self.assertRaises(ValueError):
+      store.receive_peer_messages("r", "coord", reader_id="other")
+    received = store.receive_peer_messages("r", "coord", reader_id="coord")
+    self.assertEqual(received[0]["message_id"], "m1")
+    self.assertEqual(received[0]["payload"], {"step": 1})
+    run = store.get_run("r")
+    store.send_peer_message("r", message_id="a", assignment_id="a", assignment_revision=0, correlation_id="c2", sender="worker-a", recipient="coord", message_type="task.progress", deadline=run["updated_at"] + 10, payload={"step": 2}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    page = store.receive_peer_messages("r", "coord", reader_id="coord", limit=1)
+    self.assertEqual(store.receive_peer_messages("r", "coord", reader_id="coord", after_message_id=page[0]["message_id"])[0]["message_id"], "a")
+
+  def test_peer_reply_can_use_the_responder_assignment(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    store = RuntimeStore(tmp_path.name)
+    store.create_run("r")
+    run = store.acquire_lease("r", "coord")
+    store.create_assignment("r", "a", "worker-a", owned_paths=[], context_refs=[], acceptance=[], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    store.create_assignment("r", "b", "worker-b", owned_paths=[], context_refs=[], acceptance=[], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    request = store.send_peer_message("r", message_id="q", assignment_id="a", assignment_revision=0, correlation_id="corr", sender="worker-a", recipient="worker-b", message_type="question.request", deadline=run["updated_at"] + 300, payload={}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    run = store.get_run("r")
+    reply = store.send_peer_message("r", message_id="r", assignment_id="b", assignment_revision=0, correlation_id="corr", sender="worker-b", recipient="worker-a", message_type="question.response", deadline=request["deadline"], payload={"answer": "yes"}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    self.assertEqual(reply["message_id"], "r")
+
   def test_commit_fault_does_not_leave_partial_run(self):
     tmp_path = __import__('tempfile').TemporaryDirectory()
     self.addCleanup(tmp_path.cleanup)
