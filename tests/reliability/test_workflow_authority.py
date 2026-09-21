@@ -25,6 +25,17 @@ class WorkflowAuthorityTests(unittest.TestCase):
                 self.assertIn("legacy.export", text)
                 self.assertNotIn("supports contract validation and policy resolution only", text)
 
+    def test_legacy_readers_state_the_managed_runtime_boundary(self):
+        for skill, marker in {
+            "story-intake": "event.record",
+            "sdlc-runs": "versioned runtime status/export operations",
+            "telemetry-export": "legacy.export` before reading",
+        }.items():
+            text = (ROOT / "plugins/agentic-sdlc/skills" / skill / "SKILL.md").read_text(
+                encoding="utf-8")
+            with self.subTest(skill=skill):
+                self.assertIn(marker, text)
+
 
 if __name__ == "__main__":
     unittest.main()

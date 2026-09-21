@@ -86,12 +86,23 @@ branch-guard-gated `prepare_for_development` sync is emitted later by the orches
 
 ## On every local work-item create/update
 
+First determine whether the selected run has `.agentic/state/runtime.sqlite3`.
+For a managed run, persist the work-item event through the coordinator-owned
+runtime event operation, then call `legacy.export` to regenerate the two
+compatibility ledgers. Never append those JSONL files directly. The six steps
+below describe the artifact set and remain the direct procedure only for an
+unmanaged legacy run.
+
 Do all six, every time:
 
 1. Write the canonical work-item file at `docs/superpowers/work-items/<id-or-slug>.md`.
 2. Mirror/summarize it to the run-dir file `<run_dir>/work-item.md`.
-3. Append the applicable event to the canonical ledger `docs/superpowers/work-items/work-item-events.jsonl`.
-4. Append the same run-relevant event to the run-dir ledger `<run_dir>/work-item-events.jsonl`.
+3. For an unmanaged run, append the applicable event to the canonical ledger
+   `docs/superpowers/work-items/work-item-events.jsonl`. For a managed run,
+   record it through `event.record` and let `legacy.export` render this view.
+4. For an unmanaged run, append the same run-relevant event to the run-dir
+   ledger `<run_dir>/work-item-events.jsonl`. For a managed run, do not write
+   the compatibility file directly.
 5. Link the run-dir `requirements.md` from the work item's `## Linked Artifacts` and `## History` sections.
 6. If no resolved external ticket, record external sync as `pending`.
 

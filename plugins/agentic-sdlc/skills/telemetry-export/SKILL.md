@@ -52,6 +52,9 @@ itself as a hook in `plugin.json`, so nothing exports by default.
    `meta.json` under `docs/superpowers/runs/` (maxdepth 2), matching
    `ticket-sync`'s discovery exactly so the two adapters never disagree about
    "the current run."
+   If the run is managed by `.agentic/state/runtime.sqlite3`, invoke
+   `legacy.export` before reading the compatibility files. If that operation is
+   unavailable, block rather than exporting a stale view.
 3. **Run the projector:**
    ```
    python3 "${CLAUDE_PLUGIN_ROOT}/scripts/export-run-telemetry.py" \
