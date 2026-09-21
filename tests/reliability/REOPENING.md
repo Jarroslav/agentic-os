@@ -169,6 +169,16 @@ without inventing host credentials or claiming that Claude/Codex already emit
 the required events. Actual host startup, authentication, isolation, and
 stream certification remain unverified.
 
+## Round 15 — shared journal-aware installer operations
+
+The versioned runtime now exposes `install.plan` and `install.apply`. Planning
+is read-only and classifies create, unchanged, managed-replace, and
+user-modified-preserve actions from current hashes and the install journal.
+Application recomputes the plan, writes safe files atomically, preserves user
+edits, and updates the journal. Both plugin bundles carry the same source;
+interviews and stack-specific rendering remain skill-owned. Host certification
+and full installer workflow trials remain unverified.
+
 ## Round 14 — fenced trace ingestion
 
 The host harness now exposes a coordinator-fenced ingestion helper for signed
