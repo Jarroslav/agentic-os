@@ -173,6 +173,11 @@ and its `scorecard.json` hash is
 The scorecard records all 24 infrastructure failures and no demonstrated points.
 No candidate grade exists.
 
+A candidate freeze dry run also succeeded against the baseline manifest, binding
+the current revision to that immutable baseline without launching any candidate
+trial. Candidate execution remains intentionally deferred until both host
+profiles become certifiable.
+
 This checkpoint authorizes contract implementation; it does not certify the
 live evaluator. Executable observers, host authentication/hooks under isolation,
 and the 24 candidate trials remain required later gates. macOS-specific kernel tests
