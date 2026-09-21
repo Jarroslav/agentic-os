@@ -106,6 +106,13 @@ layers over the mutable ones when they disagree.
 
 ## Operating steps
 
+If `.agentic/state/runtime.sqlite3` exists, inspect the run through the
+versioned runtime status/export operations first. Use `legacy.export` when a
+compatibility view is needed, then read the regenerated files. Do not infer
+authoritative state from an older snapshot or event log, and do not apply the
+legacy repair procedures below. If the required runtime operation is missing,
+stop with a blocked status.
+
 1. **Enumerate.** List `docs/superpowers/runs/`, sorted by directory name
    descending. If no run was specified, show the list (or the newest run's
    summary) and stop unless the user picks one.
