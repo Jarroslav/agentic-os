@@ -105,8 +105,9 @@ Stage 4 (`7af1f7a`) added owned assignments, bounded typed peer messages,
 recipient reads, timeout/cycle recovery, and cancellation propagation. Stage 5
 (`606a428`) added host capability preflight with explicit unsupported controls.
 Stage 6 (`21433c6`) added revision-bound command evidence receipts. The current
-deterministic proof is 47 runtime tests, 109 T0 checks, 99 matrix checks, and
-204 MCP tests. Live trials remain 0/48 and no host grade is established.
+deterministic proof is 47 runtime tests, 80 evaluator tests, 109 T0 checks, 99
+matrix checks, and 204 MCP tests. Live trials remain 0/48 and no host grade is
+established.
 
 The operator approved the [staging amendment](STAGING-AMENDMENT.md) on 2026-09-20.
 The next gate is an independently reviewed baseline/definition freeze. Runtime
