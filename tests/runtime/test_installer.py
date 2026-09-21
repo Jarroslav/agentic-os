@@ -97,6 +97,18 @@ class InstallerTests(unittest.TestCase):
                 merge_settings_file(target, ".claude/settings.json", {"hooks": {}})
             self.assertEqual(path.read_text(), "not-json")
 
+    def test_settings_merge_does_not_replace_existing_null_or_scalar_shapes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            path = target / "settings.json"
+            path.write_text(json.dumps({"nullable": None, "scalar": "user", "items": None}))
+            with self.assertRaisesRegex(ValueError, "non-object setting: nullable"):
+                merge_settings_file(target, "settings.json", {"nullable": {"x": 1}})
+            self.assertEqual(json.loads(path.read_text())["nullable"], None)
+            with self.assertRaisesRegex(ValueError, "non-array setting: items"):
+                merge_settings_file(target, "settings.json", {"items": ["x"]})
+            self.assertEqual(json.loads(path.read_text())["scalar"], "user")
+
     def test_public_install_operations_are_versioned(self):
         with tempfile.TemporaryDirectory() as temp:
             payload = {

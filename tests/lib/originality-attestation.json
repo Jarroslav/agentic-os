@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T19:43:56Z",
+ "attested_at": "2026-09-21T19:45:01Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -707,7 +707,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/runtime/agentic_runtime/installer.py": {
-   "sha256": "e9475c12237698b31a77ba102e02976d5324f7fcce0a4708484670275d5bdfc4",
+   "sha256": "4bfa93dd737b102dfa30ce67056e714c1f8dc3a647dbc3c845d6aa0626383bfc",
    "line": 0.0246,
    "shingle": 0.0,
    "max_run": 0
@@ -1973,7 +1973,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/runtime/agentic_runtime/installer.py": {
-   "sha256": "e9475c12237698b31a77ba102e02976d5324f7fcce0a4708484670275d5bdfc4",
+   "sha256": "4bfa93dd737b102dfa30ce67056e714c1f8dc3a647dbc3c845d6aa0626383bfc",
    "line": 0.0246,
    "shingle": 0.0,
    "max_run": 0
@@ -2789,7 +2789,7 @@
    "max_run": 0
   },
   "runtime/agentic_runtime/installer.py": {
-   "sha256": "e9475c12237698b31a77ba102e02976d5324f7fcce0a4708484670275d5bdfc4",
+   "sha256": "4bfa93dd737b102dfa30ce67056e714c1f8dc3a647dbc3c845d6aa0626383bfc",
    "line": 0.0246,
    "shingle": 0.0,
    "max_run": 0
@@ -3269,8 +3269,8 @@
    "max_run": 0
   },
   "tests/runtime/test_installer.py": {
-   "sha256": "0c604ba065c33fed5c4659160b27e63f18f7179d4cd97d2eaa4b7ef19741bae6",
-   "line": 0.0119,
+   "sha256": "40df5a8ae278c03c01bc7275c1a3c8c5614a12f5aeb0f04b9ed4c1c5abf46454",
+   "line": 0.0108,
    "shingle": 0.0,
    "max_run": 0
   },
