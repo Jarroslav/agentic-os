@@ -123,3 +123,10 @@ execution remain unverified.
 Editing a compatibility file cannot change runtime state. Existing skills still
 need to call this operation at their integration points; direct legacy-ledger
 writes remain an open Stage 6 migration item.
+
+## Round 9 — legacy append guard
+
+The QA E2E legacy event helper now detects an ancestor SQLite runtime and fails
+before writing `events.jsonl`. Unmanaged legacy fixtures remain supported and are
+tested separately. This closes one shipped dispatcher bypass; remaining workflow
+call sites still require migration to runtime operations.

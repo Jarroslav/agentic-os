@@ -158,6 +158,6 @@ This checkpoint authorizes contract implementation; it does not certify the
 live evaluator. Executable observers, host authentication/hooks under isolation,
 and all scored trials remain required later gates. macOS-specific kernel tests
 are explicitly skipped where sandbox-exec is unavailable; that is not live
-proof. The reopened candidate currently has 75 runtime tests, 82 evaluator
+proof. The reopened candidate currently has 75 runtime tests, 84 evaluator
 tests, 109 T0 checks, 99 matrix checks, and 204 MCP tests passing; these counts
 do not establish Stage 3 or Stage 4 acceptance.
