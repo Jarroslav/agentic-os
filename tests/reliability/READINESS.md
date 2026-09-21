@@ -118,7 +118,9 @@ the strict JSONL adapter, and the shared journal-aware installer
 (`install.plan`, `install.apply`, and `install.remove`) now exist and are
 covered by deterministic tests. Preflight now also reports a structured control
 matrix with explicit enforcement boundaries. Settings-source merging, full
-upgrade/fleet fixtures, and certified host launch controls remain incomplete.
+upgrade/fleet fixtures, and certified host launch controls remain incomplete;
+settings merging is now centralized in the shared installer through the
+versioned `install.merge-settings` operation.
 Stage 6 remains
 partial: managed workflow documentation and guarded QA paths
 now route state through SQLite, but remaining workflow call sites and external

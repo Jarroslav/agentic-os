@@ -289,3 +289,11 @@ external effects. Existing capability names remain compatible, while new
 consumers can require the precise control boundary instead of treating one
 aggregate sandbox flag as proof. Unsupported host controls continue to fail
 closed.
+
+## Round 28 — settings merging moves into the shared installer
+
+The canonical installer now exposes `install.merge-settings`. It recursively
+merges objects, appends only missing array entries, preserves existing scalar
+values, writes atomically, and records the resulting hash in the install
+journal. Invalid JSON fails before mutation. The operation is versioned,
+bundled into both plugins, and covered by direct and public-runtime tests.
