@@ -9,6 +9,7 @@ from agentic_runtime.contracts import load_registry, resolve_policy, normalize_i
 from agentic_runtime.store import RuntimeStore
 from agentic_runtime.host import preflight, require_capabilities
 from agentic_runtime.trace import ingest_command_event
+from agentic_runtime.host import adapt_command_event
 
 
 def unique_object(pairs):
@@ -56,6 +57,7 @@ def main():
                   'host.preflight': ({'api_version', 'operation'}, {'root', 'required_capabilities'}),
                   'evidence.record': ({'api_version', 'operation', 'run_id', 'evidence_id', 'kind', 'source_revision', 'command', 'cwd', 'source_hash', 'exit_status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'required', 'host_record', 'root'}),
                   'evidence.ingest': ({'api_version', 'operation', 'event', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
+                  'trace.adapt': ({'api_version', 'operation', 'event', 'identity', 'issued_at', 'expires_at'}, set()),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.export'] = ({'api_version', 'operation', 'run_id', 'destination'}, {'root'})
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
@@ -80,6 +82,12 @@ def main():
             value = preflight(request.get('root', os.getcwd()))
             if 'required_capabilities' in request:
                 value = require_capabilities(value, request['required_capabilities'])
+        elif operation == 'trace.adapt':
+            key = os.environ.get('AGENTIC_HOST_KEY')
+            if not key:
+                raise RuntimeError('host signing key is required')
+            value = adapt_command_event(request['event'], key, identity=request['identity'],
+                                        issued_at=request['issued_at'], expires_at=request['expires_at'])
         else:
             root = request.get('root', os.getcwd())
             store = RuntimeStore(root, host_key=os.environ.get('AGENTIC_HOST_KEY'))
