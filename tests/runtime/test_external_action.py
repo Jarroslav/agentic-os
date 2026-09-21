@@ -58,6 +58,25 @@ class ExternalActionTests(unittest.TestCase):
             self.assertEqual(json.loads(proc.stdout)["status"], "uncertain")
             self.assertEqual(RuntimeStore(root).get_run("run-1")["state"], "reconciliation_required")
 
+    def test_legacy_hook_environment_mode_uses_same_fencing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp)
+            run = self._running_run(root)
+            env = {
+                "AGENTIC_EXTERNAL_ROOT": str(root), "AGENTIC_EXTERNAL_RUN_ID": "run-1",
+                "AGENTIC_EXTERNAL_KEY": "ticket-env", "AGENTIC_EXTERNAL_ACTION": "ticket.sync",
+                "AGENTIC_EXTERNAL_REQUEST": json.dumps({"state": "DEV"}),
+                "AGENTIC_COORDINATOR_ID": "coordinator", "AGENTIC_LEASE_EPOCH": str(run["lease_epoch"]),
+                "AGENTIC_EXPECTED_REVISION": str(run["revision"]),
+                "AGENTIC_EXTERNAL_ADAPTER": "exit 0",
+            }
+            proc = subprocess.run([sys.executable, str(HELPER), "--env"], env={**__import__('os').environ, **env},
+                                  text=True, capture_output=True)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "succeeded")
+            with RuntimeStore(root)._connect() as db:
+                self.assertEqual(db.execute("select status from external_actions where idempotency_key='ticket-env'").fetchone()[0], "succeeded")
+
 
 if __name__ == "__main__":
     unittest.main()

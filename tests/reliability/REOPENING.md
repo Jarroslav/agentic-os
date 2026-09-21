@@ -311,5 +311,6 @@ invokes the declared adapter, and reconciles the outcome using the post-intent
 revision. Successful and failed exits are durable; timeout and launch
 uncertainty transition a running workflow to `reconciliation_required`. The
 legacy `ticket-sync` hook uses this path only when lease context is supplied and
-continues to fail closed otherwise. Two direct helper tests and the full hook
+continues to fail closed otherwise. Three direct helper tests (including the
+legacy hook environment mode) and the full hook
 fixture cover the boundary; live adapter/backend behavior remains unverified.
