@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:38:03Z",
+ "attested_at": "2026-09-21T15:41:25Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "43aa659d01aeb98613bdffc9e3e4182b0c4d1343aad3bfde2325d8643792b61c",
+   "sha256": "22b9f34bf66b734b8e2f2875c2c1cad9f642d72ce93d49106768fe1d096cb680",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2267,8 +2267,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-e2e-generator/SKILL.md": {
-   "sha256": "2ef0a5aa770925708df6ef17dbdce42d2bb0a738afd1e03d1f9cf24771f4cb2e",
-   "line": 0.0047,
+   "sha256": "d23d91b62e4d135ca1e326743c402ede9919e9ae6648cf368ab6a565b607a67f",
+   "line": 0.0046,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2315,8 +2315,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-e2e-generator/scripts/qa-append-event.sh": {
-   "sha256": "7399086240b57393e40d77c121126417b87c2563a5da701b47b7befecdb052f9",
-   "line": 0.037,
+   "sha256": "6f98e7d56d40409478199a493dd0b53a3cbe3e681351b6434220e30cf91093c1",
+   "line": 0.027,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3053,13 +3053,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "068d255cb1ce8d09fb02fa0a1fba1f787012a8d871e186016fb638a0efb24b96",
+   "sha256": "e02b31d0cdb60ff14443ec603487d29439aa69a7eac7ddf0eb25664893f9d6e4",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "3ef61aa473e5f921a5cddb4b511b230ff1bd0b7c3e2f92f5b41cda968662fd14",
+   "sha256": "190fbc922159e7099786560d72cf8727b0dfa636ba0f8191948f5da24abb27e9",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0

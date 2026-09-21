@@ -168,6 +168,10 @@ For each file-backed subagent phase:
    into `$RUN_DIR/e2e/`, and returns a structured verdict (never prose).
 4. Append the event:
    `${CLAUDE_PLUGIN_ROOT}/skills/qa-e2e-generator/scripts/qa-append-event.sh "$RUN_DIR/e2e" <phase-number> <name> complete`
+   This helper is available for unmanaged legacy fixtures only. If the run is
+   backed by `.agentic/state/runtime.sqlite3`, it fails closed; record the
+   lifecycle/evidence through runtime operations and refresh compatibility views
+   with `legacy.export`.
 
 Phase 4 skips step 1 and dispatches the `sizing-analyst` agent type
 directly. Model-tier guidance: mechanical passes (AC check, MR compose) run

@@ -34,6 +34,24 @@ step_name=$3
 step_status=$4
 extra_object=${5:-}
 
+mkdir -p "$run_dir"
+
+# A managed SQLite run owns lifecycle state. This legacy helper cannot safely
+# translate a QA phase event into a coordinator-fenced runtime mutation, so it
+# must fail closed instead of creating a second authority. Unmanaged legacy
+# fixtures remain supported for migration and compatibility testing.
+probe_dir=$(cd "$run_dir" 2>/dev/null && pwd) || {
+    printf 'qa-append-event: output directory is not accessible: %s\n' "$run_dir" >&2
+    exit 2
+}
+while [[ "$probe_dir" != "/" ]]; do
+    if [[ -f "$probe_dir/.agentic/state/runtime.sqlite3" ]]; then
+        printf 'qa-append-event: managed SQLite run detected; use runtime operations and legacy.export\n' >&2
+        exit 2
+    fi
+    probe_dir=$(dirname "$probe_dir")
+done
+
 # An absent or blank extra argument collapses to an empty object.
 if [[ -z "$extra_object" ]]; then
     extra_object='{}'
@@ -50,5 +68,4 @@ event_line=$(
         '{phase: $phase, name: $name, timestamp: (now | todate), status: $status} + $extra'
 )
 
-mkdir -p "$run_dir"
 printf '%s\n' "$event_line" >> "$run_dir/events.jsonl"
