@@ -1,4 +1,5 @@
 import hashlib
+import json
 import sqlite3
 import subprocess
 import unittest
@@ -105,6 +106,8 @@ class RuntimeStoreTests(unittest.TestCase):
     self.assertTrue(exported.is_dir())
     self.assertIn(f"revision-{run['revision']}", exported.name)
     self.assertEqual(store.export_run("r"), exported)
+    exported_payload = json.loads((exported / "run.json").read_text())
+    self.assertEqual(set(("assignments", "peer_messages", "evidence", "dispatch_leases")) - set(exported_payload), set())
     payload = b"legacy bytes"
     source = root / "legacy.json"
     source.write_bytes(payload)

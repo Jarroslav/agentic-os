@@ -91,3 +91,10 @@ gate, and the schema migration preserves existing databases by adding the new
 column during initialization. Deterministic runtime proof is now 68 tests. The
 remaining evidence gap is extraction from real Claude/Codex traces rather than
 caller-supplied JSON.
+
+## Round 5 — complete run snapshots
+
+Run exports now include assignments, peer messages, evidence receipts, and
+dispatch leases alongside transitions, decisions, and external actions. The
+export remains a regenerable, revision-labelled view and does not become an
+authority for mutations. Runtime proof remains 68 tests.
