@@ -16,6 +16,10 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- Added a structured host control matrix to preflight output, identifying which
+  controls are enforced by the runtime, checked before integration, delegated
+  to an adapter, or unsupported at the host boundary.
+
 - Added revision-bound command evidence receipts; failed required checks cannot
   be recorded as successful verification.
 

@@ -30,6 +30,34 @@ def _version(command: str) -> str | None:
 def preflight(root: str | Path) -> dict:
     """Report observed capabilities; never claims unsupported sandbox guarantees."""
     root = Path(root)
+    host_identity = "configured" if os.environ.get("AGENTIC_HOST_KEY") else "unsupported"
+    control_matrix = {
+        "state_protocol": {
+            "status": "enforced", "boundary": "runtime",
+            "evidence": "SQLite transactions, revisions, and coordinator leases",
+        },
+        "coordinator_identity": {
+            "status": host_identity, "boundary": "before_execution",
+            "evidence": "host-signed dispatch records" if host_identity == "configured"
+                        else "AGENTIC_HOST_KEY is unavailable",
+        },
+        "worker_tool_scope": {
+            "status": "unsupported", "boundary": "before_execution",
+            "evidence": "host adapter must provide tool restriction and identity binding",
+        },
+        "artifact_integrity": {
+            "status": "enforced", "boundary": "before_integration",
+            "evidence": "signed evidence and current-revision hash checks",
+        },
+        "os_sandbox": {
+            "status": "unsupported", "boundary": "before_execution",
+            "evidence": "native host sandbox certification is not available",
+        },
+        "external_effects": {
+            "status": "adapter_required", "boundary": "before_execution",
+            "evidence": "record intent and reconcile outcome through a host adapter",
+        },
+    }
     return {
         "python": {"available": sys.version_info >= (3, 10), "version": sys.version.split()[0]},
         "sqlite": {"available": sqlite3.sqlite_version_info >= (3, 24, 0), "version": sqlite3.sqlite_version},
@@ -38,12 +66,13 @@ def preflight(root: str | Path) -> dict:
         "repository": {"root": str(root.resolve()), "git_worktree": (root / ".git").exists()},
         "enforcement": {
             "sqlite_protocol": "enforced",
-            "host_identity": "configured" if os.environ.get("AGENTIC_HOST_KEY") else "unsupported",
-            "completion_gate": "configured" if os.environ.get("AGENTIC_HOST_KEY") else "unsupported",
+            "host_identity": host_identity,
+            "completion_gate": host_identity,
             "dispatch_leases": "enforced",
             "os_sandbox": "unsupported",
             "external_effects": "adapter_required",
         },
+        "control_matrix": control_matrix,
     }
 
 
