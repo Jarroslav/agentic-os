@@ -97,8 +97,10 @@ Recognized CLI-style flags inside `task_input`: `--greenfield`, `--escalate-on`.
 9. **Dirty-tree rule (autonomous mode).** A dirty working tree halts the run unless project
    policy explicitly allows auto-stash. Hard-reset or force-push-forward on a dirty tree is
    disallowed regardless of any other setting.
-10. **Audit.** Every routed decision is appended to `<run_dir>/decisions.jsonl` for the run,
-    regardless of outcome.
+10. **Audit.** Every routed decision is committed through the runtime `decision.record`
+    operation for the run, regardless of outcome. Refresh `<run_dir>/decisions.jsonl` with
+    `legacy.export` only as a compatibility view; never append directly when the runtime is
+    available.
 
 ## Delegation payload
 
@@ -118,7 +120,8 @@ Field names and literal values below are exact — do not rename or restructure 
 ## Outputs
 
 - A running (or halted-at-gate) `sdlc-engine` invocation in `mode: "autonomous"`.
-- An audit trail at `<run_dir>/decisions.jsonl` covering every routed decision for the run.
+- An authoritative runtime decision ledger, with `<run_dir>/decisions.jsonl` regenerated as a
+  compatibility view for older readers.
 - On success, a branch left at Phase 12 (branch-ready stop point) with no MR/PR opened.
   Hand the result to `mr-submit` (or an equivalent PR tool) as a separate, explicit step.
 - On a precondition failure, a redirect instructing the user to run `repo-guides` before
