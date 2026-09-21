@@ -10,6 +10,7 @@ from agentic_runtime.store import RuntimeStore
 from agentic_runtime.host import preflight, require_capabilities
 from agentic_runtime.trace import ingest_command_event
 from agentic_runtime.host import adapt_command_event
+from agentic_runtime.installer import plan_install, apply_install
 
 
 def unique_object(pairs):
@@ -59,6 +60,8 @@ def main():
                   'evidence.record': ({'api_version', 'operation', 'run_id', 'evidence_id', 'kind', 'source_revision', 'command', 'cwd', 'source_hash', 'exit_status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'required', 'host_record', 'root'}),
                   'evidence.ingest': ({'api_version', 'operation', 'event', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'trace.adapt': ({'api_version', 'operation', 'event', 'identity', 'issued_at', 'expires_at'}, set()),
+                  'install.plan': ({'api_version', 'operation', 'target', 'files'}, set()),
+                  'install.apply': ({'api_version', 'operation', 'target', 'files'}, {'agentic_os_version'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.export'] = ({'api_version', 'operation', 'run_id', 'destination'}, {'root'})
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
@@ -89,6 +92,11 @@ def main():
                 raise RuntimeError('host signing key is required')
             value = adapt_command_event(request['event'], key, identity=request['identity'],
                                         issued_at=request['issued_at'], expires_at=request['expires_at'])
+        elif operation == 'install.plan':
+            value = plan_install(request['target'], request['files'])
+        elif operation == 'install.apply':
+            value = apply_install(request['target'], request['files'],
+                                  agentic_os_version=request.get('agentic_os_version'))
         else:
             root = request.get('root', os.getcwd())
             store = RuntimeStore(root, host_key=os.environ.get('AGENTIC_HOST_KEY'))
