@@ -17,6 +17,7 @@ from typing import Any, Callable, Mapping
 from uuid import uuid4
 
 from .contracts import load_registry, validate_identifier, validate_transition
+from .host import verify_dispatch
 
 
 SCHEMA_VERSION = "1"
@@ -31,12 +32,13 @@ class RuntimeStore:
     """
 
     def __init__(self, root: str | os.PathLike[str], clock: Callable[[], float] | None = None,
-                 fault: Callable[[str], None] | None = None):
+                 fault: Callable[[str], None] | None = None, host_key: bytes | str | None = None):
         self.root = Path(root)
         self.db_path = self.root / ".agentic" / "state" / "runtime.sqlite3"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.clock = clock or time.time
         self.fault = fault
+        self.host_key = host_key
         self._initialize()
 
     def _commit(self, db):
@@ -150,12 +152,48 @@ class RuntimeStore:
                     source_hash TEXT NOT NULL, exit_status INTEGER NOT NULL, required INTEGER NOT NULL,
                     created_at REAL NOT NULL, PRIMARY KEY(run_id, evidence_id), FOREIGN KEY(run_id) REFERENCES runs(run_id)
                 );
+                CREATE TABLE IF NOT EXISTS host_dispatches (
+                    record_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, purpose TEXT NOT NULL,
+                    identity TEXT NOT NULL, assignment_id TEXT, assignment_revision INTEGER,
+                    claims_json TEXT NOT NULL, accepted_at REAL NOT NULL,
+                    FOREIGN KEY(run_id) REFERENCES runs(run_id)
+                );
+                CREATE TABLE IF NOT EXISTS dispatch_leases (
+                    run_id TEXT NOT NULL, reservation_id TEXT NOT NULL, worker_id TEXT NOT NULL,
+                    started_at REAL NOT NULL, deadline REAL NOT NULL, finished_at REAL,
+                    outcome TEXT, PRIMARY KEY(run_id, reservation_id),
+                    FOREIGN KEY(run_id, reservation_id) REFERENCES dispatch_reservations(run_id, reservation_id)
+                );
                 """
             )
             db.execute("INSERT OR IGNORE INTO metadata(key,value) VALUES('schema_version',?)", (SCHEMA_VERSION,))
             db.execute("INSERT OR IGNORE INTO metadata(key,value) VALUES('registry_contract_version',?)", (load_registry()["contract_version"],))
             self._validate_versions(db)
             self._commit(db)
+
+    def _host_claims(self, record: Mapping[str, Any], *, purpose: str, run_id: str,
+                     assignment_id: str | None = None) -> dict[str, Any]:
+        if self.host_key is None:
+            raise RuntimeError("host-issued dispatch verification is not configured")
+        claims = verify_dispatch(record, self.host_key, purpose=purpose, now=self.clock())
+        if claims.get("run_id") != run_id:
+            raise RuntimeError("host dispatch run mismatch")
+        if assignment_id is not None and claims.get("assignment_id") != assignment_id:
+            raise RuntimeError("host dispatch assignment mismatch")
+        return claims
+
+    def _accept_host_claim(self, db, claims: Mapping[str, Any]) -> None:
+        record_id = claims["record_id"]
+        existing = db.execute("SELECT claims_json FROM host_dispatches WHERE record_id=?", (record_id,)).fetchone()
+        encoded = self._json(dict(claims))
+        if existing:
+            if existing[0] != encoded:
+                raise RuntimeError("host dispatch record was reused with different claims")
+            return
+        db.execute(
+            "INSERT INTO host_dispatches(record_id,run_id,purpose,identity,assignment_id,assignment_revision,claims_json,accepted_at) VALUES(?,?,?,?,?,?,?,?)",
+            (record_id, claims["run_id"], claims["purpose"], claims["identity"], claims.get("assignment_id"), claims.get("assignment_revision"), encoded, self.clock()),
+        )
 
     @staticmethod
     def _json(value: Any) -> str:
@@ -279,6 +317,41 @@ class RuntimeStore:
             self._commit(db)
             return self._run(db, run_id)
 
+    def complete_run(self, run_id: str, *, host_record: Mapping[str, Any],
+                     expected_revision: int | None = None, lease_epoch: int | None = None,
+                     coordinator_id: str | None = None) -> dict[str, Any]:
+        """Complete only with a host-signed gate and successful required evidence."""
+        claims = self._host_claims(host_record, purpose="run.complete", run_id=run_id)
+        if claims.get("gate_decision") != "approved":
+            raise RuntimeError("trusted completion gate approval is required")
+        evidence_ids = claims.get("evidence_ids")
+        if not isinstance(evidence_ids, list) or not evidence_ids:
+            raise RuntimeError("trusted completion evidence is required")
+        now = self.clock()
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            current = db.execute("SELECT state,active_seconds,active_since FROM runs WHERE run_id=?", (run_id,)).fetchone()
+            if current["state"] != "running":
+                raise RuntimeError("run must be running before completion")
+            self._accept_host_claim(db, claims)
+            placeholders = ",".join("?" for _ in evidence_ids)
+            evidence = db.execute(f"SELECT * FROM evidence WHERE run_id=? AND evidence_id IN ({placeholders})", (run_id, *evidence_ids)).fetchall()
+            if len(evidence) != len(set(evidence_ids)) or any(item["required"] and item["exit_status"] != 0 for item in evidence):
+                raise RuntimeError("required completion evidence is missing or failed")
+            unfinished = db.execute("SELECT 1 FROM assignments WHERE run_id=? AND state NOT IN ('completed','failed','cancelled')", (run_id,)).fetchone()
+            if unfinished:
+                raise RuntimeError("unfinished assignments block completion")
+            active = current["active_seconds"]
+            if current["active_since"] is not None:
+                active += max(0, now - current["active_since"])
+            revision = row["revision"] + 1
+            seq = db.execute("SELECT COALESCE(MAX(sequence),0)+1 FROM transitions WHERE run_id=?", (run_id,)).fetchone()[0]
+            db.execute("UPDATE runs SET state='completed',revision=?,updated_at=?,active_seconds=?,active_since=NULL WHERE run_id=?", (revision, now, active, run_id))
+            db.execute("INSERT INTO transitions VALUES(?,?,?,?,?,?,?)", (run_id, seq, "running", "completed", revision, now, "trusted host gate approved"))
+            self._commit(db)
+            return self._run(db, run_id)
+
     def reserve_dispatch(self, run_id: str, reservation_id: str, *, max_dispatches: int | None = None,
                          expected_revision: int | None = None, lease_epoch: int | None = None,
                          coordinator_id: str | None = None) -> dict[str, Any]:
@@ -314,6 +387,74 @@ class RuntimeStore:
             db.execute("UPDATE runs SET dispatch_count=dispatch_count+1,revision=?,updated_at=? WHERE run_id=?", (row["revision"] + 1, self.clock(), run_id))
             self._commit(db)
             return {"reserved": True, "reservation_id": reservation_id, "count": count + 1}
+
+    def start_dispatch(self, run_id: str, reservation_id: str, worker_id: str, *,
+                       timeout_seconds: int | None = None, expected_revision: int | None = None,
+                       lease_epoch: int | None = None, coordinator_id: str | None = None) -> dict[str, Any]:
+        """Start a reserved worker dispatch under persistent concurrency limits."""
+        policy = load_registry()["policy_defaults"]
+        timeout = int(policy["worker_minutes"] * 60 if timeout_seconds is None else timeout_seconds)
+        ceiling = int(policy["worker_minutes"] * 60)
+        if not worker_id or type(timeout) is not int or timeout < 1 or timeout > ceiling:
+            raise ValueError("timeout_seconds must be within the worker policy ceiling")
+        now = self.clock()
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
+            run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            if db.execute("SELECT 1 FROM dispatch_reservations WHERE run_id=? AND reservation_id=?", (run_id, reservation_id)).fetchone() is None:
+                raise KeyError("unknown dispatch reservation")
+            existing = db.execute("SELECT * FROM dispatch_leases WHERE run_id=? AND reservation_id=?", (run_id, reservation_id)).fetchone()
+            if existing:
+                db.rollback()
+                return dict(existing)
+            active = db.execute("SELECT COUNT(*) FROM dispatch_leases WHERE run_id=? AND finished_at IS NULL", (run_id,)).fetchone()[0]
+            if active >= int(policy["max_concurrent_workers"]):
+                raise RuntimeError("concurrent worker limit exhausted")
+            current = db.execute("SELECT active_seconds,active_since FROM runs WHERE run_id=?", (run_id,)).fetchone()
+            if current["active_since"] is not None and current["active_seconds"] + max(0, now - current["active_since"]) >= int(policy["active_run_minutes"] * 60):
+                raise RuntimeError("active execution budget exhausted; escalation required")
+            result = (run_id, reservation_id, worker_id, now, now + timeout)
+            db.execute("INSERT INTO dispatch_leases(run_id,reservation_id,worker_id,started_at,deadline) VALUES(?,?,?,?,?)", result)
+            db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
+            self._commit(db)
+            row = db.execute("SELECT * FROM dispatch_leases WHERE run_id=? AND reservation_id=?", (run_id, reservation_id)).fetchone()
+            return dict(row)
+
+    def finish_dispatch(self, run_id: str, reservation_id: str, *, outcome: str,
+                        expected_revision: int | None = None, lease_epoch: int | None = None,
+                        coordinator_id: str | None = None) -> dict[str, Any]:
+        if outcome not in {"succeeded", "failed", "cancelled", "timed_out"}:
+            raise ValueError("invalid dispatch outcome")
+        now = self.clock()
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
+            run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            row = db.execute("SELECT * FROM dispatch_leases WHERE run_id=? AND reservation_id=?", (run_id, reservation_id)).fetchone()
+            if row is None: raise KeyError("unknown dispatch lease")
+            if row["finished_at"] is not None:
+                db.rollback(); return dict(row)
+            db.execute("UPDATE dispatch_leases SET finished_at=?,outcome=? WHERE run_id=? AND reservation_id=?", (now, outcome, run_id, reservation_id))
+            db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
+            self._commit(db)
+            return dict(db.execute("SELECT * FROM dispatch_leases WHERE run_id=? AND reservation_id=?", (run_id, reservation_id)).fetchone())
+
+    def recover_dispatches(self, run_id: str, *, expected_revision: int | None = None,
+                           lease_epoch: int | None = None, coordinator_id: str | None = None) -> list[dict[str, Any]]:
+        """Close expired in-flight dispatches without refunding reservations."""
+        now = self.clock()
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._validate_versions(db)
+            run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            rows = db.execute("SELECT * FROM dispatch_leases WHERE run_id=? AND finished_at IS NULL AND deadline<=?", (run_id, now)).fetchall()
+            if not rows:
+                db.rollback(); return []
+            db.execute("UPDATE dispatch_leases SET finished_at=?,outcome='timed_out' WHERE run_id=? AND finished_at IS NULL AND deadline<=?", (now, run_id, now))
+            db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
+            self._commit(db)
+            return [dict(row) | {"finished_at": now, "outcome": "timed_out"} for row in rows]
 
     def record_decision(self, run_id: str, decision_key: str, value: Any, *, expected_revision: int | None = None, lease_epoch: int | None = None, coordinator_id: str | None = None) -> dict[str, Any]:
         return self._append(run_id, "decisions", (decision_key, self._json(value)), expected_revision, lease_epoch, coordinator_id)
@@ -553,7 +694,8 @@ class RuntimeStore:
                           assignment_revision: int, correlation_id: str, sender: str, recipient: str,
                           message_type: str, deadline: float, payload: Any,
                           expected_revision: int | None = None, lease_epoch: int | None = None,
-                          coordinator_id: str | None = None) -> dict[str, Any]:
+                          coordinator_id: str | None = None,
+                          host_record: Mapping[str, Any] | None = None) -> dict[str, Any]:
         registry = load_registry()
         if message_type not in registry["message_types"]: raise ValueError("unknown message type")
         if not all(isinstance(value, str) and value for value in (message_id, assignment_id, correlation_id, sender, recipient)):
@@ -571,6 +713,11 @@ class RuntimeStore:
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             assignment = db.execute("SELECT * FROM assignments WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()
             if assignment is None: raise KeyError("unknown assignment: " + assignment_id)
+            if host_record is not None:
+                claims = self._host_claims(host_record, purpose="message.send", run_id=run_id, assignment_id=assignment_id)
+                if claims.get("assignment_revision") != assignment_revision or claims.get("identity") != sender:
+                    raise RuntimeError("host dispatch does not authorize this message")
+                self._accept_host_claim(db, claims)
             existing = db.execute("SELECT * FROM peer_messages WHERE message_id=?", (message_id,)).fetchone()
             if existing:
                 if any(existing[field] != value for field, value in (("run_id", run_id), ("assignment_id", assignment_id), ("assignment_revision", assignment_revision), ("correlation_id", correlation_id), ("sender", sender), ("recipient", recipient), ("message_type", message_type), ("deadline", float(deadline)), ("payload_json", encoded))):
@@ -647,9 +794,37 @@ class RuntimeStore:
                 db.rollback()
             return {"escalated_assignments": sorted(escalated), "checked_at": now}
 
-    def receive_peer_messages(self, run_id: str, recipient: str, *, reader_id: str, limit: int = 8,
+    def receive_peer_messages(self, run_id: str, recipient: str, *, reader_id: str | None = None,
+                              host_record: Mapping[str, Any] | None = None, limit: int = 8,
                               after_message_id: str | None = None) -> list[dict[str, Any]]:
-        raise RuntimeError("mailbox delivery unavailable: host-issued identity is not implemented")
+        if host_record is None:
+            raise RuntimeError("mailbox delivery unavailable: host-issued identity is not implemented")
+        claims = self._host_claims(host_record, purpose="message.receive", run_id=run_id)
+        if claims.get("identity") != recipient or (reader_id is not None and reader_id != recipient):
+            raise RuntimeError("host dispatch does not authorize mailbox recipient")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._accept_host_claim(db, claims)
+            rows = self._inspect_peer_messages_db(db, run_id, recipient, limit, after_message_id)
+            self._commit(db)
+            return rows
+
+    def _inspect_peer_messages_db(self, db, run_id: str, recipient: str, limit: int,
+                                  after_message_id: str | None) -> list[dict[str, Any]]:
+        if not recipient or type(limit) is not int or limit < 1 or limit > 8:
+            raise ValueError("recipient required and limit must be bounded")
+        if db.execute("SELECT 1 FROM runs WHERE run_id=?", (run_id,)).fetchone() is None:
+            raise KeyError("unknown run: " + run_id)
+        if after_message_id:
+            cursor = db.execute("SELECT created_at FROM peer_messages WHERE run_id=? AND message_id=?", (run_id, after_message_id)).fetchone()
+            if cursor is None: raise ValueError("unknown message cursor")
+            rows = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND recipient=? AND (created_at>? OR (created_at=? AND message_id>?)) ORDER BY created_at,message_id LIMIT ?", (run_id, recipient, cursor[0], cursor[0], after_message_id, limit)).fetchall()
+        else:
+            rows = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND recipient=? ORDER BY created_at,message_id LIMIT ?", (run_id, recipient, limit)).fetchall()
+        result = []
+        for row in rows:
+            item = dict(row); item["payload"] = json.loads(item.pop("payload_json")); result.append(item)
+        return result
 
     def _inspect_peer_messages(self, run_id: str, recipient: str, *, limit: int = 8,
                                after_message_id: str | None = None) -> list[dict[str, Any]]:

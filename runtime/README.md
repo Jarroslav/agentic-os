@@ -1,9 +1,10 @@
 # Shared runtime contracts
 
 Status: experimental, incomplete implementation. Existing SDLC/QA skills are
-not yet integrated with this store. No host authentication or live workflow
-certification is established. Run completion and mailbox delivery require
-trusted host contracts before they can be enabled safely. The reopening ledger
+not yet integrated with this store. Live workflow certification is not
+established. Host adapters can issue short-lived signed dispatch records for
+identity-bound mailbox reads and trusted completion gates; without a configured
+host key those operations remain fail-closed. The reopening ledger
 at `tests/reliability/REOPENING.md` tracks the current acceptance gaps.
 
 `agentic_runtime/registry.json` is the canonical contract source. Run
@@ -21,8 +22,9 @@ printf '%s\n' '{"api_version":"1.0.0","operation":"registry.get"}' | python3 run
 
 The runtime lifecycle operations use SQLite as their state and require a
 branch/worktree ownership precondition before export artifacts are written.
-They check supplied coordinator revisions and lease epochs, reserve
-dispatches transactionally, and put uncertain external outcomes into
+They check supplied coordinator revisions and lease epochs, reserve dispatches
+transactionally, persist in-flight dispatch leases with concurrency and timeout
+limits, and put uncertain external outcomes into
 reconciliation. JSON exports are revision-labelled views; editing one never
 changes the database. Host enforcement and installation operations remain
 separate capabilities. An absent operation is an error; it must never fall
@@ -49,7 +51,8 @@ can reduce default budgets. Increasing a running budget requires a future record
 user-decision operation; changing configuration must not silently reset counters.
 
 Lifecycle requests include `run.start`, `run.status`, `run.resume`, `run.cancel`,
-`task.dispatch`, `decision.record`, `message.deliver`, `external.intent`,
+`run.complete`, `task.dispatch`, `dispatch.start`, `dispatch.finish`,
+`dispatch.recover`, `decision.record`, `message.deliver`, `external.intent`,
 `external.reconcile`, `legacy.import`, and `run.export`. `legacy.import` records
 the source hash and receipt without replacing the original file. Mutating requests for an owned run carry
 the coordinator identity, current `lease_epoch`, and expected revision; stale ownership or revisions fail atomically.
@@ -59,10 +62,11 @@ unknown dependencies and cycles; `assignment.transition` requires the current
 assignment revision. `message.send` accepts only registered typed messages and
 rejects stale assignments, duplicate content changes, inconsistent sender labels, and
 payloads over the registry limit.
-`evidence.record` currently stores caller-supplied command claims bound to a run
-counter. It does not execute or authenticate commands or bind them to repository
-content. Required failures are rejected at ingestion rather than retained as
-receipts. Trusted evidence capture and gate decisions remain implementation work.
+`evidence.record` stores receipts bound to a run revision. A host-signed
+`run.complete` record must name successful required evidence and an approved gate
+before completion. Host adapters use the signing helpers in `agentic_runtime.host`
+and keep the signing key outside repository state. Required failures are rejected
+at ingestion rather than retained as receipts.
 Setup uses `host.preflight` to report observed Python, SQLite, Git, and host
 launch capabilities; unsupported OS sandboxing is reported explicitly. Peer
 work also exposes `assignment.create`, `assignment.transition`, `message.send`,

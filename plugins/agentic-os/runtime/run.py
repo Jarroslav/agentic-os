@@ -37,7 +37,11 @@ def main():
                   'run.resume': ({'api_version', 'operation', 'run_id', 'coordinator_id'}, {'root'}),
                   'run.cancel': ({'api_version', 'operation', 'run_id', 'coordinator_id'}, {'root'}),
                   'run.transition': ({'api_version', 'operation', 'run_id', 'target', 'coordinator_id', 'lease_epoch'}, {'expected_revision', 'reason', 'root'}),
+                  'run.complete': ({'api_version', 'operation', 'run_id', 'host_record', 'coordinator_id', 'lease_epoch'}, {'expected_revision', 'root'}),
                   'task.dispatch': ({'api_version', 'operation', 'run_id', 'reservation_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'max_dispatches', 'root'}),
+                  'dispatch.start': ({'api_version', 'operation', 'run_id', 'reservation_id', 'worker_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'timeout_seconds', 'root'}),
+                  'dispatch.finish': ({'api_version', 'operation', 'run_id', 'reservation_id', 'outcome', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
+                  'dispatch.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'decision.record': ({'api_version', 'operation', 'run_id', 'decision_key', 'value', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'message.deliver': ({'api_version', 'operation', 'run_id', 'body', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'sender', 'root'}),
                   'external.intent': ({'api_version', 'operation', 'run_id', 'idempotency_key', 'action', 'request', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
@@ -46,7 +50,7 @@ def main():
                   'assignment.transition': ({'api_version', 'operation', 'run_id', 'assignment_id', 'target', 'expected_assignment_revision', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'worker_id', 'root'}),
                   'message.send': ({'api_version', 'operation', 'run_id', 'message_id', 'assignment_id', 'assignment_revision', 'correlation_id', 'sender', 'recipient', 'message_type', 'deadline', 'payload', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'runtime.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
-                  'message.receive': ({'api_version', 'operation', 'run_id', 'recipient', 'reader_id'}, {'limit', 'after_message_id', 'root'}),
+                  'message.receive': ({'api_version', 'operation', 'run_id', 'recipient'}, {'reader_id', 'host_record', 'limit', 'after_message_id', 'root'}),
                   'host.preflight': ({'api_version', 'operation'}, {'root'}),
                   'evidence.record': ({'api_version', 'operation', 'run_id', 'evidence_id', 'kind', 'source_revision', 'command', 'cwd', 'source_hash', 'exit_status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'required', 'root'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
@@ -94,8 +98,16 @@ def main():
                 value = store.transition(request['run_id'], 'cancelled', expected_revision=value['revision'], lease_epoch=value['lease_epoch'], coordinator_id=request['coordinator_id'], reason='cancelled')
             elif operation == 'run.transition':
                 value = store.transition(request['run_id'], request['target'], expected_revision=request.get('expected_revision'), lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'], reason=request.get('reason'))
+            elif operation == 'run.complete':
+                value = store.complete_run(request['run_id'], host_record=request['host_record'], expected_revision=request.get('expected_revision'), lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'task.dispatch':
                 value = store.reserve_dispatch(request['run_id'], request['reservation_id'], max_dispatches=request.get('max_dispatches'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'dispatch.start':
+                value = store.start_dispatch(request['run_id'], request['reservation_id'], request['worker_id'], timeout_seconds=request.get('timeout_seconds'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'dispatch.finish':
+                value = store.finish_dispatch(request['run_id'], request['reservation_id'], outcome=request['outcome'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'dispatch.recover':
+                value = store.recover_dispatches(request['run_id'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'decision.record':
                 value = store.record_decision(request['run_id'], request['decision_key'], request['value'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'message.deliver':
@@ -113,7 +125,7 @@ def main():
             elif operation == 'runtime.recover':
                 value = store.recover_timeouts(request['run_id'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'message.receive':
-                value = store.receive_peer_messages(request['run_id'], request['recipient'], reader_id=request['reader_id'], limit=request.get('limit', 8), after_message_id=request.get('after_message_id'))
+                value = store.receive_peer_messages(request['run_id'], request['recipient'], reader_id=request.get('reader_id'), host_record=request.get('host_record'), limit=request.get('limit', 8), after_message_id=request.get('after_message_id'))
             elif operation == 'evidence.record':
                 value = store.record_evidence(request['run_id'], request['evidence_id'], kind=request['kind'], source_revision=request['source_revision'], command=request['command'], cwd=request['cwd'], source_hash=request['source_hash'], exit_status=request['exit_status'], required=request.get('required', True), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'legacy.import':

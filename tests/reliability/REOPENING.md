@@ -56,3 +56,19 @@ retained under `/tmp/agentic-reopen-*.log`. Unaffected evaluator, T0, and
 acceptance matrix checks passed (80, 109, and 99 respectively); the MCP suite
 passed 204 tests and content drift was rebuilt. Review verdicts must bind to
 the final staged tree after packaging and attestation.
+
+## Round 2 — host trust and dispatch admission
+
+The operator approved continuation on 2026-09-21. This round adds signed,
+short-lived host dispatch records with identity, run, assignment, and purpose
+bindings. Valid records unlock mailbox reads and trusted completion only when
+the configured host key verifies them; caller-supplied identities remain
+insufficient. Completion also requires an approved host gate, successful named
+evidence, and no unfinished assignments.
+
+Dispatch reservations now have persistent in-flight leases. SQLite enforces
+the registry concurrency ceiling, per-worker timeout ceiling, idempotent finish,
+timeout recovery, and no reservation refund after timeout. Deterministic runtime
+proof is now 63 tests. These changes are a tested implementation checkpoint;
+host adapters, workflow integration, independent blind review, and live trials
+remain required for stage acceptance.
