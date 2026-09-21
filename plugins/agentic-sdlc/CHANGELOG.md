@@ -8,6 +8,8 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ### Added
 
+- Bundle the canonical versioned runtime contracts for independent installation, with deterministic drift checks and strict policy/input validation.
+
 - **`usage.sampled` is now a real event, not just a reserved shape.**
   `references/model-routing.md` documented this event ("Usage sampling (spec
   only)") but nothing ever produced one. A new `usage-sampler` SubagentStop

@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-20T14:11:36Z",
+ "attested_at": "2026-09-20T20:22:47Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -41,8 +41,8 @@
    "max_run": 0
   },
   ".github/workflows/ci.yml": {
-   "sha256": "84145ded552aab7058b22ceb8c28f6dd4ac7e2c4fa4dcabf2112495939826b9c",
-   "line": 0.024,
+   "sha256": "b579f06e4110cc81bda960c273821f2252a4cb98d946cec464e8d76087837631",
+   "line": 0.0234,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "9b9ed6963485704b356523a706022aa68e63e4c9f264c8ffe8d4c09f25ce2021",
+   "sha256": "3efd8118afc85276658b62e2c3878ed336f88b2739cf7a1e9a554afc025ef435",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -455,7 +455,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "f45a62c0bd54a2060faa767daa1b0c73d7625174065e0ec77f253d1d423b515f",
+   "sha256": "2dac4ad271c99f17bd2939d7fed9d59faaf145287792c3fab6565460f43bb91c",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -676,6 +676,36 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "plugins/agentic-os/references/runtime-contracts.md": {
+   "sha256": "686c5459f707f14f9b29f927e16d2d5c31d61d86e15482f826dfabb641528204",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/runtime/agentic_runtime/__init__.py": {
+   "sha256": "424463366bd19da202ba8ee446c2ced20aaa6c585fee76a4614564b375c1be42",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/runtime/agentic_runtime/contracts.py": {
+   "sha256": "07116c708384f915dd2cd7292488af1be0be697299a19a3b5afee270295dfa56",
+   "line": 0.0106,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/runtime/agentic_runtime/registry.json": {
+   "sha256": "0c940072952465d0abcf06671fa450594e8ca3781928842ca8ef410df7a1912b",
+   "line": 0.0533,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-os/runtime/run.py": {
+   "sha256": "32b0b70c8938125f529c4aefd3e9f0f9c24f0edf3a47c06eb4e2202cc62d16cc",
+   "line": 0.0526,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "plugins/agentic-os/scripts/detect-adoption.py": {
    "sha256": "e19aba3428ba1dd1149f8583155d60c0714dbb9c4b7b8491af8e11ec4d7789b8",
    "line": 0.1333,
@@ -689,7 +719,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-doctor/SKILL.md": {
-   "sha256": "dcf9719001da950a90d78dbb5780f2611d49071a9aad7b8b21353b9935029ae3",
+   "sha256": "ad8034aede1365f428c418fbd700d5fa34e303f6d3e71142d4de44a04e3ebcb3",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -707,7 +737,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-init/SKILL.md": {
-   "sha256": "85ba8b60ee3ac7ecccbe8c532f2274bb65937271a336845e1bece88f35d8ea5d",
+   "sha256": "6c70bd4fcf08281e021fa23828e790571dfefc91ecea6f35260f82d238852cd2",
    "line": 0.0013,
    "shingle": 0.0,
    "max_run": 0
@@ -725,7 +755,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-uninstall/SKILL.md": {
-   "sha256": "922154e43aad85b3d285f40a13fbea0315ab071f578e2c78e6c5cd50f67d5d20",
+   "sha256": "cf113038a4c90513847924e6a70b9b98f874c838da07141a3a68db1e961c48c3",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -743,7 +773,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/skills/agentic-upgrade/SKILL.md": {
-   "sha256": "464715ede657042d12fb43640f3e285565a350be911281e187ca29deb93394d3",
+   "sha256": "80fc5ce1ea2a4cd609642c4f86d238fbd5cc4508d4a22266e326a25524e3d419",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1091,7 +1121,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/templates/sdlc/config.json.tmpl": {
-   "sha256": "ccae1cc16c5465d8fe3cf7caf923d164efe712b0c824c81811bf6c2179a16aba",
+   "sha256": "8f69efd80e9f1a1b6acfb943fee30bb849709cd486011b9386e2c147c2dfc831",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1547,13 +1577,13 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/BUNDLE.md": {
-   "sha256": "ae4214266432250557886bfd0ed0039fb08defbed97b71ac9553445044650bf7",
+   "sha256": "5786ef97ecae8b52fe8c6061dfceda94d0e79239f8686062d26cbb4ac08ebc7d",
    "line": 0.0102,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "09199f50835e093a51e1d27e74184edf4d5cbef7ddcba56ac8f7702b6d56bd1e",
+   "sha256": "c45ff2db6b88448fffedafbb96fe54ab09a44765ed7038e244ad79f2e4b91d13",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1565,15 +1595,15 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/README.md": {
-   "sha256": "1a6454258b0f7fd7797b83eadb0e7089b0a59f3015e07947f8e6925a962c7fa4",
+   "sha256": "1c114c4d877a5419e7eac3eafbbb49c97ca026d6da7e94ff66d6b1d7064740fc",
    "line": 0.0081,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/agents/codebase-scout.md": {
-   "sha256": "4ef181ac4c529feb0b264f4b6b11e39922b715969cb1c0791b6d92ed31455324",
-   "line": 0.1111,
-   "shingle": 0.0086,
+   "sha256": "5cf213c6b76e43575af8d30894d323810a2855137528713670e5bd65681f2773",
+   "line": 0.1082,
+   "shingle": 0.0087,
    "max_run": 4
   },
   "plugins/agentic-sdlc/agents/guide-sync.md": {
@@ -1589,8 +1619,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/agents/sizing-analyst.md": {
-   "sha256": "56bdcabfae1489ce0dead150c403c1e6b70960294d241f685c97644ee6ae7231",
-   "line": 0.006,
+   "sha256": "31bba4b9aed642ab46b3d1a84cc5fb05e93dfc2dfd3fa81d88d2962acc200c0c",
+   "line": 0.0069,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1715,8 +1745,8 @@
    "max_run": 4
   },
   "plugins/agentic-sdlc/references/gate-catalog.md": {
-   "sha256": "7df33b9c3be69e3747804c54bd5422fac31b35dde000171f8a51f76e2dc39c7b",
-   "line": 0.0256,
+   "sha256": "9c1f1cac95f265b32aa3a854de41282a5f081eeabb624ca36d1c214949f94bd2",
+   "line": 0.0122,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1751,13 +1781,13 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/references/parallelism-safety.md": {
-   "sha256": "2c5ffdb30df8afd5b620648de55d7b6ea325eb86deb8c1fd11c1e8ff00572d7a",
-   "line": 0.0123,
+   "sha256": "6ffa2cb6a63e6876543673d8e4111a72f7dc2ce70cd643855211f47fcc038980",
+   "line": 0.0111,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/references/phase-routing.md": {
-   "sha256": "02fc688d14c080448ed4031664007318c89d47957e0a5e6d7f370d5a9a99a9e9",
+   "sha256": "a9ed00c5b1240ede5d4650605f9bff0d88ee830b5287c2783706f8dff9f47e24",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1800,6 +1830,12 @@
   },
   "plugins/agentic-sdlc/references/role-tier-map.json": {
    "sha256": "99f06983ab10a156f64ae70c03d1957f1adcaaaae131ed5e9a01c3ab2f8bfbc3",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-sdlc/references/runtime-contracts.md": {
+   "sha256": "686c5459f707f14f9b29f927e16d2d5c31d61d86e15482f826dfabb641528204",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1873,6 +1909,30 @@
   "plugins/agentic-sdlc/references/work-item-adapters.md": {
    "sha256": "b6dbb4b2f99e32f80c082f25e04da2790cb8753e4589eb84e0cb4bd0d3b8088a",
    "line": 0.032,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-sdlc/runtime/agentic_runtime/__init__.py": {
+   "sha256": "424463366bd19da202ba8ee446c2ced20aaa6c585fee76a4614564b375c1be42",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-sdlc/runtime/agentic_runtime/contracts.py": {
+   "sha256": "07116c708384f915dd2cd7292488af1be0be697299a19a3b5afee270295dfa56",
+   "line": 0.0106,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-sdlc/runtime/agentic_runtime/registry.json": {
+   "sha256": "0c940072952465d0abcf06671fa450594e8ca3781928842ca8ef410df7a1912b",
+   "line": 0.0533,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "plugins/agentic-sdlc/runtime/run.py": {
+   "sha256": "32b0b70c8938125f529c4aefd3e9f0f9c24f0edf3a47c06eb4e2202cc62d16cc",
+   "line": 0.0526,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2003,10 +2063,10 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/gate-arbiter/SKILL.md": {
-   "sha256": "5bc926783d02a9f5b5a3c26a0c7cf6aea54df20d18eccaafe42a836e2b4a843b",
-   "line": 0.0387,
-   "shingle": 0.0056,
-   "max_run": 3
+   "sha256": "1868112adc06f92d352d83875d314e0cf7e27753d321bff79a0e2c6c9b00ad96",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
   },
   "plugins/agentic-sdlc/skills/gate-arbiter/evals/evals.json": {
    "sha256": "954938d752356497b099db783cc89607ae2f8fb8069ed1bdf1020385b687603d",
@@ -2075,9 +2135,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-baseline/SKILL.md": {
-   "sha256": "ac7d7c70c53fdbcf05c943583bee165e81b7913870400d16dfca20881447c5d1",
-   "line": 0.0504,
-   "shingle": 0.0171,
+   "sha256": "fe76ea8a426e9b0f3f21fb15321e0745351ff37055b353d696c2c4730c3fb95f",
+   "line": 0.0465,
+   "shingle": 0.0157,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/qa-baseline/evals/evals.json": {
@@ -2093,9 +2153,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/SKILL.md": {
-   "sha256": "428478ece96b97d04161e0d45fcba7b4631c997d9a72b3a98a71e052db6f1dc9",
-   "line": 0.0426,
-   "shingle": 0.0144,
+   "sha256": "8c4e673227df12f64c3c6dc659afa9eeff4ece90ab3661a1ba926441954474ea",
+   "line": 0.0397,
+   "shingle": 0.0134,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/evals/evals.json": {
@@ -2165,8 +2225,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-e2e-generator/SKILL.md": {
-   "sha256": "4f1243eb46cb88adbe8bb404a40b558267d9630309580c006eaa5ee75d404fa6",
-   "line": 0.005,
+   "sha256": "2570054463f638f8736dfb98b92ff85c38dd870fefd880e610ee252491ed14d4",
+   "line": 0.0047,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2237,8 +2297,8 @@
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/qa-scoping/SKILL.md": {
-   "sha256": "30b4c58cdfa030ba883d1fc4a48ad17d9a654eeec0b4ceb63324f7036ba6c7bc",
-   "line": 0.0662,
+   "sha256": "d32954f76cbc7c1f588a6cfc6881af94010bc10753821305d534d86ee3670a24",
+   "line": 0.0616,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2435,16 +2495,16 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-auto/README.md": {
-   "sha256": "d940861ad9bd4ac5aad3747224a7394cbd30817bc550ad74543173fd67dd6e87",
+   "sha256": "e5e5e57a1ccf6e9fb4f8bea94dc71f7167d5d7e633b231bb58c79f198ad8acfe",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-auto/SKILL.md": {
-   "sha256": "6d40990c51f693688c8e251370b26665f57c278aaa580f7f5d4b1ca34d884a4b",
-   "line": 0.0822,
-   "shingle": 0.0282,
-   "max_run": 4
+   "sha256": "ee777800b9678eab9e08083d42627c6efaf04e4707b2957672f51ae022033257",
+   "line": 0.0357,
+   "shingle": 0.0,
+   "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-auto/evals/evals.json": {
    "sha256": "a1d3ae6319508187fe3cf0e8b2d68b456598a27b6370f42fba4262ade3a358cc",
@@ -2453,15 +2513,15 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-brief/README.md": {
-   "sha256": "3f4415cb37a14699bdb89edeada0551e41c1d4f69962c1446fe9e454863cd8c4",
+   "sha256": "ef55e263a68614779a8ff4763bf1dee65e60ec3826b17c8d2ab02a2a41a22457",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-brief/SKILL.md": {
-   "sha256": "8c4272c439787ba50cfcb545e6d1878d33769100e848b7ce4a2f316617bf2e61",
-   "line": 0.0518,
-   "shingle": 0.0209,
+   "sha256": "6d0d1b8b7a72c2418dbb4f1ef8ce447a47ed7fab25c1c798fbc31fe778719572",
+   "line": 0.0493,
+   "shingle": 0.0199,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/sdlc-brief/evals/evals.json": {
@@ -2471,14 +2531,14 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-direct/README.md": {
-   "sha256": "151679a22f6bd1ce1d0e1c3c7155b4bc8da5e506230119428e7d410088bfb108",
+   "sha256": "a719d2b1822ee205b285ce4a632ded42d113645d89b8f5315ec6769baf95dc20",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-direct/SKILL.md": {
-   "sha256": "32a9cd4843dbc3a8e90d612f5fbbe76bf48eb6d79a7ddabca9aba93b64b0dd72",
-   "line": 0.0464,
+   "sha256": "3babaf61368d613010ca80f48b9162333a9c4b731f15a4aae02f4b0fe6c69e75",
+   "line": 0.0445,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2489,13 +2549,13 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-engine/README.md": {
-   "sha256": "d7b890eb3bd83f8222b9854e8326cd0f4e43d8bd7d62ef5c729abac3bf3fe50f",
+   "sha256": "2ceefc41584bee94a640beec4f1e378697a6fa7c91c61facf670a07ad3043e6a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-engine/SKILL.md": {
-   "sha256": "a205f2296493b4fab50199cec5e5e415ed448b5d49f776b2089dec36731019a2",
+   "sha256": "03fffa4652694ee03359f952c56dc2f9adeb57e361b6664cacf720b3dffe52fa",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2507,14 +2567,14 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-guided/README.md": {
-   "sha256": "7754a91ae2cc57c937bfc6bfa55cc45b47ed253c8484aef1da8066d22678870a",
+   "sha256": "c8e9e4df91803b0ed3064db45be5f3df02d4d197cdef90fd7f7b91c41538e669",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-guided/SKILL.md": {
-   "sha256": "557a8e2fccb2e545cf1ba2f0e7c8f2457f42d8862e9828912f538d4bb6b22e27",
-   "line": 0.0185,
+   "sha256": "2b15664a16c2828c2cb0089ae4c5c4ffea406b2af25dc5baa03acd6090929e29",
+   "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2525,7 +2585,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-preflight/README.md": {
-   "sha256": "e5770dc5804d94719e04b755fc244814ab9561835aab7ba7f43f797910813aa1",
+   "sha256": "bbc9a2da8bbf5f7a7601bea8966f67255b4d447d6c82b5f9bdffaa05b73bce9a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2629,6 +2689,42 @@
   "plugins/agentic-sdlc/skills/test-heal/evals/evals.json": {
    "sha256": "3789cb28b38a3cc4cb0505d2544e273f76ca07acfdcef4d52c6668f04e8eec51",
    "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "runtime/README.md": {
+   "sha256": "899838a565efe500576f7ef437010f36f7e63098e1af4687afc1caa4cc8e386c",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "runtime/agentic_runtime/__init__.py": {
+   "sha256": "424463366bd19da202ba8ee446c2ced20aaa6c585fee76a4614564b375c1be42",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "runtime/agentic_runtime/contracts.py": {
+   "sha256": "07116c708384f915dd2cd7292488af1be0be697299a19a3b5afee270295dfa56",
+   "line": 0.0106,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "runtime/agentic_runtime/registry.json": {
+   "sha256": "0c940072952465d0abcf06671fa450594e8ca3781928842ca8ef410df7a1912b",
+   "line": 0.0533,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "runtime/generate_bundles.py": {
+   "sha256": "79b910685de34d57b990fc4294cdeed22c093785b004231ddb2ef7a3ca2357f4",
+   "line": 0.087,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "runtime/run.py": {
+   "sha256": "32b0b70c8938125f529c4aefd3e9f0f9c24f0edf3a47c06eb4e2202cc62d16cc",
+   "line": 0.0526,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2897,7 +2993,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "ee4e29de1b0d8fc0c0ef81634dc084944b4579e49db0a3c450339c85b952b8d8",
+   "sha256": "ce9886ea54c604a58f3470b16c59b4d239747dfc5e51cfa03fae23a02f40848f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3013,6 +3109,30 @@
   "tests/run-matrix.sh": {
    "sha256": "3d4a8068676eb86bd5bc0994b13d822f2a4e2e47af5caabd5a37d022f7440c6a",
    "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/runtime/test_bundles.py": {
+   "sha256": "55df659ba035ef95bedd90e9409cf31498b739e59aa83581e097d54fc6cc0503",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/runtime/test_cli.py": {
+   "sha256": "e4968bcf5d6666ba25199a8b1801ce245f9b8336ad057cf419040b401c162aa5",
+   "line": 0.0256,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/runtime/test_contracts.py": {
+   "sha256": "918bf54ddedb152edde0fd7a7072b02ce812f90705dc6e65e53a951c4c5f5597",
+   "line": 0.0105,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/runtime/test_entrypoints.py": {
+   "sha256": "746fd667116c947ca9c685412da5626f3bf85459074b17273f931a5abf1607a5",
+   "line": 0.0417,
    "shingle": 0.0,
    "max_run": 0
   },

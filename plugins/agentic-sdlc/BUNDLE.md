@@ -11,7 +11,7 @@ separate, explicit step performed by a human or an adapter skill, never automati
 ## Prerequisite
 
 Install and version-check the shared skill-infrastructure plugin before this one loads. Required
-version: **≥ 5.0.7**.
+version: **≥ 6.1.0**.
 
 ```
 /plugin marketplace add <prerequisite-plugin-source>
