@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:59:34Z",
+ "attested_at": "2026-09-21T16:01:45Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -2735,7 +2735,7 @@
    "max_run": 0
   },
   "runtime/README.md": {
-   "sha256": "c07f9de862e247be825a909b25c4d20063156ae8a0aee77441725882716cb3e3",
+   "sha256": "4920d37e6662e608ea84b351788446c5045b3df6fe563bcfae013dde55c1b418",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3053,13 +3053,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "c656db9595f8ebffe0d3d6cfac6e6aa77acb01352b0dbba1e153b503bd1bf319",
+   "sha256": "92c25645691f7e145a25f5249c9e244b8399208e5b28059d144dd0cdbd451030",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "2edefdb9791e999ec184f456b35e09eca1eb03f1e050375243384cc2f6b5de44",
+   "sha256": "37010c12f76a10ef664231194b2dbb341be6aea3c9ac4d814b2c129018aae486",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
