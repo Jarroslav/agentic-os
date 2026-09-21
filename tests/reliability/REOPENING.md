@@ -212,6 +212,14 @@ rejected before the coordinator revision changes. Public runtime tests cover
 both accepted and malformed outcomes; actual human approval interactions
 remain unverified.
 
+## Round 20 — approved-decision artifact binding
+
+Approved `decision.record` values now require a non-empty `artifact_hashes`
+map. The coordinator cannot persist a successful gate outcome without naming
+the artifacts it approved; malformed approvals fail before revision advance.
+Public runtime tests cover valid, missing-hash, and malformed outcomes. Live
+artifact mutation and human approval trials remain unverified.
+
 ## Round 19 — completion artifact-hash binding
 
 Trusted completion claims now require an `artifact_hashes` map covering every
