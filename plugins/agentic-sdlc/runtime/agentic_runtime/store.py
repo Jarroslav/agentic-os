@@ -566,6 +566,17 @@ class RuntimeStore:
             transitions = [dict(r) for r in db.execute("SELECT * FROM transitions WHERE run_id=? ORDER BY sequence", (run_id,))]
             decisions = [dict(r) for r in db.execute("SELECT * FROM decisions WHERE run_id=? ORDER BY sequence", (run_id,))]
             messages = [dict(r) for r in db.execute("SELECT * FROM messages WHERE run_id=? ORDER BY sequence", (run_id,))]
+            assignments = []
+            for row in db.execute("SELECT * FROM assignments WHERE run_id=? ORDER BY assignment_id", (run_id,)):
+                item = dict(row)
+                for field in ("owned_paths_json", "context_json", "acceptance_json", "limits_json", "depends_on_json"):
+                    item[field[:-5]] = json.loads(item.pop(field))
+                assignments.append(item)
+            peer_messages = []
+            for row in db.execute("SELECT * FROM peer_messages WHERE run_id=? ORDER BY created_at,message_id", (run_id,)):
+                item = dict(row); item["payload"] = json.loads(item.pop("payload_json")); peer_messages.append(item)
+            evidence = [dict(r) for r in db.execute("SELECT * FROM evidence WHERE run_id=? ORDER BY created_at,evidence_id", (run_id,))]
+            dispatch_leases = [dict(r) for r in db.execute("SELECT * FROM dispatch_leases WHERE run_id=? ORDER BY started_at,reservation_id", (run_id,))]
             external = [self._external(r) for r in db.execute("SELECT * FROM external_actions WHERE run_id=? ORDER BY created_at", (run_id,))]
         destination = self.root / ".agentic" / "runs" / run_id / f"revision-{run['revision']}"
         parent = destination.parent
@@ -577,7 +588,7 @@ class RuntimeStore:
         temp = Path(tempfile.mkdtemp(prefix=".export-", dir=parent))
         try:
             if fault: fault("before_write")
-            (temp / "run.json").write_text(self._json({"run": run, "transitions": transitions, "decisions": decisions, "messages": messages, "external_actions": external}), encoding="utf-8")
+            (temp / "run.json").write_text(self._json({"run": run, "transitions": transitions, "decisions": decisions, "messages": messages, "assignments": assignments, "peer_messages": peer_messages, "evidence": evidence, "dispatch_leases": dispatch_leases, "external_actions": external}), encoding="utf-8")
             if fault: fault("after_write")
             try:
                 temp.rename(destination)
