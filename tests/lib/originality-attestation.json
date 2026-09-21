@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:57:44Z",
+ "attested_at": "2026-09-21T15:59:34Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "a7aea546b917622aa0370dcbe772770c70931d8b99ff7dee5fe19bed31302bf5",
+   "sha256": "878edaf2c93503eca66bdc957cc7d672d9757d889d5453d5b1de9a04a0f28f85",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -695,8 +695,8 @@
    "max_run": 0
   },
   "plugins/agentic-os/runtime/agentic_runtime/host.py": {
-   "sha256": "b95d7e181e1854ab94d38c8e50466b78faac280c895f32e3ba144bcb76d4b364",
-   "line": 0.0238,
+   "sha256": "9e7589d4d0ece47f498ea377b2574149ec385b6d1555d77a3f97a26210d18fe9",
+   "line": 0.0222,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1949,8 +1949,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/runtime/agentic_runtime/host.py": {
-   "sha256": "b95d7e181e1854ab94d38c8e50466b78faac280c895f32e3ba144bcb76d4b364",
-   "line": 0.0238,
+   "sha256": "9e7589d4d0ece47f498ea377b2574149ec385b6d1555d77a3f97a26210d18fe9",
+   "line": 0.0222,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2753,8 +2753,8 @@
    "max_run": 0
   },
   "runtime/agentic_runtime/host.py": {
-   "sha256": "b95d7e181e1854ab94d38c8e50466b78faac280c895f32e3ba144bcb76d4b364",
-   "line": 0.0238,
+   "sha256": "9e7589d4d0ece47f498ea377b2574149ec385b6d1555d77a3f97a26210d18fe9",
+   "line": 0.0222,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3053,13 +3053,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "8076eeda1d1f62b7f920d14b934e4f1be95b0395b4efc0b3ab2dcf70b882d2f5",
+   "sha256": "c656db9595f8ebffe0d3d6cfac6e6aa77acb01352b0dbba1e153b503bd1bf319",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "e3a148e7bb4ae683d73aa2a26583d60d1f004e86e295f171047913827b5fa964",
+   "sha256": "2edefdb9791e999ec184f456b35e09eca1eb03f1e050375243384cc2f6b5de44",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3221,8 +3221,8 @@
    "max_run": 0
   },
   "tests/runtime/test_host_issuer.py": {
-   "sha256": "280f2612f87d9f932d8e9ddb87df148bde89fab0c4ae43f32308c46b920d92e7",
-   "line": 0.0323,
+   "sha256": "a37665507fbc794f04449ee922a7174356dd9b0a83bb92910bd3326c13ebe4ce",
+   "line": 0.027,
    "shingle": 0.0,
    "max_run": 0
   },

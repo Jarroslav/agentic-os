@@ -152,4 +152,5 @@ completion event, signs only its command/evidence fields, and produces the
 short-lived `evidence.record` claim accepted by SQLite. Prose and incomplete
 events cannot be signed. Real Claude/Codex stream wiring remains external host
 integration work. The issuer-to-SQLite acceptance path is covered by the runtime
-tests, but actual host stream wiring remains unverified.
+tests, but actual host stream wiring remains unverified. `adapt_command_event`
+now composes the issuer and parser into one adapter-facing operation.
