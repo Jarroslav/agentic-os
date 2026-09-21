@@ -21,6 +21,8 @@ import subprocess
 import tempfile
 import time
 
+from runtime.agentic_runtime.trace import command_receipt
+
 
 def _isolation_evidence(timeout_seconds: float = 3) -> dict:
     # Load the sibling explicitly: the harness is also imported by file path.
@@ -218,7 +220,8 @@ _INFRA_ERROR = re.compile(
 
 def _trace_metadata(stdout_path: Path) -> dict:
     metadata = {"observed_model": None, "usage": None, "failed": False,
-                "infrastructure_failed": False}
+                "infrastructure_failed": False, "command_receipts": [],
+                "invalid_command_receipts": 0}
     with stdout_path.open(encoding="utf-8", errors="replace") as stream:
         for line in stream:
             try:
@@ -228,6 +231,13 @@ def _trace_metadata(stdout_path: Path) -> dict:
             if not isinstance(event, dict):
                 continue
             kind = event.get("type")
+            if kind == "agentic.command.completed":
+                try:
+                    metadata["command_receipts"].append(command_receipt(event))
+                except (TypeError, ValueError):
+                    # A host trace is evidence input, not evidence itself. Keep
+                    # malformed adapter output visible without trusting it.
+                    metadata["invalid_command_receipts"] += 1
             # Read host metadata, never model-looking strings inside tool output.
             if kind in ("system", "session.started", "thread.started", "result", "turn.completed"):
                 if isinstance(event.get("model"), str):
@@ -310,7 +320,9 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
                 _cleanup(process)
                 result["exit_code"] = process.returncode
     metadata = _trace_metadata(Path(stdout_name))
-    result.update(observed_model=metadata["observed_model"], usage=metadata["usage"])
+    result.update(observed_model=metadata["observed_model"], usage=metadata["usage"],
+                  command_receipts=metadata["command_receipts"],
+                  invalid_command_receipts=metadata["invalid_command_receipts"])
     if result["status"] in ("completed", "product_failed"):
         if metadata["failed"]:
             result["status"] = "product_failed"
