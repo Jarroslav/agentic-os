@@ -107,14 +107,16 @@ Two isolated temporary-database probes against commit `43d2a58` confirmed:
   returns the coordinator mailbox using caller-supplied strings alone. This
   is not host authentication or proof of assignment ownership.
 
-Stage 5 remains partial: `host.preflight` reports executable versions, but the
-shared installer, settings merge, upgrade/uninstall journal, and enforcing host
-adapters are absent. Stage 6 remains partial: evidence storage exists, but
-source_revision is a run counter, receipts trust caller data, failed required
-commands are discarded, and completion does not consult evidence. The shipped
-SDLC engine still describes SQLite as future authority and uses legacy ledgers.
-Stage 7 remains incomplete, including full CI/provenance checks, independent
-final review, executable observer certification, and all scored live trials.
+Stage 5 remains partial: `host.preflight`, canonical dispatch/evidence issuers,
+and the strict JSONL adapter exist, but the shared installer, settings merge,
+upgrade/uninstall journal, and certified host launch controls are not complete.
+Stage 6 remains partial: managed workflow documentation and guarded QA paths
+now route state through SQLite, but remaining workflow call sites and external
+host wiring still require migration and certification. Signed command receipts,
+required-evidence checks, and host-approved completion are enforced by the
+runtime. Stage 7 remains incomplete, including full CI/provenance checks,
+independent final review, executable observer certification, and all scored
+live trials.
 
 The historical counts below are regression results, not a reliability grade or
 proof that the full stage requirements passed.
@@ -136,8 +138,10 @@ above; this is implementation evidence only and does not create a live score.
 Stage 4 (`7af1f7a`) added owned assignments, bounded typed peer messages,
 recipient reads, timeout/cycle recovery, and cancellation propagation. Stage 5
 (`606a428`) added host capability preflight with explicit unsupported controls.
-Stage 6 (`21433c6`) added revision-bound command evidence receipts. The current
-deterministic proof is 47 runtime tests, 80 evaluator tests, 109 T0 checks, 99
+Stage 6 (`21433c6`) added revision-bound command evidence receipts. Later
+checkpoints added signed host issuance, strict stream adaptation, managed
+workflow authority guards, and the public `task.result` contract. The current
+deterministic proof is 86 runtime tests, 90 evaluator tests, 109 T0 checks, 99
 matrix checks, and 204 MCP tests. Live trials remain 0/48 and no host grade is
 established.
 
@@ -158,6 +162,6 @@ This checkpoint authorizes contract implementation; it does not certify the
 live evaluator. Executable observers, host authentication/hooks under isolation,
 and all scored trials remain required later gates. macOS-specific kernel tests
 are explicitly skipped where sandbox-exec is unavailable; that is not live
-proof. The reopened candidate currently has 85 runtime tests, 89 evaluator
+proof. The reopened candidate currently has 86 runtime tests, 90 evaluator
 tests, 109 T0 checks, 99 matrix checks, and 204 MCP tests passing; these counts
 do not establish Stage 3 or Stage 4 acceptance.
