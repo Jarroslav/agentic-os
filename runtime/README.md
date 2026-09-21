@@ -90,7 +90,9 @@ and requires `AGENTIC_HOST_KEY`.
 `install.plan` computes journal-aware file actions without writes. `install.apply`
 recomputes that plan immediately before atomically applying create/managed-replace
 actions and updates `.agentic/agentic-os/install.json`; user-modified files are
-preserved. Skills remain responsible for interviews and stack-specific rendering.
+preserved. `install.remove` deletes only unchanged managed/generated files and
+marks modified files as user-owned. Skills remain responsible for interviews and
+stack-specific rendering.
 `legacy.export` regenerates `meta.json`, `events.jsonl`, and `decisions.jsonl`
 as compatibility views from SQLite; edits to those files are overwritten on
 the next export and never affect authoritative state.

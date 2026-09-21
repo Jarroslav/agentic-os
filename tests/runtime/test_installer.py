@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-from runtime.agentic_runtime.installer import apply_install, plan_install
+from runtime.agentic_runtime.installer import apply_install, plan_install, remove_install
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -51,6 +51,19 @@ class InstallerTests(unittest.TestCase):
             journal.write_text("not-json")
             with self.assertRaises(RuntimeError):
                 plan_install(target, {"config.json": "x"})
+
+    def test_remove_preserves_modified_files_and_removes_managed_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"managed.txt": "managed\n", "user.txt": "original\n"})
+            (target / "user.txt").write_text("user edit\n")
+            result = remove_install(target)
+            self.assertEqual(result["removed"], ["managed.txt"])
+            self.assertEqual(result["preserved"], ["user.txt"])
+            self.assertFalse((target / "managed.txt").exists())
+            self.assertEqual((target / "user.txt").read_text(), "user edit\n")
+            journal = json.loads((target / ".agentic/agentic-os/install.json").read_text())
+            self.assertEqual(journal["files"]["user.txt"]["owner"], "user")
 
     def test_public_install_operations_are_versioned(self):
         with tempfile.TemporaryDirectory() as temp:
