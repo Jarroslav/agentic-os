@@ -21,6 +21,12 @@ resolvable work-item reference is on file before that document is written.
 > Get the normalization right and stay inside the output contract — no phase artifacts leak from
 > here.
 
+When this intake belongs to a managed runtime run, lifecycle and work-item
+decisions remain in SQLite. Use the runtime authority reference at
+`../../references/runtime-authority.md`; `requirements.md` and work-item ledgers
+are human-facing artifacts or compatibility views and never advance the run by
+direct append alone; refresh compatibility ledgers with `legacy.export`.
+
 ## When to run
 
 - **Automatic**: `sdlc-engine` calls this at Phase 1. Human-in-the-loop runs enter through
