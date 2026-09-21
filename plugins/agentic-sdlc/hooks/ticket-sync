@@ -157,6 +157,12 @@ EOF
 RUN_DIR=$(dirname "$newest_meta")
 META_CONTENT=$(cat "$newest_meta" 2>/dev/null)
 
+# A managed run's external intent and receipt must be fenced and reconciled by
+# the runtime. This asynchronous compatibility hook has no safe authority to
+# execute or journal that action directly, so fail closed instead of appending
+# a legacy receipt that could be mistaken for authoritative state.
+[ ! -f ".agentic/state/runtime.sqlite3" ] || bail
+
 run_id=$(json_str_field "$META_CONTENT" "run_id")
 [ -n "$run_id" ] || run_id="unknown"
 
