@@ -53,7 +53,8 @@ user-decision operation; changing configuration must not silently reset counters
 Lifecycle requests include `run.start`, `run.status`, `run.resume`, `run.cancel`,
 `run.complete`, `task.dispatch`, `dispatch.start`, `dispatch.finish`,
 `dispatch.recover`, `decision.record`, `message.deliver`, `external.intent`,
-`external.reconcile`, `legacy.import`, `evidence.ingest`, and `run.export`.
+`external.reconcile`, `legacy.import`, `legacy.export`, `evidence.ingest`, and
+`run.export`.
 `legacy.import` records
 the source hash and receipt without replacing the original file. Mutating requests for an owned run carry
 the coordinator identity, current `lease_epoch`, and expected revision; stale ownership or revisions fail atomically.
@@ -76,6 +77,9 @@ evidence by inference.
 Host adapters can pass the same event to `agentic_runtime.trace.ingest_command_event`
 or the versioned `evidence.ingest` operation; parsing happens before the
 transaction and the store verifies the signed host claims.
+`legacy.export` regenerates `meta.json`, `events.jsonl`, and `decisions.jsonl`
+as compatibility views from SQLite; edits to those files are overwritten on
+the next export and never affect authoritative state.
 Setup uses `host.preflight` to report observed Python, SQLite, Git, and host
 launch capabilities. Passing `required_capabilities` makes the check fail closed
 when a workflow depends on an unavailable control; unsupported OS sandboxing is

@@ -124,6 +124,26 @@ class RuntimeStoreTests(unittest.TestCase):
     with self.assertRaises(RuntimeError):
         store.export_run("r")
 
+  def test_legacy_export_is_a_regenerable_view_and_preserves_user_files(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    root = __import__('pathlib').Path(tmp_path.name)
+    store = RuntimeStore(root)
+    run = store.create_run("r", branch="feature/r", worktree=self.worktree(root, "r", "feature/r"),
+                           metadata={"task_input": "view me"}, precondition={"ownership": "verified"})
+    store.transition("r", "running")
+    destination = root / "legacy-view"
+    destination.mkdir()
+    (destination / "requirements.md").write_text("owned", encoding="utf-8")
+    exported = store.export_legacy("r", destination)
+    self.assertEqual(exported, destination)
+    self.assertEqual(__import__('json').loads((destination / "meta.json").read_text())["status"], "running")
+    self.assertIn('"to":"running"', (destination / "events.jsonl").read_text())
+    self.assertEqual((destination / "requirements.md").read_text(), "owned")
+    (destination / "meta.json").write_text('{"status":"completed"}', encoding="utf-8")
+    store.export_legacy("r", destination)
+    self.assertEqual(__import__('json').loads((destination / "meta.json").read_text())["status"], "running")
+
   def test_ownership_requires_real_git_worktree_and_matching_branch(self):
     tmp_path = __import__('tempfile').TemporaryDirectory()
     self.addCleanup(tmp_path.cleanup)
