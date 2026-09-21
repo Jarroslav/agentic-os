@@ -123,7 +123,10 @@ reference during generation.
 | 5 | User review gate | user cancels |
 | 6 | Adapter sync | none (mark failed) |
 
-Append one audit event to `events.jsonl` after each phase completes.
+For an unmanaged legacy run, append one audit event to `events.jsonl` after each
+phase completes. For a managed SQLite run, record the phase decision/evidence
+through runtime operations and refresh the compatibility view with
+`legacy.export`; direct JSONL appends are forbidden.
 
 ### 0 — Pre-flight
 

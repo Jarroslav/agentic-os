@@ -131,6 +131,11 @@ layers over the mutable ones when they disagree.
 
 ## Reconciliation rules
 
+When `.agentic/state/runtime.sqlite3` exists, these legacy repair procedures do
+not apply: use the coordinator-fenced runtime transition/decision operations and
+then regenerate compatibility files with `legacy.export`. If the required
+operation is unavailable, block and report it rather than editing JSON state.
+
 ### Stale-"running" detection
 
 Reclassify a run's status from `running` to `interrupted` when **both** hold:

@@ -65,7 +65,9 @@ itself as a hook in `plugin.json`, so nothing exports by default.
 5. **Invoke the declared exporter**, piping the NDJSON batch to its stdin,
    under a timeout (120s, matching `ticket-sync`). Never let a nonzero exit or
    a hang block turn-end.
-6. **Append the outcome** to the run's `events.jsonl`:
+6. **Record the outcome** through the runtime event/evidence operation for a
+   managed run, then refresh compatibility files with `legacy.export`. For an
+   unmanaged legacy run, append the outcome to `events.jsonl`:
    - success → `telemetry.export_receipt`, `data` = the `CURSOR` object plus
      `{"line_count": <lines sent>}`.
    - failure/timeout → `telemetry.export_warning`, `data` =
