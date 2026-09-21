@@ -69,6 +69,9 @@ unanswered or cyclic exchange is escalated by `runtime.recover`.
 before completion. Host adapters use the signing helpers in `agentic_runtime.host`
 and keep the signing key outside repository state. Required failures are rejected
 at ingestion rather than retained as receipts.
+`agentic_runtime.trace.command_receipt` accepts only explicit
+`agentic.command.completed` adapter events, so model prose cannot become command
+evidence by inference.
 Setup uses `host.preflight` to report observed Python, SQLite, Git, and host
 launch capabilities. Passing `required_capabilities` makes the check fail closed
 when a workflow depends on an unavailable control; unsupported OS sandboxing is
