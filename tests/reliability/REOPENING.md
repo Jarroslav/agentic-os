@@ -243,3 +243,11 @@ cited evidence receipt. SQLite compares each claimed hash with the current
 authoritative evidence row before allowing completion, so an approval for an
 older artifact cannot satisfy the gate. Existing signed completion tests were
 updated; live host approval and artifact mutation trials remain unverified.
+
+## Round 23 — stale completion approvals are rejected
+
+An adversarial regression now submits a signed completion claim whose approval
+hash disagrees with the authoritative evidence hash. The claim is rejected
+before the run can complete, while the matching hash still succeeds. This
+proves the stale-approval defense in the executable runtime; host certification
+and live-trial evidence remain unverified.

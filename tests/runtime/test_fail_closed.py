@@ -239,6 +239,14 @@ class FailClosedTests(unittest.TestCase):
         evidence = self.store.record_evidence('r', 'verified', kind='host.command',
                                               source_revision=run['revision'], command='true', cwd='/',
                                               source_hash='source', exit_status=0, host_record=evidence_record)
+        stale_record = sign_dispatch({
+            'record_id': 'complete-stale', 'purpose': 'run.complete', 'run_id': 'r',
+            'identity': 'coordinator', 'gate_decision': 'approved',
+            'evidence_ids': [evidence['evidence_id']], 'artifact_hashes': {'verified': 'old-source'},
+            'issued_at': 99, 'expires_at': 200,
+        }, key)
+        with self.assertRaisesRegex(RuntimeError, 'evidence'):
+            self.store.complete_run('r', host_record=stale_record)
         record = sign_dispatch({
             'record_id': 'complete-1', 'purpose': 'run.complete', 'run_id': 'r',
             'identity': 'coordinator', 'gate_decision': 'approved',
