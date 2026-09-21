@@ -21,7 +21,7 @@ import subprocess
 import tempfile
 import time
 
-from runtime.agentic_runtime.trace import command_receipt
+from runtime.agentic_runtime.trace import command_receipt, ingest_command_event
 from runtime.agentic_runtime.adapter import adapt_json_lines
 
 
@@ -267,6 +267,27 @@ def adapt_trace_receipts(stdout_path: Path, key: bytes | str, *, identity: str,
         raise RuntimeError("host trace cannot be read") from exc
     return adapt_json_lines(lines, key, identity=identity,
                             issued_at=issued_at, expires_at=expires_at)
+
+
+def ingest_adapted_receipts(store, receipts: list[dict], *, expected_revision: int,
+                            lease_epoch: int, coordinator_id: str) -> dict:
+    """Persist signed host receipts through the same fenced evidence path.
+
+    The host runner retains raw output and adapts it separately so malformed or
+    incomplete traces stay visible. Callers must explicitly choose to ingest
+    the adapted receipts with the coordinator's current revision and lease.
+    """
+    if not isinstance(receipts, list):
+        raise ValueError("adapted receipts must be a list")
+    revision = expected_revision
+    accepted = []
+    for receipt in receipts:
+        ingest_command_event(store, receipt, expected_revision=revision,
+                             lease_epoch=lease_epoch,
+                             coordinator_id=coordinator_id)
+        revision = store.get_run(receipt["run_id"])["revision"]
+        accepted.append(receipt["evidence_id"])
+    return {"accepted": accepted, "revision": revision}
 
 
 def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],

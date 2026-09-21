@@ -168,3 +168,13 @@ rejected before launch. This wires the canonical adapter into the harness
 without inventing host credentials or claiming that Claude/Codex already emit
 the required events. Actual host startup, authentication, isolation, and
 stream certification remain unverified.
+
+## Round 14 — fenced trace ingestion
+
+The host harness now exposes a coordinator-fenced ingestion helper for signed
+adapted receipts. It advances the expected SQLite revision after each accepted
+receipt and refuses to bypass the runtime evidence path. The fake-host test
+covers launch, raw trace retention, signing, and authoritative evidence
+ingestion together. This proves the adapter seam only; actual Claude/Codex
+startup, authentication, isolation, and stream certification remain
+unverified.

@@ -13,6 +13,8 @@ import time
 import unittest
 from unittest import mock
 
+from runtime.agentic_runtime.store import RuntimeStore
+
 
 HOSTS_PATH = Path(__file__).with_name("hosts.py")
 if HOSTS_PATH.exists():
@@ -176,11 +178,30 @@ class HostTests(unittest.TestCase):
         # assignment-scoped key and identity after recording the dispatch.
         result = hosts.run_host("claude", self.fixture, "Do the task", [self.plugin], self.traces,
                                 evidence_key=b"key", evidence_identity="claude-assignment",
-                                evidence_issued_at=1, evidence_expires_at=2)
+                                evidence_issued_at=1, evidence_expires_at=2000000000)
         self.assertEqual(result["status"], "completed")
         self.assertEqual(result["adapted_receipts"][0]["host_record"]["identity"],
                          "claude-assignment")
         self.assertNotIn("evidence_adapter_error", result)
+
+    def test_adapted_receipts_can_be_ingested_with_coordinator_fencing(self):
+        event = {"type": "agentic.command.completed", "evidence_id": "e1", "run_id": "r",
+                 "source_revision": 2, "command": "pytest", "cwd": ".",
+                 "source_hash": "sha256:abc", "exit_status": 0}
+        self.fake("print(json.dumps(" + repr(event) + "))\n")
+        result = hosts.run_host("claude", self.fixture, "Do the task", [self.plugin], self.traces,
+                                evidence_key=b"key", evidence_identity="claude-assignment",
+                                evidence_issued_at=1, evidence_expires_at=2000000000)
+        store = RuntimeStore(self.root, host_key=b"key")
+        store.create_run("r")
+        run = store.acquire_lease("r", "coord")
+        run = store.transition("r", "running", expected_revision=run["revision"],
+                               lease_epoch=run["lease_epoch"], coordinator_id="coord")
+        accepted = hosts.ingest_adapted_receipts(
+            store, result["adapted_receipts"], expected_revision=run["revision"],
+            lease_epoch=run["lease_epoch"], coordinator_id="coord")
+        self.assertEqual(accepted["accepted"], ["e1"])
+        self.assertEqual(store.get_run("r")["revision"], accepted["revision"])
 
     def test_partial_host_evidence_context_fails_before_launch(self):
         marker = self.root / "task-started"
