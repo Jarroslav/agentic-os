@@ -84,8 +84,12 @@ class RuntimeStore:
                 # An empty metadata table is a valid interrupted-initialization
                 # checkpoint. Once a version is recorded, reject mismatches
                 # before changing the schema.
-                if existing_metadata:
+                expected_metadata = {"schema_version": SCHEMA_VERSION,
+                                     "registry_contract_version": load_registry()["contract_version"]}
+                if set(existing_metadata) >= set(expected_metadata):
                     self._validate_versions(db)
+                elif any(existing_metadata.get(key) != value for key, value in existing_metadata.items() if key in expected_metadata):
+                    raise RuntimeError("unsupported runtime schema or registry contract version")
             db.executescript(
                 """
                 CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
