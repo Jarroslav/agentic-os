@@ -259,3 +259,25 @@ class CLITests(unittest.TestCase):
                 expected_revision=run['revision'])
             self.assertEqual(code, 2)
             self.assertIn('host-issued sender identity', result['error']['message'])
+
+    def test_decision_record_accepts_registry_gate_and_rejects_unknown_gate(self):
+        from runtime.agentic_runtime.store import RuntimeStore
+        with tempfile.TemporaryDirectory() as root:
+            store = RuntimeStore(root)
+            store.create_run('decision-cli')
+            run = store.acquire_lease('decision-cli', 'coord')
+            run = store.transition('decision-cli', 'running', expected_revision=run['revision'],
+                                   lease_epoch=run['lease_epoch'], coordinator_id='coord')
+            code, accepted = self.request(
+                'decision.record', root=root, run_id='decision-cli',
+                decision_key='plan.approved', value={'decision': 'approve'},
+                coordinator_id='coord', lease_epoch=run['lease_epoch'],
+                expected_revision=run['revision'])
+            self.assertEqual(code, 0, accepted)
+            code, rejected = self.request(
+                'decision.record', root=root, run_id='decision-cli',
+                decision_key='invented.gate', value={'decision': 'approve'},
+                coordinator_id='coord', lease_epoch=run['lease_epoch'],
+                expected_revision=accepted['result']['revision'])
+            self.assertEqual(code, 2)
+            self.assertIn('unknown gate identifier', rejected['error']['message'])

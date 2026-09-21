@@ -82,7 +82,7 @@ class FailClosedTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'version'):
                 RuntimeStore(self.tmp.name)
             with self.assertRaisesRegex(RuntimeError, 'version'):
-                self.store.record_decision('r', 'x', True)
+                self.store.record_decision('r', 'plan.approved', True)
             self.assertEqual(before, self.store.db_path.read_bytes())
             with sqlite3.connect(self.store.db_path) as db:
                 db.execute('UPDATE metadata SET value=? WHERE key=?', (old, key))
