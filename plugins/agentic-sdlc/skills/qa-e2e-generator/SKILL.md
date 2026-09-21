@@ -33,6 +33,10 @@ is accepted only by the explicit `input.normalize` compatibility adapter with `l
 This preflight validates policy; durable lifecycle and host enforcement are separate
 capabilities. Never infer those capabilities from a successful policy response.
 
+For a managed run, follow [`references/runtime-authority.md`](../../references/runtime-authority.md):
+record phase decisions and execution evidence through runtime operations and use
+`legacy.export` for compatibility ledgers. Direct JSONL appends never advance a run.
+
 
 Orchestrator skill. One ticket id in, executable E2E automation out. You run an
 11-phase pipeline that alternates inline shell steps with seven isolated

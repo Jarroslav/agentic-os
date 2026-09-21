@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:30:59Z",
+ "attested_at": "2026-09-21T15:34:46Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "5dd986cb579c7d48c78cc2a83d0c10670c59dd84206709c907c7c58aea879bef",
+   "sha256": "9a7e3b2e5d2ec466fd0a201ef8cdd0a57cbbdbb7e2a6c1d0139569044dc51920",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2063,8 +2063,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/code-review/SKILL.md": {
-   "sha256": "5515a374276b7780084991753b38203282d0c19245f0054fee7d34f9be5b7bf5",
-   "line": 0.0278,
+   "sha256": "f622a6185db3ea92276f3863225fb2ba51e03dd6053e1a06ada530eeb39fbd69",
+   "line": 0.0267,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2117,9 +2117,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/gate-runner/SKILL.md": {
-   "sha256": "5338041b12d5d5646e58ff451ad950c470859b7b010489d1c3fd115531f384cf",
-   "line": 0.0563,
-   "shingle": 0.0071,
+   "sha256": "5dd482242264ab905da76ae2b40d3dcb67415bb33c2ad1686b9690e1fe0dee2e",
+   "line": 0.0548,
+   "shingle": 0.0069,
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/gate-runner/evals/evals.json": {
@@ -2189,9 +2189,9 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/SKILL.md": {
-   "sha256": "8c4e673227df12f64c3c6dc659afa9eeff4ece90ab3661a1ba926441954474ea",
-   "line": 0.0397,
-   "shingle": 0.0134,
+   "sha256": "bcb34960a6db00955a5d3fe909c6eea00ea8414ca6a350428cd60946812070b7",
+   "line": 0.039,
+   "shingle": 0.0132,
    "max_run": 4
   },
   "plugins/agentic-sdlc/skills/qa-case-generator/evals/evals.json": {
@@ -2261,7 +2261,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-e2e-generator/SKILL.md": {
-   "sha256": "2570054463f638f8736dfb98b92ff85c38dd870fefd880e610ee252491ed14d4",
+   "sha256": "2ef0a5aa770925708df6ef17dbdce42d2bb0a738afd1e03d1f9cf24771f4cb2e",
    "line": 0.0047,
    "shingle": 0.0,
    "max_run": 0
@@ -2333,8 +2333,8 @@
    "max_run": 3
   },
   "plugins/agentic-sdlc/skills/qa-scoping/SKILL.md": {
-   "sha256": "d32954f76cbc7c1f588a6cfc6881af94010bc10753821305d534d86ee3670a24",
-   "line": 0.0616,
+   "sha256": "c2c8aa603d6419c78b3b89b97e38701e917ffbf29a41f311ed1afba437705238",
+   "line": 0.0604,
    "shingle": 0.0,
    "max_run": 0
   },

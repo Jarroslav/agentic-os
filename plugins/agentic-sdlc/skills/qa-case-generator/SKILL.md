@@ -33,6 +33,10 @@ is accepted only by the explicit `input.normalize` compatibility adapter with `l
 This preflight validates policy; durable lifecycle and host enforcement are separate
 capabilities. Never infer those capabilities from a successful policy response.
 
+For a managed run, follow [`references/runtime-authority.md`](../../references/runtime-authority.md):
+record QA decisions and verification evidence through runtime operations and use
+`legacy.export` for compatibility ledgers. Direct JSONL appends never advance a run.
+
 
 Convert a single work-item's acceptance criteria into functional test-case
 documents (manual and API level), gated by an explicit human approval, with an
