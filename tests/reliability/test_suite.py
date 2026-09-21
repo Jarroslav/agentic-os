@@ -218,17 +218,24 @@ class SuiteTests(unittest.TestCase):
 
     @patch('suite.verify_freeze')
     @patch('hosts.inspect_host')
-    def test_host_preflight_does_not_consume_trial_budget(self, inspect, verify):
+    def test_host_preflight_records_unsupported_slot_but_drift_does_not_consume_it(self, inspect, verify):
         for changed in (False, True):
             with self.subTest(changed=changed), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 host = {'available': True, 'profile': {'model': 'fixture-model',
                         'isolation_supported': False, 'unsupported_channels': ['uncertified']}}
-                write_new(root / 'manifest.json', {'phase': 'baseline', 'hosts': {'claude': host}})
+                write_new(root / 'manifest.json', {'phase': 'baseline', 'revision': 'fixed',
+                                                   'hosts': {'claude': host}})
                 inspect.return_value = ({**host, 'version': 'changed'} if changed else host)
-                with self.assertRaises(ValueError):
-                    run_trial(root, trial_schedule('baseline')[0])
-                self.assertFalse((root / 'trials').exists())
+                if changed:
+                    with self.assertRaises(ValueError):
+                        run_trial(root, trial_schedule('baseline')[0])
+                    self.assertFalse((root / 'trials').exists())
+                else:
+                    result = run_trial(root, trial_schedule('baseline')[0])
+                    self.assertEqual(result['status'], 'infrastructure_failed')
+                    self.assertTrue((root / 'trials' / trial_schedule('baseline')[0]['id'] /
+                                     'execution-receipt.json').is_file())
 
 
 if __name__ == '__main__':

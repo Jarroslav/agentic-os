@@ -242,9 +242,9 @@ def run_trial(root: Path, slot: dict) -> dict:
     if current_host != manifest['hosts'][slot['host']]:
         raise ValueError('frozen host version or execution profile changed')
     profile = current_host.get('profile') or {}
-    if not current_host['available'] or not profile.get('isolation_supported'):
-        raise ValueError('host is not certified for trial execution: ' +
-                         '; '.join(profile.get('unsupported_channels', [current_host.get('error') or 'unavailable'])))
+    # Reserve after the frozen profile comparison, but before the certification
+    # gate. An unavailable or uncertified host is still an evaluation slot whose
+    # infrastructure failure must remain visible and unverified.
     directory = reserve_trial(root, slot)
     fixture = directory / 'fixture'
     metadata = prepare_fixture(fixture, slot['scenario'])
@@ -253,27 +253,43 @@ def run_trial(root: Path, slot: dict) -> dict:
     write_new(directory / 'before-oracle.json', before)
     prompt = prompt_for(slot['scenario'], root / 'source')
     (directory / 'prompt.txt').write_text(prompt)
-    plugins = [root / 'source' / 'plugins' / name for name in ('agentic-os', 'agentic-sdlc', 'agentic-qe')]
-    plugins.append(root / 'dependency')
-    checkpoint = fixture / '.evaluation-checkpoint' if slot['scenario'] == 'delegation_resume' else None
-    outcome = run_host(slot['host'], fixture, prompt, plugins, directory / 'trace',
-                       timeout_seconds=900, checkpoint_path=checkpoint, expected_profile=profile)
     interrupted = None
-    if outcome['status'] == 'interrupted':
-        interrupted = outcome
-        write_new(directory / 'checkpoint-boundary.json',
-                  capture_boundary(fixture, slot['scenario'], metadata))
-        remaining = max(0, 900 - outcome['elapsed_seconds'])
-        if remaining > 0:
-            resumed_prompt = (prompt + '\n\nThe evaluator interrupted the prior session at its durable '
-                              'checkpoint. Resume the existing workflow from that checkpoint, retaining '
-                              'its run identity and budgets. Do not recreate the evaluation checkpoint '
-                              'or restart completed work. Complete the remaining task and verification.')
-            outcome = run_host(slot['host'], fixture, resumed_prompt, plugins, directory / 'resume-trace',
-                               timeout_seconds=remaining, expected_profile=profile)
-            outcome['elapsed_seconds'] += interrupted['elapsed_seconds']
-        else:
-            outcome = {**outcome, 'status': 'timed_out'}
+    if not current_host['available'] or not profile.get('isolation_supported'):
+        trace_dir = directory / 'trace'
+        trace_dir.mkdir(parents=True, exist_ok=True)
+        stdout_path = trace_dir / 'stdout.jsonl'
+        stderr_path = trace_dir / 'stderr.log'
+        reasons = profile.get('unsupported_channels') or [current_host.get('error') or 'unavailable']
+        message = 'host is not certified for trial execution: ' + '; '.join(reasons)
+        stdout_path.write_text('', encoding='utf-8')
+        stderr_path.write_text(message + '\n', encoding='utf-8')
+        stdout_path.chmod(0o600)
+        stderr_path.chmod(0o600)
+        outcome = {'host': slot['host'], 'status': 'infrastructure_failed',
+                   'exit_code': None, 'elapsed_seconds': 0, 'observed_model': None,
+                   'usage': None, 'raw_stdout_path': str(stdout_path),
+                   'raw_stderr_path': str(stderr_path), 'error': message}
+    else:
+        plugins = [root / 'source' / 'plugins' / name for name in ('agentic-os', 'agentic-sdlc', 'agentic-qe')]
+        plugins.append(root / 'dependency')
+        checkpoint = fixture / '.evaluation-checkpoint' if slot['scenario'] == 'delegation_resume' else None
+        outcome = run_host(slot['host'], fixture, prompt, plugins, directory / 'trace',
+                           timeout_seconds=900, checkpoint_path=checkpoint, expected_profile=profile)
+        if outcome['status'] == 'interrupted':
+            interrupted = outcome
+            write_new(directory / 'checkpoint-boundary.json',
+                      capture_boundary(fixture, slot['scenario'], metadata))
+            remaining = max(0, 900 - outcome['elapsed_seconds'])
+            if remaining > 0:
+                resumed_prompt = (prompt + '\n\nThe evaluator interrupted the prior session at its durable '
+                                  'checkpoint. Resume the existing workflow from that checkpoint, retaining '
+                                  'its run identity and budgets. Do not recreate the evaluation checkpoint '
+                                  'or restart completed work. Complete the remaining task and verification.')
+                outcome = run_host(slot['host'], fixture, resumed_prompt, plugins, directory / 'resume-trace',
+                                   timeout_seconds=remaining, expected_profile=profile)
+                outcome['elapsed_seconds'] += interrupted['elapsed_seconds']
+            else:
+                outcome = {**outcome, 'status': 'timed_out'}
     observed = [outcome] + ([interrupted] if interrupted else [])
     if any(item.get('observed_model') != profile['model'] for item in observed):
         outcome['status'] = 'infrastructure_failed'
@@ -322,7 +338,8 @@ def validate_execution(directory: Path, trial: dict, manifest: dict, slot: dict)
             or receipt.get('profile') != profile
             or receipt.get('manifest_sha256') != trial['manifest_sha256']
             or receipt.get('status') != trial.get('status')
-            or not profile.get('isolation_supported') or not profile.get('model')):
+            or (trial.get('status') != 'infrastructure_failed' and
+                (not profile.get('isolation_supported') or not profile.get('model')))):
         raise ValueError('execution receipt differs from frozen certified profile')
     segments = receipt.get('segments', [])
     if len(segments) not in (1, 2) or (len(segments) == 2 and slot['scenario'] != 'delegation_resume'):
