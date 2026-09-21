@@ -97,7 +97,7 @@ caller-supplied JSON.
 Run exports now include assignments, peer messages, evidence receipts, and
 dispatch leases alongside transitions, decisions, and external actions. The
 export remains a regenerable, revision-labelled view and does not become an
-authority for mutations. Runtime proof remains 75 tests.
+authority for mutations. Runtime proof remains 76 tests.
 
 ## Round 6 — explicit trace receipts
 
@@ -105,7 +105,7 @@ The shared runtime now exposes a strict command-trace parser. It accepts only
 an explicit `agentic.command.completed` event containing the run revision,
 command, working directory, source hash, exit status, and host record. Arbitrary
 assistant prose or malformed events are rejected. Deterministic runtime proof
-is now 75 tests; wiring this adapter to real Claude/Codex stream events remains
+is now 76 tests; wiring this adapter to real Claude/Codex stream events remains
 live host integration work.
 
 ## Round 7 — host trace receipt visibility
