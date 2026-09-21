@@ -144,3 +144,11 @@ projects them into legacy event views. The QA event helper uses that operation
 when run ID, coordinator identity, lease epoch, and expected revision are
 provided; missing context still fails closed. This gives the QA phase ledger a
 real migration path instead of requiring direct JSONL mutation.
+
+## Round 12 — canonical host evidence issuer
+
+Host adapters now have a canonical issuer that validates an explicit command
+completion event, signs only its command/evidence fields, and produces the
+short-lived `evidence.record` claim accepted by SQLite. Prose and incomplete
+events cannot be signed. Real Claude/Codex stream wiring remains external host
+integration work.

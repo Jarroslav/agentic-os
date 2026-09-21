@@ -1,6 +1,6 @@
 import unittest
 
-from runtime.agentic_runtime.trace import command_receipt
+from runtime.agentic_runtime.trace import command_claims, command_receipt
 
 
 class TraceTests(unittest.TestCase):
@@ -23,6 +23,11 @@ class TraceTests(unittest.TestCase):
             event.pop(field)
             with self.subTest(field=field), self.assertRaises(ValueError):
                 command_receipt(event)
+
+    def test_claims_can_be_validated_before_host_signature_is_attached(self):
+        event = self.event()
+        event.pop("host_record")
+        self.assertEqual(command_claims(event)["source_revision"], 4)
 
 
 if __name__ == "__main__":

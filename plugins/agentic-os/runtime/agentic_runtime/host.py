@@ -76,6 +76,30 @@ def sign_dispatch(record: Mapping[str, Any], key: bytes | str) -> dict[str, Any]
     return result
 
 
+def issue_evidence_record(event: Mapping[str, Any], key: bytes | str, *,
+                          identity: str, issued_at: float, expires_at: float) -> dict[str, Any]:
+    """Attach a short-lived host signature to an explicit command event.
+
+    The host signs only fields parsed from the explicit adapter event. It never
+    derives a command, result, revision, or source hash from model text.
+    """
+    from .trace import command_claims
+    claims = command_claims(event)
+    if not isinstance(identity, str) or not identity:
+        raise ValueError("host identity is required")
+    if not isinstance(issued_at, (int, float)) or not isinstance(expires_at, (int, float)) or expires_at <= issued_at:
+        raise ValueError("host evidence lifetime is invalid")
+    record = {
+        "record_id": claims["evidence_id"], "purpose": "evidence.record",
+        "run_id": claims["run_id"], "identity": identity,
+        "evidence_id": claims["evidence_id"],
+        "source_revision": claims["source_revision"],
+        "source_hash": claims["source_hash"], "exit_status": claims["exit_status"],
+        "issued_at": issued_at, "expires_at": expires_at,
+    }
+    return sign_dispatch(record, key)
+
+
 def verify_dispatch(record: Mapping[str, Any], key: bytes | str, *, purpose: str,
                     now: float | None = None) -> dict[str, Any]:
     """Verify a short-lived host dispatch record and return its claims."""

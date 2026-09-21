@@ -9,12 +9,12 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 
-def command_receipt(event: Mapping[str, Any]) -> dict[str, Any]:
-    """Normalize one explicit ``agentic.command.completed`` adapter event."""
+def command_claims(event: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate explicit command fields before any host claim is attached."""
     if not isinstance(event, Mapping) or event.get("type") != "agentic.command.completed":
         raise ValueError("explicit command completion event is required")
     required = ("evidence_id", "run_id", "source_revision", "command", "cwd",
-                "source_hash", "exit_status", "host_record")
+                "source_hash", "exit_status")
     if any(field not in event for field in required):
         raise ValueError("command completion event is missing required fields")
     if not all(isinstance(event[field], str) and event[field] for field in
@@ -24,8 +24,6 @@ def command_receipt(event: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("command completion source_revision is invalid")
     if type(event["exit_status"]) is not int:
         raise ValueError("command completion exit_status is invalid")
-    if not isinstance(event["host_record"], Mapping):
-        raise ValueError("command completion host_record is required")
     return {
         "evidence_id": event["evidence_id"],
         "run_id": event["run_id"],
@@ -34,8 +32,16 @@ def command_receipt(event: Mapping[str, Any]) -> dict[str, Any]:
         "cwd": event["cwd"],
         "source_hash": event["source_hash"],
         "exit_status": event["exit_status"],
-        "host_record": dict(event["host_record"]),
     }
+
+
+def command_receipt(event: Mapping[str, Any]) -> dict[str, Any]:
+    """Normalize one explicit ``agentic.command.completed`` adapter event."""
+    receipt = command_claims(event)
+    if not isinstance(event.get("host_record"), Mapping):
+        raise ValueError("command completion host_record is required")
+    receipt["host_record"] = dict(event["host_record"])
+    return receipt
 
 
 def ingest_command_event(store: Any, event: Mapping[str, Any], *,
