@@ -29,6 +29,16 @@ class CLITests(unittest.TestCase):
         self.assertIn('enforcement', result['result'])
         self.assertEqual(result['result']['enforcement']['os_sandbox'], 'unsupported')
 
+    def test_host_preflight_blocks_unavailable_required_controls(self):
+        code, result = self.request('host.preflight', required_capabilities=['os_sandbox'])
+        self.assertEqual(code, 2)
+        self.assertIn('required host capabilities unavailable', result['error']['message'])
+
+    def test_host_preflight_accepts_enforced_runtime_controls(self):
+        code, result = self.request('host.preflight', required_capabilities=['sqlite_protocol', 'dispatch_leases'])
+        self.assertEqual(code, 0, result)
+        self.assertTrue(result['result']['ready'])
+
     def test_unknown_request_field_is_rejected(self):
         code, result = self.request('registry.get', ignored=True)
         self.assertEqual(code, 2)

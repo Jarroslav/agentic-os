@@ -10,6 +10,7 @@ import base64
 import hashlib
 import hmac
 import json
+import os
 import time
 from typing import Any, Mapping
 from pathlib import Path
@@ -37,11 +38,27 @@ def preflight(root: str | Path) -> dict:
         "repository": {"root": str(root.resolve()), "git_worktree": (root / ".git").exists()},
         "enforcement": {
             "sqlite_protocol": "enforced",
-            "host_identity": "reported_only",
+            "host_identity": "configured" if os.environ.get("AGENTIC_HOST_KEY") else "unsupported",
+            "completion_gate": "configured" if os.environ.get("AGENTIC_HOST_KEY") else "unsupported",
+            "dispatch_leases": "enforced",
             "os_sandbox": "unsupported",
             "external_effects": "adapter_required",
         },
     }
+
+
+def require_capabilities(report: Mapping[str, Any], required: list[str]) -> dict:
+    """Fail closed when a workflow declares controls that preflight cannot prove."""
+    if not isinstance(required, list) or any(not isinstance(item, str) or not item for item in required):
+        raise ValueError("required capabilities must be a list of names")
+    enforcement = report.get("enforcement", {})
+    unsupported = [item for item in required if enforcement.get(item) != "enforced" and enforcement.get(item) != "configured"]
+    if unsupported:
+        raise RuntimeError("required host capabilities unavailable: " + ", ".join(sorted(unsupported)))
+    result = dict(report)
+    result["required_capabilities"] = list(required)
+    result["ready"] = True
+    return result
 
 
 def _canonical(record: Mapping[str, Any]) -> bytes:
