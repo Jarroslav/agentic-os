@@ -270,7 +270,8 @@ class CLITests(unittest.TestCase):
                                    lease_epoch=run['lease_epoch'], coordinator_id='coord')
             code, accepted = self.request(
                 'decision.record', root=root, run_id='decision-cli',
-                decision_key='plan.approved', value={'decision': 'approve'},
+                decision_key='plan.approved', value={'decision': 'approve',
+                                                    'artifact_hashes': {'plan': 'sha256:plan'}},
                 coordinator_id='coord', lease_epoch=run['lease_epoch'],
                 expected_revision=run['revision'])
             self.assertEqual(code, 0, accepted)
@@ -288,3 +289,10 @@ class CLITests(unittest.TestCase):
                 expected_revision=accepted['result']['revision'])
             self.assertEqual(code, 2)
             self.assertIn('allowed decision', malformed['error']['message'])
+            code, missing_hashes = self.request(
+                'decision.record', root=root, run_id='decision-cli',
+                decision_key='plan.approved', value={'decision': 'approve'},
+                coordinator_id='coord', lease_epoch=run['lease_epoch'],
+                expected_revision=accepted['result']['revision'])
+            self.assertEqual(code, 2)
+            self.assertIn('artifact hashes', missing_hashes['error']['message'])
