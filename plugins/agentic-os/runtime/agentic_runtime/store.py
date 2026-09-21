@@ -150,7 +150,7 @@ class RuntimeStore:
                     run_id TEXT NOT NULL, evidence_id TEXT NOT NULL, kind TEXT NOT NULL,
                     source_revision INTEGER NOT NULL, command TEXT NOT NULL, cwd TEXT NOT NULL,
                     source_hash TEXT NOT NULL, exit_status INTEGER NOT NULL, required INTEGER NOT NULL,
-                    created_at REAL NOT NULL, PRIMARY KEY(run_id, evidence_id), FOREIGN KEY(run_id) REFERENCES runs(run_id)
+                    created_at REAL NOT NULL, host_record_id TEXT, PRIMARY KEY(run_id, evidence_id), FOREIGN KEY(run_id) REFERENCES runs(run_id)
                 );
                 CREATE TABLE IF NOT EXISTS host_dispatches (
                     record_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, purpose TEXT NOT NULL,
@@ -166,6 +166,9 @@ class RuntimeStore:
                 );
                 """
             )
+            evidence_columns = {row[1] for row in db.execute("PRAGMA table_info(evidence)")}
+            if "host_record_id" not in evidence_columns:
+                db.execute("ALTER TABLE evidence ADD COLUMN host_record_id TEXT")
             db.execute("INSERT OR IGNORE INTO metadata(key,value) VALUES('schema_version',?)", (SCHEMA_VERSION,))
             db.execute("INSERT OR IGNORE INTO metadata(key,value) VALUES('registry_contract_version',?)", (load_registry()["contract_version"],))
             self._validate_versions(db)
@@ -337,7 +340,7 @@ class RuntimeStore:
             self._accept_host_claim(db, claims)
             placeholders = ",".join("?" for _ in evidence_ids)
             evidence = db.execute(f"SELECT * FROM evidence WHERE run_id=? AND evidence_id IN ({placeholders})", (run_id, *evidence_ids)).fetchall()
-            if len(evidence) != len(set(evidence_ids)) or any(item["required"] and item["exit_status"] != 0 for item in evidence):
+            if len(evidence) != len(set(evidence_ids)) or any(item["required"] and item["exit_status"] != 0 for item in evidence) or any(item["host_record_id"] is None for item in evidence):
                 raise RuntimeError("required completion evidence is missing or failed")
             unfinished = db.execute("SELECT 1 FROM assignments WHERE run_id=? AND state NOT IN ('completed','failed','cancelled')", (run_id,)).fetchone()
             if unfinished:
@@ -859,7 +862,8 @@ class RuntimeStore:
     def record_evidence(self, run_id: str, evidence_id: str, *, kind: str, source_revision: int,
                         command: str, cwd: str, source_hash: str, exit_status: int,
                         required: bool = True, expected_revision: int | None = None,
-                        lease_epoch: int | None = None, coordinator_id: str | None = None) -> dict[str, Any]:
+                        lease_epoch: int | None = None, coordinator_id: str | None = None,
+                        host_record: Mapping[str, Any] | None = None) -> dict[str, Any]:
         validate_identifier(evidence_id)
         if not kind or not command or not cwd or not source_hash or type(exit_status) is not int:
             raise ValueError("evidence receipt fields are invalid")
@@ -869,8 +873,15 @@ class RuntimeStore:
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             if source_revision != run["revision"]: raise RuntimeError("evidence is stale for current revision")
             if exit_status != 0 and required: raise RuntimeError("required verification failed")
+            host_record_id = None
+            if host_record is not None:
+                claims = self._host_claims(host_record, purpose="evidence.record", run_id=run_id)
+                if claims.get("evidence_id") != evidence_id or claims.get("source_revision") != source_revision or claims.get("source_hash") != source_hash or claims.get("exit_status") != exit_status:
+                    raise RuntimeError("host evidence record does not match receipt")
+                self._accept_host_claim(db, claims)
+                host_record_id = claims["record_id"]
             now = self.clock()
-            db.execute("INSERT INTO evidence VALUES(?,?,?,?,?,?,?,?,?,?)", (run_id, evidence_id, kind, source_revision, command, cwd, source_hash, exit_status, int(bool(required)), now))
+            db.execute("INSERT INTO evidence(run_id,evidence_id,kind,source_revision,command,cwd,source_hash,exit_status,required,created_at,host_record_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)", (run_id, evidence_id, kind, source_revision, command, cwd, source_hash, exit_status, int(bool(required)), now, host_record_id))
             db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
             self._commit(db)
             return dict(db.execute("SELECT * FROM evidence WHERE run_id=? AND evidence_id=?", (run_id, evidence_id)).fetchone())
