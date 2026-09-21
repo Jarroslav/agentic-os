@@ -6,7 +6,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 SKILLS = (
     "sdlc-engine", "sdlc-runs", "sdlc-auto", "gate-arbiter",
     "qa-case-generator", "qa-e2e-generator", "qa-scoping",
-    "code-review", "gate-runner",
+    "code-review", "gate-runner", "story-intake", "acceptance-check",
+    "test-heal",
 )
 
 
