@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:56:12Z",
+ "attested_at": "2026-09-21T15:57:44Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3053,13 +3053,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "ac0aaaee1a9c3e69f6ca991ff2afd6060c626062ef619f4e16a64921c2cd369d",
+   "sha256": "8076eeda1d1f62b7f920d14b934e4f1be95b0395b4efc0b3ab2dcf70b882d2f5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "0ddf9965ebbbe3659418e15ab9714c1f322090b8a67fd23367e0d5d224fbe526",
+   "sha256": "e3a148e7bb4ae683d73aa2a26583d60d1f004e86e295f171047913827b5fa964",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3217,6 +3217,12 @@
   "tests/runtime/test_fail_closed.py": {
    "sha256": "dcab68b9b9e034944430553b4b090d51fbce91d3bd939aef446d039f4be6e2b0",
    "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/runtime/test_host_issuer.py": {
+   "sha256": "280f2612f87d9f932d8e9ddb87df148bde89fab0c4ae43f32308c46b920d92e7",
+   "line": 0.0323,
    "shingle": 0.0,
    "max_run": 0
   },
