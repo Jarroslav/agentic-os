@@ -212,6 +212,14 @@ rejected before the coordinator revision changes. Public runtime tests cover
 both accepted and malformed outcomes; actual human approval interactions
 remain unverified.
 
+## Round 21 — risk-aware decision source enforcement
+
+Gate decisions now require an explicit source (`hitl`, `deterministic`,
+`fast-path`, or `subagent`). An approval with non-empty risk flags is rejected
+unless its source is `hitl`, so a risk-plus-fast-path payload cannot become a
+successful gate without human escalation. Public runtime tests cover the
+rejection path; live approval interaction remains unverified.
+
 ## Round 20 — approved-decision artifact binding
 
 Approved `decision.record` values now require a non-empty `artifact_hashes`
