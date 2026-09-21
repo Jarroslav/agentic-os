@@ -53,3 +53,5 @@ unknown dependencies and cycles; `assignment.transition` requires the current
 assignment revision. `message.send` accepts only registered typed messages and
 rejects stale assignments, duplicate content changes, unauthorized senders, and
 payloads over the registry limit.
+`evidence.record` stores command receipts bound to the current run revision and
+rejects stale or failed required checks.

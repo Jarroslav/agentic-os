@@ -8,6 +8,9 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ### Added
 
+- Added revision-bound command evidence receipts; failed required checks cannot
+  be recorded as successful verification.
+
 - Added durable assignment ownership and typed peer-message envelopes with
   correlation, stale-revision, duplicate, sender, and payload-limit checks.
 

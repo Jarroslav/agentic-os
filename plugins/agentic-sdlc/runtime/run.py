@@ -48,6 +48,7 @@ def main():
                   'runtime.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'message.receive': ({'api_version', 'operation', 'run_id', 'recipient', 'reader_id'}, {'limit', 'after_message_id', 'root'}),
                   'host.preflight': ({'api_version', 'operation'}, {'root'}),
+                  'evidence.record': ({'api_version', 'operation', 'run_id', 'evidence_id', 'kind', 'source_revision', 'command', 'cwd', 'source_hash', 'exit_status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'required', 'root'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
         if not isinstance(operation, str) or operation not in fields:
@@ -113,6 +114,8 @@ def main():
                 value = store.recover_timeouts(request['run_id'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'message.receive':
                 value = store.receive_peer_messages(request['run_id'], request['recipient'], reader_id=request['reader_id'], limit=request.get('limit', 8), after_message_id=request.get('after_message_id'))
+            elif operation == 'evidence.record':
+                value = store.record_evidence(request['run_id'], request['evidence_id'], kind=request['kind'], source_revision=request['source_revision'], command=request['command'], cwd=request['cwd'], source_hash=request['source_hash'], exit_status=request['exit_status'], required=request.get('required', True), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'legacy.import':
                 value = store.import_legacy(request['run_id'], request['source'])
             else:

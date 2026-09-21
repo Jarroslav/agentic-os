@@ -118,6 +118,12 @@ class RuntimeStore:
                     deadline REAL NOT NULL, payload_json TEXT NOT NULL, created_at REAL NOT NULL,
                     FOREIGN KEY(run_id, assignment_id) REFERENCES assignments(run_id, assignment_id)
                 );
+                CREATE TABLE IF NOT EXISTS evidence (
+                    run_id TEXT NOT NULL, evidence_id TEXT NOT NULL, kind TEXT NOT NULL,
+                    source_revision INTEGER NOT NULL, command TEXT NOT NULL, cwd TEXT NOT NULL,
+                    source_hash TEXT NOT NULL, exit_status INTEGER NOT NULL, required INTEGER NOT NULL,
+                    created_at REAL NOT NULL, PRIMARY KEY(run_id, evidence_id), FOREIGN KEY(run_id) REFERENCES runs(run_id)
+                );
                 """
             )
             db.execute("INSERT OR IGNORE INTO metadata(key,value) VALUES('schema_version',?)", (SCHEMA_VERSION,))
@@ -592,3 +598,21 @@ class RuntimeStore:
             for row in rows:
                 item = dict(row); item["payload"] = json.loads(item.pop("payload_json")); result.append(item)
             return result
+
+    def record_evidence(self, run_id: str, evidence_id: str, *, kind: str, source_revision: int,
+                        command: str, cwd: str, source_hash: str, exit_status: int,
+                        required: bool = True, expected_revision: int | None = None,
+                        lease_epoch: int | None = None, coordinator_id: str | None = None) -> dict[str, Any]:
+        validate_identifier(evidence_id)
+        if not kind or not command or not cwd or not source_hash or type(exit_status) is not int:
+            raise ValueError("evidence receipt fields are invalid")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            if source_revision != run["revision"]: raise RuntimeError("evidence is stale for current revision")
+            if exit_status != 0 and required: raise RuntimeError("required verification failed")
+            now = self.clock()
+            db.execute("INSERT INTO evidence VALUES(?,?,?,?,?,?,?,?,?,?)", (run_id, evidence_id, kind, source_revision, command, cwd, source_hash, exit_status, int(bool(required)), now))
+            db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
+            self._commit(db)
+            return dict(db.execute("SELECT * FROM evidence WHERE run_id=? AND evidence_id=?", (run_id, evidence_id)).fetchone())
