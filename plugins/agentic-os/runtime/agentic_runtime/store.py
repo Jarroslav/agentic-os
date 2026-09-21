@@ -326,6 +326,7 @@ class RuntimeStore:
             db.execute("INSERT INTO transitions VALUES(?,?,?,?,?,?,?)", (run_id, seq, current["state"], target, revision, now, reason))
             if target == "cancelled":
                 db.execute("UPDATE assignments SET state='cancelled',revision=revision+1,updated_at=? WHERE run_id=? AND state NOT IN ('completed','failed','cancelled')", (now, run_id))
+                db.execute("UPDATE dispatch_leases SET finished_at=?,outcome='cancelled' WHERE run_id=? AND finished_at IS NULL", (now, run_id))
             self._commit(db)
             return self._run(db, run_id)
 
