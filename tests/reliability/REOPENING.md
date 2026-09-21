@@ -211,3 +211,11 @@ Gate persistence now requires a structured value whose `decision` is one of
 rejected before the coordinator revision changes. Public runtime tests cover
 both accepted and malformed outcomes; actual human approval interactions
 remain unverified.
+
+## Round 19 — completion artifact-hash binding
+
+Trusted completion claims now require an `artifact_hashes` map covering every
+cited evidence receipt. SQLite compares each claimed hash with the current
+authoritative evidence row before allowing completion, so an approval for an
+older artifact cannot satisfy the gate. Existing signed completion tests were
+updated; live host approval and artifact mutation trials remain unverified.
