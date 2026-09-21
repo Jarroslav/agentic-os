@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-from runtime.agentic_runtime.installer import apply_install, plan_install, remove_install
+from runtime.agentic_runtime.installer import apply_install, merge_settings_file, plan_install, remove_install
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -65,6 +65,38 @@ class InstallerTests(unittest.TestCase):
             journal = json.loads((target / ".agentic/agentic-os/install.json").read_text())
             self.assertEqual(journal["files"]["user.txt"]["owner"], "user")
 
+    def test_settings_merge_preserves_user_values_and_journals_result(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            settings = target / ".claude/settings.json"
+            settings.parent.mkdir(parents=True)
+            settings.write_text(json.dumps({
+                "permissions": {"allow": ["Read"], "mode": "user"},
+                "custom": True,
+            }))
+            result = merge_settings_file(target, ".claude/settings.json", {
+                "permissions": {"allow": ["Read", "Write"], "deny": ["Bash"], "mode": "managed"},
+                "hooks": {"Stop": ["agentic-stop"]},
+            }, agentic_os_version="0.2.0")
+            merged = json.loads(settings.read_text())
+            self.assertEqual(merged["permissions"]["allow"], ["Read", "Write"])
+            self.assertEqual(merged["permissions"]["mode"], "user")
+            self.assertEqual(merged["custom"], True)
+            self.assertEqual(merged["hooks"]["Stop"], ["agentic-stop"])
+            journal = json.loads((target / ".agentic/agentic-os/install.json").read_text())
+            self.assertEqual(journal["files"][".claude/settings.json"]["template"], "settings-merge")
+            self.assertTrue(result["changed"])
+
+    def test_settings_merge_rejects_invalid_existing_json_without_writing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            path = target / ".claude/settings.json"
+            path.parent.mkdir(parents=True)
+            path.write_text("not-json")
+            with self.assertRaisesRegex(RuntimeError, "invalid JSON"):
+                merge_settings_file(target, ".claude/settings.json", {"hooks": {}})
+            self.assertEqual(path.read_text(), "not-json")
+
     def test_public_install_operations_are_versioned(self):
         with tempfile.TemporaryDirectory() as temp:
             payload = {
@@ -78,6 +110,21 @@ class InstallerTests(unittest.TestCase):
             result = json.loads(response.stdout)
             self.assertTrue(result["ok"])
             self.assertEqual(result["result"]["actions"][0]["action"], "create")
+
+    def test_public_settings_merge_operation_is_versioned(self):
+        with tempfile.TemporaryDirectory() as temp:
+            payload = {
+                "api_version": "1.0.0", "operation": "install.merge-settings",
+                "target": temp, "path": ".claude/settings.json",
+                "fragment": {"hooks": {"Stop": ["agentic-stop"]}},
+            }
+            response = subprocess.run([sys.executable, str(ROOT / "runtime/run.py")],
+                                      input=json.dumps(payload), text=True,
+                                      capture_output=True)
+            self.assertEqual(response.returncode, 0, response.stderr)
+            result = json.loads(response.stdout)
+            self.assertTrue(result["ok"])
+            self.assertTrue((pathlib.Path(temp) / ".claude/settings.json").is_file())
 
 
 if __name__ == "__main__":

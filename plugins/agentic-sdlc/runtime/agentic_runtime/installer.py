@@ -12,10 +12,52 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from copy import deepcopy
 from typing import Any, Mapping
 
 
 JOURNAL_RELATIVE = Path(".agentic/agentic-os/install.json")
+
+
+def merge_settings(base: Mapping[str, Any], fragment: Mapping[str, Any]) -> dict[str, Any]:
+    """Deep-merge a settings fragment without discarding user values.
+
+    Objects merge recursively, arrays append only missing values, and scalar
+    values already present in the user's settings win. Inputs are copied and
+    validated so a caller cannot observe a partially mutated settings object.
+    """
+    if not isinstance(base, Mapping) or not isinstance(fragment, Mapping):
+        raise ValueError("settings base and fragment must be objects")
+    result = deepcopy(dict(base))
+
+    def merge_object(destination: dict[str, Any], source: Mapping[str, Any]) -> None:
+        for key, value in source.items():
+            if not isinstance(key, str) or not key:
+                raise ValueError("settings keys must be non-empty strings")
+            if isinstance(value, Mapping):
+                existing = destination.get(key)
+                if existing is None:
+                    existing = {}
+                    destination[key] = existing
+                if not isinstance(existing, dict):
+                    raise ValueError("cannot merge an object into a non-object setting: " + key)
+                merge_object(existing, value)
+            elif isinstance(value, list):
+                existing = destination.get(key)
+                if existing is None:
+                    existing = []
+                    destination[key] = existing
+                if not isinstance(existing, list):
+                    raise ValueError("cannot merge an array into a non-array setting: " + key)
+                for item in value:
+                    copied = deepcopy(item)
+                    if copied not in existing:
+                        existing.append(copied)
+            elif key not in destination:
+                destination[key] = deepcopy(value)
+
+    merge_object(result, fragment)
+    return result
 
 
 def _target(target: str | os.PathLike[str]) -> Path:
@@ -86,6 +128,62 @@ def _journal(target: Path) -> tuple[dict[str, Any], Path]:
     if value.get("files") is not None and not isinstance(value["files"], dict):
         raise RuntimeError("install journal files must be an object")
     return value, path
+
+
+def _atomic_write(path: Path, content: str, *, prefix: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=prefix, dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def merge_settings_file(target: str | os.PathLike[str], relative_path: str,
+                        fragment: Mapping[str, Any], *,
+                        agentic_os_version: str | None = None) -> dict[str, Any]:
+    """Merge a JSON settings fragment and journal the resulting managed file."""
+    root = _target(target)
+    relative = _relative_path(relative_path)
+    destination = root / relative
+    before_hash = _sha(destination)
+    if destination.exists():
+        try:
+            current = json.loads(destination.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise RuntimeError("settings file is unreadable or invalid JSON") from exc
+        if not isinstance(current, dict):
+            raise RuntimeError("settings file must contain a JSON object")
+    else:
+        current = {}
+    merged = merge_settings(current, fragment)
+    content = json.dumps(merged, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    desired_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    changed = before_hash != desired_hash
+    if changed:
+        _atomic_write(destination, content, prefix=f".{destination.name}.")
+
+    journal, journal_path = _journal(root)
+    files = dict(journal.get("files", {}))
+    files[relative] = {"sha256": desired_hash, "template": "settings-merge",
+                       "owner": "managed", "origin": "installer"}
+    updated = dict(journal)
+    if agentic_os_version is not None:
+        if not isinstance(agentic_os_version, str) or not agentic_os_version:
+            raise ValueError("agentic_os_version must be a non-empty string")
+        updated["agentic_os_version"] = agentic_os_version
+    updated["phase"] = updated.get("phase", "scaffold")
+    updated["files"] = dict(sorted(files.items()))
+    _atomic_write(journal_path, json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                  prefix=".settings-journal.")
+    return {"schema": 1, "target": str(root), "path": relative,
+            "journal": str(journal_path), "changed": changed,
+            "before_sha256": before_hash, "after_sha256": desired_hash}
 
 
 def plan_install(target: str | os.PathLike[str], files: Mapping[str, Any]) -> dict[str, Any]:

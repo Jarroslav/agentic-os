@@ -10,7 +10,7 @@ from agentic_runtime.store import RuntimeStore
 from agentic_runtime.host import preflight, require_capabilities
 from agentic_runtime.trace import ingest_command_event
 from agentic_runtime.host import adapt_command_event
-from agentic_runtime.installer import plan_install, apply_install, remove_install
+from agentic_runtime.installer import plan_install, apply_install, remove_install, merge_settings_file
 
 
 def unique_object(pairs):
@@ -62,6 +62,7 @@ def main():
                   'trace.adapt': ({'api_version', 'operation', 'event', 'identity', 'issued_at', 'expires_at'}, set()),
                   'install.plan': ({'api_version', 'operation', 'target', 'files'}, set()),
                   'install.apply': ({'api_version', 'operation', 'target', 'files'}, {'agentic_os_version'}),
+                  'install.merge-settings': ({'api_version', 'operation', 'target', 'path', 'fragment'}, {'agentic_os_version'}),
                   'install.remove': ({'api_version', 'operation', 'target'}, {'paths'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.export'] = ({'api_version', 'operation', 'run_id', 'destination'}, {'root'})
@@ -98,6 +99,9 @@ def main():
         elif operation == 'install.apply':
             value = apply_install(request['target'], request['files'],
                                   agentic_os_version=request.get('agentic_os_version'))
+        elif operation == 'install.merge-settings':
+            value = merge_settings_file(request['target'], request['path'], request['fragment'],
+                                        agentic_os_version=request.get('agentic_os_version'))
         elif operation == 'install.remove':
             value = remove_install(request['target'], request.get('paths'))
         else:
