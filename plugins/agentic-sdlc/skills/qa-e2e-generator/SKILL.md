@@ -302,6 +302,8 @@ The external side-effect. Only after finalization:
 
 1. Roll up metadata:
    `${CLAUDE_PLUGIN_ROOT}/skills/qa-e2e-generator/scripts/qa-assemble-meta.sh "$RUN_DIR/e2e"`
+   This compatibility assembler fails closed for managed SQLite runs; use the
+   runtime lifecycle operation and `legacy.export` to regenerate metadata.
 2. Dispatch `mr`, which composes and opens the merge request through the
    adapter (handing off to the `mr-submit` skill — no source-control platform
    hardcoded).

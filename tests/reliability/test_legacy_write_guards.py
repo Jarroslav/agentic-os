@@ -8,6 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "plugins/agentic-sdlc/skills/qa-e2e-generator/scripts/qa-append-event.sh"
+ASSEMBLE = ROOT / "plugins/agentic-sdlc/skills/qa-e2e-generator/scripts/qa-assemble-meta.sh"
 
 
 class LegacyWriteGuardTests(unittest.TestCase):
@@ -33,6 +34,19 @@ class LegacyWriteGuardTests(unittest.TestCase):
             self.assertEqual(result.returncode, 2)
             self.assertIn("managed SQLite run", result.stderr)
             self.assertFalse((run_dir / "events.jsonl").exists())
+
+    def test_meta_assembler_has_the_same_managed_run_guard(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            run_dir = root / "docs" / "run" / "e2e"
+            run_dir.mkdir(parents=True)
+            (root / ".agentic/state").mkdir(parents=True)
+            (root / ".agentic/state/runtime.sqlite3").write_bytes(b"marker")
+            result = subprocess.run([str(ASSEMBLE), str(run_dir)], text=True,
+                                    capture_output=True, env=os.environ.copy())
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("managed SQLite run", result.stderr)
+            self.assertFalse((run_dir / "meta.json").exists())
 
 
 if __name__ == "__main__":
