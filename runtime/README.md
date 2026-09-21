@@ -68,6 +68,8 @@ before completion. Host adapters use the signing helpers in `agentic_runtime.hos
 and keep the signing key outside repository state. Required failures are rejected
 at ingestion rather than retained as receipts.
 Setup uses `host.preflight` to report observed Python, SQLite, Git, and host
-launch capabilities; unsupported OS sandboxing is reported explicitly. Peer
+launch capabilities. Passing `required_capabilities` makes the check fail closed
+when a workflow depends on an unavailable control; unsupported OS sandboxing is
+reported explicitly. Peer
 work also exposes `assignment.create`, `assignment.transition`, `message.send`,
 `message.receive`, and `runtime.recover`.

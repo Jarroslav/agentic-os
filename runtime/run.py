@@ -7,7 +7,7 @@ import sys
 
 from agentic_runtime.contracts import load_registry, resolve_policy, normalize_input, validate_transition, retry_allowed, lookup_contract
 from agentic_runtime.store import RuntimeStore
-from agentic_runtime.host import preflight
+from agentic_runtime.host import preflight, require_capabilities
 
 
 def unique_object(pairs):
@@ -51,7 +51,7 @@ def main():
                   'message.send': ({'api_version', 'operation', 'run_id', 'message_id', 'assignment_id', 'assignment_revision', 'correlation_id', 'sender', 'recipient', 'message_type', 'deadline', 'payload', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'runtime.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'message.receive': ({'api_version', 'operation', 'run_id', 'recipient'}, {'reader_id', 'host_record', 'limit', 'after_message_id', 'root'}),
-                  'host.preflight': ({'api_version', 'operation'}, {'root'}),
+                  'host.preflight': ({'api_version', 'operation'}, {'root', 'required_capabilities'}),
                   'evidence.record': ({'api_version', 'operation', 'run_id', 'evidence_id', 'kind', 'source_revision', 'command', 'cwd', 'source_hash', 'exit_status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'required', 'root'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
@@ -74,6 +74,8 @@ def main():
             value = retry_allowed(request['loop_id'], request['attempts_used'])
         elif operation == 'host.preflight':
             value = preflight(request.get('root', os.getcwd()))
+            if 'required_capabilities' in request:
+                value = require_capabilities(value, request['required_capabilities'])
         else:
             root = request.get('root', os.getcwd())
             store = RuntimeStore(root)
