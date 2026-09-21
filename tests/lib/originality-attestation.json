@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T14:56:55Z",
+ "attested_at": "2026-09-21T15:09:47Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -707,7 +707,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/runtime/agentic_runtime/store.py": {
-   "sha256": "00fc60cbcda8973d280d0e405e3fdb022f4baa7ef6b4fe998e08759945e522c0",
+   "sha256": "02c67cbff280b9c19df5cb0f1c58012ca6ec12af6baf1b2b1d965932c3b314ed",
    "line": 0.0055,
    "shingle": 0.0,
    "max_run": 0
@@ -1955,7 +1955,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/runtime/agentic_runtime/store.py": {
-   "sha256": "00fc60cbcda8973d280d0e405e3fdb022f4baa7ef6b4fe998e08759945e522c0",
+   "sha256": "02c67cbff280b9c19df5cb0f1c58012ca6ec12af6baf1b2b1d965932c3b314ed",
    "line": 0.0055,
    "shingle": 0.0,
    "max_run": 0
@@ -2759,7 +2759,7 @@
    "max_run": 0
   },
   "runtime/agentic_runtime/store.py": {
-   "sha256": "00fc60cbcda8973d280d0e405e3fdb022f4baa7ef6b4fe998e08759945e522c0",
+   "sha256": "02c67cbff280b9c19df5cb0f1c58012ca6ec12af6baf1b2b1d965932c3b314ed",
    "line": 0.0055,
    "shingle": 0.0,
    "max_run": 0
@@ -3047,13 +3047,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "6c8bf4f08059e3d53714d64b50900492cff106130d102114dfd5eb6d30939fb9",
+   "sha256": "045511df26c6cad3b8e4eed9fb45984a7bfa201826e56343a088c15aa7d45f41",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "71858c3a56dd46b45f35dbaf0d5227be812a0068e38489e4d02c13823afc061c",
+   "sha256": "735fd0ff979fe73ffdb30ddbfd8b35751fd846e552b2052dcb2adcdb2e519f52",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3197,7 +3197,7 @@
    "max_run": 0
   },
   "tests/runtime/test_fail_closed.py": {
-   "sha256": "6703cb769c4f07c2a248eda2d243b76329e8be0ee712a9d2f26100150bc98256",
+   "sha256": "dcab68b9b9e034944430553b4b090d51fbce91d3bd939aef446d039f4be6e2b0",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
