@@ -166,8 +166,8 @@ fixed rubric/scenario/challenge hashes. `freeze_definitions.py verify` checks th
 retained local archives; unit tests check the committed definition hashes and
 legacy fixtures against the original schema. Archive files are deliberately kept
 outside version control. The local baseline trial archive is retained under
-`.agentic/work/framework-reliability/baseline-trials-2026-09-21-final/`; its
-`manifest.json` hash is `c4b1eaebcd3110dffc8ba8dd0dffc90c99ed700bc616613d514ddf9b3d7a0cb2`
+`.agentic/work/framework-reliability/baseline-trials-2026-09-21-models/`; its
+`manifest.json` hash is `c2ebe1e401d992e73da09ed0836c34c07333b1058195c49adf06d04ea383687f`
 and its `scorecard.json` hash is
 `91ee4a101897ae205dfc05b4145402d7083f4c7002ef0afacaaf952595928b02`.
 The scorecard records all 24 infrastructure failures and no demonstrated points.
@@ -187,9 +187,9 @@ tests, 109 T0 checks, 99 matrix checks, and 204 MCP tests passing; these counts
 do not establish Stage 3 or Stage 4 acceptance.
 
 On 2026-09-21, read-only profile probes found Claude Code `2.1.201`, Codex
-`0.155.0-alpha.9.2`, and Cursor `3.20.21` installed. Claude and Codex both
-passed the filesystem canary, but neither profile is launch-ready: no explicit
-`RELIABILITY_*_MODEL` identity is configured and the probe cannot certify
-authentication, global instruction exclusion, or retained plugin-hook behavior
-under the actual host sandbox. Cursor remains static-compatibility-only in this
-evaluation.
+`0.155.0-alpha.9.2`, and Cursor `3.20.21` installed. The frozen baseline now
+uses the supplied explicit identities `claude-opus-5` and `gpt-6-astra`.
+Claude and Codex both passed the filesystem canary, but neither profile is
+launch-ready: the probe cannot certify authentication, global instruction
+exclusion, or retained plugin-hook behavior under the actual host sandbox.
+Cursor remains static-compatibility-only in this evaluation.

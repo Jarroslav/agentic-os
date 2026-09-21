@@ -261,3 +261,12 @@ the fixed denominator and prevents unavailable host capabilities from silently
 turning into retryable missing data. A local baseline run recorded all 24 slots
 as unverified infrastructure failures with a 0.0 demonstrated score; it does
 not constitute a product-quality grade or candidate acceptance.
+
+## Round 25 — explicit model identities bound into baseline profiles
+
+After the operator supplied model choices, the baseline was re-frozen with
+`claude-opus-5` and `gpt-6-astra`. All 24 slots were rerun under that immutable
+profile and again recorded as infrastructure failures because host isolation
+remains uncertified. The candidate freeze now links to this model-bound
+baseline; candidate execution remains deferred until the isolation and hook
+certification gate passes.
