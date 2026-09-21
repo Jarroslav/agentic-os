@@ -153,7 +153,7 @@ recipient reads, timeout/cycle recovery, and cancellation propagation. Stage 5
 Stage 6 (`21433c6`) added revision-bound command evidence receipts. Later
 checkpoints added signed host issuance, strict stream adaptation, managed
 workflow authority guards, and the public `task.result` contract. The current
-deterministic proof is 95 runtime tests, 91 evaluator tests, 109 T0 checks, 99
+deterministic proof is 99 runtime tests, 91 evaluator tests, 109 T0 checks, 99
 matrix checks, and 204 MCP tests. Live trials remain 0/48 and no host grade is
 established.
 
@@ -186,7 +186,7 @@ This checkpoint authorizes contract implementation; it does not certify the
 live evaluator. Executable observers, host authentication/hooks under isolation,
 and the 24 candidate trials remain required later gates. macOS-specific kernel tests
 are explicitly skipped where sandbox-exec is unavailable; that is not live
-proof. The reopened candidate currently has 95 runtime tests, 91 evaluator
+proof. The reopened candidate currently has 99 runtime tests, 91 evaluator
 tests, 109 T0 checks, 99 matrix checks, and 204 MCP tests passing; these counts
 do not establish Stage 3 or Stage 4 acceptance.
 

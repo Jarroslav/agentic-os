@@ -297,3 +297,8 @@ merges objects, appends only missing array entries, preserves existing scalar
 values, writes atomically, and records the resulting hash in the install
 journal. Invalid JSON fails before mutation. The operation is versioned,
 bundled into both plugins, and covered by direct and public-runtime tests.
+
+The merge implementation also rejects object/array shape conflicts before
+writing, including existing `null` and scalar values. The runtime proof is now
+99 tests; the deterministic installer contract remains fail-closed on malformed
+or incompatible settings.
