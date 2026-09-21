@@ -203,3 +203,11 @@ covers launch, raw trace retention, signing, and authoritative evidence
 ingestion together. This proves the adapter seam only; actual Claude/Codex
 startup, authentication, isolation, and stream certification remain
 unverified.
+
+## Round 18 — structured gate outcomes
+
+Gate persistence now requires a structured value whose `decision` is one of
+`approve`, `request-changes`, or `abort`. Primitive or unknown outcomes are
+rejected before the coordinator revision changes. Public runtime tests cover
+both accepted and malformed outcomes; actual human approval interactions
+remain unverified.
