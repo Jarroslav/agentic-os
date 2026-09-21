@@ -157,3 +157,14 @@ now composes the issuer and parser into one adapter-facing operation. The
 stream adapter extracts only explicit receipts and fails closed on malformed
 JSON; host-specific launch wiring is still unverified. The reliability harness
 can adapt retained raw traces through this same strict boundary.
+
+## Round 13 — host-boundary adaptation seam
+
+The reliability host runner now accepts an assignment-scoped evidence key,
+identity, and validity window. When supplied, it adapts the retained stdout
+stream immediately after process cleanup and exposes `adapted_receipts` plus
+any adapter error in the run result. Partial or unordered evidence context is
+rejected before launch. This wires the canonical adapter into the harness
+without inventing host credentials or claiming that Claude/Codex already emit
+the required events. Actual host startup, authentication, isolation, and
+stream certification remain unverified.
