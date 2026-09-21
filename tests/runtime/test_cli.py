@@ -1,5 +1,6 @@
 """Public CLI rejects malformed requests and resolves policies without writes."""
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -38,6 +39,23 @@ class CLITests(unittest.TestCase):
         code, result = self.request('host.preflight', required_capabilities=['sqlite_protocol', 'dispatch_leases'])
         self.assertEqual(code, 0, result)
         self.assertTrue(result['result']['ready'])
+
+    def test_trace_adapt_requires_key_and_returns_signed_event(self):
+        event = {'type': 'agentic.command.completed', 'evidence_id': 'e1', 'run_id': 'r',
+                 'source_revision': 1, 'command': 'pytest', 'cwd': '.',
+                 'source_hash': 'sha256:abc', 'exit_status': 0}
+        payload = {'api_version': '1.0.0', 'operation': 'trace.adapt', 'event': event,
+                   'identity': 'codex', 'issued_at': 10, 'expires_at': 20}
+        missing = subprocess.run([sys.executable, str(ROOT / 'runtime/run.py')],
+            input=json.dumps(payload), text=True, capture_output=True)
+        self.assertEqual(missing.returncode, 2)
+        env = dict(os.environ, AGENTIC_HOST_KEY='test-key')
+        response = subprocess.run([sys.executable, str(ROOT / 'runtime/run.py')],
+            input=json.dumps(payload), text=True, capture_output=True, env=env)
+        self.assertEqual(response.returncode, 0, response.stderr)
+        result = json.loads(response.stdout)
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['result']['host_record']['identity'], 'codex')
 
     def test_unknown_request_field_is_rejected(self):
         code, result = self.request('registry.get', ignored=True)

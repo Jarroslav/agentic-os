@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T16:01:45Z",
+ "attested_at": "2026-09-21T16:04:28Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "878edaf2c93503eca66bdc957cc7d672d9757d889d5453d5b1de9a04a0f28f85",
+   "sha256": "9734c40e6fd75494fafb959f4507ca06e759f17067940b1036e57810d89742d5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -688,6 +688,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "plugins/agentic-os/runtime/agentic_runtime/adapter.py": {
+   "sha256": "69ef225c4fdc6367931a9e55f9b6b4b0e611f127663a88280fca6ce50f6ceb4a",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "plugins/agentic-os/runtime/agentic_runtime/contracts.py": {
    "sha256": "35b7279334024c90649af5718dd2953d21e9e4e66394d187478690ebe1b29009",
    "line": 0.0104,
@@ -719,8 +725,8 @@
    "max_run": 0
   },
   "plugins/agentic-os/runtime/run.py": {
-   "sha256": "bab1a77f17b35f562796a0950561993cb214529f6d481ea0d2f8aac87d2bac90",
-   "line": 0.0152,
+   "sha256": "0d36db3a2274503648641dba9f2891eb25329a1f6948ad5ee6f3f0423f5cc4f3",
+   "line": 0.0144,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1942,6 +1948,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "plugins/agentic-sdlc/runtime/agentic_runtime/adapter.py": {
+   "sha256": "69ef225c4fdc6367931a9e55f9b6b4b0e611f127663a88280fca6ce50f6ceb4a",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "plugins/agentic-sdlc/runtime/agentic_runtime/contracts.py": {
    "sha256": "35b7279334024c90649af5718dd2953d21e9e4e66394d187478690ebe1b29009",
    "line": 0.0104,
@@ -1973,8 +1985,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/runtime/run.py": {
-   "sha256": "bab1a77f17b35f562796a0950561993cb214529f6d481ea0d2f8aac87d2bac90",
-   "line": 0.0152,
+   "sha256": "0d36db3a2274503648641dba9f2891eb25329a1f6948ad5ee6f3f0423f5cc4f3",
+   "line": 0.0144,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2735,13 +2747,19 @@
    "max_run": 0
   },
   "runtime/README.md": {
-   "sha256": "4920d37e6662e608ea84b351788446c5045b3df6fe563bcfae013dde55c1b418",
+   "sha256": "fadab7985f579112560d34761e3ecd371ff35fa40e45f0ff1141a5843c9a41f5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "runtime/agentic_runtime/__init__.py": {
    "sha256": "424463366bd19da202ba8ee446c2ced20aaa6c585fee76a4614564b375c1be42",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "runtime/agentic_runtime/adapter.py": {
+   "sha256": "69ef225c4fdc6367931a9e55f9b6b4b0e611f127663a88280fca6ce50f6ceb4a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2783,8 +2801,8 @@
    "max_run": 0
   },
   "runtime/run.py": {
-   "sha256": "bab1a77f17b35f562796a0950561993cb214529f6d481ea0d2f8aac87d2bac90",
-   "line": 0.0152,
+   "sha256": "0d36db3a2274503648641dba9f2891eb25329a1f6948ad5ee6f3f0423f5cc4f3",
+   "line": 0.0144,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3053,7 +3071,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "92c25645691f7e145a25f5249c9e244b8399208e5b28059d144dd0cdbd451030",
+   "sha256": "fc362c2eae2085e4921b0dc27df59c602320eb94c64915187f86ec65d4792e59",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3190,6 +3208,12 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "tests/runtime/test_adapter.py": {
+   "sha256": "4aa30b419dd5b9093ba32a3e7f4bec24972ab653430437f522f8b64727d0357a",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "tests/runtime/test_bundles.py": {
    "sha256": "55df659ba035ef95bedd90e9409cf31498b739e59aa83581e097d54fc6cc0503",
    "line": 0.0,
@@ -3197,8 +3221,8 @@
    "max_run": 0
   },
   "tests/runtime/test_cli.py": {
-   "sha256": "42b5a146df42799cf6cdc63cf818f377ababe81051e56a87db4b838e3a909625",
-   "line": 0.0167,
+   "sha256": "2b542df8bd3d600366193a9c6b93d68179ef313028bf22acee8a4acd645e5f5a",
+   "line": 0.0149,
    "shingle": 0.0,
    "max_run": 0
   },

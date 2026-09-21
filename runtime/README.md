@@ -82,6 +82,8 @@ validated explicit command fields before ingestion.
 `agentic_runtime.adapter.adapt_json_lines` provides the stream boundary: unrelated
 host output is ignored, explicit receipts are signed, and malformed JSON fails
 closed.
+The versioned `trace.adapt` operation exposes the same boundary to host launchers
+and requires `AGENTIC_HOST_KEY`.
 `legacy.export` regenerates `meta.json`, `events.jsonl`, and `decisions.jsonl`
 as compatibility views from SQLite; edits to those files are overwritten on
 the next export and never affect authoritative state.
