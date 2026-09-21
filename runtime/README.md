@@ -1,8 +1,9 @@
 # Shared runtime contracts
 
-Status: experimental, incomplete implementation. Existing SDLC/QA skills are
-not yet integrated with this store. Live workflow certification is not
-established. Host adapters can issue short-lived signed dispatch records for
+Status: experimental, incomplete implementation. SDLC/QA skills have a
+managed-runtime boundary and guarded integration points, but full workflow
+migration and live certification are not established. Host adapters can issue
+short-lived signed dispatch records for
 identity-bound mailbox reads and trusted completion gates; without a configured
 host key those operations remain fail-closed. The reopening ledger
 at `tests/reliability/REOPENING.md` tracks the current acceptance gaps.
