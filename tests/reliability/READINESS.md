@@ -108,9 +108,11 @@ Two isolated temporary-database probes against commit `43d2a58` confirmed:
   is not host authentication or proof of assignment ownership.
 
 Stage 5 remains partial: `host.preflight`, canonical dispatch/evidence issuers,
-and the strict JSONL adapter exist, but the shared installer, settings merge,
-upgrade/uninstall journal, and certified host launch controls are not complete.
-Stage 6 remains partial: managed workflow documentation and guarded QA paths
+the strict JSONL adapter, and the shared journal-aware installer
+(`install.plan`, `install.apply`, and `install.remove`) now exist and are
+covered by deterministic tests. Settings-source merging, full upgrade/fleet
+fixtures, and certified host launch controls remain incomplete. Stage 6 remains
+partial: managed workflow documentation and guarded QA paths
 now route state through SQLite, but remaining workflow call sites and external
 host wiring still require migration and certification. Signed command receipts,
 required-evidence checks, and host-approved completion are enforced by the
@@ -165,3 +167,11 @@ are explicitly skipped where sandbox-exec is unavailable; that is not live
 proof. The reopened candidate currently has 95 runtime tests, 91 evaluator
 tests, 109 T0 checks, 99 matrix checks, and 204 MCP tests passing; these counts
 do not establish Stage 3 or Stage 4 acceptance.
+
+On 2026-09-21, read-only profile probes found Claude Code `2.1.201`, Codex
+`0.155.0-alpha.9.2`, and Cursor `3.20.21` installed. Claude and Codex both
+passed the filesystem canary, but neither profile is launch-ready: no explicit
+`RELIABILITY_*_MODEL` identity is configured and the probe cannot certify
+authentication, global instruction exclusion, or retained plugin-hook behavior
+under the actual host sandbox. Cursor remains static-compatibility-only in this
+evaluation.
