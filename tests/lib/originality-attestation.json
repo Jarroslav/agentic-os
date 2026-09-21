@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T19:45:27Z",
+ "attested_at": "2026-09-21T20:33:03Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "ba536f18a2597e0964064d0803b9f4b08aa1758a8c950c76439eea5164c59132",
+   "sha256": "1ae26fe8ffa410b5e594ac76003dd7d321e068736e8f57420e0c1a71bee698e0",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1613,7 +1613,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "726e907b63fd3f3420b3c1a1a98d9f0b3f87f4d32c378fbf361596db7b1a0dfd",
+   "sha256": "71758af03bc9cf5fd78b4a76e96fec549d3a37a28899de85faabaec10837bc07",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -1703,8 +1703,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/hooks/ticket-sync": {
-   "sha256": "385b123333e462f8addd4545e659870a98d26876696978f3f9e78311188d1389",
-   "line": 0.0485,
+   "sha256": "f8baeb2b163b29f9e5f6d1a28981abfd5985f8774e3409007764a7d67f73a656",
+   "line": 0.0444,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1865,7 +1865,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/references/runtime-authority.md": {
-   "sha256": "f6feb2c87ef700c568ad95a9a4f42228ebeda6fd99ee87d70d10a0ed62809af2",
+   "sha256": "d32e8eacfc14173d46a91b6ddc68cdcbcaef0107e1c933439ae10a4e2345e271",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
