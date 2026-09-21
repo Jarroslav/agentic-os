@@ -485,6 +485,11 @@ class RuntimeStore:
             raise ValueError("unknown gate identifier")
         if not isinstance(value, Mapping) or value.get("decision") not in {"approve", "request-changes", "abort"}:
             raise ValueError("gate decision must contain an allowed decision")
+        if value["decision"] == "approve":
+            hashes = value.get("artifact_hashes")
+            if not isinstance(hashes, Mapping) or not hashes or not all(
+                    isinstance(key, str) and isinstance(item, str) and item for key, item in hashes.items()):
+                raise ValueError("approved gate decision requires artifact hashes")
         return self._append(run_id, "decisions", (decision_key, self._json(value)), expected_revision, lease_epoch, coordinator_id)
 
     def record_message(self, run_id: str, body: str, *, sender: str | None = None, expected_revision: int | None = None, lease_epoch: int | None = None, coordinator_id: str | None = None, max_messages: int | None = None, max_bytes: int | None = None) -> dict[str, Any]:
