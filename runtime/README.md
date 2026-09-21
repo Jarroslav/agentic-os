@@ -62,6 +62,8 @@ unknown dependencies and cycles; `assignment.transition` requires the current
 assignment revision. `message.send` accepts only registered typed messages and
 rejects stale assignments, duplicate content changes, inconsistent sender labels, and
 payloads over the registry limit.
+Question correlations support the registry's bounded request/reply rounds; an
+unanswered or cyclic exchange is escalated by `runtime.recover`.
 `evidence.record` stores receipts bound to a run revision. A host-signed
 `run.complete` record must name successful required evidence and an approved gate
 before completion. Host adapters use the signing helpers in `agentic_runtime.host`
