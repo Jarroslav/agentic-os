@@ -9,6 +9,10 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- Hardened managed worker enforcement: quoted frontmatter globs are parsed, malformed assignment
+  state fails closed, and read-only assignments cannot invoke shell mutation through the scoped
+  host hook. The policy documents the host boundary and its sandbox limitation.
+
 - Bundle the canonical versioned runtime contracts for independent installation, with deterministic drift checks and strict policy/input validation.
 
 - **`devops` preset picks up the `agentic-sdlc` `telemetry-export` skill.**
