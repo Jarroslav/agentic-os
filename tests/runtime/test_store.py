@@ -231,6 +231,19 @@ class RuntimeStoreTests(unittest.TestCase):
     page = store.receive_peer_messages("r", "coord", reader_id="coord", limit=1)
     self.assertEqual(store.receive_peer_messages("r", "coord", reader_id="coord", after_message_id=page[0]["message_id"])[0]["message_id"], "a")
 
+  def test_evidence_is_revision_bound_and_failed_required_checks_are_rejected(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    store = RuntimeStore(tmp_path.name)
+    store.create_run("r")
+    run = store.acquire_lease("r", "coord")
+    with self.assertRaises(RuntimeError):
+      store.record_evidence("r", "bad", kind="test", source_revision=run["revision"], command="pytest", cwd=".", source_hash="h", exit_status=1, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    receipt = store.record_evidence("r", "ok", kind="test", source_revision=run["revision"], command="pytest", cwd=".", source_hash="h", exit_status=0, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
+    self.assertEqual(receipt["exit_status"], 0)
+    with self.assertRaises(RuntimeError):
+      store.record_evidence("r", "stale", kind="test", source_revision=run["revision"], command="pytest", cwd=".", source_hash="h", exit_status=0, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=receipt["source_revision"])
+
   def test_peer_reply_can_use_the_responder_assignment(self):
     tmp_path = __import__('tempfile').TemporaryDirectory()
     self.addCleanup(tmp_path.cleanup)
