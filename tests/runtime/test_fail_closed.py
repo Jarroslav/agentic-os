@@ -5,6 +5,7 @@ import unittest
 
 from runtime.agentic_runtime.store import RuntimeStore
 from runtime.agentic_runtime.contracts import load_registry
+from runtime.agentic_runtime.host import sign_dispatch
 
 
 class FailClosedTests(unittest.TestCase):
@@ -141,3 +142,56 @@ class FailClosedTests(unittest.TestCase):
         self.store.reserve_dispatch('other', 'first', max_dispatches=5)
         self.assertTrue(self.store.reserve_dispatch('other', 'first', max_dispatches=1)['reserved'])
         self.assertFalse(RuntimeStore(self.tmp.name).reserve_dispatch('other', 'second')['reserved'])
+
+    def test_signed_host_dispatch_unlocks_mailbox_with_bound_identity(self):
+        key = b'test-host-key'
+        sender = sign_dispatch({
+            'record_id': 'send-1', 'purpose': 'message.send', 'run_id': 'r',
+            'assignment_id': 'a', 'assignment_revision': 0, 'identity': 'worker',
+            'issued_at': 99, 'expires_at': 200,
+        }, key)
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=key)
+        self.store.send_peer_message('r', message_id='signed', assignment_id='a',
+                                     assignment_revision=0, correlation_id='signed-correlation',
+                                     sender='worker', recipient='peer', message_type='task.progress',
+                                     deadline=200, payload={'ok': True}, host_record=sender)
+        receiver = sign_dispatch({
+            'record_id': 'receive-1', 'purpose': 'message.receive', 'run_id': 'r',
+            'identity': 'peer', 'issued_at': 99, 'expires_at': 200,
+        }, key)
+        messages = self.store.receive_peer_messages('r', 'peer', host_record=receiver)
+        self.assertEqual(messages[0]['message_id'], 'signed')
+
+    def test_trusted_completion_requires_signed_gate_and_evidence(self):
+        key = b'test-host-key'
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=key)
+        self.store.assignment_transition('r', 'a', 'running', expected_assignment_revision=0)
+        assignment = self.store.assignment_transition('r', 'a', 'completed', expected_assignment_revision=1)
+        run = self.store.get_run('r')
+        evidence = self.store.record_evidence('r', 'verified', kind='host.command',
+                                              source_revision=run['revision'], command='true', cwd='/',
+                                              source_hash='source', exit_status=0)
+        record = sign_dispatch({
+            'record_id': 'complete-1', 'purpose': 'run.complete', 'run_id': 'r',
+            'identity': 'coordinator', 'gate_decision': 'approved',
+            'evidence_ids': [evidence['evidence_id']], 'issued_at': 99, 'expires_at': 200,
+        }, key)
+        completed = self.store.complete_run('r', host_record=record)
+        self.assertEqual(completed['state'], 'completed')
+
+    def test_dispatch_leases_enforce_concurrency_and_timeout_without_refund(self):
+        reservations = []
+        for index in range(4):
+            reservation = f'dispatch-{index}'
+            self.store.reserve_dispatch('r', reservation)
+            reservations.append(reservation)
+        for reservation in reservations[:3]:
+            self.store.start_dispatch('r', reservation, 'worker-' + reservation)
+        with self.assertRaisesRegex(RuntimeError, 'concurrent worker'):
+            self.store.start_dispatch('r', reservations[3], 'worker-four')
+        self.store.finish_dispatch('r', reservations[0], outcome='succeeded')
+        self.store.start_dispatch('r', reservations[3], 'worker-four')
+        self.now = 100 + 901
+        expired = self.store.recover_dispatches('r')
+        self.assertEqual({row['reservation_id'] for row in expired}, set(reservations[1:]))
+        self.assertFalse(self.store.reserve_dispatch('r', 'dispatch-4', max_dispatches=4)['reserved'])
