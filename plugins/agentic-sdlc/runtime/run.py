@@ -44,6 +44,7 @@ def main():
                   'dispatch.finish': ({'api_version', 'operation', 'run_id', 'reservation_id', 'outcome', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'dispatch.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'decision.record': ({'api_version', 'operation', 'run_id', 'decision_key', 'value', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
+                  'event.record': ({'api_version', 'operation', 'run_id', 'event_id', 'event_type', 'payload', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'message.deliver': ({'api_version', 'operation', 'run_id', 'body', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'sender', 'root'}),
                   'external.intent': ({'api_version', 'operation', 'run_id', 'idempotency_key', 'action', 'request', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'external.reconcile': ({'api_version', 'operation', 'run_id', 'idempotency_key', 'status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'result', 'root'}),
@@ -115,6 +116,8 @@ def main():
                 value = store.recover_dispatches(request['run_id'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'decision.record':
                 value = store.record_decision(request['run_id'], request['decision_key'], request['value'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'event.record':
+                value = store.record_event(request['run_id'], request['event_id'], request['event_type'], request['payload'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'message.deliver':
                 value = store.record_message(request['run_id'], request['body'], sender=request.get('sender'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'external.intent':

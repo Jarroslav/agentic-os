@@ -168,10 +168,9 @@ For each file-backed subagent phase:
    into `$RUN_DIR/e2e/`, and returns a structured verdict (never prose).
 4. Append the event:
    `${CLAUDE_PLUGIN_ROOT}/skills/qa-e2e-generator/scripts/qa-append-event.sh "$RUN_DIR/e2e" <phase-number> <name> complete`
-   This helper is available for unmanaged legacy fixtures only. If the run is
-   backed by `.agentic/state/runtime.sqlite3`, it fails closed; record the
-   lifecycle/evidence through runtime operations and refresh compatibility views
-   with `legacy.export`.
+   For a managed SQLite run, the helper requires the coordinator run ID, lease
+   epoch, and expected revision environment and records `event.record`; missing
+   context fails closed. Refresh compatibility views with `legacy.export`.
 
 Phase 4 skips step 1 and dispatches the `sizing-analyst` agent type
 directly. Model-tier guidance: mechanical passes (AC check, MR compose) run
@@ -302,8 +301,9 @@ The external side-effect. Only after finalization:
 
 1. Roll up metadata:
    `${CLAUDE_PLUGIN_ROOT}/skills/qa-e2e-generator/scripts/qa-assemble-meta.sh "$RUN_DIR/e2e"`
-   This compatibility assembler fails closed for managed SQLite runs; use the
-   runtime lifecycle operation and `legacy.export` to regenerate metadata.
+   This compatibility assembler remains for unmanaged fixtures; managed runs
+   must use the runtime lifecycle operation and `legacy.export` to regenerate
+   metadata.
 2. Dispatch `mr`, which composes and opens the merge request through the
    adapter (handing off to the `mr-submit` skill — no source-control platform
    hardcoded).

@@ -54,7 +54,7 @@ Lifecycle requests include `run.start`, `run.status`, `run.resume`, `run.cancel`
 `run.complete`, `task.dispatch`, `dispatch.start`, `dispatch.finish`,
 `dispatch.recover`, `decision.record`, `message.deliver`, `external.intent`,
 `external.reconcile`, `legacy.import`, `legacy.export`, `evidence.ingest`, and
-`run.export`.
+`event.record`, `run.export`.
 `legacy.import` records
 the source hash and receipt without replacing the original file. Mutating requests for an owned run carry
 the coordinator identity, current `lease_epoch`, and expected revision; stale ownership or revisions fail atomically.

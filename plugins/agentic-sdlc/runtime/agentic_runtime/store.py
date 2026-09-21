@@ -106,6 +106,11 @@ class RuntimeStore:
                     target TEXT NOT NULL, revision INTEGER NOT NULL, at REAL NOT NULL,
                     reason TEXT, PRIMARY KEY(run_id, sequence), FOREIGN KEY(run_id) REFERENCES runs(run_id)
                 );
+                CREATE TABLE IF NOT EXISTS runtime_events (
+                    event_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, event_type TEXT NOT NULL,
+                    payload_json TEXT NOT NULL, revision INTEGER NOT NULL, at REAL NOT NULL,
+                    FOREIGN KEY(run_id) REFERENCES runs(run_id)
+                );
                 CREATE TABLE IF NOT EXISTS decisions (
                     run_id TEXT NOT NULL, sequence INTEGER NOT NULL, decision_key TEXT NOT NULL,
                     value_json TEXT NOT NULL, revision INTEGER NOT NULL, at REAL NOT NULL,
@@ -568,6 +573,7 @@ class RuntimeStore:
             if precondition.get("ownership") != "verified" or not precondition.get("branch") or not precondition.get("worktree"):
                 raise RuntimeError("branch/worktree ownership precondition is required before export")
             transitions = [dict(r) for r in db.execute("SELECT * FROM transitions WHERE run_id=? ORDER BY sequence", (run_id,))]
+            events = [dict(r) for r in db.execute("SELECT * FROM runtime_events WHERE run_id=? ORDER BY revision,event_id", (run_id,))]
             decisions = [dict(r) for r in db.execute("SELECT * FROM decisions WHERE run_id=? ORDER BY sequence", (run_id,))]
             messages = [dict(r) for r in db.execute("SELECT * FROM messages WHERE run_id=? ORDER BY sequence", (run_id,))]
             assignments = []
@@ -592,7 +598,7 @@ class RuntimeStore:
         temp = Path(tempfile.mkdtemp(prefix=".export-", dir=parent))
         try:
             if fault: fault("before_write")
-            (temp / "run.json").write_text(self._json({"run": run, "transitions": transitions, "decisions": decisions, "messages": messages, "assignments": assignments, "peer_messages": peer_messages, "evidence": evidence, "dispatch_leases": dispatch_leases, "external_actions": external}), encoding="utf-8")
+            (temp / "run.json").write_text(self._json({"run": run, "transitions": transitions, "events": events, "decisions": decisions, "messages": messages, "assignments": assignments, "peer_messages": peer_messages, "evidence": evidence, "dispatch_leases": dispatch_leases, "external_actions": external}), encoding="utf-8")
             if fault: fault("after_write")
             try:
                 temp.rename(destination)
@@ -606,6 +612,34 @@ class RuntimeStore:
             shutil.rmtree(temp, ignore_errors=True)
             raise
         return destination
+
+    def record_event(self, run_id: str, event_id: str, event_type: str, payload: Mapping[str, Any], *,
+                     expected_revision: int | None = None, lease_epoch: int | None = None,
+                     coordinator_id: str | None = None) -> dict[str, Any]:
+        """Record a bounded coordinator-owned event for compatibility projections."""
+        validate_identifier(event_id)
+        validate_identifier(event_type)
+        if not isinstance(payload, Mapping):
+            raise ValueError("event payload must be an object")
+        encoded = self._json(dict(payload))
+        if len(encoded.encode("utf-8")) > int(load_registry()["policy_defaults"]["max_message_bytes"]):
+            raise ValueError("event payload exceeds byte limit")
+        now = self.clock()
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            existing = db.execute("SELECT * FROM runtime_events WHERE event_id=?", (event_id,)).fetchone()
+            if existing:
+                if existing["run_id"] != run_id or existing["event_type"] != event_type or existing["payload_json"] != encoded:
+                    db.rollback()
+                    raise ValueError("event id reused with different content")
+                db.rollback()
+                return self._run(db, run_id)
+            revision = row["revision"] + 1
+            db.execute("INSERT INTO runtime_events VALUES(?,?,?,?,?,?)", (event_id, run_id, event_type, encoded, revision, now))
+            db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (revision, now, run_id))
+            self._commit(db)
+            return self._run(db, run_id)
 
     def export_legacy(self, run_id: str, destination: str | os.PathLike[str]) -> Path:
         """Regenerate legacy JSON/JSONL files as views of authoritative state.
@@ -624,6 +658,8 @@ class RuntimeStore:
                 "SELECT * FROM transitions WHERE run_id=? ORDER BY sequence", (run_id,))]
             decisions = [dict(row) for row in db.execute(
                 "SELECT * FROM decisions WHERE run_id=? ORDER BY sequence", (run_id,))]
+            events = [dict(row) for row in db.execute(
+                "SELECT * FROM runtime_events WHERE run_id=? ORDER BY revision,event_id", (run_id,))]
         meta = {
             "run_id": run["run_id"], "status": run["state"],
             "revision": run["revision"], "started_at": run["created_at"],
@@ -637,6 +673,12 @@ class RuntimeStore:
                 "sequence": row["sequence"], "from": row["source"],
                 "to": row["target"], "revision": row["revision"],
                 "at": row["at"], "reason": row["reason"],
+            }))
+        for row in events:
+            event_lines.append(self._json({
+                "type": row["event_type"], "event_id": row["event_id"],
+                "run_id": run_id, "revision": row["revision"],
+                "at": row["at"], "data": json.loads(row["payload_json"]),
             }))
         decision_lines = []
         for row in decisions:

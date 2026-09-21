@@ -8,6 +8,7 @@ Skills must use the versioned `runtime/run.py` operations for mutations:
 
 - `decision.record` for gate decisions;
 - `evidence.record` or `evidence.ingest` for verification receipts;
+- `event.record` for coordinator-owned workflow phase events;
 - `assignment.*`, `message.*`, and `dispatch.*` for delegated work;
 - `run.transition`, `run.resume`, `run.cancel`, and `run.complete` for lifecycle;
 - `legacy.export` to refresh `meta.json`, `events.jsonl`, and `decisions.jsonl` compatibility views.

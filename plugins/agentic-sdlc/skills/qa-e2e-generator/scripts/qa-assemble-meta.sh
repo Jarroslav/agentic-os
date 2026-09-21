@@ -37,8 +37,8 @@ meta_path="$base_dir/meta.json"
 dir_with_slash="$base_dir/"
 
 # A managed SQLite run owns lifecycle state. This compatibility assembler cannot
-# safely commit a coordinator-fenced runtime snapshot, so refuse to create a
-# second authoritative meta.json. Unmanaged legacy fixtures remain supported.
+# commit a coordinator-fenced snapshot, so refuse to create a second authority.
+# Managed callers use runtime lifecycle operations and legacy.export instead.
 probe_dir=$(cd "$base_dir" 2>/dev/null && pwd) || {
     printf 'qa-assemble-meta: output directory is not accessible: %s\n' "$base_dir" >&2
     exit 2
