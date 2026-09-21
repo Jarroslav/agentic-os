@@ -35,18 +35,20 @@ def merge_settings(base: Mapping[str, Any], fragment: Mapping[str, Any]) -> dict
             if not isinstance(key, str) or not key:
                 raise ValueError("settings keys must be non-empty strings")
             if isinstance(value, Mapping):
-                existing = destination.get(key)
-                if existing is None:
+                if key not in destination:
                     existing = {}
                     destination[key] = existing
+                else:
+                    existing = destination[key]
                 if not isinstance(existing, dict):
                     raise ValueError("cannot merge an object into a non-object setting: " + key)
                 merge_object(existing, value)
             elif isinstance(value, list):
-                existing = destination.get(key)
-                if existing is None:
+                if key not in destination:
                     existing = []
                     destination[key] = existing
+                else:
+                    existing = destination[key]
                 if not isinstance(existing, list):
                     raise ValueError("cannot merge an array into a non-array setting: " + key)
                 for item in value:
