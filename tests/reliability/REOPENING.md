@@ -204,6 +204,14 @@ ingestion together. This proves the adapter seam only; actual Claude/Codex
 startup, authentication, isolation, and stream certification remain
 unverified.
 
+## Round 22 — cancellation closes dispatch leases
+
+Cancelling a run now atomically marks all unfinished dispatch leases as
+`cancelled` with a completion timestamp alongside assignment cancellation.
+Recovery cannot treat those workers as still in flight after the run reaches a
+terminal cancelled state. A runtime fault test covers the persisted lease
+outcome; host interruption trials remain unverified.
+
 ## Round 18 — structured gate outcomes
 
 Gate persistence now requires a structured value whose `decision` is one of
