@@ -133,6 +133,29 @@ class FailClosedTests(unittest.TestCase):
         self.now = 201
         self.assertEqual(self.store.recover_timeouts('r')['escalated_assignments'], [])
 
+    def test_question_correlation_allows_two_bounded_rounds(self):
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=b'round-key')
+        self.store.create_run('rounds')
+        self.store.transition('rounds', 'running')
+        self.store.create_assignment('rounds', 'peer-task', 'peer', owned_paths=[], context_refs=[], acceptance=[])
+        base = dict(assignment_id='peer-task', assignment_revision=0, correlation_id='rounds-correlation',
+                    deadline=200, payload={})
+        def reply_record(record_id):
+            return sign_dispatch({'record_id': record_id, 'purpose': 'message.send', 'run_id': 'rounds',
+                                  'assignment_id': 'peer-task', 'assignment_revision': 0,
+                                  'identity': 'worker', 'issued_at': 99, 'expires_at': 200}, b'round-key')
+        self.store.send_peer_message('rounds', message_id='q1', sender='peer', recipient='worker',
+                                     message_type='question.request', **base)
+        self.store.send_peer_message('rounds', message_id='a1', sender='worker', recipient='peer',
+                                     message_type='question.response', host_record=reply_record('reply-1'), **base)
+        self.store.send_peer_message('rounds', message_id='q2', sender='peer', recipient='worker',
+                                     message_type='question.request', **base)
+        self.store.send_peer_message('rounds', message_id='a2', sender='worker', recipient='peer',
+                                     message_type='question.response', host_record=reply_record('reply-2'), **base)
+        with self.assertRaises(ValueError):
+            self.store.send_peer_message('rounds', message_id='a3', sender='worker', recipient='peer',
+                                         message_type='question.response', host_record=reply_record('reply-3'), **base)
+
     def test_ceiling_tightening_persists_on_denial_and_idempotent_reservation(self):
         for name in ('first', 'second'):
             self.store.reserve_dispatch('r', name, max_dispatches=5)
@@ -195,3 +218,10 @@ class FailClosedTests(unittest.TestCase):
         expired = self.store.recover_dispatches('r')
         self.assertEqual({row['reservation_id'] for row in expired}, set(reservations[1:]))
         self.assertFalse(self.store.reserve_dispatch('r', 'dispatch-4', max_dispatches=4)['reserved'])
+
+    def test_active_budget_exhaustion_escalates_run_for_user(self):
+        self.store.reserve_dispatch('r', 'budgeted')
+        self.now = 100 + 120 * 60
+        with self.assertRaisesRegex(RuntimeError, 'active execution budget'):
+            self.store.start_dispatch('r', 'budgeted', 'worker-budgeted')
+        self.assertEqual(self.store.get_run('r')['state'], 'waiting_for_user')

@@ -78,7 +78,7 @@ def main():
                 value = require_capabilities(value, request['required_capabilities'])
         else:
             root = request.get('root', os.getcwd())
-            store = RuntimeStore(root)
+            store = RuntimeStore(root, host_key=os.environ.get('AGENTIC_HOST_KEY'))
             if operation == 'run.start':
                 normalize_input({'contract_version': '1.0.0', 'task_input': request['task_input']})
                 value = store.create_run(request.get('run_id'), branch=request['branch'], worktree=request['worktree'], metadata=request.get('metadata'), precondition=request.get('precondition'))

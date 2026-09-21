@@ -413,6 +413,12 @@ class RuntimeStore:
                 raise RuntimeError("concurrent worker limit exhausted")
             current = db.execute("SELECT active_seconds,active_since FROM runs WHERE run_id=?", (run_id,)).fetchone()
             if current["active_since"] is not None and current["active_seconds"] + max(0, now - current["active_since"]) >= int(policy["active_run_minutes"] * 60):
+                active_seconds = current["active_seconds"] + max(0, now - current["active_since"])
+                revision = run["revision"] + 1
+                sequence = db.execute("SELECT COALESCE(MAX(sequence),0)+1 FROM transitions WHERE run_id=?", (run_id,)).fetchone()[0]
+                db.execute("UPDATE runs SET state='waiting_for_user',revision=?,updated_at=?,active_seconds=?,active_since=NULL WHERE run_id=?", (revision, now, active_seconds, run_id))
+                db.execute("INSERT INTO transitions VALUES(?,?,?,?,?,?,?)", (run_id, sequence, "running", "waiting_for_user", revision, now, "active execution budget exhausted"))
+                self._commit(db)
                 raise RuntimeError("active execution budget exhausted; escalation required")
             result = (run_id, reservation_id, worker_id, now, now + timeout)
             db.execute("INSERT INTO dispatch_leases(run_id,reservation_id,worker_id,started_at,deadline) VALUES(?,?,?,?,?)", result)
@@ -726,7 +732,8 @@ class RuntimeStore:
             if assignment["state"] in {"completed", "failed", "cancelled"}:
                 raise RuntimeError("assignment is terminal")
             if assignment["revision"] != assignment_revision: raise RuntimeError("stale assignment message")
-            if sender != assignment["worker_id"] and sender != coordinator_id: raise RuntimeError("sender is not assignment owner")
+            if sender != assignment["worker_id"] and sender != coordinator_id and host_record is None:
+                raise RuntimeError("sender is not assignment owner")
             now = self.clock()
             if float(deadline) < now:
                 db.execute("UPDATE assignments SET state='escalation_required',revision=revision+1,updated_at=? WHERE run_id=? AND assignment_id=?", (now, run_id, assignment_id))
@@ -736,22 +743,24 @@ class RuntimeStore:
             count = db.execute("SELECT COUNT(*) FROM peer_messages WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()[0]
             if count >= int(registry["policy_defaults"]["max_messages_per_worker"]): raise RuntimeError("assignment message budget exhausted")
             if message_type == "question.request":
-                if db.execute("SELECT 1 FROM peer_messages WHERE run_id=? AND correlation_id=?", (run_id, correlation_id)).fetchone():
-                    raise ValueError("question correlation already used in this run")
+                prior = db.execute("SELECT rowid AS _rowid,* FROM peer_messages WHERE run_id=? AND correlation_id=? ORDER BY rowid", (run_id, correlation_id)).fetchall()
+                requests = [item for item in prior if item["message_type"] == "question.request"]
+                if requests and prior[-1]["message_type"] != "question.response":
+                    raise ValueError("question correlation already has an outstanding request")
                 outstanding = db.execute("SELECT COUNT(*) FROM peer_messages q WHERE q.run_id=? AND q.assignment_id=? AND q.message_type='question.request' AND NOT EXISTS (SELECT 1 FROM peer_messages r WHERE r.message_type='question.response' AND r.run_id=q.run_id AND r.correlation_id=q.correlation_id)", (run_id, assignment_id)).fetchone()[0]
                 if outstanding >= int(registry["policy_defaults"]["max_outstanding_questions"]): raise RuntimeError("question budget exhausted")
-                rounds = db.execute("SELECT COUNT(*) FROM peer_messages WHERE run_id=? AND correlation_id=?", (run_id, correlation_id)).fetchone()[0]
-                if rounds >= int(registry["policy_defaults"]["max_question_rounds"]) * 2: raise RuntimeError("question round budget exhausted")
+                if requests:
+                    if prior[-1]["message_type"] != "question.response" or prior[-1]["sender"] != recipient or prior[-1]["recipient"] != sender:
+                        raise RuntimeError("question round participants do not match")
+                    if len(requests) >= int(registry["policy_defaults"]["max_question_rounds"]):
+                        raise RuntimeError("question round budget exhausted")
             if message_type == "question.response":
-                request = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND correlation_id=? AND message_type='question.request'", (run_id, correlation_id)).fetchone()
-                if db.execute("SELECT 1 FROM peer_messages WHERE run_id=? AND correlation_id=? AND message_type='question.response'", (run_id, correlation_id)).fetchone():
-                    raise ValueError("question already answered")
+                prior = db.execute("SELECT rowid AS _rowid,* FROM peer_messages WHERE run_id=? AND correlation_id=? ORDER BY rowid", (run_id, correlation_id)).fetchall()
+                request = next((item for item in reversed(prior) if item["message_type"] == "question.request" and not any(reply["message_type"] == "question.response" and reply["_rowid"] > item["_rowid"] for reply in prior)), None)
                 if request is None:
                     raise ValueError("question response has no request")
                 if request["sender"] != recipient or request["recipient"] != sender: raise RuntimeError("question participants do not match")
                 if now > request["deadline"]: raise RuntimeError("question reply deadline expired")
-                rounds = db.execute("SELECT COUNT(*) FROM peer_messages WHERE run_id=? AND correlation_id=?", (run_id, correlation_id)).fetchone()[0]
-                if rounds >= int(registry["policy_defaults"]["max_question_rounds"]) * 2: raise RuntimeError("question round budget exhausted")
             db.execute("INSERT INTO peer_messages VALUES(?,?,?,?,?,?,?,?,?,?,?)", (message_id, run_id, assignment_id, assignment_revision, correlation_id, sender, recipient, message_type, float(deadline), encoded, now))
             db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
             self._commit(db)
@@ -765,10 +774,12 @@ class RuntimeStore:
             db.execute("BEGIN IMMEDIATE")
             self._validate_versions(db)
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
-            requests = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND message_type='question.request'", (run_id,)).fetchall()
-            answered = {r["correlation_id"] for r in db.execute("SELECT correlation_id FROM peer_messages WHERE run_id=? AND message_type='question.response'", (run_id,))}
-            escalated = {r["assignment_id"] for r in requests if r["deadline"] <= now and r["correlation_id"] not in answered}
-            edges = [(r["sender"], r["recipient"], r["assignment_id"]) for r in requests if r["correlation_id"] not in answered]
+            requests = db.execute("SELECT rowid AS _rowid,* FROM peer_messages WHERE run_id=? AND message_type='question.request'", (run_id,)).fetchall()
+            all_messages = db.execute("SELECT rowid AS _rowid,* FROM peer_messages WHERE run_id=? ORDER BY rowid", (run_id,)).fetchall()
+            unanswered = [request for request in requests if request["deadline"] <= now and not any(reply["message_type"] == "question.response" and reply["correlation_id"] == request["correlation_id"] and reply["_rowid"] > request["_rowid"] for reply in all_messages)]
+            active_requests = [request for request in requests if not any(reply["message_type"] == "question.response" and reply["correlation_id"] == request["correlation_id"] and reply["_rowid"] > request["_rowid"] for reply in all_messages)]
+            escalated = {r["assignment_id"] for r in unanswered}
+            edges = [(r["sender"], r["recipient"], r["assignment_id"]) for r in active_requests]
             graph = {}
             for sender, recipient, assignment_id in edges:
                 graph.setdefault(sender, []).append((recipient, assignment_id))

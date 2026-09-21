@@ -72,3 +72,13 @@ timeout recovery, and no reservation refund after timeout. Deterministic runtime
 proof is now 63 tests. These changes are a tested implementation checkpoint;
 host adapters, workflow integration, independent blind review, and live trials
 remain required for stage acceptance.
+
+## Round 3 — runtime integration controls
+
+The operator approved continuation on 2026-09-21. The versioned CLI now loads
+the host key from the adapter environment, supports the second bounded
+question/reply round, and exposes capability requirements that fail closed.
+Active execution exhaustion atomically transitions a running run to
+`waiting_for_user`; it no longer leaves only a transient error. Deterministic
+runtime proof is now 67 tests. These changes still do not certify real host
+dispatch hooks or command capture.
