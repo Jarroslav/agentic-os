@@ -19,6 +19,9 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
   controls are enforced by the runtime, checked before integration, delegated
   to an adapter, or unsupported at the host boundary.
 
+- Added the versioned `install.merge-settings` operation for atomic,
+  journaled recursive settings merges that preserve user scalar values.
+
 - Added revision-bound command evidence receipts; failed required checks cannot
   be recorded as successful verification.
 

@@ -91,14 +91,18 @@ and requires `AGENTIC_HOST_KEY`.
 recomputes that plan immediately before atomically applying create/managed-replace
 actions and updates `.agentic/agentic-os/install.json`; user-modified files are
 preserved. `install.remove` deletes only unchanged managed/generated files and
-marks modified files as user-owned. Skills remain responsible for interviews and
-stack-specific rendering.
+marks modified files as user-owned. `install.merge-settings` performs the same
+deterministic recursive object/unique-array merge used by setup, writes the
+result atomically, and journals the resulting hash while preserving existing
+user scalar values. Skills remain responsible for interviews and stack-specific
+rendering.
 `legacy.export` regenerates `meta.json`, `events.jsonl`, and `decisions.jsonl`
 as compatibility views from SQLite; edits to those files are overwritten on
 the next export and never affect authoritative state.
 Setup uses `host.preflight` to report observed Python, SQLite, Git, and host
 launch capabilities. Passing `required_capabilities` makes the check fail closed
 when a workflow depends on an unavailable control; unsupported OS sandboxing is
-reported explicitly. Peer
+reported explicitly, and `control_matrix` names each control's enforcement
+boundary and evidence source. Peer
 work also exposes `assignment.create`, `assignment.transition`, `message.send`,
 `message.receive`, and `runtime.recover`.
