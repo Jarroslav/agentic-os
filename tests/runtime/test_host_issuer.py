@@ -1,6 +1,8 @@
 import unittest
+import tempfile
 
 from runtime.agentic_runtime.host import issue_evidence_record, verify_dispatch
+from runtime.agentic_runtime.store import RuntimeStore
 
 
 class HostIssuerTests(unittest.TestCase):
@@ -23,6 +25,21 @@ class HostIssuerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             issue_evidence_record({**self.event(), "source_hash": ""}, b"key",
                                   identity="codex", issued_at=10, expires_at=20)
+
+    def test_issued_claim_is_accepted_by_authoritative_store(self):
+        with tempfile.TemporaryDirectory() as temp:
+            store = RuntimeStore(temp, host_key=b"key", clock=lambda: 10)
+            store.create_run("r")
+            store.transition("r", "running")
+            event = self.event()
+            event["source_revision"] = store.get_run("r")["revision"]
+            event["host_record"] = issue_evidence_record(event, b"key", identity="codex",
+                                                          issued_at=10, expires_at=20)
+            evidence = store.record_evidence(
+                "r", "e1", kind="host.command", source_revision=event["source_revision"],
+                command=event["command"], cwd=event["cwd"], source_hash=event["source_hash"],
+                exit_status=event["exit_status"], host_record=event["host_record"])
+            self.assertEqual(evidence["host_record_id"], "e1")
 
 
 if __name__ == "__main__":
