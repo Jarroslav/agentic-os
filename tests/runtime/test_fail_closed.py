@@ -82,6 +82,12 @@ class FailClosedTests(unittest.TestCase):
         run = reopened.create_run('recovered')
         self.assertEqual(run['state'], 'pending')
 
+    def test_partial_version_marker_repairs_on_reopen(self):
+        with sqlite3.connect(self.store.db_path) as db:
+            db.execute("DELETE FROM metadata WHERE key='registry_contract_version'")
+        reopened = RuntimeStore(self.tmp.name, clock=lambda: self.now)
+        self.assertEqual(reopened.get_run('r')['state'], 'running')
+
     def test_deadline_must_be_finite_and_question_bounded(self):
         for deadline in (math.inf, -math.inf, math.nan, 401):
             with self.assertRaises(ValueError):
