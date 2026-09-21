@@ -179,6 +179,14 @@ edits, and updates the journal. Both plugin bundles carry the same source;
 interviews and stack-specific rendering remain skill-owned. Host certification
 and full installer workflow trials remain unverified.
 
+## Round 16 — journal-aware uninstall
+
+The shared installer now exposes `install.remove`. It removes only unchanged
+managed/generated files, preserves modified files, marks preserved paths as
+user-owned in the journal, and validates explicit path lists. The operation is
+bundled into both plugins and covered by direct and versioned installer tests.
+Full host-driven upgrade/uninstall workflow trials remain unverified.
+
 ## Round 14 — fenced trace ingestion
 
 The host harness now exposes a coordinator-fenced ingestion helper for signed
