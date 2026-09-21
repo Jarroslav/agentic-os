@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Read one versioned JSON request; emit one JSON result without repository writes."""
 import json
+import os
+import sqlite3
 import sys
 
 from agentic_runtime.contracts import load_registry, resolve_policy, normalize_input, validate_transition, retry_allowed, lookup_contract
+from agentic_runtime.store import RuntimeStore
 
 
 def unique_object(pairs):
@@ -21,12 +24,25 @@ def main():
         if not isinstance(request, dict) or request.get('api_version') != '1.0.0':
             raise ValueError('unsupported api_version')
         operation = request.get('operation')
+        common = {'root'}
         fields = {'registry.get': ({'api_version', 'operation'}, set()),
                   'policy.resolve': ({'api_version', 'operation', 'entrypoint'}, {'overrides'}),
                   'contract.lookup': ({'api_version', 'operation', 'section', 'identifier'}, set()),
                   'input.normalize': ({'api_version', 'operation', 'payload'}, {'legacy'}),
                   'transition.validate': ({'api_version', 'operation', 'source', 'target'}, set()),
-                  'retry.allowed': ({'api_version', 'operation', 'loop_id', 'attempts_used'}, set())}
+                  'retry.allowed': ({'api_version', 'operation', 'loop_id', 'attempts_used'}, set()),
+                  'run.start': ({'api_version', 'operation', 'task_input', 'coordinator_id', 'branch', 'worktree'}, {'run_id', 'metadata', 'precondition', 'root'}),
+                  'run.status': ({'api_version', 'operation', 'run_id'}, {'root'}),
+                  'run.resume': ({'api_version', 'operation', 'run_id', 'coordinator_id'}, {'root'}),
+                  'run.cancel': ({'api_version', 'operation', 'run_id', 'coordinator_id'}, {'root'}),
+                  'run.transition': ({'api_version', 'operation', 'run_id', 'target', 'coordinator_id', 'lease_epoch'}, {'expected_revision', 'reason', 'root'}),
+                  'task.dispatch': ({'api_version', 'operation', 'run_id', 'reservation_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'max_dispatches', 'root'}),
+                  'decision.record': ({'api_version', 'operation', 'run_id', 'decision_key', 'value', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
+                  'message.deliver': ({'api_version', 'operation', 'run_id', 'body', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'sender', 'root'}),
+                  'external.intent': ({'api_version', 'operation', 'run_id', 'idempotency_key', 'action', 'request', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
+                  'external.reconcile': ({'api_version', 'operation', 'run_id', 'idempotency_key', 'status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'result', 'root'}),
+                  'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
+        fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
         if not isinstance(operation, str) or operation not in fields:
             raise ValueError('unknown operation')
         required, optional = fields[operation]
@@ -42,11 +58,49 @@ def main():
             value = normalize_input(request['payload'], request.get('legacy', False))
         elif operation == 'transition.validate':
             value = validate_transition(request['source'], request['target'])
-        else:
+        elif operation == 'retry.allowed':
             value = retry_allowed(request['loop_id'], request['attempts_used'])
+        else:
+            root = request.get('root', os.getcwd())
+            store = RuntimeStore(root)
+            if operation == 'run.start':
+                normalize_input({'contract_version': '1.0.0', 'task_input': request['task_input']})
+                value = store.create_run(request.get('run_id'), branch=request['branch'], worktree=request['worktree'], metadata=request.get('metadata'), precondition=request.get('precondition'))
+                value = store.acquire_lease(value['run_id'], request['coordinator_id'])
+                value = store.transition(value['run_id'], 'running', expected_revision=value['revision'], lease_epoch=value['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'run.status':
+                value = store.get_run(request['run_id'])
+            elif operation == 'run.resume':
+                current = store.get_run(request['run_id'])
+                if current['state'] not in {'interrupted', 'waiting_for_user', 'reconciliation_required'}:
+                    raise ValueError('run cannot be resumed from ' + current['state'])
+                value = store.acquire_lease(request['run_id'], request['coordinator_id'], expected_revision=current['revision'])
+                value = store.transition(request['run_id'], 'running', expected_revision=value['revision'], lease_epoch=value['lease_epoch'], coordinator_id=request['coordinator_id'], reason='resumed')
+            elif operation == 'run.cancel':
+                current = store.get_run(request['run_id'])
+                if current['state'] not in {'pending', 'running', 'waiting_for_user', 'interrupted', 'reconciliation_required'}:
+                    raise ValueError('run cannot be cancelled from ' + current['state'])
+                value = store.acquire_lease(request['run_id'], request['coordinator_id'], expected_revision=current['revision'])
+                value = store.transition(request['run_id'], 'cancelled', expected_revision=value['revision'], lease_epoch=value['lease_epoch'], coordinator_id=request['coordinator_id'], reason='cancelled')
+            elif operation == 'run.transition':
+                value = store.transition(request['run_id'], request['target'], expected_revision=request.get('expected_revision'), lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'], reason=request.get('reason'))
+            elif operation == 'task.dispatch':
+                value = store.reserve_dispatch(request['run_id'], request['reservation_id'], max_dispatches=request.get('max_dispatches'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'decision.record':
+                value = store.record_decision(request['run_id'], request['decision_key'], request['value'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'message.deliver':
+                value = store.record_message(request['run_id'], request['body'], sender=request.get('sender'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'external.intent':
+                value = store.record_external_intent(request['run_id'], request['idempotency_key'], request['action'], request['request'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'external.reconcile':
+                value = store.reconcile_external(request['run_id'], request['idempotency_key'], status=request['status'], result=request.get('result'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'legacy.import':
+                value = store.import_legacy(request['run_id'], request['source'])
+            else:
+                value = store.export_run(request['run_id']).as_posix()
         result = {'api_version': '1.0.0', 'ok': True, 'result': value}
         status = 0
-    except (ValueError, TypeError, KeyError) as error:
+    except (ValueError, TypeError, KeyError, RuntimeError, OSError, sqlite3.Error) as error:
         result = {'api_version': '1.0.0', 'ok': False,
                   'error': {'code': 'invalid_request', 'message': str(error)}}
         status = 2

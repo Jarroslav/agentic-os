@@ -90,6 +90,18 @@ without requiring SQLite or a candidate-only message representation.
 The existing runner is experimental and must not be used to publish reliability
 claims. It is not an accepted Stage 0 deliverable.
 
+## Reviewed implementation checkpoints
+
+Stage 1 (`43d6c6d651059331038ef4f82ecf271adf908d1b`) centralized the registry and
+generated plugin bundles. Stage 2 (`17dac928c6a0e393ff1f6008f6f020e680b7b5bd`)
+closed the shipped worker-scope and escalation bypasses. Stage 3 is frozen for
+review at tree `989219fad3c92b8000f15550a7d6f65eb3c30680`: it adds the SQLite
+authoritative lifecycle store, revision/lease/coordinator fencing, durable
+dispatch reservations, real Git worktree ownership checks, migration receipts,
+revision-labelled exports, and external-outcome reconciliation. The Stage 3
+offline proof is 39 runtime tests plus the existing deterministic checks listed
+above; this is implementation evidence only and does not create a live score.
+
 The operator approved the [staging amendment](STAGING-AMENDMENT.md) on 2026-09-20.
 The next gate is an independently reviewed baseline/definition freeze. Runtime
 implementation may then proceed while executable observers are completed. All

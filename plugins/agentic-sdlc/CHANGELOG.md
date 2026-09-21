@@ -8,6 +8,9 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ### Added
 
+- Added the shared SQLite lifecycle runtime with fenced revisions, durable dispatch reservations,
+  external-action reconciliation, and revision-labelled exports.
+
 - Bundle the canonical versioned runtime contracts for independent installation, with deterministic drift checks and strict policy/input validation.
 
 - **`usage.sampled` is now a real event, not just a reserved shape.**
