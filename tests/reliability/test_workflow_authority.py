@@ -16,7 +16,7 @@ class WorkflowAuthorityTests(unittest.TestCase):
         reference = ROOT / "plugins/agentic-sdlc/references/runtime-authority.md"
         self.assertTrue(reference.is_file())
         content = reference.read_text(encoding="utf-8")
-        for operation in ("decision.record", "evidence.ingest", "legacy.export"):
+        for operation in ("decision.record", "event.record", "evidence.ingest", "legacy.export"):
             self.assertIn(operation, content)
         for skill in SKILLS:
             path = ROOT / "plugins/agentic-sdlc/skills" / skill / "SKILL.md"

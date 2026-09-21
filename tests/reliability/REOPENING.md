@@ -136,3 +136,11 @@ call sites still require migration to runtime operations.
 The QA E2E metadata assembler now applies the same managed-run fail-closed
 boundary as the event helper. It cannot overwrite a runtime-derived
 `meta.json`; unmanaged legacy smoke fixtures continue to pass.
+
+## Round 11 — fenced QA phase events
+
+The runtime now persists bounded coordinator-owned `event.record` entries and
+projects them into legacy event views. The QA event helper uses that operation
+when run ID, coordinator identity, lease epoch, and expected revision are
+provided; missing context still fails closed. This gives the QA phase ledger a
+real migration path instead of requiring direct JSONL mutation.

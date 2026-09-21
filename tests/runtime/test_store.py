@@ -107,7 +107,7 @@ class RuntimeStoreTests(unittest.TestCase):
     self.assertIn(f"revision-{run['revision']}", exported.name)
     self.assertEqual(store.export_run("r"), exported)
     exported_payload = json.loads((exported / "run.json").read_text())
-    self.assertEqual(set(("assignments", "peer_messages", "evidence", "dispatch_leases")) - set(exported_payload), set())
+    self.assertEqual(set(("assignments", "peer_messages", "evidence", "dispatch_leases", "events")) - set(exported_payload), set())
     payload = b"legacy bytes"
     source = root / "legacy.json"
     source.write_bytes(payload)
@@ -143,6 +143,26 @@ class RuntimeStoreTests(unittest.TestCase):
     (destination / "meta.json").write_text('{"status":"completed"}', encoding="utf-8")
     store.export_legacy("r", destination)
     self.assertEqual(__import__('json').loads((destination / "meta.json").read_text())["status"], "running")
+
+  def test_coordinator_event_is_durable_and_projected_to_legacy_view(self):
+    tmp_path = __import__('tempfile').TemporaryDirectory()
+    self.addCleanup(tmp_path.cleanup)
+    root = __import__('pathlib').Path(tmp_path.name)
+    store = RuntimeStore(root)
+    run = store.create_run("r", branch="feature/r", worktree=self.worktree(root, "r", "feature/r"),
+                           precondition={"ownership": "verified"})
+    run = store.acquire_lease("r", "coord")
+    run = store.transition("r", "running", expected_revision=run["revision"], lease_epoch=1, coordinator_id="coord")
+    run = store.record_event("r", "qa-event-1", "qa.phase.completed", {"phase": 1, "status": "complete"},
+                             expected_revision=run["revision"], lease_epoch=1, coordinator_id="coord")
+    self.assertEqual(run["revision"], 3)
+    destination = root / "legacy-view"
+    store.export_legacy("r", destination)
+    events = [__import__('json').loads(line) for line in (destination / "events.jsonl").read_text().splitlines()]
+    self.assertEqual(events[-1]["event_id"], "qa-event-1")
+    with self.assertRaises(ValueError):
+      store.record_event("r", "qa-event-1", "qa.phase.completed", {"phase": 2},
+                         expected_revision=run["revision"], lease_epoch=1, coordinator_id="coord")
 
   def test_ownership_requires_real_git_worktree_and_matching_branch(self):
     tmp_path = __import__('tempfile').TemporaryDirectory()
