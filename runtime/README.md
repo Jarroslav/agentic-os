@@ -51,7 +51,7 @@ can reduce default budgets. Increasing a running budget requires a future record
 user-decision operation; changing configuration must not silently reset counters.
 
 Lifecycle requests include `run.start`, `run.status`, `run.resume`, `run.cancel`,
-`run.complete`, `task.dispatch`, `dispatch.start`, `dispatch.finish`,
+`run.complete`, `task.dispatch`, `task.result`, `dispatch.start`, `dispatch.finish`,
 `dispatch.recover`, `decision.record`, `message.deliver`, `external.intent`,
 `external.reconcile`, `legacy.import`, `legacy.export`, `evidence.ingest`, and
 `event.record`, `run.export`.
