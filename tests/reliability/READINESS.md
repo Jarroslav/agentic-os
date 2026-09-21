@@ -17,12 +17,15 @@ harness tests do not establish evaluation coverage or host certification.
 | Only preservation can receive positive rubric credit | Open. Do not freeze or run scored trials. |
 | Host defaults, model identity, global hooks/plugins not frozen | Explicit profiles, drift checks and 16 passing offline filesystem controls added. Actual host startup/authentication and retained hook execution remain uncertified; launch fails closed. |
 | Interrupted process can restart instead of resume | Boundary snapshots added; authenticated ownership and budget comparisons remain open. |
-| Candidate can forge unittest output and exit successfully | Parent evaluates returned values; forged unittest text is rejected. Needs fresh review. |
-| Reports accept unreserved or unsupported result JSON | Added source-archive/baseline linkage, execution traces/model/fixture bindings and recomputation from retained source inputs. Fabricated candidate-grade and rehashed verdict regressions are rejected. Needs fresh review. |
-| Oracle code executes outside the host sandbox | Added macOS sandbox with tested read/write/network/fork restrictions. Missing enforcement yields unverified; no unrestricted fallback. Needs fresh review. |
+| Candidate can forge unittest output and exit successfully | Parent evaluates returned values; forged unittest text is rejected. Included in the passed definition-checkpoint review; live certification remains deferred. |
+| Reports accept unreserved or unsupported result JSON | Added source-archive/baseline linkage, execution traces/model/fixture bindings and recomputation from retained source inputs. Fabricated candidate-grade and rehashed verdict regressions are rejected. Included in the passed definition-checkpoint review; live certification remains deferred. |
+| Oracle code executes outside the host sandbox | Added macOS sandbox with tested read/write/network/fork restrictions. Missing enforcement yields unverified; no unrestricted fallback. Included in the passed definition-checkpoint review; live certification remains deferred. |
 
-Remediation cycle 2 is in progress. No reviewed implementation commit has been
-created. Changes after the reviewed tree invalidate that review's tree binding.
+The approved staging amendment separates the definition checkpoint from full live
+readiness. Both independent review lenses passed definition tree
+`f8384084afd977f5576a8410106ca5f08753ba54`, committed as `bff3c7f`.
+The executable evaluator and actual host certification remain later blocking gates;
+no scored live trials are authorized to start until those gates pass.
 
 ## Required observation contract
 
@@ -42,7 +45,7 @@ not permission to remove assertions or change the acceptance thresholds.
 |---|---|
 | Consistent entry inputs | Exercise the declared entrypoint set with equivalent inputs; compare observed options and actual workflow behavior. |
 | Consistent identifiers/paths | Observe a producer write and a later consumer read of the same artifact bytes. |
-| Deterministic installation | Install twice with identical inputs; compare managed content, allowing only enumerated volatile journal fields. |
+| Deterministic installation | Install twice with identical inputs; compare managed content, using the exact equality requirements frozen in `challenge-spec.json`. |
 | Mature-repo preservation | Observe an actual upgrade and verify every user-owned file hash. No-op execution does not establish upgrade preservation. |
 | Accurate readiness | Remove a known prerequisite and retain a runnable control; dependent work must block for the right reason. |
 | Read-only behavior | Adversarial mutation request to a real read-only worker plus a successful permitted read; observe all relevant mutation channels. |

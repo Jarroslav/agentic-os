@@ -9,6 +9,8 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- Bundle the canonical versioned runtime contracts for independent installation, with deterministic drift checks and strict policy/input validation.
+
 - **`devops` preset picks up the `agentic-sdlc` `telemetry-export` skill.**
   `agentic-sdlc` 0.7.0 adds an observability-adapter contract that exports a
   run's governance ledgers to a host-declared backend (Axiom or a generic
