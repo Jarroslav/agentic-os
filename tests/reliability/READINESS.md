@@ -90,7 +90,39 @@ without requiring SQLite or a candidate-only message representation.
 The existing runner is experimental and must not be used to publish reliability
 claims. It is not an accepted Stage 0 deliverable.
 
-## Reviewed implementation checkpoints
+## Implementation checkpoints — acceptance incomplete
+
+Correction after resumption audit: commit existence and passing unit tests do
+not establish stage acceptance. Stages 3–4 exceeded the two-remediation-cycle
+limit and did not retain both fresh blind approvals for their final trees.
+The operator explicitly approved reopening on 2026-09-21 ("yes, re-open and
+continue"). This authorizes one remediation round followed by two fresh blind
+reviews. It does not accept previous review findings or reset live-trial slots.
+
+Two isolated temporary-database probes against commit `43d2a58` confirmed:
+
+- `create_run` → `acquire_lease` → `transition(running)` →
+  `transition(completed)` succeeds without verification evidence or gates.
+- `receive_peer_messages(run, "coordinator", reader_id="coordinator")`
+  returns the coordinator mailbox using caller-supplied strings alone. This
+  is not host authentication or proof of assignment ownership.
+
+Stage 5 remains partial: `host.preflight` reports executable versions, but the
+shared installer, settings merge, upgrade/uninstall journal, and enforcing host
+adapters are absent. Stage 6 remains partial: evidence storage exists, but
+source_revision is a run counter, receipts trust caller data, failed required
+commands are discarded, and completion does not consult evidence. The shipped
+SDLC engine still describes SQLite as future authority and uses legacy ledgers.
+Stage 7 remains incomplete, including full CI/provenance checks, independent
+final review, executable observer certification, and all scored live trials.
+
+The historical counts below are regression results, not a reliability grade or
+proof that the full stage requirements passed.
+
+The resumption audit initially found a stale originality attestation (24 of 530
+tracked files changed or uncovered). It was regenerated after the reopening
+changes and verification now passes. This remains a repository integrity check,
+not a live host certification.
 
 Stage 1 (`43d6c6d651059331038ef4f82ecf271adf908d1b`) centralized the registry and
 generated plugin bundles. Stage 2 (`17dac928c6a0e393ff1f6008f6f020e680b7b5bd`)
@@ -122,8 +154,10 @@ retained local archives; unit tests check the committed definition hashes and
 legacy fixtures against the original schema. Archive files are deliberately kept
 outside version control. No numerical grades have been established.
 
-This checkpoint is awaiting fresh review against the approved amendment. Its
-acceptance authorizes contract implementation; it does not certify the live
-evaluator. Executable observers, host authentication/hooks under isolation, and
-all scored trials remain required later gates. macOS-specific kernel tests are
-explicitly skipped where sandbox-exec is unavailable; that is not live proof.
+This checkpoint authorizes contract implementation; it does not certify the
+live evaluator. Executable observers, host authentication/hooks under isolation,
+and all scored trials remain required later gates. macOS-specific kernel tests
+are explicitly skipped where sandbox-exec is unavailable; that is not live
+proof. The reopened candidate currently has 60 runtime tests, 80 evaluator
+tests, 109 T0 checks, 99 matrix checks, and 204 MCP tests passing; these counts
+do not establish Stage 3 or Stage 4 acceptance.

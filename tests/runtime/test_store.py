@@ -32,7 +32,7 @@ class RuntimeStoreTests(unittest.TestCase):
     now[0] = 1000.0
     run = store.transition("run-1", "running", expected_revision=run["revision"], lease_epoch=1, coordinator_id="coordinator-a")
     now[0] = 1010.0
-    run = store.transition("run-1", "completed", expected_revision=run["revision"], lease_epoch=1, coordinator_id="coordinator-a")
+    run = store.transition("run-1", "cancelled", expected_revision=run["revision"], lease_epoch=1, coordinator_id="coordinator-a")
     self.assertAlmostEqual(run["active_seconds"], 20.0)
 
 
@@ -221,15 +221,15 @@ class RuntimeStoreTests(unittest.TestCase):
     store.create_assignment("r", "a", "worker-a", owned_paths=[], context_refs=[], acceptance=[], coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
     run = store.get_run("r")
     store.send_peer_message("r", message_id="m1", assignment_id="a", assignment_revision=0, correlation_id="c", sender="worker-a", recipient="coord", message_type="task.progress", deadline=run["updated_at"] + 10, payload={"step": 1}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
-    with self.assertRaises(ValueError):
+    with self.assertRaises(RuntimeError):
       store.receive_peer_messages("r", "coord", reader_id="other")
-    received = store.receive_peer_messages("r", "coord", reader_id="coord")
+    received = store._inspect_peer_messages("r", "coord")
     self.assertEqual(received[0]["message_id"], "m1")
     self.assertEqual(received[0]["payload"], {"step": 1})
     run = store.get_run("r")
     store.send_peer_message("r", message_id="a", assignment_id="a", assignment_revision=0, correlation_id="c2", sender="worker-a", recipient="coord", message_type="task.progress", deadline=run["updated_at"] + 10, payload={"step": 2}, coordinator_id="coord", lease_epoch=run["lease_epoch"], expected_revision=run["revision"])
-    page = store.receive_peer_messages("r", "coord", reader_id="coord", limit=1)
-    self.assertEqual(store.receive_peer_messages("r", "coord", reader_id="coord", after_message_id=page[0]["message_id"])[0]["message_id"], "a")
+    page = store._inspect_peer_messages("r", "coord", limit=1)
+    self.assertEqual(store._inspect_peer_messages("r", "coord", after_message_id=page[0]["message_id"])[0]["message_id"], "a")
 
   def test_evidence_is_revision_bound_and_failed_required_checks_are_rejected(self):
     tmp_path = __import__('tempfile').TemporaryDirectory()

@@ -1,5 +1,11 @@
 # Shared runtime contracts
 
+Status: experimental, incomplete implementation. Existing SDLC/QA skills are
+not yet integrated with this store. No host authentication or live workflow
+certification is established. Run completion and mailbox delivery require
+trusted host contracts before they can be enabled safely. The reopening ledger
+at `tests/reliability/REOPENING.md` tracks the current acceptance gaps.
+
 `agentic_runtime/registry.json` is the canonical contract source. Run
 `python3 runtime/generate_bundles.py` after a source change; CI uses `--check`
 to reject drift. Each plugin receives its own runtime and generated contract
@@ -13,9 +19,9 @@ requests fail with exit status 2 and a structured error. Registry inspection:
 printf '%s\n' '{"api_version":"1.0.0","operation":"registry.get"}' | python3 runtime/run.py
 ```
 
-The lifecycle operations use SQLite as the authoritative state and require a
+The runtime lifecycle operations use SQLite as their state and require a
 branch/worktree ownership precondition before export artifacts are written.
-They fence coordinator mutations with a revision and lease epoch, reserve
+They check supplied coordinator revisions and lease epochs, reserve
 dispatches transactionally, and put uncertain external outcomes into
 reconciliation. JSON exports are revision-labelled views; editing one never
 changes the database. Host enforcement and installation operations remain
@@ -51,10 +57,12 @@ Assignments are owned by one worker and carry paths, context references,
 acceptance criteria, limits, and dependencies. `assignment.create` rejects
 unknown dependencies and cycles; `assignment.transition` requires the current
 assignment revision. `message.send` accepts only registered typed messages and
-rejects stale assignments, duplicate content changes, unauthorized senders, and
+rejects stale assignments, duplicate content changes, inconsistent sender labels, and
 payloads over the registry limit.
-`evidence.record` stores command receipts bound to the current run revision and
-rejects stale or failed required checks.
+`evidence.record` currently stores caller-supplied command claims bound to a run
+counter. It does not execute or authenticate commands or bind them to repository
+content. Required failures are rejected at ingestion rather than retained as
+receipts. Trusted evidence capture and gate decisions remain implementation work.
 Setup uses `host.preflight` to report observed Python, SQLite, Git, and host
 launch capabilities; unsupported OS sandboxing is reported explicitly. Peer
 work also exposes `assignment.create`, `assignment.transition`, `message.send`,

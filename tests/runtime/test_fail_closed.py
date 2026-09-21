@@ -1,0 +1,143 @@
+import math
+import sqlite3
+import tempfile
+import unittest
+
+from runtime.agentic_runtime.store import RuntimeStore
+from runtime.agentic_runtime.contracts import load_registry
+
+
+class FailClosedTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.now = 100.0
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now)
+        self.make_run('r')
+
+    def make_run(self, name):
+        self.store.create_run(name)
+        self.store.transition(name, 'running')
+        self.store.create_assignment(name, 'a', 'worker', owned_paths=[], context_refs=[], acceptance=[])
+
+    def send(self, run='r', **changes):
+        args = dict(message_id=run+'q', assignment_id='a', assignment_revision=0,
+                    correlation_id='shared', sender='worker', recipient='peer',
+                    message_type='question.request', deadline=200, payload={})
+        args.update(changes)
+        return self.store.send_peer_message(run, **args)
+
+    def test_completion_denied_even_with_caller_written_evidence(self):
+        with self.assertRaisesRegex(RuntimeError, 'completion'):
+            self.store.transition('r', 'completed')
+        rev = self.store.get_run('r')['revision']
+        self.store.record_evidence('r', 'e', kind='host-certification', source_revision=rev,
+                                   command='true', cwd='/', source_hash='claimed', exit_status=0)
+        with self.assertRaisesRegex(RuntimeError, 'completion'):
+            self.store.transition('r', 'completed')
+        rev = self.store.get_run('r')['revision']
+        self.store.record_evidence('r', 'optional', kind='acceptance', source_revision=rev,
+                                   command='false', cwd='/', source_hash='claimed', exit_status=1, required=False)
+        with self.assertRaisesRegex(RuntimeError, 'completion'):
+            self.store.transition('r', 'completed')
+        self.assertEqual(self.store.transition('r', 'cancelled')['state'], 'cancelled')
+
+    def test_mailbox_identity_strings_never_unlock_delivery(self):
+        self.send()
+        for reader in ('peer', 'worker', 'forged'):
+            with self.assertRaisesRegex(RuntimeError, 'host-issued'):
+                self.store.receive_peer_messages('r', 'peer', reader_id=reader)
+        self.assertEqual(len(self.store._inspect_peer_messages('r', 'peer')), 1)
+
+    def test_dispatch_ceiling_survives_reopen_and_resume(self):
+        self.assertTrue(self.store.reserve_dispatch('r', 'one', max_dispatches=1)['reserved'])
+        self.store.transition('r', 'interrupted')
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now)
+        self.store.transition('r', 'running')
+        for ceiling in (None, 64):
+            self.assertFalse(self.store.reserve_dispatch('r', 'two', max_dispatches=ceiling)['reserved'])
+        self.assertTrue(self.store.reserve_dispatch('r', 'one')['reserved'])
+
+    def test_versions_rejected_on_open_and_before_existing_handle_mutation(self):
+        for key in ('schema_version', 'registry_contract_version'):
+            with sqlite3.connect(self.store.db_path) as db:
+                old = db.execute('SELECT value FROM metadata WHERE key=?', (key,)).fetchone()[0]
+                db.execute('UPDATE metadata SET value=? WHERE key=?', ('unsupported', key))
+            before = self.store.db_path.read_bytes()
+            with self.assertRaisesRegex(RuntimeError, 'version'):
+                RuntimeStore(self.tmp.name)
+            with self.assertRaisesRegex(RuntimeError, 'version'):
+                self.store.record_decision('r', 'x', True)
+            self.assertEqual(before, self.store.db_path.read_bytes())
+            with sqlite3.connect(self.store.db_path) as db:
+                db.execute('UPDATE metadata SET value=? WHERE key=?', (old, key))
+
+    def test_interrupted_initialization_repairs_on_reopen(self):
+        # A partially-created metadata table is recoverable; a mismatched
+        # declared version still remains fail-closed.
+        with sqlite3.connect(self.store.db_path) as db:
+            db.execute('DROP TABLE runs')
+        reopened = RuntimeStore(self.tmp.name, clock=lambda: self.now)
+        run = reopened.create_run('recovered')
+        self.assertEqual(run['state'], 'pending')
+
+    def test_deadline_must_be_finite_and_question_bounded(self):
+        for deadline in (math.inf, -math.inf, math.nan, 401):
+            with self.assertRaises(ValueError):
+                self.send(deadline=deadline)
+        self.send(deadline=400)
+
+    def test_other_run_response_does_not_answer_question(self):
+        self.send()
+        self.make_run('other')
+        self.send('other', sender='worker', recipient='worker')
+        self.send('other', message_id='reply', message_type='question.response', recipient='worker')
+        ceiling = load_registry()['policy_defaults']['max_outstanding_questions']
+        for index in range(1, ceiling):
+            self.send(message_id='extra'+str(index), correlation_id='extra'+str(index))
+        with self.assertRaisesRegex(RuntimeError, 'question budget'):
+            self.send(message_id='overflow', correlation_id='overflow')
+        self.now = 201
+        self.assertEqual(self.store.recover_timeouts('r')['escalated_assignments'], ['a'])
+
+    def test_terminal_assignment_cannot_be_resurrected_by_expired_message(self):
+        self.store.assignment_transition('r', 'a', 'cancelled', expected_assignment_revision=0)
+        with self.assertRaises(RuntimeError):
+            self.send(assignment_revision=1, deadline=99)
+        self.assertEqual(self.store.assignment('r', 'a')['state'], 'cancelled')
+
+    def test_recovery_is_idempotent(self):
+        self.send()
+        self.now = 201
+        self.assertEqual(self.store.recover_timeouts('r')['escalated_assignments'], ['a'])
+        before = self.store.get_run('r')['revision'], self.store.assignment('r', 'a')['revision']
+        self.assertEqual(self.store.recover_timeouts('r')['escalated_assignments'], [])
+        self.assertEqual(before, (self.store.get_run('r')['revision'], self.store.assignment('r', 'a')['revision']))
+
+    def test_run_cancellation_cascades_unfinished_assignments(self):
+        self.store.create_assignment('r', 'b', 'worker', owned_paths=[], context_refs=[], acceptance=[])
+        self.store.assignment_transition('r', 'b', 'running', expected_assignment_revision=0)
+        self.store.assignment_transition('r', 'b', 'failed', expected_assignment_revision=1)
+        self.store.transition('r', 'cancelled')
+        self.assertEqual(self.store.assignment('r', 'a')['state'], 'cancelled')
+        self.assertEqual(self.store.assignment('r', 'b')['state'], 'failed')
+
+    def test_question_correlations_cannot_be_reused_or_answered_twice(self):
+        self.send(recipient='worker')
+        with self.assertRaises(ValueError):
+            self.send(message_id='duplicate')
+        self.send(message_id='response', recipient='worker', message_type='question.response')
+        with self.assertRaises(ValueError):
+            self.send(message_id='response-two', recipient='worker', message_type='question.response')
+        self.now = 201
+        self.assertEqual(self.store.recover_timeouts('r')['escalated_assignments'], [])
+
+    def test_ceiling_tightening_persists_on_denial_and_idempotent_reservation(self):
+        for name in ('first', 'second'):
+            self.store.reserve_dispatch('r', name, max_dispatches=5)
+        self.assertFalse(self.store.reserve_dispatch('r', 'denied', max_dispatches=1)['reserved'])
+        self.assertFalse(RuntimeStore(self.tmp.name).reserve_dispatch('r', 'third')['reserved'])
+        self.make_run('other')
+        self.store.reserve_dispatch('other', 'first', max_dispatches=5)
+        self.assertTrue(self.store.reserve_dispatch('other', 'first', max_dispatches=1)['reserved'])
+        self.assertFalse(RuntimeStore(self.tmp.name).reserve_dispatch('other', 'second')['reserved'])

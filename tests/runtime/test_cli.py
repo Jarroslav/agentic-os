@@ -135,6 +135,9 @@ class CLITests(unittest.TestCase):
             code, terminal = request('run.transition', run_id='run-terminal', target='completed',
                                      coordinator_id='c1', lease_epoch=started['result']['lease_epoch'],
                                      expected_revision=started['result']['revision'])
+            self.assertEqual(code, 2, terminal)
+            self.assertIn('completion', terminal['error']['message'])
+            code, terminal = request('run.cancel', run_id='run-terminal', coordinator_id='c1')
             self.assertEqual(code, 0, terminal)
             revision = terminal['result']['revision']
             code, result = request('run.resume', run_id='run-terminal', coordinator_id='c2')
@@ -146,3 +149,19 @@ class CLITests(unittest.TestCase):
             code, status = request('run.status', run_id='run-terminal')
             self.assertEqual(code, 0, status)
             self.assertEqual(status['result']['revision'], revision)
+
+    def test_mailbox_caller_identity_never_discloses_messages(self):
+        from runtime.agentic_runtime.store import RuntimeStore
+        with tempfile.TemporaryDirectory() as root:
+            store = RuntimeStore(root, clock=lambda: 100)
+            store.create_run('mailbox')
+            store.create_assignment('mailbox', 'a', 'worker', owned_paths=[], context_refs=[], acceptance=[])
+            store.send_peer_message('mailbox', message_id='secret', assignment_id='a', assignment_revision=0,
+                                    correlation_id='c', sender='worker', recipient='victim',
+                                    message_type='task.progress', deadline=110, payload={'private': 'mailbox-content'})
+            for reader in ('victim', 'attacker'):
+                code, result = self.request('message.receive', root=root, run_id='mailbox', recipient='victim', reader_id=reader)
+                self.assertEqual(code, 2)
+                self.assertIn('host-issued', result['error']['message'])
+                self.assertNotIn('result', result)
+                self.assertNotIn('mailbox-content', json.dumps(result))

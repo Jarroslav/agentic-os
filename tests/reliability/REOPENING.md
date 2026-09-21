@@ -1,0 +1,58 @@
+# Stages 3–4 reopening ledger
+
+Starting commit: `43d2a58`. Branch: `codex/framework-reliability`.
+Authorization: operator said "yes, re-open and continue" on 2026-09-21,
+in response to one bounded remediation round and fresh blind reviews.
+
+## Rules
+
+- One implementation round, then independent correctness/recovery and
+  enforcement/contracts reviews with no inherited conversation.
+- Capture the staged tree before review; do not modify it while reviewing.
+- Neither passing unit tests nor a fail-closed stub establishes stage acceptance.
+- Unresolved acceptance gaps remain blocking. No extra fix cycle is assumed.
+- Original live budget remains 48 trials, with none executed.
+
+## Confirmed findings before remediation
+
+- Completion succeeds with no gates or command evidence.
+- Mailbox authorization compares two caller-supplied strings.
+- The dispatch ceiling is supplied per call, so omission restores the default.
+- Schema/contract metadata is written but not checked on reopening a database.
+- Peer deadlines can exceed the registry ceiling and recovery can repeatedly
+  change revisions for already escalated assignments.
+- Run cancellation does not propagate to every unfinished assignment.
+- Originality attestation verification failed for 24 of 530 tracked files.
+- MCP content drift check failed: both plugins' new host/store modules were
+  missing from the content index, with stale changelog and CLI entries.
+
+A fresh `check-provenance.py --require-store` scan on the pre-remediation
+working tree passed (535 tracked files, zero failures/warnings). Attestation
+must be regenerated after final changes; this scan alone does not renew it.
+
+## Remaining scope beyond containment fixes
+
+Full acceptance still requires authenticated host dispatch records; executable
+gate and source-bound command verification; active-time/concurrency/retry
+admission; durable scheduling; meaningful legacy import and external outcome
+reconciliation; deterministic installer operations; workflow integration; and
+independent live observers. A restriction that blocks an unsupported operation
+prevents a false success but does not implement that operation.
+
+## Round 1
+
+Candidate implementation finished. Before remediation, nine added regressions
+produced eight failures. After remediation, 60 runtime tests pass. Public
+completion and mailbox delivery are disabled pending trusted host contracts.
+Persisted dispatch ceilings, version validation, finite bounded deadlines,
+run-scoped question correlations, terminal assignment protection, idempotent
+timeout recovery, and run cancellation propagation have regression coverage.
+Question correlations currently allow one request/response pair; two-round
+reuse is not implemented. This candidate does not establish stage acceptance.
+
+An interrupted-initialization fault injection now exits at the injected DDL
+statement and successfully reopens the partial database. Raw checks are
+retained under `/tmp/agentic-reopen-*.log`. Unaffected evaluator, T0, and
+acceptance matrix checks passed (80, 109, and 99 respectively); the MCP suite
+passed 204 tests and content drift was rebuilt. Review verdicts must bind to
+the final staged tree after packaging and attestation.
