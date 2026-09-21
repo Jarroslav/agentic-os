@@ -236,3 +236,26 @@ class CLITests(unittest.TestCase):
                 self.assertIn('host-issued', result['error']['message'])
                 self.assertNotIn('result', result)
                 self.assertNotIn('mailbox-content', json.dumps(result))
+
+    def test_public_message_send_rejects_unsigned_worker_identity(self):
+        from runtime.agentic_runtime.store import RuntimeStore
+        with tempfile.TemporaryDirectory() as root:
+            store = RuntimeStore(root)
+            store.create_run('message-cli')
+            run = store.acquire_lease('message-cli', 'coord')
+            run = store.transition('message-cli', 'running', expected_revision=run['revision'],
+                                   lease_epoch=run['lease_epoch'], coordinator_id='coord')
+            store.create_assignment('message-cli', 'a', 'worker', owned_paths=[],
+                                    context_refs=[], acceptance=[],
+                                    coordinator_id='coord', lease_epoch=run['lease_epoch'],
+                                    expected_revision=run['revision'])
+            run = store.get_run('message-cli')
+            code, result = self.request(
+                'message.send', root=root, run_id='message-cli', message_id='unsigned-cli',
+                assignment_id='a', assignment_revision=0, correlation_id='c',
+                sender='worker', recipient='coord', message_type='task.progress',
+                deadline=run['updated_at'] + 30, payload={'step': 1},
+                coordinator_id='coord', lease_epoch=run['lease_epoch'],
+                expected_revision=run['revision'])
+            self.assertEqual(code, 2)
+            self.assertIn('host-issued sender identity', result['error']['message'])
