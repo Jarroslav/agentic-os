@@ -1,8 +1,9 @@
 import unittest
 import tempfile
 
-from runtime.agentic_runtime.host import issue_evidence_record, verify_dispatch
+from runtime.agentic_runtime.host import adapt_command_event, issue_evidence_record, verify_dispatch
 from runtime.agentic_runtime.store import RuntimeStore
+from runtime.agentic_runtime.trace import command_receipt
 
 
 class HostIssuerTests(unittest.TestCase):
@@ -40,6 +41,13 @@ class HostIssuerTests(unittest.TestCase):
                 command=event["command"], cwd=event["cwd"], source_hash=event["source_hash"],
                 exit_status=event["exit_status"], host_record=event["host_record"])
             self.assertEqual(evidence["host_record_id"], "e1")
+
+    def test_adapter_returns_ingestible_event(self):
+        event = adapt_command_event(self.event(), b"key", identity="claude",
+                                    issued_at=10, expires_at=20)
+        self.assertEqual(command_receipt(event)["evidence_id"], "e1")
+        self.assertEqual(event["host_record"]["purpose"], "evidence.record")
+        self.assertEqual(event["host_record"]["identity"], "claude")
 
 
 if __name__ == "__main__":

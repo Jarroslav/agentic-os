@@ -100,6 +100,16 @@ def issue_evidence_record(event: Mapping[str, Any], key: bytes | str, *,
     return sign_dispatch(record, key)
 
 
+def adapt_command_event(event: Mapping[str, Any], key: bytes | str, *,
+                        identity: str, issued_at: float, expires_at: float) -> dict[str, Any]:
+    """Return an explicit command event with a signed evidence claim attached."""
+    record = issue_evidence_record(event, key, identity=identity,
+                                   issued_at=issued_at, expires_at=expires_at)
+    result = dict(event)
+    result["host_record"] = record
+    return result
+
+
 def verify_dispatch(record: Mapping[str, Any], key: bytes | str, *, purpose: str,
                     now: float | None = None) -> dict[str, Any]:
     """Verify a short-lived host dispatch record and return its claims."""
