@@ -339,6 +339,9 @@ class RuntimeStore:
         evidence_ids = claims.get("evidence_ids")
         if not isinstance(evidence_ids, list) or not evidence_ids:
             raise RuntimeError("trusted completion evidence is required")
+        artifact_hashes = claims.get("artifact_hashes")
+        if not isinstance(artifact_hashes, Mapping):
+            raise RuntimeError("trusted completion artifact hashes are required")
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -349,7 +352,10 @@ class RuntimeStore:
             self._accept_host_claim(db, claims)
             placeholders = ",".join("?" for _ in evidence_ids)
             evidence = db.execute(f"SELECT * FROM evidence WHERE run_id=? AND evidence_id IN ({placeholders})", (run_id, *evidence_ids)).fetchall()
-            if len(evidence) != len(set(evidence_ids)) or any(item["required"] and item["exit_status"] != 0 for item in evidence) or any(item["host_record_id"] is None for item in evidence):
+            if (len(evidence) != len(set(evidence_ids)) or
+                    any(item["required"] and item["exit_status"] != 0 for item in evidence) or
+                    any(item["host_record_id"] is None for item in evidence) or
+                    any(artifact_hashes.get(item["evidence_id"]) != item["source_hash"] for item in evidence)):
                 raise RuntimeError("required completion evidence is missing or failed")
             unfinished = db.execute("SELECT 1 FROM assignments WHERE run_id=? AND state NOT IN ('completed','failed','cancelled')", (run_id,)).fetchone()
             if unfinished:

@@ -226,7 +226,8 @@ class FailClosedTests(unittest.TestCase):
         record = sign_dispatch({
             'record_id': 'complete-1', 'purpose': 'run.complete', 'run_id': 'r',
             'identity': 'coordinator', 'gate_decision': 'approved',
-            'evidence_ids': [evidence['evidence_id']], 'issued_at': 99, 'expires_at': 200,
+            'evidence_ids': [evidence['evidence_id']], 'artifact_hashes': {'verified': 'source'},
+            'issued_at': 99, 'expires_at': 200,
         }, key)
         completed = self.store.complete_run('r', host_record=record)
         self.assertEqual(completed['state'], 'completed')
@@ -239,7 +240,8 @@ class FailClosedTests(unittest.TestCase):
                                               command='true', cwd='/', source_hash='claimed', exit_status=0)
         gate = sign_dispatch({'record_id': 'caller-gate', 'purpose': 'run.complete', 'run_id': 'r',
                               'identity': 'coordinator', 'gate_decision': 'approved',
-                              'evidence_ids': [evidence['evidence_id']], 'issued_at': 99, 'expires_at': 200}, key)
+                              'evidence_ids': [evidence['evidence_id']], 'artifact_hashes': {'caller-only': 'claimed'},
+                              'issued_at': 99, 'expires_at': 200}, key)
         with self.assertRaisesRegex(RuntimeError, 'evidence'):
             self.store.complete_run('r', host_record=gate)
 
