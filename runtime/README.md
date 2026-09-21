@@ -79,6 +79,9 @@ or the versioned `evidence.ingest` operation; parsing happens before the
 transaction and the store verifies the signed host claims.
 Adapters may use `agentic_runtime.host.issue_evidence_record` to sign only the
 validated explicit command fields before ingestion.
+`agentic_runtime.adapter.adapt_json_lines` provides the stream boundary: unrelated
+host output is ignored, explicit receipts are signed, and malformed JSON fails
+closed.
 `legacy.export` regenerates `meta.json`, `events.jsonl`, and `decisions.jsonl`
 as compatibility views from SQLite; edits to those files are overwritten on
 the next export and never affect authoritative state.
