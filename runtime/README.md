@@ -47,3 +47,9 @@ Lifecycle requests include `run.start`, `run.status`, `run.resume`, `run.cancel`
 `external.reconcile`, `legacy.import`, and `run.export`. `legacy.import` records
 the source hash and receipt without replacing the original file. Mutating requests for an owned run carry
 the coordinator identity, current `lease_epoch`, and expected revision; stale ownership or revisions fail atomically.
+Assignments are owned by one worker and carry paths, context references,
+acceptance criteria, limits, and dependencies. `assignment.create` rejects
+unknown dependencies and cycles; `assignment.transition` requires the current
+assignment revision. `message.send` accepts only registered typed messages and
+rejects stale assignments, duplicate content changes, unauthorized senders, and
+payloads over the registry limit.

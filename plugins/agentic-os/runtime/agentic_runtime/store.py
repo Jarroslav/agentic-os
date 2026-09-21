@@ -10,6 +10,7 @@ import sqlite3
 import subprocess
 import tempfile
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Mapping
 from uuid import uuid4
@@ -44,11 +45,15 @@ class RuntimeStore:
         if self.fault:
             self.fault("after_commit")
 
+    @contextmanager
     def _connect(self):
         db = sqlite3.connect(self.db_path, timeout=30, isolation_level=None)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys=ON")
-        return db
+        try:
+            yield db
+        finally:
+            db.close()
 
     def _initialize(self):
         with self._connect() as db:
@@ -97,6 +102,21 @@ class RuntimeStore:
                     run_id TEXT NOT NULL, source TEXT NOT NULL, sha256 TEXT NOT NULL,
                     imported_at REAL NOT NULL, receipt_json TEXT NOT NULL,
                     PRIMARY KEY(run_id, source), FOREIGN KEY(run_id) REFERENCES runs(run_id)
+                );
+                CREATE TABLE IF NOT EXISTS assignments (
+                    run_id TEXT NOT NULL, assignment_id TEXT NOT NULL, worker_id TEXT NOT NULL,
+                    state TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0,
+                    owned_paths_json TEXT NOT NULL, context_json TEXT NOT NULL,
+                    acceptance_json TEXT NOT NULL, limits_json TEXT NOT NULL,
+                    depends_on_json TEXT NOT NULL, created_at REAL NOT NULL, updated_at REAL NOT NULL,
+                    PRIMARY KEY(run_id, assignment_id), FOREIGN KEY(run_id) REFERENCES runs(run_id)
+                );
+                CREATE TABLE IF NOT EXISTS peer_messages (
+                    message_id TEXT PRIMARY KEY, run_id TEXT NOT NULL, assignment_id TEXT NOT NULL,
+                    assignment_revision INTEGER NOT NULL, correlation_id TEXT NOT NULL,
+                    sender TEXT NOT NULL, recipient TEXT NOT NULL, message_type TEXT NOT NULL,
+                    deadline REAL NOT NULL, payload_json TEXT NOT NULL, created_at REAL NOT NULL,
+                    FOREIGN KEY(run_id, assignment_id) REFERENCES assignments(run_id, assignment_id)
                 );
                 """
             )
@@ -389,3 +409,186 @@ class RuntimeStore:
             db.execute("INSERT INTO migration_receipts VALUES(?,?,?,?,?)", (run_id, name, receipt["sha256"], receipt["imported_at"], self._json(receipt)))
             self._commit(db)
         return receipt
+
+    def create_assignment(self, run_id: str, assignment_id: str, worker_id: str, *,
+                          owned_paths: list[str], context_refs: list[str], acceptance: list[str],
+                          limits: Mapping[str, Any] | None = None, depends_on: list[str] | None = None,
+                          expected_revision: int | None = None, lease_epoch: int | None = None,
+                          coordinator_id: str | None = None) -> dict[str, Any]:
+        validate_identifier(assignment_id)
+        if not worker_id or not isinstance(owned_paths, list) or not isinstance(context_refs, list) or not isinstance(acceptance, list):
+            raise ValueError("assignment fields are invalid")
+        deps = list(depends_on or [])
+        if any(not isinstance(item, str) for item in deps):
+            raise ValueError("depends_on must contain assignment identifiers")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            if db.execute("SELECT 1 FROM assignments WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone():
+                db.rollback(); raise ValueError("assignment already exists: " + assignment_id)
+            known = {r[0]: json.loads(r[1]) for r in db.execute("SELECT assignment_id,depends_on_json FROM assignments WHERE run_id=?", (run_id,))}
+            if any(dep not in known for dep in deps):
+                db.rollback(); raise ValueError("unknown assignment dependency")
+            known[assignment_id] = deps
+            visiting, visited = set(), set()
+            def visit(node):
+                if node in visiting: return True
+                if node in visited: return False
+                visiting.add(node)
+                if any(visit(dep) for dep in known[node]): return True
+                visiting.remove(node); visited.add(node); return False
+            if visit(assignment_id):
+                db.rollback(); raise ValueError("assignment dependency cycle")
+            now = self.clock()
+            db.execute("INSERT INTO assignments VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", (run_id, assignment_id, worker_id, "pending", 0, self._json(owned_paths), self._json(context_refs), self._json(acceptance), self._json(dict(limits or {})), self._json(deps), now, now))
+            revision = run["revision"] + 1
+            db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (revision, now, run_id))
+            self._commit(db)
+            return self.assignment(run_id, assignment_id)
+
+    def assignment(self, run_id: str, assignment_id: str) -> dict[str, Any]:
+        with self._connect() as db:
+            row = db.execute("SELECT * FROM assignments WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()
+            if row is None: raise KeyError("unknown assignment: " + assignment_id)
+            result = dict(row)
+            for field in ("owned_paths_json", "context_json", "acceptance_json", "limits_json", "depends_on_json"):
+                result[field[:-5]] = json.loads(result.pop(field))
+            return result
+
+    def assignment_transition(self, run_id: str, assignment_id: str, target: str, *, expected_assignment_revision: int,
+                              worker_id: str | None = None, expected_revision: int | None = None,
+                              lease_epoch: int | None = None, coordinator_id: str | None = None) -> dict[str, Any]:
+        allowed = {"pending": {"running", "cancelled"}, "running": {"waiting", "completed", "failed", "cancelled", "escalation_required"}, "waiting": {"running", "cancelled", "escalation_required"}, "escalation_required": {"running", "failed", "cancelled"}}
+        if target not in {"running", "completed", "failed", "cancelled", "waiting", "escalation_required"}:
+            raise ValueError("invalid assignment state")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            row = db.execute("SELECT * FROM assignments WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()
+            if row is None: raise KeyError("unknown assignment: " + assignment_id)
+            if row["revision"] != expected_assignment_revision: raise RuntimeError("assignment revision mismatch")
+            if worker_id is not None and row["worker_id"] != worker_id: raise RuntimeError("assignment owner mismatch")
+            if row["state"] in {"completed", "failed", "cancelled"}: raise RuntimeError("assignment is terminal")
+            if target not in allowed.get(row["state"], set()): raise ValueError("forbidden assignment transition")
+            if target in {"running", "completed"}:
+                dependencies = json.loads(row["depends_on_json"])
+                if dependencies:
+                    placeholders = ",".join("?" for _ in dependencies)
+                    states = [r[0] for r in db.execute(f"SELECT state FROM assignments WHERE run_id=? AND assignment_id IN ({placeholders})", (run_id, *dependencies)).fetchall()]
+                    if len(states) != len(dependencies) or any(state != "completed" for state in states): raise RuntimeError("assignment dependencies are incomplete")
+            now = self.clock(); assignment_revision = row["revision"] + 1
+            db.execute("UPDATE assignments SET state=?,revision=?,updated_at=? WHERE run_id=? AND assignment_id=?", (target, assignment_revision, now, run_id, assignment_id))
+            if target == "cancelled":
+                cancelled = {assignment_id}
+                while True:
+                    changed = False
+                    dependents = db.execute("SELECT assignment_id,depends_on_json,state FROM assignments WHERE run_id=?", (run_id,)).fetchall()
+                    for dependent in dependents:
+                        if dependent["state"] not in {"completed", "failed", "cancelled"} and any(dep in cancelled for dep in json.loads(dependent["depends_on_json"])):
+                            db.execute("UPDATE assignments SET state='cancelled',revision=revision+1,updated_at=? WHERE run_id=? AND assignment_id=?", (now, run_id, dependent["assignment_id"]))
+                            cancelled.add(dependent["assignment_id"]); changed = True
+                    if not changed: break
+            db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
+            self._commit(db)
+            return self.assignment(run_id, assignment_id)
+
+    def send_peer_message(self, run_id: str, *, message_id: str, assignment_id: str,
+                          assignment_revision: int, correlation_id: str, sender: str, recipient: str,
+                          message_type: str, deadline: float, payload: Any,
+                          expected_revision: int | None = None, lease_epoch: int | None = None,
+                          coordinator_id: str | None = None) -> dict[str, Any]:
+        registry = load_registry()
+        if message_type not in registry["message_types"]: raise ValueError("unknown message type")
+        if not all(isinstance(value, str) and value for value in (message_id, assignment_id, correlation_id, sender, recipient)):
+            raise ValueError("message identifiers are required")
+        encoded = self._json(payload)
+        if len(encoded.encode("utf-8")) > int(registry["policy_defaults"]["max_message_bytes"]): raise ValueError("message exceeds byte limit")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            assignment = db.execute("SELECT * FROM assignments WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()
+            if assignment is None: raise KeyError("unknown assignment: " + assignment_id)
+            existing = db.execute("SELECT * FROM peer_messages WHERE message_id=?", (message_id,)).fetchone()
+            if existing:
+                if any(existing[field] != value for field, value in (("run_id", run_id), ("assignment_id", assignment_id), ("assignment_revision", assignment_revision), ("correlation_id", correlation_id), ("sender", sender), ("recipient", recipient), ("message_type", message_type), ("deadline", float(deadline)), ("payload_json", encoded))):
+                    raise ValueError("message id reused with different content")
+                db.rollback(); return dict(existing)
+            if assignment["revision"] != assignment_revision: raise RuntimeError("stale assignment message")
+            if sender != assignment["worker_id"] and sender != coordinator_id: raise RuntimeError("sender is not assignment owner")
+            now = self.clock()
+            if float(deadline) < now:
+                db.execute("UPDATE assignments SET state='escalation_required',revision=revision+1,updated_at=? WHERE run_id=? AND assignment_id=?", (now, run_id, assignment_id))
+                db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
+                self._commit(db)
+                raise RuntimeError("message deadline expired; escalation required")
+            count = db.execute("SELECT COUNT(*) FROM peer_messages WHERE run_id=? AND assignment_id=?", (run_id, assignment_id)).fetchone()[0]
+            if count >= int(registry["policy_defaults"]["max_messages_per_worker"]): raise RuntimeError("assignment message budget exhausted")
+            if message_type == "question.request":
+                outstanding = db.execute("SELECT COUNT(*) FROM peer_messages q WHERE q.run_id=? AND q.assignment_id=? AND q.message_type='question.request' AND NOT EXISTS (SELECT 1 FROM peer_messages r WHERE r.message_type='question.response' AND r.correlation_id=q.correlation_id)", (run_id, assignment_id)).fetchone()[0]
+                if outstanding >= int(registry["policy_defaults"]["max_outstanding_questions"]): raise RuntimeError("question budget exhausted")
+                rounds = db.execute("SELECT COUNT(*) FROM peer_messages WHERE run_id=? AND correlation_id=?", (run_id, correlation_id)).fetchone()[0]
+                if rounds >= int(registry["policy_defaults"]["max_question_rounds"]) * 2: raise RuntimeError("question round budget exhausted")
+            if message_type == "question.response":
+                request = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND correlation_id=? AND message_type='question.request'", (run_id, correlation_id)).fetchone()
+                if request is None:
+                    raise ValueError("question response has no request")
+                if request["sender"] != recipient or request["recipient"] != sender: raise RuntimeError("question participants do not match")
+                if now > request["deadline"]: raise RuntimeError("question reply deadline expired")
+                rounds = db.execute("SELECT COUNT(*) FROM peer_messages WHERE run_id=? AND correlation_id=?", (run_id, correlation_id)).fetchone()[0]
+                if rounds >= int(registry["policy_defaults"]["max_question_rounds"]) * 2: raise RuntimeError("question round budget exhausted")
+            db.execute("INSERT INTO peer_messages VALUES(?,?,?,?,?,?,?,?,?,?,?)", (message_id, run_id, assignment_id, assignment_revision, correlation_id, sender, recipient, message_type, float(deadline), encoded, now))
+            db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
+            self._commit(db)
+            return dict(db.execute("SELECT * FROM peer_messages WHERE message_id=?", (message_id,)).fetchone())
+
+    def recover_timeouts(self, run_id: str, *, expected_revision: int | None = None,
+                         lease_epoch: int | None = None, coordinator_id: str | None = None) -> dict[str, Any]:
+        """Escalate expired unanswered questions and peer wait cycles."""
+        now = self.clock()
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
+            requests = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND message_type='question.request'", (run_id,)).fetchall()
+            answered = {r["correlation_id"] for r in db.execute("SELECT correlation_id FROM peer_messages WHERE run_id=? AND message_type='question.response'", (run_id,))}
+            escalated = {r["assignment_id"] for r in requests if r["deadline"] <= now and r["correlation_id"] not in answered}
+            edges = [(r["sender"], r["recipient"], r["assignment_id"]) for r in requests if r["correlation_id"] not in answered]
+            graph = {}
+            for sender, recipient, assignment_id in edges:
+                graph.setdefault(sender, []).append((recipient, assignment_id))
+            visiting, visited = set(), set()
+            def visit(node, path):
+                if node in visiting:
+                    cycle_nodes = set(path[path.index(node):])
+                    escalated.update(a for s, t, a in edges if s in cycle_nodes and t in cycle_nodes)
+                    return
+                if node in visited: return
+                visiting.add(node)
+                for target, _ in graph.get(node, []): visit(target, path + [target])
+                visiting.remove(node); visited.add(node)
+            for node in graph: visit(node, [node])
+            if escalated:
+                placeholders = ",".join("?" for _ in escalated)
+                db.execute(f"UPDATE assignments SET state='escalation_required',revision=revision+1,updated_at=? WHERE run_id=? AND assignment_id IN ({placeholders}) AND state NOT IN ('completed','failed','cancelled')", (now, run_id, *sorted(escalated)))
+                db.execute("UPDATE runs SET revision=?,updated_at=? WHERE run_id=?", (run["revision"] + 1, now, run_id))
+                self._commit(db)
+            else:
+                db.rollback()
+            return {"escalated_assignments": sorted(escalated), "checked_at": now}
+
+    def receive_peer_messages(self, run_id: str, recipient: str, *, reader_id: str, limit: int = 8,
+                              after_message_id: str | None = None) -> list[dict[str, Any]]:
+        if not recipient or not reader_id or reader_id != recipient or type(limit) is not int or limit < 1 or limit > 8:
+            raise ValueError("reader identity must match recipient and limit must be bounded")
+        with self._connect() as db:
+            if db.execute("SELECT 1 FROM runs WHERE run_id=?", (run_id,)).fetchone() is None:
+                raise KeyError("unknown run: " + run_id)
+            if after_message_id:
+                cursor = db.execute("SELECT created_at FROM peer_messages WHERE run_id=? AND message_id=?", (run_id, after_message_id)).fetchone()
+                if cursor is None: raise ValueError("unknown message cursor")
+                rows = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND recipient=? AND (created_at>? OR (created_at=? AND message_id>?)) ORDER BY created_at,message_id LIMIT ?", (run_id, recipient, cursor[0], cursor[0], after_message_id, limit)).fetchall()
+            else:
+                rows = db.execute("SELECT * FROM peer_messages WHERE run_id=? AND recipient=? ORDER BY created_at,message_id LIMIT ?", (run_id, recipient, limit)).fetchall()
+            result = []
+            for row in rows:
+                item = dict(row); item["payload"] = json.loads(item.pop("payload_json")); result.append(item)
+            return result

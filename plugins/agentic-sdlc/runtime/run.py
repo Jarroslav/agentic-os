@@ -41,6 +41,11 @@ def main():
                   'message.deliver': ({'api_version', 'operation', 'run_id', 'body', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'sender', 'root'}),
                   'external.intent': ({'api_version', 'operation', 'run_id', 'idempotency_key', 'action', 'request', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'external.reconcile': ({'api_version', 'operation', 'run_id', 'idempotency_key', 'status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'result', 'root'}),
+                  'assignment.create': ({'api_version', 'operation', 'run_id', 'assignment_id', 'worker_id', 'owned_paths', 'context_refs', 'acceptance', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'limits', 'depends_on', 'root'}),
+                  'assignment.transition': ({'api_version', 'operation', 'run_id', 'assignment_id', 'target', 'expected_assignment_revision', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'worker_id', 'root'}),
+                  'message.send': ({'api_version', 'operation', 'run_id', 'message_id', 'assignment_id', 'assignment_revision', 'correlation_id', 'sender', 'recipient', 'message_type', 'deadline', 'payload', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
+                  'runtime.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
+                  'message.receive': ({'api_version', 'operation', 'run_id', 'recipient', 'reader_id'}, {'limit', 'after_message_id', 'root'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
         if not isinstance(operation, str) or operation not in fields:
@@ -94,6 +99,16 @@ def main():
                 value = store.record_external_intent(request['run_id'], request['idempotency_key'], request['action'], request['request'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'external.reconcile':
                 value = store.reconcile_external(request['run_id'], request['idempotency_key'], status=request['status'], result=request.get('result'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'assignment.create':
+                value = store.create_assignment(request['run_id'], request['assignment_id'], request['worker_id'], owned_paths=request['owned_paths'], context_refs=request['context_refs'], acceptance=request['acceptance'], limits=request.get('limits'), depends_on=request.get('depends_on'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'assignment.transition':
+                value = store.assignment_transition(request['run_id'], request['assignment_id'], request['target'], expected_assignment_revision=request['expected_assignment_revision'], worker_id=request.get('worker_id'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'message.send':
+                value = store.send_peer_message(request['run_id'], message_id=request['message_id'], assignment_id=request['assignment_id'], assignment_revision=request['assignment_revision'], correlation_id=request['correlation_id'], sender=request['sender'], recipient=request['recipient'], message_type=request['message_type'], deadline=request['deadline'], payload=request['payload'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'runtime.recover':
+                value = store.recover_timeouts(request['run_id'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
+            elif operation == 'message.receive':
+                value = store.receive_peer_messages(request['run_id'], request['recipient'], reader_id=request['reader_id'], limit=request.get('limit', 8), after_message_id=request.get('after_message_id'))
             elif operation == 'legacy.import':
                 value = store.import_legacy(request['run_id'], request['source'])
             else:

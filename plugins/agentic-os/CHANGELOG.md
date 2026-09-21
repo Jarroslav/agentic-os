@@ -9,6 +9,9 @@ Semantic Versioning. The plugin version lives in
 
 ### Added
 
+- Added durable assignment ownership and typed peer-message envelopes with
+  correlation, stale-revision, duplicate, sender, and payload-limit checks.
+
 - Added the shared SQLite lifecycle runtime with fenced revisions, durable dispatch reservations,
   external-action reconciliation, and revision-labelled exports.
 
