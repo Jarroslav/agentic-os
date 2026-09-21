@@ -8,6 +8,7 @@ import sys
 from agentic_runtime.contracts import load_registry, resolve_policy, normalize_input, validate_transition, retry_allowed, lookup_contract
 from agentic_runtime.store import RuntimeStore
 from agentic_runtime.host import preflight, require_capabilities
+from agentic_runtime.trace import ingest_command_event
 
 
 def unique_object(pairs):
@@ -53,6 +54,7 @@ def main():
                   'message.receive': ({'api_version', 'operation', 'run_id', 'recipient'}, {'reader_id', 'host_record', 'limit', 'after_message_id', 'root'}),
                   'host.preflight': ({'api_version', 'operation'}, {'root', 'required_capabilities'}),
                   'evidence.record': ({'api_version', 'operation', 'run_id', 'evidence_id', 'kind', 'source_revision', 'command', 'cwd', 'source_hash', 'exit_status', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'required', 'host_record', 'root'}),
+                  'evidence.ingest': ({'api_version', 'operation', 'event', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
         if not isinstance(operation, str) or operation not in fields:
@@ -130,6 +132,8 @@ def main():
                 value = store.receive_peer_messages(request['run_id'], request['recipient'], reader_id=request.get('reader_id'), host_record=request.get('host_record'), limit=request.get('limit', 8), after_message_id=request.get('after_message_id'))
             elif operation == 'evidence.record':
                 value = store.record_evidence(request['run_id'], request['evidence_id'], kind=request['kind'], source_revision=request['source_revision'], command=request['command'], cwd=request['cwd'], source_hash=request['source_hash'], exit_status=request['exit_status'], required=request.get('required', True), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'], host_record=request.get('host_record'))
+            elif operation == 'evidence.ingest':
+                value = ingest_command_event(store, request['event'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'legacy.import':
                 value = store.import_legacy(request['run_id'], request['source'])
             else:

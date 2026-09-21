@@ -36,3 +36,19 @@ def command_receipt(event: Mapping[str, Any]) -> dict[str, Any]:
         "exit_status": event["exit_status"],
         "host_record": dict(event["host_record"]),
     }
+
+
+def ingest_command_event(store: Any, event: Mapping[str, Any], *,
+                         expected_revision: int | None = None,
+                         lease_epoch: int | None = None,
+                         coordinator_id: str | None = None) -> dict[str, Any]:
+    """Validate an explicit host event and persist it as authoritative evidence."""
+    receipt = command_receipt(event)
+    return store.record_evidence(
+        receipt["run_id"], receipt["evidence_id"], kind="host.command",
+        source_revision=receipt["source_revision"], command=receipt["command"],
+        cwd=receipt["cwd"], source_hash=receipt["source_hash"],
+        exit_status=receipt["exit_status"], expected_revision=expected_revision,
+        lease_epoch=lease_epoch, coordinator_id=coordinator_id,
+        host_record=receipt["host_record"],
+    )
