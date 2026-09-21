@@ -302,3 +302,14 @@ The merge implementation also rejects object/array shape conflicts before
 writing, including existing `null` and scalar values. The runtime proof is now
 99 tests; the deterministic installer contract remains fail-closed on malformed
 or incompatible settings.
+
+## Round 29 — managed external adapter fencing
+
+`scripts/external-action.py` now provides the coordinator-backed boundary for
+managed ticket synchronization. It records an idempotent external intent,
+invokes the declared adapter, and reconciles the outcome using the post-intent
+revision. Successful and failed exits are durable; timeout and launch
+uncertainty transition a running workflow to `reconciliation_required`. The
+legacy `ticket-sync` hook uses this path only when lease context is supplied and
+continues to fail closed otherwise. Two direct helper tests and the full hook
+fixture cover the boundary; live adapter/backend behavior remains unverified.
