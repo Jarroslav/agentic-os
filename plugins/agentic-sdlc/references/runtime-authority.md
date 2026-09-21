@@ -18,3 +18,8 @@ them never advances a managed run. If the required runtime operation is absent,
 the workflow must block and report the missing capability. Human-authored
 specifications, plans, QA documents, and review reports remain ordinary files
 under their documented locations.
+
+Asynchronous compatibility hooks follow the same boundary: they may append
+legacy ledgers only for unmanaged runs. A managed run without coordinator-fenced
+runtime context must fail closed; it must not perform an external action or
+write a receipt that could be mistaken for authoritative state.
