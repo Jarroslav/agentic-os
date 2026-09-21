@@ -130,3 +130,9 @@ The QA E2E legacy event helper now detects an ancestor SQLite runtime and fails
 before writing `events.jsonl`. Unmanaged legacy fixtures remain supported and are
 tested separately. This closes one shipped dispatcher bypass; remaining workflow
 call sites still require migration to runtime operations.
+
+## Round 10 — metadata assembler guard
+
+The QA E2E metadata assembler now applies the same managed-run fail-closed
+boundary as the event helper. It cannot overwrite a runtime-derived
+`meta.json`; unmanaged legacy smoke fixtures continue to pass.

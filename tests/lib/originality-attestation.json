@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:41:25Z",
+ "attested_at": "2026-09-21T15:43:36Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "22b9f34bf66b734b8e2f2875c2c1cad9f642d72ce93d49106768fe1d096cb680",
+   "sha256": "85289277b552ca26be21875f02c36dd8e954d3141ed4575d5c5478bbbed73fec",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2267,8 +2267,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-e2e-generator/SKILL.md": {
-   "sha256": "d23d91b62e4d135ca1e326743c402ede9919e9ae6648cf368ab6a565b607a67f",
-   "line": 0.0046,
+   "sha256": "74235c65e89c52dabb031b54157f9c674dc86125177e74c022826a013711c569",
+   "line": 0.0045,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2321,8 +2321,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/qa-e2e-generator/scripts/qa-assemble-meta.sh": {
-   "sha256": "8b7e5d6643294dc9246d768a3aecd7a421780ffb7410ced580163802e7514b94",
-   "line": 0.058,
+   "sha256": "b81b16506b64e47057163bf3dfd90e9de09c7511f7db4f2fb5fe411fc0cfd916",
+   "line": 0.0513,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3053,13 +3053,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "e02b31d0cdb60ff14443ec603487d29439aa69a7eac7ddf0eb25664893f9d6e4",
+   "sha256": "7b095e342018ec6695a872dee67d50ac81dc52f2539852e008d1c345bb022a8d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "190fbc922159e7099786560d72cf8727b0dfa636ba0f8191948f5da24abb27e9",
+   "sha256": "eb126be96e3ac40a4e452f9210de2443b6ef54823f6bbbea91a6a6ddd4a577ce",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3145,6 +3145,12 @@
   "tests/reliability/test_isolation.py": {
    "sha256": "d0c9042e66421eea3fd8590da9c093519c1a0aac2d3e67f1cb44416899d5d50b",
    "line": 0.0938,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/test_legacy_write_guards.py": {
+   "sha256": "cac030dbea92b2361fa7f74a2afd6e04fffe7a3af185c8d78884ae351fe4950e",
+   "line": 0.0714,
    "shingle": 0.0,
    "max_run": 0
   },
