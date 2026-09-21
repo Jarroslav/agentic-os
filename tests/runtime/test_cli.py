@@ -270,7 +270,7 @@ class CLITests(unittest.TestCase):
                                    lease_epoch=run['lease_epoch'], coordinator_id='coord')
             code, accepted = self.request(
                 'decision.record', root=root, run_id='decision-cli',
-                decision_key='plan.approved', value={'decision': 'approve',
+                decision_key='plan.approved', value={'decision': 'approve', 'source': 'hitl',
                                                     'artifact_hashes': {'plan': 'sha256:plan'}},
                 coordinator_id='coord', lease_epoch=run['lease_epoch'],
                 expected_revision=run['revision'])
@@ -291,8 +291,18 @@ class CLITests(unittest.TestCase):
             self.assertIn('allowed decision', malformed['error']['message'])
             code, missing_hashes = self.request(
                 'decision.record', root=root, run_id='decision-cli',
-                decision_key='plan.approved', value={'decision': 'approve'},
+                decision_key='plan.approved', value={'decision': 'approve', 'source': 'hitl'},
                 coordinator_id='coord', lease_epoch=run['lease_epoch'],
                 expected_revision=accepted['result']['revision'])
             self.assertEqual(code, 2)
             self.assertIn('artifact hashes', missing_hashes['error']['message'])
+            code, risk_fast_path = self.request(
+                'decision.record', root=root, run_id='decision-cli',
+                decision_key='plan.approved', value={
+                    'decision': 'approve', 'source': 'fast-path',
+                    'risk_flags': ['migration'],
+                    'artifact_hashes': {'plan': 'sha256:plan'},
+                }, coordinator_id='coord', lease_epoch=run['lease_epoch'],
+                expected_revision=accepted['result']['revision'])
+            self.assertEqual(code, 2)
+            self.assertIn('human escalation', risk_fast_path['error']['message'])
