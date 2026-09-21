@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:53:28Z",
+ "attested_at": "2026-09-21T15:56:12Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "4e409e51bb99e04e8e23bc9b934580b9e20905d6a1c8ce7c7cd2fd227f47c874",
+   "sha256": "a7aea546b917622aa0370dcbe772770c70931d8b99ff7dee5fe19bed31302bf5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -695,8 +695,8 @@
    "max_run": 0
   },
   "plugins/agentic-os/runtime/agentic_runtime/host.py": {
-   "sha256": "59db5e1c395b9f4e7909082102153ad61e03d911ea01512685eff9ee7d62e020",
-   "line": 0.0303,
+   "sha256": "b95d7e181e1854ab94d38c8e50466b78faac280c895f32e3ba144bcb76d4b364",
+   "line": 0.0238,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -713,8 +713,8 @@
    "max_run": 0
   },
   "plugins/agentic-os/runtime/agentic_runtime/trace.py": {
-   "sha256": "a74a7ba8ff2c23c1a1982bbabf4eb3c1a27fbdeed7ffa15bfac172204a6b6e97",
-   "line": 0.0233,
+   "sha256": "e5cdb3f56e648d091351a13f18b4d633a4c193fc56c7901aa1b6d9eca53656f2",
+   "line": 0.0217,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1949,8 +1949,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/runtime/agentic_runtime/host.py": {
-   "sha256": "59db5e1c395b9f4e7909082102153ad61e03d911ea01512685eff9ee7d62e020",
-   "line": 0.0303,
+   "sha256": "b95d7e181e1854ab94d38c8e50466b78faac280c895f32e3ba144bcb76d4b364",
+   "line": 0.0238,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1967,8 +1967,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/runtime/agentic_runtime/trace.py": {
-   "sha256": "a74a7ba8ff2c23c1a1982bbabf4eb3c1a27fbdeed7ffa15bfac172204a6b6e97",
-   "line": 0.0233,
+   "sha256": "e5cdb3f56e648d091351a13f18b4d633a4c193fc56c7901aa1b6d9eca53656f2",
+   "line": 0.0217,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2735,7 +2735,7 @@
    "max_run": 0
   },
   "runtime/README.md": {
-   "sha256": "9a9813306d1836ef74d1f3122e248fc9084941741873a339e0dad425782ee6e8",
+   "sha256": "c07f9de862e247be825a909b25c4d20063156ae8a0aee77441725882716cb3e3",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2753,8 +2753,8 @@
    "max_run": 0
   },
   "runtime/agentic_runtime/host.py": {
-   "sha256": "59db5e1c395b9f4e7909082102153ad61e03d911ea01512685eff9ee7d62e020",
-   "line": 0.0303,
+   "sha256": "b95d7e181e1854ab94d38c8e50466b78faac280c895f32e3ba144bcb76d4b364",
+   "line": 0.0238,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2771,8 +2771,8 @@
    "max_run": 0
   },
   "runtime/agentic_runtime/trace.py": {
-   "sha256": "a74a7ba8ff2c23c1a1982bbabf4eb3c1a27fbdeed7ffa15bfac172204a6b6e97",
-   "line": 0.0233,
+   "sha256": "e5cdb3f56e648d091351a13f18b4d633a4c193fc56c7901aa1b6d9eca53656f2",
+   "line": 0.0217,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3053,13 +3053,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "dd8c2dcdc5f839c16799410b9bd54a8d31f1baabd6266611704f9d9750030d91",
+   "sha256": "ac0aaaee1a9c3e69f6ca991ff2afd6060c626062ef619f4e16a64921c2cd369d",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "a6dcb0967ca3b32bce59243088a25fc66843c25b01225997610cd5050f207ae5",
+   "sha256": "0ddf9965ebbbe3659418e15ab9714c1f322090b8a67fd23367e0d5d224fbe526",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3227,7 +3227,7 @@
    "max_run": 0
   },
   "tests/runtime/test_trace.py": {
-   "sha256": "15f970296ce6550c5aa531df95126e0df5fdbb23218e77dc30822b0b27a0be6d",
+   "sha256": "50da344de5a9f9dcf2bcb1f7e862ae270decb8520e1743cdd3c1851cfd852031",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
