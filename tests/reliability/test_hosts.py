@@ -146,6 +146,17 @@ class HostTests(unittest.TestCase):
         self.assertEqual(result["observed_model"], "fixture-model")
         self.assertIsNone(result["usage"])
 
+    def test_only_explicit_command_receipts_are_exposed_as_evidence_inputs(self):
+        valid = {"type": "agentic.command.completed", "evidence_id": "e1",
+                 "run_id": "r", "source_revision": 2, "command": "pytest",
+                 "cwd": ".", "source_hash": "sha256:abc", "exit_status": 0,
+                 "host_record": {"record_id": "host-e1"}}
+        self.fake("print(json.dumps(" + repr(valid) + "))\n"
+                  "print(json.dumps({'type':'agentic.command.completed','run_id':'r'}))\n")
+        result = self.run_fake("claude")
+        self.assertEqual(result["command_receipts"][0]["evidence_id"], "e1")
+        self.assertEqual(result["invalid_command_receipts"], 1)
+
     def test_missing_required_flag_fails_closed_before_task_launch(self):
         marker = self.root / "task-started"
         self.fake("open(" + repr(str(marker)) + ",'w').close()\n")

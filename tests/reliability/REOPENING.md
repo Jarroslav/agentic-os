@@ -107,3 +107,11 @@ command, working directory, source hash, exit status, and host record. Arbitrary
 assistant prose or malformed events are rejected. Deterministic runtime proof
 is now 74 tests; wiring this adapter to real Claude/Codex stream events remains
 live host integration work.
+
+## Round 7 — host trace receipt visibility
+
+The offline Claude/Codex harness now exposes only explicitly valid command
+receipts in its retained metadata and counts malformed receipt-shaped events
+without trusting them. This is an evidence-input boundary, not host
+certification: real host authentication, signed record issuance, and isolated
+execution remain unverified.
