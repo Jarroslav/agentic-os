@@ -17,13 +17,15 @@ shape, and requires a supported authoritative commit before progression.
 ## Availability and authority
 
 `runtime/agentic_runtime/registry.json` is the sole source of gate/loop identifiers and policy
-defaults. `references/runtime-contracts.md` is generated from it. The bundled runtime provides contract validation and
-policy inspection only: managed gate resolution and durable lifecycle mutation are not yet
-implemented. An unavailable operation blocks;
-never simulate resolution by appending JSON/JSONL or claim a managed gate was committed.
+defaults. `references/runtime-contracts.md` is generated from it. The bundled runtime provides
+versioned lifecycle, decision, evidence, export, and reconciliation operations. This skill must
+commit gate decisions through the runtime operation (`decision.record`) when a runtime run exists;
+an unavailable operation blocks. Never simulate resolution by appending JSON/JSONL or claim a
+managed gate was committed.
 
-The intended authority is `.agentic/state/runtime.sqlite3`. `.agentic/runs/<run-id>/` holds
-regenerable exports, not the decision ledger of record. Preserve human specs/plans under
+The authority is `.agentic/state/runtime.sqlite3`. `.agentic/runs/<run-id>/` holds
+regenerable exports, not the decision ledger of record. Use `legacy.export` only to refresh
+compatibility ledgers for older readers. Preserve human specs/plans under
 `docs/superpowers/`. Establish branch/worktree ownership before any run-artifact writes.
 
 ## Operating modes

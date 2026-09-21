@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T15:27:12Z",
+ "attested_at": "2026-09-21T15:29:12Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -197,7 +197,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "69aacdc6e2cf1ec83e677b835dfa9ca1fa24a75da25dfe2fab1f07a45edb7d95",
+   "sha256": "cb3ea913d30badd14fa3d9d4a9af6b435b000a0e04cc17b493fddfefc6174a29",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2099,7 +2099,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/gate-arbiter/SKILL.md": {
-   "sha256": "1868112adc06f92d352d83875d314e0cf7e27753d321bff79a0e2c6c9b00ad96",
+   "sha256": "74f381b8d0f16910f4d537e3e3b740d3719d94f0686eb07d3f685a166d6be16a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2591,7 +2591,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-engine/SKILL.md": {
-   "sha256": "03fffa4652694ee03359f952c56dc2f9adeb57e361b6664cacf720b3dffe52fa",
+   "sha256": "6a78605ca0617a6e9a7616de646597ec2a1dade62df494b5869768db460bbc38",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2645,8 +2645,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/skills/sdlc-runs/SKILL.md": {
-   "sha256": "151abe03be630458648d29a27ad4a4ead3323bd44583557e36e51413f88d2b9d",
-   "line": 0.0111,
+   "sha256": "70c49ebdf30f200a405a2955a845f911f87183c192bd6c33ee8e9bc23fa2af0e",
+   "line": 0.0109,
    "shingle": 0.0,
    "max_run": 0
   },
