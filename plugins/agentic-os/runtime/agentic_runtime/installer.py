@@ -183,3 +183,50 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
     return {"schema": 1, "target": str(root), "journal": str(journal_path),
             "applied": applied, "preserved": preserved,
             "actions": plan["actions"]}
+
+
+def remove_install(target: str | os.PathLike[str], paths: list[str] | None = None) -> dict[str, Any]:
+    """Remove journaled files only when their bytes are still managed-owned."""
+    root = _target(target)
+    journal, journal_path = _journal(root)
+    entries = journal.get("files", {})
+    if not isinstance(entries, dict):
+        raise RuntimeError("install journal files must be an object")
+    if paths is not None and (not isinstance(paths, list) or
+                              not all(isinstance(item, str) for item in paths)):
+        raise ValueError("install.remove paths must be a list of strings")
+    selected = sorted(entries) if paths is None else sorted({_relative_path(item) for item in paths})
+    removed, preserved = [], []
+    updated_files = dict(entries)
+    for relative in selected:
+        entry = entries.get(relative)
+        if not isinstance(entry, Mapping):
+            continue
+        destination = root / relative
+        current = _sha(destination)
+        if current is not None and current == entry.get("sha256") and entry.get("owner", "managed") in {"managed", "generated"}:
+            destination.unlink()
+            removed.append(relative)
+            updated_files.pop(relative, None)
+        else:
+            preserved.append(relative)
+            retained = dict(entry)
+            retained["owner"] = "user"
+            retained["origin"] = retained.get("origin", "adopted-existing")
+            updated_files[relative] = retained
+    updated = dict(journal)
+    updated["files"] = dict(sorted(updated_files.items()))
+    journal_path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=".uninstall.", dir=journal_path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(updated, stream, ensure_ascii=False, sort_keys=True, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, journal_path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    return {"schema": 1, "target": str(root), "journal": str(journal_path),
+            "removed": removed, "preserved": preserved}
