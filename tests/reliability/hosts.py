@@ -272,10 +272,29 @@ def adapt_trace_receipts(stdout_path: Path, key: bytes | str, *, identity: str,
 def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
              trace_dir: Path, timeout_seconds: float = 900,
              checkpoint_path: Path | None = None,
-             expected_profile: dict | None = None) -> dict:
-    """Run one host, retaining private raw traces and normalized outcome metadata."""
+             expected_profile: dict | None = None,
+             evidence_key: bytes | str | None = None,
+             evidence_identity: str | None = None,
+             evidence_issued_at: float | None = None,
+             evidence_expires_at: float | None = None) -> dict:
+    """Run one host, retaining traces and optionally adapting signed evidence.
+
+    Evidence adaptation is opt-in because the caller owns the host key and the
+    assignment identity. Supplying only part of the evidence context is a
+    configuration error and fails closed before the host process starts.
+    """
     _validate_host(host)
     fixture = _fixture_path(fixture)
+    evidence_context = (evidence_key is not None or evidence_identity is not None or
+                        evidence_issued_at is not None or evidence_expires_at is not None)
+    if evidence_context:
+        if (evidence_key is None or not isinstance(evidence_identity, str) or
+                not evidence_identity or not isinstance(evidence_issued_at, (int, float)) or
+                not isinstance(evidence_expires_at, (int, float)) or
+                not math.isfinite(float(evidence_issued_at)) or
+                not math.isfinite(float(evidence_expires_at)) or
+                float(evidence_expires_at) <= float(evidence_issued_at)):
+            raise ValueError("complete, ordered evidence context is required")
     if checkpoint_path is not None:
         checkpoint_path = Path(checkpoint_path)
         if not checkpoint_path.is_absolute():
@@ -335,6 +354,14 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
     result.update(observed_model=metadata["observed_model"], usage=metadata["usage"],
                   command_receipts=metadata["command_receipts"],
                   invalid_command_receipts=metadata["invalid_command_receipts"])
+    if evidence_context:
+        try:
+            result["adapted_receipts"] = adapt_trace_receipts(
+                Path(stdout_name), evidence_key, identity=evidence_identity,
+                issued_at=float(evidence_issued_at), expires_at=float(evidence_expires_at))
+        except (OSError, TypeError, ValueError, RuntimeError) as exc:
+            result["adapted_receipts"] = []
+            result["evidence_adapter_error"] = str(exc)
     if result["status"] in ("completed", "product_failed"):
         if metadata["failed"]:
             result["status"] = "product_failed"
