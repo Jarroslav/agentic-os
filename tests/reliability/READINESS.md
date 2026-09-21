@@ -2,7 +2,12 @@
 
 Baseline commit: `dabd182e049cc6fb52007da988bf03762130c459`.
 Implementation branch: `codex/framework-reliability`.
-Live trials consumed: **0 of 48**. No baseline or candidate grade exists.
+Live trials consumed: **24 of 48**. The 24 baseline slots were recorded on
+2026-09-21, but every trial ended as an infrastructure failure because Claude
+and Codex were not certified for isolated execution. The baseline report is
+therefore **F / 0.0 demonstrated points with 240 unverified observations**;
+this is a coverage result, not a product-quality grade. Candidate trials remain
+0 of 24 and have not started.
 
 The initial blind review evaluated staged tree
 `111b0002e6d0a693f3490950a44d78a8af42c854` with separate correctness/recovery
@@ -85,7 +90,8 @@ without requiring SQLite or a candidate-only message representation.
 5. Bind host/model/settings and observer configuration into the freeze manifest;
    recheck before each launch and reject drift.
 6. Finish remediation, run affected tests, stage a new tree and obtain fresh blind
-   reviews. Then capture and execute the 24 immutable baseline trials.
+   reviews. Then certify both hosts and execute the 24 candidate trials against
+   the reviewed candidate snapshot.
 
 The existing runner is experimental and must not be used to publish reliability
 claims. It is not an accepted Stage 0 deliverable.
@@ -148,9 +154,10 @@ matrix checks, and 204 MCP tests. Live trials remain 0/48 and no host grade is
 established.
 
 The operator approved the [staging amendment](STAGING-AMENDMENT.md) on 2026-09-20.
-The next gate is an independently reviewed baseline/definition freeze. Runtime
-implementation may then proceed while executable observers are completed. All
-live certification and acceptance requirements remain mandatory before completion.
+The definition freeze and baseline slot capture are complete, but the baseline
+has no observable host execution. Runtime implementation may continue while
+host certification is completed. All live certification and acceptance
+requirements remain mandatory before completion.
 
 ## Definition checkpoint
 
@@ -158,11 +165,17 @@ live certification and acceptance requirements remain mandatory before completio
 fixed rubric/scenario/challenge hashes. `freeze_definitions.py verify` checks the
 retained local archives; unit tests check the committed definition hashes and
 legacy fixtures against the original schema. Archive files are deliberately kept
-outside version control. No numerical grades have been established.
+outside version control. The local baseline trial archive is retained under
+`.agentic/work/framework-reliability/baseline-trials-2026-09-21-final/`; its
+`manifest.json` hash is `c4b1eaebcd3110dffc8ba8dd0dffc90c99ed700bc616613d514ddf9b3d7a0cb2`
+and its `scorecard.json` hash is
+`91ee4a101897ae205dfc05b4145402d7083f4c7002ef0afacaaf952595928b02`.
+The scorecard records all 24 infrastructure failures and no demonstrated points.
+No candidate grade exists.
 
 This checkpoint authorizes contract implementation; it does not certify the
 live evaluator. Executable observers, host authentication/hooks under isolation,
-and all scored trials remain required later gates. macOS-specific kernel tests
+and the 24 candidate trials remain required later gates. macOS-specific kernel tests
 are explicitly skipped where sandbox-exec is unavailable; that is not live
 proof. The reopened candidate currently has 95 runtime tests, 91 evaluator
 tests, 109 T0 checks, 99 matrix checks, and 204 MCP tests passing; these counts

@@ -251,3 +251,13 @@ hash disagrees with the authoritative evidence hash. The claim is rejected
 before the run can complete, while the matching hash still succeeds. This
 proves the stale-approval defense in the executable runtime; host certification
 and live-trial evidence remain unverified.
+
+## Round 24 — infrastructure failures consume visible trial slots
+
+The evaluator now reserves a trial after frozen host-profile comparison and
+records an infrastructure-failed result when isolation or model certification
+is unavailable. Profile drift still aborts before reservation. This preserves
+the fixed denominator and prevents unavailable host capabilities from silently
+turning into retryable missing data. A local baseline run recorded all 24 slots
+as unverified infrastructure failures with a 0.0 demonstrated score; it does
+not constitute a product-quality grade or candidate acceptance.
