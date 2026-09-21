@@ -187,6 +187,13 @@ user-owned in the journal, and validates explicit path lists. The operation is
 bundled into both plugins and covered by direct and versioned installer tests.
 Full host-driven upgrade/uninstall workflow trials remain unverified.
 
+## Round 17 — registry-bound gate decisions
+
+`decision.record` now rejects identifiers absent from the canonical gate
+registry before writing any decision. A public runtime test covers an accepted
+`plan.approved` gate and an unknown-gate rejection, with bundle copies kept in
+sync. Host approval authenticity and live gate interactions remain unverified.
+
 ## Round 14 — fenced trace ingestion
 
 The host harness now exposes a coordinator-fenced ingestion helper for signed
