@@ -23,6 +23,12 @@ class CLITests(unittest.TestCase):
         self.assertTrue(result['ok'])
         self.assertEqual(result['result']['max_dispatches'], 64)
 
+    def test_host_preflight_reports_capabilities_without_claiming_sandbox(self):
+        code, result = self.request('host.preflight')
+        self.assertEqual(code, 0, result)
+        self.assertIn('enforcement', result['result'])
+        self.assertEqual(result['result']['enforcement']['os_sandbox'], 'unsupported')
+
     def test_unknown_request_field_is_rejected(self):
         code, result = self.request('registry.get', ignored=True)
         self.assertEqual(code, 2)

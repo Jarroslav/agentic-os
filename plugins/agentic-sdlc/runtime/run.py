@@ -7,6 +7,7 @@ import sys
 
 from agentic_runtime.contracts import load_registry, resolve_policy, normalize_input, validate_transition, retry_allowed, lookup_contract
 from agentic_runtime.store import RuntimeStore
+from agentic_runtime.host import preflight
 
 
 def unique_object(pairs):
@@ -46,6 +47,7 @@ def main():
                   'message.send': ({'api_version', 'operation', 'run_id', 'message_id', 'assignment_id', 'assignment_revision', 'correlation_id', 'sender', 'recipient', 'message_type', 'deadline', 'payload', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'runtime.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'message.receive': ({'api_version', 'operation', 'run_id', 'recipient', 'reader_id'}, {'limit', 'after_message_id', 'root'}),
+                  'host.preflight': ({'api_version', 'operation'}, {'root'}),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
         if not isinstance(operation, str) or operation not in fields:
@@ -65,6 +67,8 @@ def main():
             value = validate_transition(request['source'], request['target'])
         elif operation == 'retry.allowed':
             value = retry_allowed(request['loop_id'], request['attempts_used'])
+        elif operation == 'host.preflight':
+            value = preflight(request.get('root', os.getcwd()))
         else:
             root = request.get('root', os.getcwd())
             store = RuntimeStore(root)
