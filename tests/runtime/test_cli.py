@@ -133,6 +133,41 @@ class CLITests(unittest.TestCase):
             self.assertEqual(code, 0, cancelled)
             self.assertEqual(cancelled['result']['state'], 'cancelled')
 
+    def test_task_result_is_the_versioned_public_completion_operation(self):
+        with tempfile.TemporaryDirectory() as root:
+            worktree = pathlib.Path(root) / 'work-task-result'
+            subprocess.run(['git', 'init', '-q', str(worktree)], check=True)
+            subprocess.run(['git', '-C', str(worktree), 'checkout', '-q', '-b', 'feature/task-result'], check=True)
+            def request(operation, **payload):
+                payload['root'] = root
+                return self.request(operation, **payload)
+            code, started = request('run.start', task_input='task result', coordinator_id='c1',
+                                    branch='feature/task-result', worktree=str(worktree),
+                                    run_id='run-task-result', precondition={'ownership': 'verified'})
+            self.assertEqual(code, 0, started)
+            epoch = started['result']['lease_epoch']
+            revision = started['result']['revision']
+            code, reserved = request('task.dispatch', run_id='run-task-result',
+                                     reservation_id='reservation-1', coordinator_id='c1',
+                                     lease_epoch=epoch, expected_revision=revision)
+            self.assertEqual(code, 0, reserved)
+            code, status = request('run.status', run_id='run-task-result')
+            self.assertEqual(code, 0, status)
+            code, started_dispatch = request('dispatch.start', run_id='run-task-result',
+                                             reservation_id='reservation-1', worker_id='worker-1',
+                                             coordinator_id='c1', lease_epoch=epoch,
+                                             expected_revision=status['result']['revision'])
+            self.assertEqual(code, 0, started_dispatch)
+            code, status = request('run.status', run_id='run-task-result')
+            self.assertEqual(code, 0, status)
+            code, result = request('task.result', run_id='run-task-result',
+                                   reservation_id='reservation-1', outcome='succeeded',
+                                   coordinator_id='c1', lease_epoch=epoch,
+                                   expected_revision=status['result']['revision'])
+            self.assertEqual(code, 0, result)
+            self.assertEqual(result['result']['outcome'], 'succeeded')
+            self.assertIsNotNone(result['result']['finished_at'])
+
     def test_legacy_import_is_reachable_through_versioned_runtime(self):
         with tempfile.TemporaryDirectory() as root:
             source = pathlib.Path(root) / 'legacy.json'

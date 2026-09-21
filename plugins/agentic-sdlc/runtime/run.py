@@ -41,6 +41,7 @@ def main():
                   'run.transition': ({'api_version', 'operation', 'run_id', 'target', 'coordinator_id', 'lease_epoch'}, {'expected_revision', 'reason', 'root'}),
                   'run.complete': ({'api_version', 'operation', 'run_id', 'host_record', 'coordinator_id', 'lease_epoch'}, {'expected_revision', 'root'}),
                   'task.dispatch': ({'api_version', 'operation', 'run_id', 'reservation_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'max_dispatches', 'root'}),
+                  'task.result': ({'api_version', 'operation', 'run_id', 'reservation_id', 'outcome', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'dispatch.start': ({'api_version', 'operation', 'run_id', 'reservation_id', 'worker_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'timeout_seconds', 'root'}),
                   'dispatch.finish': ({'api_version', 'operation', 'run_id', 'reservation_id', 'outcome', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
                   'dispatch.recover': ({'api_version', 'operation', 'run_id', 'coordinator_id', 'lease_epoch', 'expected_revision'}, {'root'}),
@@ -118,7 +119,7 @@ def main():
                 value = store.reserve_dispatch(request['run_id'], request['reservation_id'], max_dispatches=request.get('max_dispatches'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'dispatch.start':
                 value = store.start_dispatch(request['run_id'], request['reservation_id'], request['worker_id'], timeout_seconds=request.get('timeout_seconds'), expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
-            elif operation == 'dispatch.finish':
+            elif operation in {'dispatch.finish', 'task.result'}:
                 value = store.finish_dispatch(request['run_id'], request['reservation_id'], outcome=request['outcome'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'dispatch.recover':
                 value = store.recover_dispatches(request['run_id'], expected_revision=request['expected_revision'], lease_epoch=request['lease_epoch'], coordinator_id=request['coordinator_id'])
