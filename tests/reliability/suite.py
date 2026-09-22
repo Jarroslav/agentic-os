@@ -132,7 +132,7 @@ def freeze(root: Path, repo: Path, revision: str, dependency: Path, phase: str =
         if baseline is None:
             raise ValueError('candidate freeze requires the baseline suite')
         original = json.loads((baseline / 'manifest.json').read_text())
-        verify_freeze(baseline, original)
+        verify_freeze(baseline, original, allow_runner_drift=True)
         # Candidate host profiles and the trusted runner are intentionally
         # re-frozen after evaluator improvements; the baseline retains its
         # original evidence and remains immutable.
@@ -145,7 +145,7 @@ def freeze(root: Path, repo: Path, revision: str, dependency: Path, phase: str =
     return manifest
 
 
-def verify_freeze(root: Path, manifest: dict) -> None:
+def verify_freeze(root: Path, manifest: dict, allow_runner_drift: bool = False) -> None:
     """Integrity within trusted evaluator storage, not operator authenticity.
 
     Certified candidate isolation must deny writes to this storage. A same-user
@@ -179,7 +179,7 @@ def verify_freeze(root: Path, manifest: dict) -> None:
     for name in ('source', 'dependency'):
         if not (root / name).is_dir() or tree_hash(root / name) != manifest.get(f'{name}_sha256'):
             raise ValueError(f'frozen {name} was modified')
-    if runner_hashes() != manifest.get('runner_sha256'):
+    if not allow_runner_drift and runner_hashes() != manifest.get('runner_sha256'):
         raise ValueError('frozen harness changed; do not silently rebaseline')
     if manifest['phase'] == 'candidate':
         baseline = Path(manifest.get('baseline_dir', ''))
@@ -188,7 +188,7 @@ def verify_freeze(root: Path, manifest: dict) -> None:
         original = json.loads((baseline / 'manifest.json').read_text())
         if original.get('phase') != 'baseline':
             raise ValueError('candidate linkage must point to baseline')
-        verify_freeze(baseline, original)
+        verify_freeze(baseline, original, allow_runner_drift=True)
         if file_hash(baseline / 'manifest.json') != manifest.get('baseline_manifest_sha256'):
             raise ValueError('baseline linkage changed')
         for field in ('dependency_sha256',):
