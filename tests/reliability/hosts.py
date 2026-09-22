@@ -131,6 +131,16 @@ def _configured_auth_files(host: str) -> tuple[list[str], dict[str, str]]:
     return sorted(set(paths)), hashes
 
 
+def _configured_state_dir(host: str) -> str | None:
+    value = os.environ.get(f"RELIABILITY_{host.upper()}_STATE_DIR", "").strip()
+    if not value:
+        return None
+    path = Path(value).expanduser()
+    if not path.is_absolute() or not path.is_dir():
+        raise ValueError(f"{host} writable state directory must be an existing absolute directory")
+    return str(path.resolve())
+
+
 def _profile(host: str, executable: str, help_text: str,
              timeout_seconds: float = 10) -> dict:
     model = os.environ.get(f"RELIABILITY_{host.upper()}_MODEL", "")
@@ -141,6 +151,7 @@ def _profile(host: str, executable: str, help_text: str,
                  "--config", "--ephemeral"])
     limits = _isolation_limits(host)
     auth_files, auth_file_hashes = _configured_auth_files(host)
+    state_dir = _configured_state_dir(host)
     isolation_evidence = _isolation_evidence(timeout_seconds)
     if not isolation_evidence["filesystem_enforced"]:
         limits.append(isolation_evidence["error"] or "Filesystem containment canary failed")
@@ -164,6 +175,7 @@ def _profile(host: str, executable: str, help_text: str,
         "isolation_supported": not limits, "unsupported_channels": limits,
         "isolation_evidence": isolation_evidence, "auth_files": auth_files,
         "auth_file_sha256": auth_file_hashes,
+        "state_dir": state_dir,
     }
 
 
@@ -222,7 +234,9 @@ def _contain(argv: list[str], profile: dict, executable: str, fixture: Path,
         raise RuntimeError("Linux bubblewrap is unavailable at launch")
     return isolation.linux_argv(bwrap, fixture, [Path(executable).resolve().parent],
                                 [Path(p) for p in profile.get("auth_files", [])],
-                                roots, argv)
+                                roots, argv,
+                                writable_dirs=([Path(profile["state_dir"])]
+                                                if profile.get("state_dir") else []))
 
 
 def _launch(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
