@@ -314,3 +314,19 @@ legacy `ticket-sync` hook uses this path only when lease context is supplied and
 continues to fail closed otherwise. Three direct helper tests (including the
 legacy hook environment mode) and the full hook
 fixture cover the boundary; live adapter/backend behavior remains unverified.
+
+## Round 30 — Linux bubblewrap containment adapter
+
+The evaluator previously recognized only macOS sandbox-exec, so Linux hosts
+could never produce containment evidence. A bubblewrap probe now passes 30
+kernel-backed controls on the Ubuntu VM. These cover fixture-only writes, exact
+auth reads, selected plugins and hooks, invisible host globals, a hidden
+signing key, and descendant PID, mount and `setns` containment. Linux launches
+are wrapped in the same boundary with a pinned `/usr/bin/bwrap`, hosts no
+longer receive `AGENTIC_HOST_KEY`, and signed isolation receipts bind the clean
+repository revision and trial fixture. The VM needed a narrow AppArmor
+`userns` profile for bwrap, approved by the operator. `isolation_supported`
+remains false: real host startup, declared auth files, host-level hook
+execution, a profile re-freeze after host upgrades, and a Linux scenario oracle
+are still required. No candidate slot was consumed.
+

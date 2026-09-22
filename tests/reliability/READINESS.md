@@ -20,11 +20,11 @@ harness tests do not establish evaluation coverage or host certification.
 | Finding | Current disposition |
 |---|---|
 | Only preservation can receive positive rubric credit | Open. Do not freeze or run scored trials. |
-| Host defaults, model identity, global hooks/plugins not frozen | Explicit profiles, drift checks and 16 passing offline filesystem controls added. Actual host startup/authentication and retained hook execution remain uncertified; launch fails closed. |
+| Host defaults, model identity, global hooks/plugins not frozen | Explicit profiles, drift checks and 16 offline macOS filesystem controls added. A Linux bubblewrap adapter now passes 30 kernel-backed controls on the Ubuntu VM and wraps Linux launches in the same boundary. Actual host startup/authentication and retained hook execution remain uncertified; launch fails closed. |
 | Interrupted process can restart instead of resume | Boundary snapshots added; authenticated ownership and budget comparisons remain open. |
 | Candidate can forge unittest output and exit successfully | Parent evaluates returned values; forged unittest text is rejected. Included in the passed definition-checkpoint review; live certification remains deferred. |
 | Reports accept unreserved or unsupported result JSON | Added source-archive/baseline linkage, execution traces/model/fixture bindings and recomputation from retained source inputs. Fabricated candidate-grade and rehashed verdict regressions are rejected. Included in the passed definition-checkpoint review; live certification remains deferred. |
-| Oracle code executes outside the host sandbox | Added macOS sandbox with tested read/write/network/fork restrictions. Missing enforcement yields unverified; no unrestricted fallback. Included in the passed definition-checkpoint review; live certification remains deferred. |
+| Oracle code executes outside the host sandbox | Added macOS sandbox with tested read/write/network/fork restrictions. Missing enforcement yields unverified; no unrestricted fallback. Included in the passed definition-checkpoint review; live certification remains deferred. The hash-frozen `scenarios.py` oracle still recognizes only sandbox-exec, so on Linux every oracle result is unverified until a definition amendment is approved. |
 
 The approved staging amendment separates the definition checkpoint from full live
 readiness. Both independent review lenses passed definition tree
@@ -205,3 +205,51 @@ requested budget boundary; Codex completed a read-only prompt with
 establish model acceptance and an available authentication path only. They are
 outside the 48 scored slots, do not certify filesystem isolation or selected
 plugin-hook execution, and do not authorize candidate scoring.
+
+## Linux host-isolation adapter — containment proven, host uncertified
+
+On 2026-09-22 the evaluator gained a Linux adapter (`isolation.py`,
+`hosts.py`) on the Ubuntu 24.04 VM (kernel 6.17 Azure, bubblewrap 0.9.0).
+Azure Bastion is only the operator's transport; it is not isolation evidence.
+Ubuntu restricts unprivileged user namespaces, so with operator approval the VM
+received a narrow AppArmor profile, `/etc/apparmor.d/bwrap`, granting `userns`
+only to `/usr/bin/bwrap`. The global restriction remains enabled. Without that
+host configuration the canary fails closed with `setting up uid map`.
+
+The canary runs in user, PID, IPC and UTS namespaces over a read-only synthetic
+root and passes 30 controls: fixture-only writes, exact auth-file reads (a
+sibling file is denied), selected plugin reads without writes, a selected hook
+that executes and an unselected hook that cannot, real host globals (`~/.claude`,
+`~/.codex`, and similar) invisible, no signing key in the environment, and
+descendants that cannot read, write, see or signal host processes or `setns`
+out. The parent independently checks the fixture writes and a nonce-bearing
+hook marker, so forged all-true output fails. Running the same canary without
+the sandbox fails the containment controls; that mutation is a regression test.
+
+Launches whose evidence names bubblewrap are wrapped in the same boundary, with
+`/usr/bin/bwrap` pinned instead of resolved from `PATH`. Hosts no longer
+inherit `AGENTIC_HOST_KEY`. `run_host(receipt_repository=...)` signs an
+isolation command receipt with that key. The receipt binds host, model, host
+identity, argv hash, exit status, the clean repository revision, and the
+post-run fixture digest and Git HEAD. Dirty trees, other fixtures, other keys
+and tampered fields are rejected.
+
+A read-only `inspect_host` on the VM with the frozen Claude and Codex model
+identities reports `filesystem_enforced: true` with 30 controls for both hosts,
+and `isolation_supported: false`. Remaining blockers before any candidate slot:
+
+1. A real host startup probe under bubblewrap proving authentication through
+   declared auth files only, host-level exclusion of global inputs, and
+   execution of selected plugin hooks. Every profile's `auth_files` is still
+   empty, and the hosts' credential paths have not been declared.
+2. The installed hosts moved after the baseline freeze (Claude Code `2.1.278`,
+   Codex `0.155.1`). The candidate profile must be re-frozen; the baseline
+   evidence is unchanged.
+3. The Linux scenario oracle (see the findings table).
+
+The host profile is not frozen and preflight does not pass, so candidate trials
+remain 0 of 24. The deterministic proof is 102 runtime tests (run with
+`AGENTIC_HOST_KEY` unset; this VM exports the key in its shell, which breaks
+the CLI test that expects it to be missing) and 109 evaluator tests with 9
+macOS-only skips. Tracked text changed, so the originality attestation needs a
+maintainer re-attestation. The 8 existing neutrality findings are unchanged.
