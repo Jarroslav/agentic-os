@@ -188,6 +188,13 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
             argv += ['--ro-bind', source_name, target_name]
     for root in sorted({str(Path(p).resolve()) for p in (*runtime_roots, *plugin_roots)}):
         if not any(root == b or root.startswith(b + '/') for b in bound):
+            parents = []
+            parent = Path(root).parent
+            while parent != parent.parent and str(parent) != '/':
+                parents.append(str(parent))
+                parent = parent.parent
+            for directory in reversed(parents):
+                argv += ['--dir', directory]
             argv += ['--ro-bind', root, root]
     # Bind the fixture first. Explicit read files are layered afterwards so a
     # credential mounted below a writable fixture cannot become writable by
