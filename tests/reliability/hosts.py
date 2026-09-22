@@ -348,6 +348,8 @@ _INFRA_ERROR = re.compile(
     re.IGNORECASE,
 )
 
+_PLACEHOLDER_MODELS = frozenset({"<synthetic>", "synthetic", "unknown", "none"})
+
 
 def _trace_metadata(stdout_path: Path, *, host: str | None = None,
                     launch_model: str | None = None) -> dict:
@@ -375,13 +377,16 @@ def _trace_metadata(stdout_path: Path, *, host: str | None = None,
                     metadata["invalid_command_receipts"] += 1
             # Read host metadata, never model-looking strings inside tool output.
             if kind in ("system", "session.started", "thread.started", "result", "turn.completed"):
-                if isinstance(event.get("model"), str):
+                if (isinstance(event.get("model"), str)
+                        and event["model"].strip().lower() not in _PLACEHOLDER_MODELS):
                     metadata["observed_model"] = event["model"]
             if kind in ("result", "turn.completed") and isinstance(event.get("usage"), dict):
                 metadata["usage"] = event["usage"]
             if kind == "assistant" and isinstance(event.get("message"), dict):
-                if isinstance(event["message"].get("model"), str):
-                    metadata["observed_model"] = event["message"]["model"]
+                model = event["message"].get("model")
+                if (isinstance(model, str)
+                        and model.strip().lower() not in _PLACEHOLDER_MODELS):
+                    metadata["observed_model"] = model
             failed = (kind in ("turn.failed", "error") or
                       (kind == "result" and event.get("is_error") is True))
             if failed:
