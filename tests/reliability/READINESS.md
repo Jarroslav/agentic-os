@@ -307,6 +307,12 @@ create `/tmp/claude-1000`; the launcher now routes `TMPDIR` into the declared
 state directory automatically. This remains non-scored startup evidence and
 does not yet prove global-input exclusion or selected hook execution.
 
+A follow-up launch mounted the repository's `agentic-sdlc` plugin directory
+read-only. Claude completed the same probe, returned the sentinel, and its
+initialization trace listed `agentic-sdlc` as a loaded plugin. This proves
+selected-plugin visibility; hook execution and denial of unselected/global
+inputs remain separate certification checks.
+
 The host profile is not frozen and preflight does not pass, so candidate trials
 remain 0 of 24. The deterministic proof is 102 runtime tests (run with
 `AGENTIC_HOST_KEY` unset; this VM exports the key in its shell, which breaks
