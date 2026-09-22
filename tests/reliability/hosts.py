@@ -234,7 +234,8 @@ def _contain(argv: list[str], profile: dict, executable: str, fixture: Path,
         raise RuntimeError("Linux bubblewrap is unavailable at launch")
     resolved_executable = Path(executable).resolve()
     runtime_root = next((parent for parent in resolved_executable.parents
-                         if all((parent / name).is_dir() for name in ("bin", "lib"))),
+                         if str(parent) != "/"
+                         and all((parent / name).is_dir() for name in ("bin", "lib"))),
                         resolved_executable.parent)
     return isolation.linux_argv(bwrap, fixture, [runtime_root],
                                 [Path(p) for p in profile.get("auth_files", [])],
