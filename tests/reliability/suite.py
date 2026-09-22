@@ -359,7 +359,9 @@ def validate_execution(directory: Path, trial: dict, manifest: dict, slot: dict)
             if (str(trace) not in trial['evidence'] or trace.is_relative_to(directory / 'fixture')
                     or not trace.is_relative_to(directory / 'trace') and not trace.is_relative_to(directory / 'resume-trace')):
                 raise ValueError('independently retained host traces required')
-        metadata = _trace_metadata(Path(segment['raw_stdout_path']))
+        metadata = _trace_metadata(Path(segment['raw_stdout_path']),
+                                   host=slot['host'],
+                                   launch_model=profile.get('model'))
         if segment.get('observed_model') != metadata['observed_model']:
             raise ValueError('model receipt differs from raw host metadata')
         if trial['status'] != 'infrastructure_failed' and metadata['observed_model'] != profile['model']:

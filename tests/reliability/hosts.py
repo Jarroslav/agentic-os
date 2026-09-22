@@ -349,10 +349,12 @@ _INFRA_ERROR = re.compile(
 )
 
 
-def _trace_metadata(stdout_path: Path) -> dict:
+def _trace_metadata(stdout_path: Path, *, host: str | None = None,
+                    launch_model: str | None = None) -> dict:
     metadata = {"observed_model": None, "usage": None, "failed": False,
                 "infrastructure_failed": False, "command_receipts": [],
-                "invalid_command_receipts": 0}
+                "invalid_command_receipts": 0, "thread_started": False,
+                "model_identity_source": None}
     with stdout_path.open(encoding="utf-8", errors="replace") as stream:
         for line in stream:
             try:
@@ -362,6 +364,8 @@ def _trace_metadata(stdout_path: Path) -> dict:
             if not isinstance(event, dict):
                 continue
             kind = event.get("type")
+            if kind == "thread.started":
+                metadata["thread_started"] = True
             if kind == "agentic.command.completed":
                 try:
                     metadata["command_receipts"].append(command_receipt(event))
@@ -385,6 +389,14 @@ def _trace_metadata(stdout_path: Path) -> dict:
                 error = event.get("error", event.get("errors", event.get("result", "")))
                 if _INFRA_ERROR.search(json.dumps(error)):
                     metadata["infrastructure_failed"] = True
+    # Codex CLI 0.155.1 does not include the selected model in JSON events.
+    # Accept the frozen launch identity only when the host emitted a genuine
+    # thread-start event and the adapter's explicit --model matches it. A
+    # usage-only or fabricated trace remains without an identity.
+    if (metadata["observed_model"] is None and host == "codex"
+            and launch_model and metadata["thread_started"]):
+        metadata["observed_model"] = launch_model
+        metadata["model_identity_source"] = "frozen_launch_argument"
     return metadata
 
 
@@ -525,7 +537,8 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
             if process is not None:
                 _cleanup(process)
                 result["exit_code"] = process.returncode
-    metadata = _trace_metadata(Path(stdout_name))
+    metadata = _trace_metadata(Path(stdout_name), host=host,
+                               launch_model=(profile or {}).get("model"))
     result.update(observed_model=metadata["observed_model"], usage=metadata["usage"],
                   command_receipts=metadata["command_receipts"],
                   invalid_command_receipts=metadata["invalid_command_receipts"])

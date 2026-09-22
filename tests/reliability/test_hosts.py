@@ -156,6 +156,12 @@ class HostTests(unittest.TestCase):
         self.assertIsNone(result["observed_model"])
         self.assertEqual(result["usage"], {"input_tokens": 2, "output_tokens": 4})
 
+    def test_codex_thread_start_binds_identity_to_frozen_launch_model(self):
+        self.fake("print(json.dumps({'type':'thread.started','thread_id':'t'}))\n"
+                  "print(json.dumps({'type':'turn.completed','usage':{'input_tokens':2}}))\n")
+        result = self.run_fake("codex")
+        self.assertEqual(result["observed_model"], "codex-fixture-1")
+
     def test_malformed_trace_lines_do_not_hide_later_metadata(self):
         self.fake("print('not-json')\nprint('[]')\n"
                   "print(json.dumps({'type':'assistant','message':{'model':'fixture-model'}}))\n")
