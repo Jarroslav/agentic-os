@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-21T20:38:47Z",
+ "attested_at": "2026-09-22T12:47:36Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3095,13 +3095,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "954712ffb9b1eacbedf98995fa74b65c0f82dec40ea5dff5e0d70bbfb76b8147",
+   "sha256": "c50b3e45038e07e207284e2d6cf811760f30347514d945878fbb5dadf9845ec2",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "9d725f8393279a5f7a732e844e4daf084e472bfc0a5d274d69ca74eecf26dcbe",
+   "sha256": "b5f6840b7817369f88d8a99dd854f7ebd7a795b8b96403a54df29e3c2c5705fd",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3125,20 +3125,20 @@
    "max_run": 0
   },
   "tests/reliability/frozen-definitions.json": {
-   "sha256": "738302d2a5f980b5061c6ffa95e9427a7f2e7eeb012bb305fef4ee470f59474b",
+   "sha256": "554a3a823ce49ee0290b66bb2778895469e7d6c755e999c4987f89eb44d56814",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/hosts.py": {
-   "sha256": "d25c302c8d8de7be598ea5a4a41635f6668e3c73485223684940a5a295c4e4f5",
-   "line": 0.0175,
+   "sha256": "06364f65610e9df64ac46123c5e0097d56c7dba7913279111de3fa80684f36f9",
+   "line": 0.0138,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/isolation.py": {
-   "sha256": "1f57438a2d2c05d2a60be5dbbbfa96268b1560e083a97ab8428a5e7be496b871",
-   "line": 0.0213,
+   "sha256": "4c74713486d3564b0ba5f833ef0ffe9eb3f68a6a7e6e1f017b5d46cae6999dfc",
+   "line": 0.0059,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3155,8 +3155,8 @@
    "max_run": 0
   },
   "tests/reliability/scenarios.py": {
-   "sha256": "06d97c7bfd30e11765f92c469c7c2fc7d3ab6a41f36b1ff6052d223fa4c8dda8",
-   "line": 0.0117,
+   "sha256": "154ce43c573b0b049f51b36c852b525974afe6d410f135e85c278d0922ce77d9",
+   "line": 0.0136,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3167,8 +3167,8 @@
    "max_run": 0
   },
   "tests/reliability/suite.py": {
-   "sha256": "677e31496cd2af2f336df1703add67a3a65f87459e60fa2480545705882c251f",
-   "line": 0.0132,
+   "sha256": "8d861ea2a3b060562c766e7d031a9e824e55a32277cc4a1257a3d513ec714366",
+   "line": 0.0131,
    "shingle": 0.0026,
    "max_run": 3
   },
@@ -3179,14 +3179,14 @@
    "max_run": 0
   },
   "tests/reliability/test_hosts.py": {
-   "sha256": "4bea31a1f6658c52d8def0e8372c8a0338272b978ff1f71eac110592f9f5ce6e",
-   "line": 0.0219,
+   "sha256": "5161ccbcb441ca55e6818252cdbf5fce4230e080fa3db2edd64df91001bb613f",
+   "line": 0.0156,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/test_isolation.py": {
-   "sha256": "d0c9042e66421eea3fd8590da9c093519c1a0aac2d3e67f1cb44416899d5d50b",
-   "line": 0.0938,
+   "sha256": "292dcbe18f2636a616e181bcfa37fefab134073ebe12f1a4592cb2c3af45558f",
+   "line": 0.0229,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3197,14 +3197,14 @@
    "max_run": 0
   },
   "tests/reliability/test_observations.py": {
-   "sha256": "493e14cf82dae5c8d50799d7c7eb80f4c9bdea811ce1d79e8e9268fa5b9b3fc8",
-   "line": 0.0351,
+   "sha256": "771a4f08d22d131af71f78f5083479f4e85a69e7962a9e04280bf5080b68216f",
+   "line": 0.0345,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/test_scenarios.py": {
-   "sha256": "ccf0283700a837f70a9dfd0dc3ff2bd5adc08fe0e18f5aee0c890636c4c24c1a",
-   "line": 0.013,
+   "sha256": "7978672bc4002d8d644ce16c28fffe6fd2178775ac5097b790ae0ec9e5a462e1",
+   "line": 0.0129,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3245,8 +3245,8 @@
    "max_run": 0
   },
   "tests/runtime/test_cli.py": {
-   "sha256": "20e0a2cb12ca1872a5e96360556b092b9848cfbae818502f56cd52cbf3733bf1",
-   "line": 0.0097,
+   "sha256": "99ae85d4308dec5264023a17087cf526e0d7339cc0bd93b24185e95153d865c0",
+   "line": 0.0095,
    "shingle": 0.0,
    "max_run": 0
   },
