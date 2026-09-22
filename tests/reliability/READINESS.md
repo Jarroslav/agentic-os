@@ -329,6 +329,13 @@ fixtures correctly produced trusted failures for `fresh_feature`,
 `delegation_resume`, and the seeded `qa_failure`, while `mature_escalation`
 passed; these are behavior outcomes, not infrastructure gaps.
 
+With the immutable baseline suite transferred to the VM, a candidate manifest
+was successfully frozen against the upgraded host profiles. The freeze now
+permits candidate host/version and trusted-runner re-freezes while retaining
+the baseline dependency and source linkage. Candidate execution remains
+blocked by the profiles' explicit unsupported isolation channels; no candidate
+slot was consumed.
+
 The host profile is not frozen and preflight does not pass, so candidate trials
 remain 0 of 24. The deterministic proof is 102 runtime tests (run with
 `AGENTIC_HOST_KEY` unset; this VM exports the key in its shell, which breaks
