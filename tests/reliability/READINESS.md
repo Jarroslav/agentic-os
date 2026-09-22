@@ -216,6 +216,33 @@ received a narrow AppArmor profile, `/etc/apparmor.d/bwrap`, granting `userns`
 only to `/usr/bin/bwrap`. The global restriction remains enabled. Without that
 host configuration the canary fails closed with `setting up uid map`.
 
+Host AppArmor state was recorded on 2026-09-22 at 10:15 UTC:
+
+- `sudo sha256sum /etc/apparmor.d/bwrap` →
+  `cb4c604a3a3ef312a33bd0768511a5187a73c941b52d1ef9da0cbbb9f9eaa357`. The file
+  is operator-installed, is not owned by any dpkg package, and has no
+  `local/bwrap` include present. Its body is exactly:
+
+  ```
+  abi <abi/4.0>,
+  include <tunables/global>
+
+  profile bwrap /usr/bin/bwrap flags=(unconfined) {
+    userns,
+    include if exists <local/bwrap>
+  }
+  ```
+
+- `sudo apparmor_status`: module loaded; 128 profiles loaded (33 enforce,
+  4 complain, 0 prompt, 0 kill, 91 unconfined). `bwrap` is listed as
+  unconfined and `unprivileged_userns` as enforced.
+- `kernel.apparmor_restrict_unprivileged_userns = 1`.
+
+`flags=(unconfined)` means the profile adds no confinement to bwrap itself. Its
+only effect is the `userns` grant. Containment comes from the bubblewrap
+namespaces the canary checks, not from AppArmor. If the digest changes, this
+evidence no longer describes the host and the canary must be re-run.
+
 The canary runs in user, PID, IPC and UTS namespaces over a read-only synthetic
 root and passes 30 controls: fixture-only writes, exact auth-file reads (a
 sibling file is denied), selected plugin reads without writes, a selected hook
