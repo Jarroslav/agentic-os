@@ -176,6 +176,12 @@ class HostTests(unittest.TestCase):
         result = self.run_fake("claude")
         self.assertEqual(result["observed_model"], "fixture-model")
 
+    def test_provider_usage_limit_is_infrastructure_failure(self):
+        self.fake("print(json.dumps({'type':'rate_limit_event','rate_limit_info':{'status':'rejected'}}))\n"
+                  "print(json.dumps({'type':'error','message':'You have hit your usage limit'}))\n")
+        result = self.run_fake("claude")
+        self.assertEqual(result["status"], "infrastructure_failed")
+
     def test_only_explicit_command_receipts_are_exposed_as_evidence_inputs(self):
         valid = {"type": "agentic.command.completed", "evidence_id": "e1",
                  "run_id": "r", "source_revision": 2, "command": "pytest",
