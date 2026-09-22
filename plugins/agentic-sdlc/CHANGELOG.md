@@ -12,6 +12,17 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
   trusted completion gates, installer integration, and live certification remain
   incomplete. Unsupported completion and mailbox access fail closed during the
   bounded remediation of the lifecycle and communication stages.
+- Define SQLite-backed resume and assignment recovery, preserve user-owned
+  checkpoint inputs, keep legacy repair procedures out of managed runs, align
+  resume handoff fields with the runtime contract, and update the resume evals
+  to distinguish SQLite authority from legacy snapshot behavior. Legacy-only
+  resumes now fail closed, and uncertain external actions reconcile only after
+  the recovery coordinator acquires its fenced lease. New runs persist their
+  normalized task input in authoritative metadata for later resume. Planned
+  host interruptions now transition the run to `interrupted`; an unexpected
+  coordinator death while still `running` remains blocked because lease-expiry
+  takeover is not implemented. Worker launch instructions now start a bounded
+  dispatch lease before execution and reconcile expired dispatches explicitly.
 
 ### Added
 

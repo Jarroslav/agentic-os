@@ -120,9 +120,11 @@ class CLITests(unittest.TestCase):
                                    precondition={'ownership': 'verified'})
             self.assertEqual(code, 0, result)
             self.assertEqual(result['result']['state'], 'running')
+            self.assertEqual(result['result']['metadata']['task_input'], 'bounded task')
             epoch = result['result']['lease_epoch']
             code, status = request('run.status', run_id='run-x')
             self.assertEqual(code, 0, status)
+            self.assertEqual(status['result']['metadata']['task_input'], 'bounded task')
             code, dispatched = request('task.dispatch', run_id='run-x', reservation_id='d1', max_dispatches=1, lease_epoch=epoch,
                                        coordinator_id='c1', expected_revision=status['result']['revision'])
             self.assertEqual(code, 0, dispatched)
@@ -140,6 +142,35 @@ class CLITests(unittest.TestCase):
             code, cancelled = request('run.cancel', run_id='run-x', coordinator_id='c1')
             self.assertEqual(code, 0, cancelled)
             self.assertEqual(cancelled['result']['state'], 'cancelled')
+
+    def test_run_start_rejects_conflicting_task_input_metadata(self):
+        code, result = self.request('run.start', task_input='authoritative input',
+                                    coordinator_id='c1', branch='feature/x', worktree='unused',
+                                    metadata={'task_input': 'conflicting input'})
+        self.assertEqual(code, 2)
+        self.assertIn('task_input metadata conflicts', result['error']['message'])
+
+    def test_interrupted_run_resumes_under_a_new_fenced_coordinator(self):
+        with tempfile.TemporaryDirectory() as root:
+            worktree = pathlib.Path(root) / 'work-resume'
+            subprocess.run(['git', 'init', '-q', str(worktree)], check=True)
+            subprocess.run(['git', '-C', str(worktree), 'checkout', '-q', '-b', 'feature/resume'], check=True)
+            def request(operation, **payload):
+                payload['root'] = root
+                return self.request(operation, **payload)
+            code, started = request('run.start', task_input='resume me', coordinator_id='c1',
+                                    branch='feature/resume', worktree=str(worktree), run_id='run-resume',
+                                    precondition={'ownership': 'verified'})
+            self.assertEqual(code, 0, started)
+            code, interrupted = request('run.transition', run_id='run-resume', target='interrupted',
+                                        reason='host restart', coordinator_id='c1',
+                                        lease_epoch=started['result']['lease_epoch'],
+                                        expected_revision=started['result']['revision'])
+            self.assertEqual(code, 0, interrupted)
+            code, resumed = request('run.resume', run_id='run-resume', coordinator_id='c2')
+            self.assertEqual(code, 0, resumed)
+            self.assertEqual(resumed['result']['state'], 'running')
+            self.assertGreater(resumed['result']['lease_epoch'], started['result']['lease_epoch'])
 
     def test_task_result_is_the_versioned_public_completion_operation(self):
         with tempfile.TemporaryDirectory() as root:

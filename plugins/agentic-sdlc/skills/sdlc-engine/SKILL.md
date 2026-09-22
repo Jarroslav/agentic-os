@@ -107,6 +107,41 @@ a JSON fallback for missing runtime operations. Only the coordinator resolves ga
 Review and resolver workers are advisory. Registry worker defaults are story 3, bug 2,
 hotfix/spike/epic 1; epic children run sequentially.
 
+### Resume and assignment recovery
+
+When dispatched with an existing `run_id`, first call `run.status` and confirm the run is
+`running` under the current coordinator lease. Inspect `.agentic/runs/<run-id>/run.json` only
+after regenerating it with `run.export`; it projects assignments, messages, events, evidence,
+and dispatch reservations. Continue existing assignment IDs with their recorded owners. Do not
+replace an unavailable owner or infer a completed assignment from prose or a changed checkpoint.
+User-owned fixture and checkpoint files are immutable inputs; preserve them byte for byte and
+keep progress in managed runtime state.
+
+For each actual worker dispatch, reserve it with `task.dispatch`, refresh the run revision, then
+start its worker lease with `dispatch.start` before launching the worker. This binds the recorded
+worker and applies the concurrency, active-run, and dispatch-deadline limits. Refresh the revision
+again after start and finish the dispatch with `task.result`; if it times out, reconcile it with
+`dispatch.recover` before considering another attempt. A worker's completion report alone does not
+complete its assignment. Transition the corresponding assignment through `assignment.transition`
+with its current assignment revision, run revision, lease epoch, coordinator ID, and recorded
+worker ID. Validate the owned-path diff and acceptance evidence before transitioning to
+`completed`. If work cannot be tied to its existing assignment, its owner is unavailable, or
+runtime state cannot be updated, stop that branch of work and escalate. Never rewrite exported JSON
+or create a replacement assignment to make the run appear complete.
+
+Before handoff or a completion claim, refresh authoritative state and the run export. Any
+assignment still pending, running, waiting, or escalation-required prevents a claim that all
+delegated work completed. The runtime implements `run.complete`, but the shipped host adapter
+does not yet provide an integrated path to produce its trusted host-signed gate and evidence
+claims. Leave the run active and report that host integration limitation until that path is
+certified.
+
+If `sdlc-runs` passes a response to a gate that was waiting for the user, do not treat the resume
+request itself as approval. Verify the gate ID and current artifact hash, submit the supplied
+response through `gate-arbiter`, and persist that exact decision with `decision.record` under the
+current coordinator lease before advancing. If the decision is missing, stale, or does not match
+the artifact, stop and ask the user again.
+
 ## Phase map
 
 | # | Phase | Skippable | Gate(s) |
@@ -335,7 +370,7 @@ Gate ids in this run, verbatim: `requirements.ambiguous`, `spec.clarification`, 
 
 The coordinator commits every gate decision through supported runtime operations after mandatory
 escalation checks. Resolver/reviewer reports are advisory. Authoritative persistence failure blocks;
-export write failure may be repaired after a successful commit. Managed lifecycle operations are currently unavailable.
+export write failure may be repaired after a successful commit.
 
 ## Retry accounting
 
@@ -427,7 +462,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/validate-run-artifact.py <schema> <artifac
 - Updated human work-item documents and regenerable ledger exports; database owns lifecycle state.
 - Updated `.agentic/guides/testing/qa-health.md` (Phase 11, when in `phase_set`).
 - A feature branch in the current checkout, carrying the implementation, ready for `mr-submit`.
-- Intended durable database state for supported resume/repair operations; unavailable with the current bundle.
+- Intended durable database state for supported resume/repair operations; trusted run completion remains unsupported by the current bundle.
 
 ## Non-goals
 
