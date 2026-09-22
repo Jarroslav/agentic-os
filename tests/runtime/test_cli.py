@@ -50,10 +50,14 @@ class CLITests(unittest.TestCase):
                  'source_hash': 'sha256:abc', 'exit_status': 0}
         payload = {'api_version': '1.0.0', 'operation': 'trace.adapt', 'event': event,
                    'identity': 'codex', 'issued_at': 10, 'expires_at': 20}
+        # Pass an explicit environment so a key exported in the caller's shell
+        # cannot leak in; os.environ itself is never mutated.
+        keyless = {k: v for k, v in os.environ.items() if k != 'AGENTIC_HOST_KEY'}
         missing = subprocess.run([sys.executable, str(ROOT / 'runtime/run.py')],
-            input=json.dumps(payload), text=True, capture_output=True)
-        self.assertEqual(missing.returncode, 2)
-        env = dict(os.environ, AGENTIC_HOST_KEY='test-key')
+            input=json.dumps(payload), text=True, capture_output=True, env=keyless)
+        self.assertEqual(missing.returncode, 2, missing.stdout)
+        self.assertIn('host signing key is required', missing.stdout)
+        env = dict(keyless, AGENTIC_HOST_KEY='test-key')
         response = subprocess.run([sys.executable, str(ROOT / 'runtime/run.py')],
             input=json.dumps(payload), text=True, capture_output=True, env=env)
         self.assertEqual(response.returncode, 0, response.stderr)
