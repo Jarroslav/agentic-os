@@ -268,8 +268,8 @@ and `isolation_supported: false`. Remaining blockers before any candidate slot:
 1. A real host startup probe under bubblewrap proving host-level exclusion of
    global inputs and execution of selected plugin hooks. Codex now has an
    explicit temporary auth-file/state configuration and a successful startup
-   trace; Claude still has no declared VM credential path, and neither host
-   has yet completed the global-input/hook proof.
+   trace; Claude now has the same successful startup evidence, and neither
+   host has yet completed the global-input/hook proof.
 2. The installed hosts moved after the baseline freeze (Claude Code `2.1.278`,
    Codex `0.155.1`). The candidate profile must be re-frozen; the baseline
    evidence is unchanged.
@@ -284,7 +284,7 @@ sentinel `CODEX_VM_PROBE_OK`. The adapter had to expose only the resolver,
 hosts, NSS, and CA bundle needed for network startup; those files are
 read-only. This is non-scored startup evidence. It proves one authenticated
 Codex path on this VM, but does not yet prove global-instruction exclusion,
-selected hook execution, Claude startup, or the frozen host profile required
+selected hook execution or the frozen host profile required
 for candidate scoring.
 
 The same path was then exercised through `tests/reliability/hosts.py`'s
@@ -296,6 +296,16 @@ thread, turn, assistant-item, and usage events but no model field, so
 from the requested command. This validates launcher integration and bounded
 execution while preserving the evidence gap around host-reported model
 identity.
+
+On 2026-09-22, the VM's declared Claude credential was copied into an
+isolated `CLAUDE_CONFIG_DIR` as `.credentials.json`, with its temporary files
+redirected into the same writable state directory. The real Claude Code
+`2.1.278` launcher then completed inside bubblewrap, reported model
+`claude-opus-5`, read the fixture, and returned `CLAUDE_FORMAL_PROBE_OK` with
+exit code 0. The first attempt correctly failed closed when Claude tried to
+create `/tmp/claude-1000`; the launcher now routes `TMPDIR` into the declared
+state directory automatically. This remains non-scored startup evidence and
+does not yet prove global-input exclusion or selected hook execution.
 
 The host profile is not frozen and preflight does not pass, so candidate trials
 remain 0 of 24. The deterministic proof is 102 runtime tests (run with
