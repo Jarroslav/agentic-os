@@ -265,10 +265,11 @@ A read-only `inspect_host` on the VM with the frozen Claude and Codex model
 identities reports `filesystem_enforced: true` with 30 controls for both hosts,
 and `isolation_supported: false`. Remaining blockers before any candidate slot:
 
-1. A real host startup probe under bubblewrap proving authentication through
-   declared auth files only, host-level exclusion of global inputs, and
-   execution of selected plugin hooks. Every profile's `auth_files` is still
-   empty, and the hosts' credential paths have not been declared.
+1. A real host startup probe under bubblewrap proving host-level exclusion of
+   global inputs and execution of selected plugin hooks. Codex now has an
+   explicit temporary auth-file/state configuration and a successful startup
+   trace; Claude still has no declared VM credential path, and neither host
+   has yet completed the global-input/hook proof.
 2. The installed hosts moved after the baseline freeze (Claude Code `2.1.278`,
    Codex `0.155.1`). The candidate profile must be re-frozen; the baseline
    evidence is unchanged.
@@ -286,9 +287,19 @@ Codex path on this VM, but does not yet prove global-instruction exclusion,
 selected hook execution, Claude startup, or the frozen host profile required
 for candidate scoring.
 
+The same path was then exercised through `tests/reliability/hosts.py`'s
+`run_host` launcher with `allow_uncertified_probe` explicitly enabled for this
+non-scored check. It completed with exit code 0 and returned
+`CODEX_FORMAL_PROBE_OK` inside the sandbox. The retained Codex JSON trace has
+thread, turn, assistant-item, and usage events but no model field, so
+`observed_model` remains null by design; the evaluator does not infer a model
+from the requested command. This validates launcher integration and bounded
+execution while preserving the evidence gap around host-reported model
+identity.
+
 The host profile is not frozen and preflight does not pass, so candidate trials
 remain 0 of 24. The deterministic proof is 102 runtime tests (run with
 `AGENTIC_HOST_KEY` unset; this VM exports the key in its shell, which breaks
-the CLI test that expects it to be missing) and 109 evaluator tests with 9
+the CLI test that expects it to be missing) and 110 evaluator tests with 9
 macOS-only skips. Tracked text changed, so the originality attestation needs a
 maintainer re-attestation. The 8 existing neutrality findings are unchanged.
