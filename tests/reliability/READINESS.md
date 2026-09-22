@@ -273,7 +273,8 @@ and `isolation_supported: false`. Remaining blockers before any candidate slot:
 2. The installed hosts moved after the baseline freeze (Claude Code `2.1.278`,
    Codex `0.155.1`). The candidate profile must be re-frozen; the baseline
    evidence is unchanged.
-3. The Linux scenario oracle (see the findings table).
+3. Candidate host profiles still need a final freeze after the evidence below;
+   the Linux scenario oracle is now executable under bubblewrap.
 
 On 2026-09-22, using the VM's transferred Codex credential without an
 interactive login, a real `codex exec --json --ephemeral` startup ran inside
@@ -312,6 +313,21 @@ read-only. Claude completed the same probe, returned the sentinel, and its
 initialization trace listed `agentic-sdlc` as a loaded plugin. This proves
 selected-plugin visibility; hook execution and denial of unselected/global
 inputs remain separate certification checks.
+
+The selected-plugin hook boundary was then exercised with a temporary plugin
+whose `PostToolUse`/`Skill` hook wrote a marker only in the fixture. Claude
+invoked the selected skill, the hook marker contained `hook-ran`, and the
+launcher completed with exit code 0. The trace also showed the selected plugin
+and skill being loaded. This is direct hook evidence for Claude; the evaluator
+still keeps the host uncertified until global/unselected-input denial and the
+corresponding Codex capability decision are recorded.
+
+The scenario oracle definition was amended to use the same Linux bubblewrap
+boundary when `sandbox-exec` is unavailable. On the VM its canary reported
+`sandbox_enforced: true` for all four scenarios. The untouched deterministic
+fixtures correctly produced trusted failures for `fresh_feature`,
+`delegation_resume`, and the seeded `qa_failure`, while `mature_escalation`
+passed; these are behavior outcomes, not infrastructure gaps.
 
 The host profile is not frozen and preflight does not pass, so candidate trials
 remain 0 of 24. The deterministic proof is 102 runtime tests (run with
