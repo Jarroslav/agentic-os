@@ -108,8 +108,12 @@ def main():
             root = request.get('root', os.getcwd())
             store = RuntimeStore(root, host_key=os.environ.get('AGENTIC_HOST_KEY'))
             if operation == 'run.start':
-                normalize_input({'contract_version': '1.0.0', 'task_input': request['task_input']})
-                value = store.create_run(request.get('run_id'), branch=request['branch'], worktree=request['worktree'], metadata=request.get('metadata'), precondition=request.get('precondition'))
+                normalized = normalize_input({'contract_version': '1.0.0', 'task_input': request['task_input']})
+                metadata = dict(request.get('metadata') or {})
+                if 'task_input' in metadata and metadata['task_input'] != normalized['task_input']:
+                    raise ValueError('task_input metadata conflicts with the authoritative run input')
+                metadata['task_input'] = normalized['task_input']
+                value = store.create_run(request.get('run_id'), branch=request['branch'], worktree=request['worktree'], metadata=metadata, precondition=request.get('precondition'))
                 value = store.acquire_lease(value['run_id'], request['coordinator_id'])
                 value = store.transition(value['run_id'], 'running', expected_revision=value['revision'], lease_epoch=value['lease_epoch'], coordinator_id=request['coordinator_id'])
             elif operation == 'run.status':
