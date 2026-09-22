@@ -118,6 +118,21 @@ class HostTests(unittest.TestCase):
                           "--dangerously-bypass-approvals-and-sandbox"):
             self.assertNotIn(forbidden, argv)
 
+    def test_codex_state_writes_are_redirected_into_bound_state(self):
+        state = self.root / "codex-state"
+        state.mkdir()
+        environment = hosts._host_environment({"host": "codex", "state_dir": str(state)})
+        self.assertEqual(environment["HOME"], str(state))
+        self.assertEqual(environment["CODEX_HOME"], str(state))
+        self.assertEqual(environment["TMPDIR"], str(state / "tmp"))
+
+    def test_claude_keeps_home_when_config_root_is_explicit(self):
+        state = self.root / "claude-state"
+        state.mkdir()
+        environment = hosts._host_environment({"host": "claude", "state_dir": str(state)})
+        self.assertNotIn("CODEX_HOME", environment)
+        self.assertNotEqual(environment.get("HOME"), str(state))
+
     def test_success_captures_private_raw_traces_and_observed_metadata(self):
         self.fake("print(json.dumps({'type':'system','subtype':'init','model':'fixture-model'}))\n"
                   "print(json.dumps({'type':'result','is_error':False,'usage':{'input_tokens':3}}))\n"

@@ -52,7 +52,15 @@ def _host_environment(profile: dict | None = None) -> dict:
         temp_dir = Path(state_dir) / "tmp"
         temp_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
         temp_dir.chmod(0o700)
-        environment.setdefault("TMPDIR", str(temp_dir))
+        environment["TMPDIR"] = str(temp_dir)
+        # Codex creates first-run aliases and other CLI state below its home
+        # even with --ephemeral.  Point both HOME and CODEX_HOME at the
+        # explicitly bound, isolated state directory so those writes stay
+        # inside the sandbox. Claude keeps its normal HOME because its
+        # configuration root is controlled separately by CLAUDE_CONFIG_DIR.
+        if (profile or {}).get("host") == "codex":
+            environment["HOME"] = str(state_dir)
+            environment["CODEX_HOME"] = str(state_dir)
     return environment
 
 
@@ -216,6 +224,7 @@ def _profile(host: str, executable: str, help_text: str,
         "isolation_evidence": isolation_evidence, "auth_files": auth_files,
         "auth_file_sha256": auth_file_hashes,
         "state_dir": state_dir,
+        "host": host,
         "startup_evidence": startup_evidence,
         "startup_evidence_sha256": startup_evidence_sha256,
     }
