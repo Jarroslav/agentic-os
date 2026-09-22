@@ -44,9 +44,16 @@ def _isolation_evidence(timeout_seconds: float = 10) -> dict:
     return _isolation().probe_host_boundary(timeout_seconds=timeout_seconds)
 
 
-def _host_environment() -> dict:
-    """The host never receives the key that signs its receipts."""
-    return {k: v for k, v in os.environ.items() if k != "AGENTIC_HOST_KEY"}
+def _host_environment(profile: dict | None = None) -> dict:
+    """Build host env without receipt secrets or unwritable temp paths."""
+    environment = {k: v for k, v in os.environ.items() if k != "AGENTIC_HOST_KEY"}
+    state_dir = (profile or {}).get("state_dir")
+    if state_dir:
+        temp_dir = Path(state_dir) / "tmp"
+        temp_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        temp_dir.chmod(0o700)
+        environment.setdefault("TMPDIR", str(temp_dir))
+    return environment
 
 
 def _validate_host(host: str) -> None:
@@ -449,7 +456,7 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
                 process = subprocess.Popen(result["argv"], cwd=fixture,
                                            stdin=subprocess.DEVNULL, stdout=stdout,
                                            stderr=stderr, start_new_session=True,
-                                           env=_host_environment())
+                                           env=_host_environment(profile))
                 while True:
                     if checkpoint_path is not None and checkpoint_path.is_file():
                         result.update(status="interrupted", checkpoint_observed=True)
