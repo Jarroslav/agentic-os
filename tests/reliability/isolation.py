@@ -181,7 +181,6 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
         source = Path(path)
         if not source.is_file() or source.is_symlink():
             raise FileNotFoundError('Allowed read file does not exist: ' + path)
-    argv += ['--remount-ro', '/']
     writable = sorted({str(Path(p).resolve()) for p in writable_dirs})
     for directory in writable:
         if not Path(directory).is_dir():
@@ -204,6 +203,7 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
         for directory in reversed(parents):
             argv += ['--dir', directory]
         argv += ['--ro-bind', path, path]
+    argv += ['--remount-ro', '/']
     argv += ['--chdir', str(fixture)]
     return argv + ['--', *command]
 
