@@ -171,11 +171,24 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
     for root in sorted({str(Path(p).resolve()) for p in (*runtime_roots, *plugin_roots)}):
         if not any(root == b or root.startswith(b + '/') for b in bound):
             argv += ['--ro-bind', root, root]
+    # Bind the fixture first. Explicit read files are layered afterwards so a
+    # credential mounted below a writable fixture cannot become writable by
+    # bind-order accident. Create only the parent directories needed for those
+    # exact files; their siblings remain absent from the namespace.
+    argv += ['--bind', str(fixture), str(fixture)]
     for path in sorted({str(Path(p).resolve()) for p in read_files}):
-        if not Path(path).is_file():
+        source = Path(path)
+        if not source.is_file() or source.is_symlink():
             raise FileNotFoundError('Allowed read file does not exist: ' + path)
+        parents = []
+        parent = source.parent
+        while parent != parent.parent and str(parent) != '/':
+            parents.append(str(parent))
+            parent = parent.parent
+        for directory in reversed(parents):
+            argv += ['--dir', directory]
         argv += ['--ro-bind', path, path]
-    argv += ['--bind', str(fixture), str(fixture), '--remount-ro', '/', '--chdir', str(fixture)]
+    argv += ['--remount-ro', '/', '--chdir', str(fixture)]
     return argv + ['--', *command]
 
 

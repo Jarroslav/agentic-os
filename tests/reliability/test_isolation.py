@@ -148,8 +148,10 @@ class LinuxIsolationTests(unittest.TestCase):
             writable = [argv[i + 1] for i, a in enumerate(argv) if a == '--bind']
             self.assertEqual(writable, [str(root / 'fixture')])
             self.assertIn(str(auth), argv)
-            self.assertNotIn(str(root / 'home'), argv)
-            self.assertNotIn(str(root / 'home' / '.codex'), argv)
+            bind_paths = [argv[index + 1] for index, arg in enumerate(argv)
+                          if arg in ('--bind', '--ro-bind')]
+            self.assertNotIn(str(root / 'home'), bind_paths)
+            self.assertNotIn(str(root / 'home' / '.codex'), bind_paths)
             for flag in ('--unshare-pid', '--unshare-user', '--die-with-parent',
                          '--new-session', '--remount-ro'):
                 self.assertIn(flag, argv)

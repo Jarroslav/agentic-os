@@ -422,6 +422,7 @@ class LinuxContainedLaunchTests(unittest.TestCase):
         self.assertEqual(receipt["isolation_mechanism"], "bubblewrap")
         self.assertEqual(receipt["exit_status"], 0)
 
+    @unittest.skipUnless(_bwrap_usable(), "requires bubblewrap with user namespaces")
     def test_declared_auth_file_is_the_only_home_input_bound(self):
         self.write_cli("")
         original = hosts._profile
