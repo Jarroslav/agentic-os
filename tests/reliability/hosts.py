@@ -109,6 +109,28 @@ def _isolation_limits(host: str) -> list[str]:
             "not itself establish exclusion of other CODEX_HOME inputs"]
 
 
+def _configured_auth_files(host: str) -> tuple[list[str], dict[str, str]]:
+    """Resolve an explicit, operator-provided read-only auth allowlist.
+
+    The evaluator never guesses credential paths and never prints their
+    contents. A missing allowlist keeps the host uncertified; when supplied,
+    only existing regular files are passed to the outer sandbox.
+    """
+    raw = os.environ.get(f"RELIABILITY_{host.upper()}_AUTH_FILES", "")
+    paths: list[str] = []
+    hashes: dict[str, str] = {}
+    for item in raw.split(os.pathsep) if raw else []:
+        candidate = Path(item).expanduser()
+        if not candidate.is_absolute():
+            raise ValueError(f"{host} auth file must be an absolute path")
+        resolved = candidate.resolve()
+        if not resolved.is_file() or resolved.is_symlink():
+            raise ValueError(f"{host} auth file is not a regular file: {resolved}")
+        paths.append(str(resolved))
+        hashes[str(resolved)] = hashlib.sha256(resolved.read_bytes()).hexdigest()
+    return sorted(set(paths)), hashes
+
+
 def _profile(host: str, executable: str, help_text: str,
              timeout_seconds: float = 10) -> dict:
     model = os.environ.get(f"RELIABILITY_{host.upper()}_MODEL", "")
@@ -118,6 +140,7 @@ def _profile(host: str, executable: str, help_text: str,
                 ["--ignore-user-config", "--ignore-rules", "--model", "--sandbox",
                  "--config", "--ephemeral"])
     limits = _isolation_limits(host)
+    auth_files, auth_file_hashes = _configured_auth_files(host)
     isolation_evidence = _isolation_evidence(timeout_seconds)
     if not isolation_evidence["filesystem_enforced"]:
         limits.append(isolation_evidence["error"] or "Filesystem containment canary failed")
@@ -139,7 +162,8 @@ def _profile(host: str, executable: str, help_text: str,
             if host == "claude" else {"ignore_user_config": True, "ignore_rules": True,
                                      "approval_policy": "never"}),
         "isolation_supported": not limits, "unsupported_channels": limits,
-        "isolation_evidence": isolation_evidence, "auth_files": [],
+        "isolation_evidence": isolation_evidence, "auth_files": auth_files,
+        "auth_file_sha256": auth_file_hashes,
     }
 
 
@@ -203,7 +227,7 @@ def _contain(argv: list[str], profile: dict, executable: str, fixture: Path,
 
 def _launch(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
             probe_timeout: float, expected_profile: dict | None = None
-            ) -> tuple[list[str], dict]:
+            , allow_uncertified_probe: bool = False) -> tuple[list[str], dict]:
     _validate_host(host)
     fixture = _fixture_path(fixture)
     inspection = inspect_host(host, timeout_seconds=probe_timeout)
@@ -214,7 +238,7 @@ def _launch(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
     profile = inspection["profile"]
     if expected_profile is not None and profile != expected_profile:
         raise RuntimeError("Frozen host profile drifted before launch")
-    if not profile["isolation_supported"]:
+    if not profile["isolation_supported"] and not allow_uncertified_probe:
         raise RuntimeError("Host isolation unavailable: " + "; ".join(profile["unsupported_channels"]))
     executable = inspection["executable"]
     roots = [Path(root).resolve() for root in plugin_roots]
@@ -351,7 +375,8 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
              evidence_identity: str | None = None,
              evidence_issued_at: float | None = None,
              evidence_expires_at: float | None = None,
-             receipt_repository: Path | None = None) -> dict:
+             receipt_repository: Path | None = None,
+             allow_uncertified_probe: bool = False) -> dict:
     """Run one host, retaining traces and optionally adapting signed evidence.
 
     Evidence adaptation is opt-in because the caller owns the host key and the
@@ -396,7 +421,8 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
         try:
             result["argv"], profile = _launch(host, fixture, prompt, plugin_roots,
                                               probe_timeout=min(10, timeout_seconds),
-                                              expected_profile=expected_profile)
+                                              expected_profile=expected_profile,
+                                              allow_uncertified_probe=allow_uncertified_probe)
             remaining = timeout_seconds - (time.monotonic() - started)
             if remaining <= 0:
                 result["status"] = "timed_out"
