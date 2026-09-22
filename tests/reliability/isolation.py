@@ -14,7 +14,6 @@ import json
 import os
 from pathlib import Path
 import secrets
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -140,23 +139,26 @@ _LINUX_SYSTEM_ROOTS = ('/usr', '/bin', '/sbin', '/lib', '/lib32', '/lib64', '/li
 
 
 def linux_executable() -> str | None:
-    path = shutil.which('bwrap', path='/usr/bin:/bin')
-    return path if sys.platform.startswith('linux') and path else None
+    # Fixed system path: a PATH lookup could substitute an unconfining binary.
+    path = Path('/usr/bin/bwrap')
+    return (str(path) if sys.platform.startswith('linux') and path.is_file()
+            and os.access(path, os.X_OK) else None)
 
 
 def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
                read_files: list[Path] = (), plugin_roots: list[Path] = (),
-               command: list[str] = (), env: dict[str, str] | None = None) -> list[str]:
+               command: list[str] = ()) -> list[str]:
     """Build a deny-by-default bubblewrap command.
 
     Only the listed paths exist inside the namespace. System roots, runtime roots,
     exact auth files and selected plugins are read-only; the fixture is the only
     writable bind, and the synthetic root is remounted read-only afterwards.
-    The network namespace is shared, matching the macOS profile.
+    The network namespace is shared, matching the macOS profile. The caller
+    passes the complete environment to the process, so secrets never enter argv.
     """
     fixture = Path(fixture).resolve()
     argv = [bwrap, '--unshare-user', '--unshare-pid', '--unshare-ipc', '--unshare-uts',
-            '--unshare-cgroup-try', '--die-with-parent', '--new-session', '--clearenv',
+            '--unshare-cgroup-try', '--die-with-parent', '--new-session',
             '--proc', '/proc', '--dev', '/dev']
     bound = set()
     for name in _LINUX_SYSTEM_ROOTS:
@@ -174,8 +176,6 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
             raise FileNotFoundError('Allowed read file does not exist: ' + path)
         argv += ['--ro-bind', path, path]
     argv += ['--bind', str(fixture), str(fixture), '--remount-ro', '/', '--chdir', str(fixture)]
-    for key, value in sorted((env or {}).items()):
-        argv += ['--setenv', key, value]
     return argv + ['--', *command]
 
 
@@ -290,7 +290,7 @@ def probe_linux_boundary(timeout_seconds: float = 10, home: Path | None = None) 
     result = {'schema_version': 1, 'mechanism': 'bubblewrap', 'filesystem_enforced': False,
               'host_certified': False, 'checks': {}, 'error': None,
               'probe_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-              'host_identity': None, 'fixture_sha256': None}
+              'host_identity': None}
     if bwrap is None:
         result['error'] = 'Linux bubblewrap (/usr/bin/bwrap) is unavailable'
         return result
@@ -323,8 +323,7 @@ def probe_linux_boundary(timeout_seconds: float = 10, home: Path | None = None) 
         argv = linux_argv(bwrap, fixture, runtime, [root / 'auth' / 'auth.json'],
                           [root / 'plugin'],
                           [sys.executable, '-I', '-B', '-c', _LINUX_PROGRAM, str(root), nonce,
-                           str(os.getpid()), host_init, json.dumps(globals_)],
-                          env={'PATH': '/usr/bin:/bin'})
+                           str(os.getpid()), host_init, json.dumps(globals_)])
         try:
             process = subprocess.run(argv, capture_output=True, text=True,
                                      timeout=timeout_seconds, env={'PATH': '/usr/bin:/bin'},
@@ -347,7 +346,6 @@ def probe_linux_boundary(timeout_seconds: float = 10, home: Path | None = None) 
                 and (fixture / 'output').read_text() == 'written'
                 and (fixture / 'hook-marker').read_text() == 'hook:' + nonce
                 and not (fixture / 'unselected-marker').exists())
-            result['fixture_sha256'] = fixture_binding(fixture)['tree_sha256']
             if not result['filesystem_enforced']:
                 result['error'] = 'Linux sandbox canary evidence did not match every required control'
         except (OSError, subprocess.SubprocessError, ValueError) as exc:

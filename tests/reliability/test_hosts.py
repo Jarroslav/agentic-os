@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import signal
 import stat
+import subprocess
 import sys
 import tempfile
 import time
@@ -333,6 +334,132 @@ class HostTests(unittest.TestCase):
         self.assertTrue(ready.exists(), "fake descendant did not start before timeout")
         time.sleep(1.3)
         self.assertFalse(marker.exists(), "timeout left a descendant running")
+
+
+def _bwrap_usable() -> bool:
+    if hosts is None:
+        return False
+    isolation = hosts._isolation()
+    bwrap = isolation.linux_executable()
+    if bwrap is None:
+        return False
+    return subprocess.run(isolation.linux_argv(bwrap, Path("/tmp"), command=["/bin/true"]),
+                          capture_output=True).returncode == 0
+
+
+class LinuxContainedLaunchTests(unittest.TestCase):
+    """A fake host launched through the production Linux wrapper, not a model."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.fixture = self.root / "fixture"
+        self.fixture.mkdir()
+        (self.root / "plugin" / "hooks").mkdir(parents=True)
+        (self.root / "plugin" / "SKILL.md").write_text("selected")
+        (self.root / "secret").write_text("global instruction")
+        (self.root / "auth.json").write_text("token")
+        (self.root / "bin").mkdir()
+        self.cli = self.root / "bin" / "fake-cli"
+        self.repo = self.root / "repo"
+        self.repo.mkdir()
+        env = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t",
+               "GIT_COMMITTER_EMAIL": "t@t", "PATH": "/usr/bin:/bin"}
+        (self.repo / "f").write_text("x")
+        for args in (["init", "-q"], ["add", "."], ["commit", "-qm", "i"]):
+            subprocess.run(["git", "-C", str(self.repo), *args], check=True, env=env)
+        for patch in (mock.patch.object(hosts, "_isolation_limits", return_value=[]),
+                      mock.patch.dict(os.environ, {"RELIABILITY_CODEX_MODEL": "codex-fixture-1",
+                                                   "AGENTIC_HOST_KEY": "launch-key"}),
+                      mock.patch.object(hosts.shutil, "which", return_value=str(self.cli))):
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def evidence(self, mechanism):
+        return mock.patch.object(hosts, "_isolation_evidence", return_value={
+            "mechanism": mechanism, "filesystem_enforced": True, "host_certified": False,
+            "error": None, "probe_sha256": "p", "host_identity": {"system": "Linux"}})
+
+    def write_cli(self, body):
+        self.cli.write_text(
+            "#!" + sys.executable + "\nimport json, os, pathlib, sys\n"
+            "if '--version' in sys.argv:\n print('test-cli 1.0'); sys.exit(0)\n"
+            "if '--help' in sys.argv:\n print('--ignore-user-config --ignore-rules --model "
+            "--sandbox --config --ephemeral'); sys.exit(0)\n" + body)
+        self.cli.chmod(0o700)
+
+    @unittest.skipUnless(_bwrap_usable(), "requires bubblewrap with user namespaces")
+    def test_wrapped_host_is_confined_to_fixture_and_selected_inputs(self):
+        root = repr(str(self.root))
+        self.write_cli(
+            "r = pathlib.Path(" + root + "); out = {}\n"
+            "def denied(f):\n try: f(); return False\n except OSError: return True\n"
+            "(pathlib.Path.cwd() / 'work').write_text('done')\n"
+            "out['plugin'] = (r / 'plugin' / 'SKILL.md').read_text() == 'selected'\n"
+            "out['secret'] = denied(lambda: (r / 'secret').read_text())\n"
+            "out['auth'] = denied(lambda: (r / 'auth.json').read_text())\n"
+            "out['outside'] = denied(lambda: (r / 'escape').write_text('x'))\n"
+            "out['key'] = 'AGENTIC_HOST_KEY' not in os.environ\n"
+            "print(json.dumps({'type': 'probe', **out}))\n")
+        with self.evidence("bubblewrap"):
+            result = hosts.run_host("codex", self.fixture, "task", [self.root / "plugin"],
+                                    self.root / "traces", timeout_seconds=20,
+                                    receipt_repository=self.repo)
+        self.assertEqual(result["status"], "completed", result)
+        self.assertIn("--unshare-pid", result["argv"])
+        probe = json.loads(Path(result["raw_stdout_path"]).read_text())
+        self.assertEqual(probe, {"type": "probe", "plugin": True, "secret": True, "auth": True,
+                                 "outside": True, "key": True})
+        self.assertEqual((self.fixture / "work").read_text(), "done")
+        self.assertFalse((self.root / "escape").exists())
+        isolation = hosts._isolation()
+        receipt = isolation.verify_command_receipt(
+            result["isolation_receipt"], b"launch-key",
+            repository_revision=isolation.repository_revision(self.repo)["revision"],
+            fixture_sha256=isolation.fixture_binding(self.fixture)["tree_sha256"],
+            host="codex", model="codex-fixture-1")
+        self.assertEqual(receipt["isolation_mechanism"], "bubblewrap")
+        self.assertEqual(receipt["exit_status"], 0)
+
+    def test_declared_auth_file_is_the_only_home_input_bound(self):
+        self.write_cli("")
+        original = hosts._profile
+        declared = lambda *a, **k: dict(original(*a, **k), auth_files=[str(self.root / "auth.json")])
+        with self.evidence("bubblewrap"), mock.patch.object(hosts, "_profile", side_effect=declared):
+            argv = hosts.build_command("codex", self.fixture, "task", [], self.root)
+        bound = [argv[i + 1] for i, a in enumerate(argv) if a in ("--bind", "--ro-bind")]
+        self.assertIn(str(self.root / "auth.json"), bound)
+        self.assertNotIn(str(self.root), bound)
+        self.assertEqual([argv[i + 1] for i, a in enumerate(argv) if a == "--bind"],
+                         [str(self.fixture)])
+
+    def test_host_never_receives_signing_key_and_missing_key_blocks_receipt(self):
+        marker = self.fixture / "env"
+        self.write_cli("pathlib.Path(" + repr(str(marker)) + ").write_text("
+                       "str('AGENTIC_HOST_KEY' in os.environ))\n")
+        with self.evidence(None):
+            result = hosts.run_host("codex", self.fixture, "task", [], self.root / "traces",
+                                    timeout_seconds=10, receipt_repository=self.repo)
+        self.assertEqual(marker.read_text(), "False")
+        self.assertEqual(result["isolation_receipt"]["model"], "codex-fixture-1")
+        del os.environ["AGENTIC_HOST_KEY"]
+        with self.evidence(None):
+            result = hosts.run_host("codex", self.fixture, "task", [], self.root / "traces",
+                                    timeout_seconds=10, receipt_repository=self.repo)
+        self.assertNotIn("isolation_receipt", result)
+        self.assertIn("AGENTIC_HOST_KEY", result["isolation_receipt_error"])
+
+    def test_unavailable_bubblewrap_at_launch_fails_closed(self):
+        marker = self.fixture / "started"
+        self.write_cli("pathlib.Path(" + repr(str(marker)) + ").write_text('bad')\n")
+        with self.evidence("bubblewrap"), \
+             mock.patch.object(hosts._isolation(), "linux_executable", return_value=None):
+            result = hosts.run_host("codex", self.fixture, "task", [], self.root / "traces",
+                                    timeout_seconds=10, receipt_repository=self.repo)
+        self.assertEqual(result["status"], "infrastructure_failed")
+        self.assertFalse(marker.exists())
+        self.assertEqual(result["isolation_receipt_error"], "host was not launched")
 
 
 if __name__ == "__main__":
