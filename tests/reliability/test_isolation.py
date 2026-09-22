@@ -78,6 +78,10 @@ class LinuxIsolationTests(unittest.TestCase):
         self.assertEqual(result['host_identity']['mechanism'], 'bubblewrap')
 
     @unittest.skipUnless(_bwrap_usable(), 'requires bubblewrap with user namespaces')
+    def test_evidence_is_stable_so_frozen_profiles_do_not_drift(self):
+        self.assertEqual(isolation.probe_linux_boundary(), isolation.probe_linux_boundary())
+
+    @unittest.skipUnless(_bwrap_usable(), 'requires bubblewrap with user namespaces')
     def test_real_host_globals_are_invisible(self):
         with tempfile.TemporaryDirectory() as home:
             for name in ('.claude', '.codex', '.agents'):
@@ -140,13 +144,13 @@ class LinuxIsolationTests(unittest.TestCase):
             auth.write_text('{}')
             (root / 'fixture').mkdir()
             argv = isolation.linux_argv('/usr/bin/bwrap', root / 'fixture', read_files=[auth],
-                                        command=['/bin/true'], env={'PATH': '/usr/bin'})
+                                        command=['/bin/true'])
             writable = [argv[i + 1] for i, a in enumerate(argv) if a == '--bind']
             self.assertEqual(writable, [str(root / 'fixture')])
             self.assertIn(str(auth), argv)
             self.assertNotIn(str(root / 'home'), argv)
             self.assertNotIn(str(root / 'home' / '.codex'), argv)
-            for flag in ('--unshare-pid', '--unshare-user', '--clearenv', '--die-with-parent',
+            for flag in ('--unshare-pid', '--unshare-user', '--die-with-parent',
                          '--new-session', '--remount-ro'):
                 self.assertIn(flag, argv)
             self.assertEqual(argv[-2:], ['--', '/bin/true'])

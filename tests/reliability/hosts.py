@@ -25,13 +25,28 @@ from runtime.agentic_runtime.trace import command_receipt, ingest_command_event
 from runtime.agentic_runtime.adapter import adapt_json_lines
 
 
-def _isolation_evidence(timeout_seconds: float = 3) -> dict:
+_ISOLATION = None
+
+
+def _isolation():
     # Load the sibling explicitly: the harness is also imported by file path.
-    path = Path(__file__).with_name("isolation.py")
-    spec = importlib.util.spec_from_file_location("reliability_host_isolation", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.probe_filesystem_boundary(timeout_seconds=timeout_seconds)
+    global _ISOLATION
+    if _ISOLATION is None:
+        path = Path(__file__).with_name("isolation.py")
+        spec = importlib.util.spec_from_file_location("reliability_host_isolation", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _ISOLATION = module
+    return _ISOLATION
+
+
+def _isolation_evidence(timeout_seconds: float = 10) -> dict:
+    return _isolation().probe_host_boundary(timeout_seconds=timeout_seconds)
+
+
+def _host_environment() -> dict:
+    """The host never receives the key that signs its receipts."""
+    return {k: v for k, v in os.environ.items() if k != "AGENTIC_HOST_KEY"}
 
 
 def _validate_host(host: str) -> None:
@@ -84,7 +99,8 @@ def _isolation_limits(host: str) -> list[str]:
     common = ("Offline filesystem controls do not certify actual host startup: require "
               "a no-inference startup probe proving existing authentication, denied global "
               "instructions/skills/plugins and managed policy inputs, plus retained project "
-              "and selected-plugin hook execution under the same outer sandbox")
+              "and selected-plugin hook execution under the same outer sandbox (sandbox-exec "
+              "on macOS, bubblewrap on Linux) with the host's declared auth files")
     if host == "claude":
         return [common + "; installed --bare changes auth and skips hooks, while "
                 "--safe-mode disables the hooks/plugins under evaluation"]
@@ -94,7 +110,7 @@ def _isolation_limits(host: str) -> list[str]:
 
 
 def _profile(host: str, executable: str, help_text: str,
-             timeout_seconds: float = 3) -> dict:
+             timeout_seconds: float = 10) -> dict:
     model = os.environ.get(f"RELIABILITY_{host.upper()}_MODEL", "")
     required = (["--setting-sources", "--settings", "--model", "--effort",
                  "--permission-mode", "--strict-mcp-config", "--plugin-dir"]
@@ -123,7 +139,7 @@ def _profile(host: str, executable: str, help_text: str,
             if host == "claude" else {"ignore_user_config": True, "ignore_rules": True,
                                      "approval_policy": "never"}),
         "isolation_supported": not limits, "unsupported_channels": limits,
-        "isolation_evidence": isolation_evidence,
+        "isolation_evidence": isolation_evidence, "auth_files": [],
     }
 
 
@@ -152,7 +168,7 @@ def inspect_host(host: str, timeout_seconds: float = 10) -> dict:
         if remaining <= 0:
             raise subprocess.TimeoutExpired([executable, "isolation-canary"], timeout_seconds)
         result.update(available=True, version=probe.stdout.strip() or None,
-                      profile=_profile(host, executable, help_probe.stdout, min(3, remaining)))
+                      profile=_profile(host, executable, help_probe.stdout, min(10, remaining)))
     except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
         result["error"] = f"{host} profile probe failed ({type(exc).__name__})"
         result["timed_out"] = isinstance(exc, subprocess.TimeoutExpired)
@@ -168,6 +184,26 @@ def build_command(host: str, fixture: Path, prompt: str,
 def _build_command(host: str, fixture: Path, prompt: str,
                    plugin_roots: list[Path], probe_timeout: float,
                    expected_profile: dict | None = None) -> list[str]:
+    return _launch(host, fixture, prompt, plugin_roots, probe_timeout, expected_profile)[0]
+
+
+def _contain(argv: list[str], profile: dict, executable: str, fixture: Path,
+             roots: list[Path]) -> list[str]:
+    """Wrap a Linux launch in the same bubblewrap boundary the canary proved."""
+    if (profile.get("isolation_evidence") or {}).get("mechanism") != "bubblewrap":
+        return argv
+    isolation = _isolation()
+    bwrap = isolation.linux_executable()
+    if bwrap is None:
+        raise RuntimeError("Linux bubblewrap is unavailable at launch")
+    return isolation.linux_argv(bwrap, fixture, [Path(executable).resolve().parent],
+                                [Path(p) for p in profile.get("auth_files", [])],
+                                roots, argv)
+
+
+def _launch(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
+            probe_timeout: float, expected_profile: dict | None = None
+            ) -> tuple[list[str], dict]:
     _validate_host(host)
     fixture = _fixture_path(fixture)
     inspection = inspect_host(host, timeout_seconds=probe_timeout)
@@ -194,7 +230,7 @@ def _build_command(host: str, fixture: Path, prompt: str,
                 "--permission-mode", profile["permissions"]]
         for root in roots:
             argv.extend(["--plugin-dir", str(root)])
-        return argv + ["--", prompt]
+        return _contain(argv + ["--", prompt], profile, executable, fixture, roots), profile
     argv = [executable, "exec", "--json", "--ephemeral", "--color", "never",
             "--ignore-user-config", "--ignore-rules", "--model", profile["model"],
             "--config", 'model_reasoning_effort="high"',
@@ -204,7 +240,7 @@ def _build_command(host: str, fixture: Path, prompt: str,
         prompt += ("\n\nUse the local plugin source directories below for this task. "
                    "Read the relevant SKILL.md and referenced files directly.\n" +
                    "\n".join(f"- {root}" for root in roots))
-    return argv + ["--", prompt]
+    return _contain(argv + ["--", prompt], profile, executable, fixture, roots), profile
 
 
 _INFRA_ERROR = re.compile(
@@ -290,6 +326,23 @@ def ingest_adapted_receipts(store, receipts: list[dict], *, expected_revision: i
     return {"accepted": accepted, "revision": revision}
 
 
+def _sign_launch(result: dict, host: str, profile: dict | None, fixture: Path,
+                 repository: Path) -> None:
+    """Sign only adapter-observed launch facts; unlaunched hosts get no receipt."""
+    if profile is None or result["exit_code"] is None:
+        result["isolation_receipt_error"] = "host was not launched"
+        return
+    isolation = _isolation()
+    try:
+        result["isolation_receipt"] = isolation.sign_command_receipt(
+            key=isolation.host_key(), host=host, model=profile["model"], argv=result["argv"],
+            exit_status=result["exit_code"], repository=isolation.repository_revision(repository),
+            fixture=isolation.fixture_binding(fixture),
+            isolation=profile.get("isolation_evidence") or {})
+    except (OSError, RuntimeError, ValueError) as exc:
+        result["isolation_receipt_error"] = str(exc)
+
+
 def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
              trace_dir: Path, timeout_seconds: float = 900,
              checkpoint_path: Path | None = None,
@@ -297,12 +350,15 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
              evidence_key: bytes | str | None = None,
              evidence_identity: str | None = None,
              evidence_issued_at: float | None = None,
-             evidence_expires_at: float | None = None) -> dict:
+             evidence_expires_at: float | None = None,
+             receipt_repository: Path | None = None) -> dict:
     """Run one host, retaining traces and optionally adapting signed evidence.
 
     Evidence adaptation is opt-in because the caller owns the host key and the
     assignment identity. Supplying only part of the evidence context is a
     configuration error and fails closed before the host process starts.
+    With ``receipt_repository``, the adapter signs an isolation command receipt
+    using AGENTIC_HOST_KEY, bound to that repository's revision and the fixture.
     """
     _validate_host(host)
     fixture = _fixture_path(fixture)
@@ -335,18 +391,20 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
               "error": None, "checkpoint_observed": False}
     started = time.monotonic()
     process = None
+    profile = None
     with os.fdopen(stdout_fd, "wb") as stdout, os.fdopen(stderr_fd, "wb") as stderr:
         try:
-            result["argv"] = _build_command(host, fixture, prompt, plugin_roots,
-                                             probe_timeout=min(10, timeout_seconds),
-                                             expected_profile=expected_profile)
+            result["argv"], profile = _launch(host, fixture, prompt, plugin_roots,
+                                              probe_timeout=min(10, timeout_seconds),
+                                              expected_profile=expected_profile)
             remaining = timeout_seconds - (time.monotonic() - started)
             if remaining <= 0:
                 result["status"] = "timed_out"
             else:
                 process = subprocess.Popen(result["argv"], cwd=fixture,
                                            stdin=subprocess.DEVNULL, stdout=stdout,
-                                           stderr=stderr, start_new_session=True)
+                                           stderr=stderr, start_new_session=True,
+                                           env=_host_environment())
                 while True:
                     if checkpoint_path is not None and checkpoint_path.is_file():
                         result.update(status="interrupted", checkpoint_observed=True)
@@ -383,6 +441,8 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
         except (OSError, TypeError, ValueError, RuntimeError) as exc:
             result["adapted_receipts"] = []
             result["evidence_adapter_error"] = str(exc)
+    if receipt_repository is not None:
+        _sign_launch(result, host, profile, fixture, Path(receipt_repository))
     if result["status"] in ("completed", "product_failed"):
         if metadata["failed"]:
             result["status"] = "product_failed"
