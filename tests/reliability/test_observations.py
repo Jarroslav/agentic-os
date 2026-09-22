@@ -21,7 +21,8 @@ class ObservationTests(unittest.TestCase):
                                        '{"type":"assistant","text":"all checks pass"}')
 
     @patch('scenarios._sandbox_executable', return_value=None)
-    def test_replay_never_uses_injected_verdict(self, sandbox):
+    @patch('scenarios._linux_executable', return_value=None)
+    def test_replay_never_uses_injected_verdict(self, linux_sandbox, sandbox):
         inputs = self.collect()
         self.assertIsNone(replay_observations(inputs)['behavior_verified'])
         inputs['observations'] = {'behavior_verified': True}
@@ -29,7 +30,8 @@ class ObservationTests(unittest.TestCase):
             replay_observations(inputs)
 
     @patch('scenarios._sandbox_executable', return_value=None)
-    def test_metadata_and_source_bytes_are_bound(self, sandbox):
+    @patch('scenarios._linux_executable', return_value=None)
+    def test_metadata_and_source_bytes_are_bound(self, linux_sandbox, sandbox):
         original = self.collect()
         for key in ('metadata', 'files'):
             with self.subTest(key=key):
