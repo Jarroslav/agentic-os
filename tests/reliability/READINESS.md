@@ -274,6 +274,18 @@ and `isolation_supported: false`. Remaining blockers before any candidate slot:
    evidence is unchanged.
 3. The Linux scenario oracle (see the findings table).
 
+On 2026-09-22, using the VM's transferred Codex credential without an
+interactive login, a real `codex exec --json --ephemeral` startup ran inside
+the same bubblewrap adapter with `CODEX_HOME` bound to an isolated writable
+state directory and the credential file mounted read-only. The command exited
+0, emitted a normal `gpt-6-astra` thread/turn/usage trace, and returned the
+sentinel `CODEX_VM_PROBE_OK`. The adapter had to expose only the resolver,
+hosts, NSS, and CA bundle needed for network startup; those files are
+read-only. This is non-scored startup evidence. It proves one authenticated
+Codex path on this VM, but does not yet prove global-instruction exclusion,
+selected hook execution, Claude startup, or the frozen host profile required
+for candidate scoring.
+
 The host profile is not frozen and preflight does not pass, so candidate trials
 remain 0 of 24. The deterministic proof is 102 runtime tests (run with
 `AGENTIC_HOST_KEY` unset; this VM exports the key in its shell, which breaks
