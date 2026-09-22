@@ -12,7 +12,7 @@
   "definitions": {
     "challenge-spec.json": "7d78dbf6c66a025170358cfbac2eebe2251d27f55b943488621fb79d7789a507",
     "rubric.json": "43c5708627f075335a7bafab36adf9bb07bb462a87560634eade9ca0803b71f1",
-    "scenarios.py": "06d97c7bfd30e11765f92c469c7c2fc7d3ab6a41f36b1ff6052d223fa4c8dda8"
+    "scenarios.py": "154ce43c573b0b049f51b36c852b525974afe6d410f135e85c278d0922ce77d9"
   },
   "dependency": {
     "name": "superpowers",

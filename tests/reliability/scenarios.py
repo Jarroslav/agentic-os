@@ -22,7 +22,8 @@ oracle_observations returns flat observations, not a score:
 A preserved checkpoint does not demonstrate interruption or successful recovery.
 A passing mature fixture demonstrates preserved behavior, not actual escalation.
 The host controller must provide communication, interruption, and approval proof.
-Candidate code executes only under enforced macOS sandbox-exec. Unavailable or
+Candidate code executes only under an enforced macOS sandbox-exec or Linux
+bubblewrap boundary. Unavailable or
 failed enforcement yields unverified results without execution. Execution logs are
 untrusted diagnostics; trusted parent assertions determine all behavior verdicts.
 The execution_* fields record raw child exit/log/timeout/PID. oracle_status and
@@ -247,6 +248,21 @@ def _sandbox_executable() -> str | None:
     return str(path) if sys.platform == 'darwin' and path.is_file() else None
 
 
+def _linux_isolation():
+    import importlib.util
+    path = Path(__file__).with_name('isolation.py')
+    spec = importlib.util.spec_from_file_location('reliability_scenario_isolation', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _linux_executable() -> str | None:
+    if not sys.platform.startswith('linux'):
+        return None
+    return _linux_isolation().linux_executable()
+
+
 def _sandbox_profile(root: Path) -> str:
     # No external writes, network, signals, process-fork, or arbitrary host reads.
     # The child can only read copied inputs and its Python/system runtime.
@@ -307,6 +323,40 @@ def _sandbox_enforced(executable: str, root: Path) -> tuple[bool, str]:
             return enforced, result['stderr']
         except (OSError, subprocess.SubprocessError, ValueError) as exc:
             return False, str(exc)
+
+
+def _linux_sandbox_enforced() -> tuple[bool, str]:
+    try:
+        evidence = _linux_isolation().probe_linux_boundary(timeout_seconds=5)
+        return bool(evidence.get('filesystem_enforced')), str(evidence.get('error') or '')
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        return False, str(exc)
+
+
+def _run_linux_sandboxed(root: Path, program: str, payload: str = '') -> dict:
+    isolation = _linux_isolation()
+    argv = isolation.linux_argv(
+        isolation.linux_executable(), root,
+        runtime_roots=[Path(sys.prefix), Path(sys.executable).resolve().parent],
+        command=[sys.executable, '-I', '-B', '-c', program])
+    with tempfile.TemporaryFile(dir=root) as stdout, tempfile.TemporaryFile(dir=root) as stderr:
+        process = subprocess.Popen(argv, cwd=root, env=_env(), stdin=subprocess.PIPE,
+                                   stdout=stdout, stderr=stderr, start_new_session=True)
+        timed_out = False
+        try:
+            process.communicate(payload.encode('utf-8'), timeout=_EXECUTION_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+        finally:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait(timeout=5)
+        stdout.seek(0); stderr.seek(0)
+        return {'exit_code': process.returncode, 'pid': process.pid, 'timed_out': timed_out,
+                'stdout': stdout.read(65536).decode('utf-8', errors='replace'),
+                'stderr': stderr.read(65536).decode('utf-8', errors='replace')}
 
 
 # This runner has no expectations or test verdicts. Its data is untrusted until
@@ -408,14 +458,16 @@ def oracle_observations(fixture: Path, scenario: str, metadata: dict, trace: str
         result['unittest_log'] = 'Harness did not execute: required source missing or unsafe.'
         return result
     executable = _sandbox_executable()
-    if executable is None:
+    linux = executable is None and _linux_executable()
+    if executable is None and not linux:
         result['behavior_verified'] = None
         result['remaining_work_verified'] = None
-        result['unittest_log'] = 'Unverified: enforced macOS sandbox-exec is unavailable; candidate was not executed.'
+        result['unittest_log'] = 'Unverified: no enforced sandbox is available; candidate was not executed.'
         return result
     with tempfile.TemporaryDirectory(prefix='reliability-oracle-') as temp:
         root = Path(temp)
-        enforced, error = _sandbox_enforced(executable, root)
+        enforced, error = (_sandbox_enforced(executable, root) if executable
+                           else _linux_sandbox_enforced())
         result['sandbox_enforced'] = enforced
         if not enforced:
             result['behavior_verified'] = None
@@ -428,7 +480,8 @@ def oracle_observations(fixture: Path, scenario: str, metadata: dict, trace: str
         requests = [{'module': module, 'function': function, 'args': args}
                     for module, function, args, _expected, _exception in cases]
         try:
-            execution = _run_sandboxed(executable, root, _RUNNER, json.dumps(requests))
+            execution = (_run_sandboxed(executable, root, _RUNNER, json.dumps(requests))
+                         if executable else _run_linux_sandboxed(root, _RUNNER, json.dumps(requests)))
         except (OSError, subprocess.SubprocessError) as exc:
             result['behavior_verified'] = None
             result['remaining_work_verified'] = None
