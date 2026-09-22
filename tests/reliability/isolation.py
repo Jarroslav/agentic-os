@@ -182,9 +182,17 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
         if not source.is_file() or source.is_symlink():
             raise FileNotFoundError('Allowed read file does not exist: ' + path)
     argv += ['--remount-ro', '/']
-    for directory in sorted({str(Path(p).resolve()) for p in writable_dirs}):
+    writable = sorted({str(Path(p).resolve()) for p in writable_dirs})
+    for directory in writable:
         if not Path(directory).is_dir():
             raise FileNotFoundError('Writable host directory does not exist: ' + directory)
+        parents = []
+        parent = Path(directory).parent
+        while parent != parent.parent and str(parent) != '/':
+            parents.append(str(parent))
+            parent = parent.parent
+        for parent in reversed(parents):
+            argv += ['--dir', parent]
         argv += ['--bind', directory, directory]
     for path in read_paths:
         source = Path(path)
