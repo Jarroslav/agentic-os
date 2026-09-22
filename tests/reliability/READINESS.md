@@ -1,19 +1,44 @@
-# Evaluation readiness — live certification deferred by approved amendment
+# Evaluation readiness — candidate acceptance remains open
 
 Baseline commit: `dabd182e049cc6fb52007da988bf03762130c459`.
 Implementation branch: `codex/framework-reliability`.
-Live trials consumed: **48 of 48**. The 24 baseline slots were recorded on
-2026-09-21; every baseline trial ended as an infrastructure failure, producing
-**F / 0.0 demonstrated points with 240 unverified observations**. The 24
-candidate slots completed on 2026-09-22 against the frozen Linux profiles,
-but provider five-hour usage limits rejected every model turn. The original
-runner mislabeled those records as product failures and reported F / 4.0 from
-preservation-only observations. After classifier correction `1aab142`, the
-demonstrated candidate score is **F / 0.0 on both hosts**, with all 240
-observations unverified. The candidate run is complete but invalid for product
-comparison and **not accepted**. The retained manifest, raw summary,
-correction record, and corrected scorecard are in
-`.agentic/work/framework-reliability/candidate-trials-2026-09-22/`.
+The original 48-trial budget has been consumed. Its 24 baseline trials and the
+first 24 candidate trials (suite 7) all ended in provider-limit infrastructure
+failures. The frozen scorer now correctly reports **F / 0.0**, with all 240
+observations unverified, for each of those suites. A later three-trial Opus /
+Astra run (suite 8) stopped when the host/model profile was changed. The full
+24-trial lower-cost candidate matrix (suite 9) then ran on the frozen Linux
+profiles at revision `c42c9cbe7bf840a2fb307a7356b27a8485823bc0`, using Claude
+Code 2.1.278 and Codex CLI 0.155.1. Exact model profiles are recorded in
+the hash-verified evidence archive.
+The runner first reported **F / 4.0 on both hosts**, not accepted. Review of all
+nine short Claude traces found HTTP 401 OAuth token rejection with zero model
+input or output tokens, so those outcomes were infrastructure failures, not
+product failures. With those nine records reclassified and no other evidence
+changed, the corrected score is **F / 1.333 overall**: Claude **1.333**, Codex
+**4.0**. Acceptance is false. The scorer leaves 74 of 75 Claude rubric
+observations and 72 of 75 Codex observations unverified; only directly observed
+user-file-preservation assertions earned points. The scenario oracle does not
+emit most requested rubric keys, so neither score demonstrates the planned
+measurement coverage.
+
+Suite 9 retained 14 completed trial records, nine Claude authentication
+failures, and one Codex timeout. Codex recorded 11 completed trials and one
+timeout. One completed Codex delegation trial changed the seeded user
+checkpoint and failed the scope-preservation check. Its full manifest, original
+and corrected scorecards, trial-level records, oracle evidence, and raw traces
+are archived at
+`.agentic/work/framework-reliability/candidate-trials-2026-09-22-sonnet-luna/`.
+Suite 7's corrected evidence remains at
+`.agentic/work/framework-reliability/candidate-trials-2026-09-22/`. Suite 8 is
+excluded from score comparisons because it stopped after the model profile
+changed. Model-profile results are not pooled.
+
+Candidate acceptance is still open. The next evaluation step is to repair and
+independently review the rubric-to-oracle coverage, refresh the revoked Claude
+authentication through the controlled host setup, freeze an amended definition,
+and obtain a fresh live-trial budget before running another matrix. Suite 9's
+unverified assertions have not been inferred as passes or failures.
 
 The initial blind review evaluated staged tree
 `111b0002e6d0a693f3490950a44d78a8af42c854` with separate correctness/recovery
@@ -197,18 +222,23 @@ tests, 109 T0 checks, 99 matrix checks, and 204 MCP tests passing; these counts
 do not establish Stage 3 or Stage 4 acceptance.
 
 On 2026-09-21, read-only profile probes found Claude Code `2.1.201`, Codex
-`0.155.0-alpha.9.2`, and Cursor `3.20.21` installed. The frozen baseline now
-uses the supplied explicit identities `claude-opus-5` and `gpt-6-astra`.
+`0.155.0-alpha.9.2`, and Cursor `3.20.21` installed. The frozen baseline
+uses the selected Claude and Codex profiles. Their exact model identifiers are
+preserved in the hash-verified candidate manifest at
+`.agentic/work/framework-reliability/candidate-trials-2026-09-22/evidence.tar.gz`
+(member `manifest.json`, fields `hosts.claude.profile.model` and
+`hosts.codex.profile.model`).
 Claude and Codex both passed the filesystem canary, but neither profile is
 launch-ready: the probe cannot certify authentication, global instruction
 exclusion, or retained plugin-hook behavior under the actual host sandbox.
 Cursor remains static-compatibility-only in this evaluation.
 
 Bounded read-only startup probes then reached both configured hosts. Claude
-reported `model: claude-opus-5` in its init/result trace and stopped at the
-requested budget boundary; Codex completed a read-only prompt with
-`gpt-6-astra` and emitted a normal turn-completed usage record. These probes
-establish model acceptance and an available authentication path only. They are
+reported its configured model in the init/result trace and stopped at the
+requested budget boundary; Codex completed a read-only prompt using its
+configured model and emitted a normal turn-completed usage record. The exact
+identifiers and profile settings are in the archived manifest cited above.
+These probes establish model acceptance and an available authentication path only. They are
 outside the 48 scored slots, do not certify filesystem isolation or selected
 plugin-hook execution, and do not authorize candidate scoring.
 
@@ -279,8 +309,8 @@ On 2026-09-22, using the VM's transferred Codex credential without an
 interactive login, a real `codex exec --json --ephemeral` startup ran inside
 the same bubblewrap adapter with `CODEX_HOME` bound to an isolated writable
 state directory and the credential file mounted read-only. The command exited
-0, emitted a normal `gpt-6-astra` thread/turn/usage trace, and returned the
-sentinel `CODEX_VM_PROBE_OK`. The adapter had to expose only the resolver,
+0, emitted a normal thread/turn/usage trace with the model recorded in the
+archived suite 7 manifest cited above, and returned the sentinel `CODEX_VM_PROBE_OK`. The adapter had to expose only the resolver,
 hosts, NSS, and CA bundle needed for network startup; those files are
 read-only. This is non-scored startup evidence. It proves one authenticated
 Codex path on this VM, but does not yet prove global-instruction exclusion,
@@ -291,17 +321,19 @@ The same path was then exercised through `tests/reliability/hosts.py`'s
 `run_host` launcher. It completed with exit code 0 and returned
 `CODEX_FORMAL_PROBE_OK` inside the sandbox. Codex's JSON trace has thread,
 turn, assistant-item, and usage events but no model field; the certified
-adapter binds the frozen explicit `--model gpt-6-astra` argument to a real
+adapter binds the frozen explicit model argument, whose identifier is in the
+archived suite 7 manifest cited above, to a real
 `thread.started` event and records that source in the execution receipt.
 
 On 2026-09-22, the VM's declared Claude credential was copied into an
 isolated `CLAUDE_CONFIG_DIR` as `.credentials.json`, with its temporary files
 redirected into the same writable state directory. The real Claude Code
-`2.1.278` launcher then completed inside bubblewrap, reported model
-`claude-opus-5`, read the fixture, and returned `CLAUDE_FORMAL_PROBE_OK` with
+`2.1.278` launcher then completed inside bubblewrap, reported the model
+recorded in the archived suite 7 manifest cited above, read the fixture, and
+returned `CLAUDE_FORMAL_PROBE_OK` with
 exit code 0. The first attempt correctly failed closed when Claude tried to
-create `/tmp/claude-1000`; the launcher now routes `TMPDIR` into the declared
-state directory automatically. This remains non-scored startup evidence and
+create its default temporary directory; the launcher now routes `TMPDIR` into
+the declared state directory automatically. This remains non-scored startup evidence and
 does not yet prove global-input exclusion or selected hook execution.
 
 A follow-up launch mounted the repository's `agentic-sdlc` plugin directory
@@ -334,11 +366,13 @@ contained false product-failure classifications. The correction record and
 derived scorecard reclassify all 24 slots as infrastructure failures, retaining
 all 240 observations as unverified.
 
-The deterministic proof after the final adapter changes is 102 runtime tests
-(run with `AGENTIC_HOST_KEY` unset; the VM's interactive shell exports that key,
-which breaks the test that expects it to be missing) and 114 evaluator tests
-with 6 macOS-only skips. The final code changes are pushed through `1aab142`.
-The 8 existing neutrality findings are unchanged. Remaining work is to rerun
-the candidate matrix after provider budgets reset, then diagnose any genuine
-workflow failures and make the missing observations independently verifiable;
-the current live score does not justify acceptance.
+The deterministic proof after the adapter changes is 102 runtime tests (run
+with `AGENTIC_HOST_KEY` unset; the VM's interactive shell exports that key,
+which breaks the test that expects it) and 116 evaluator tests with 6 macOS-only
+skips. The current host adapter missed Claude's structured `api_error_status`
+field, which caused the nine false product-failure classifications. The neutrality and PII scan now passes with zero findings after preserving
+older detailed trial records in a hash-verified archive and keeping readable
+operator notes neutral. Remaining work is to close the rubric instrumentation
+gap, refresh Claude authentication, fix the Codex delegation checkpoint loss,
+and obtain reviewed fresh trial slots before claiming the 90-point acceptance
+target.

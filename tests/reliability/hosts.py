@@ -397,7 +397,9 @@ def _trace_metadata(stdout_path: Path, *, host: str | None = None,
                 metadata["failed"] = True
                 error = event.get("error", event.get("errors", event.get("result",
                                   event.get("message", event.get("rate_limit_info", "")))))
-                if kind == "rate_limit_event" or _INFRA_ERROR.search(json.dumps(error)):
+                if (kind == "rate_limit_event"
+                        or event.get("api_error_status", event.get("error_status")) in (401, 403, 407)
+                        or _INFRA_ERROR.search(json.dumps(error))):
                     metadata["infrastructure_failed"] = True
     # Codex CLI 0.155.1 does not include the selected model in JSON events.
     # Accept the frozen launch identity only when the host emitted a genuine

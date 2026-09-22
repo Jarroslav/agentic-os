@@ -1,0 +1,9 @@
+# Candidate evaluation, suite 9
+
+This is a human-readable summary of the 24-trial candidate evaluation at frozen revision `c42c9cbe7bf840a2fb307a7356b27a8485823bc0`. The hash-verified `evidence.tar.gz` contains the exact host and model profiles, manifest, fixtures and dependency hashes, original results and scorecard, classification correction, corrected scorecard, per-trial records, oracle evidence, execution receipts, prompts, and raw host traces. Its SHA-256 is recorded in `evidence.tar.gz.sha256`.
+
+The original scorecard reported **4/100 (F)**. Review of the nine short authentication-host traces found provider HTTP 401 token rejections and zero model input/output tokens. The original records and scorecard remain unchanged; the correction and trace hashes are included in the archive. Recomputing with only those nine classifications corrected gives **1.333/100 (F) overall**: Host A **1.333/F**, Host B **4/F**. Acceptance remains false.
+
+At least 72 of 75 rubric observations per host remain unverified. Only directly recorded user-file-preservation observations earned points. The oracle does not emit most rubric keys, so this score does not establish whether those assertions passed or failed. The run also contains one genuine Host B timeout and one completed Host B delegation trial that changed the seeded checkpoint and failed scope/preservation checks. Fourteen other trial records completed; completion alone does not establish rubric coverage.
+
+Elapsed time and usage counters remain in the original records. Failed authentication calls reported zero input/output tokens. Host B reported 22,759,302 input, 21,494,016 cached-input, and 164,164 output tokens; counters may overlap and are not monetary costs. Monetary cost is unknown. Suite 8's three partial trials are excluded because the host/model profile changed before the full matrix. Suite 7's provider-limit failures remain documented in the main readiness report.

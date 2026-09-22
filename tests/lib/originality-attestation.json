@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-22T16:21:26Z",
+ "attested_at": "2026-09-22T19:43:24Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -16,32 +16,38 @@
   "hash_len": 12
  },
  "files": {
-  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/classification-correction.json": {
-   "sha256": "25e43254a775928e8ecb306195848a8d4179396e0902f5cb7fee4404c5cb5898",
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22-sonnet-luna/README.md": {
+   "sha256": "f95864bf433e9516ba103b3145d16bfbd5645baa2f33ea7842eda064faafaea1",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
-  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/corrected-scorecard.json": {
-   "sha256": "1e90a24d62b246fb4abad85baa0cef4358b6b39b078684be06a7c10ef7b959df",
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22-sonnet-luna/corrected-scorecard.json": {
+   "sha256": "4e0cc5d6d035188edba2908812f6d6342a0016813ddc01d9e29bf7e514d4ce40",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
-  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/manifest.json": {
-   "sha256": "f6e33eba09587c5876178c29b5f0f455be75b65f2d76c86a1de2c9ec9290ecf3",
-   "line": 0.0111,
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22-sonnet-luna/evidence.tar.gz.sha256": {
+   "sha256": "bec6161cf83910e1590267d658cd30428d321ebd966a07fcc65dbbcf3a84d880",
+   "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
-  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/scorecard.json": {
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22-sonnet-luna/scorecard.json": {
    "sha256": "f6f1d8234b651c7c15ae93479db60a86fce316237f26b8b92e887da028ade6a5",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
-  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/trial-summary.json": {
-   "sha256": "a55c8e15bd9642af1118485cc09a3e90765235d403b07c92eaf3ebc56193a993",
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/README.md": {
+   "sha256": "cdb264301649829df5952f4aa79898fe4412188e4368346fc3c690c70c2b78b2",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/evidence.tar.gz.sha256": {
+   "sha256": "7b0a3684e56cb97562282923a41ac1c6500beeb063901e8a045f4dea9d1dddc0",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3125,13 +3131,13 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "d2e76c61edbf77e947eb30252aa46f876a2fcb4fe83f8dbce7acb378e0d9be57",
+   "sha256": "e368de4e734c3a083665c22ab8f2a6578e5f2efd888bd770bbeb8a33209f0154",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/REOPENING.md": {
-   "sha256": "b5f6840b7817369f88d8a99dd854f7ebd7a795b8b96403a54df29e3c2c5705fd",
+   "sha256": "e11c6b9e0b48d51068c8c2536ec34b8da5a57450809a5b55352fe3593eaa3f79",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3161,7 +3167,7 @@
    "max_run": 0
   },
   "tests/reliability/hosts.py": {
-   "sha256": "4e99516143f87137d10d19e2f15f5a629bfbc85961773041387758857dcc290b",
+   "sha256": "3d59b07749b2754741636367355a5313557500ea14947e570609497df29670da",
    "line": 0.0118,
    "shingle": 0.0,
    "max_run": 0
@@ -3209,8 +3215,8 @@
    "max_run": 0
   },
   "tests/reliability/test_hosts.py": {
-   "sha256": "1c4c94ae8a4d8c6e029b1214588199e765de3bd79878354045181e8b4524e938",
-   "line": 0.0146,
+   "sha256": "11667010f0238af23918c730f6afe2a272d2dec370d2d5932511be85b543c718",
+   "line": 0.0145,
    "shingle": 0.0,
    "max_run": 0
   },

@@ -265,7 +265,8 @@ not constitute a product-quality grade or candidate acceptance.
 ## Round 25 — explicit model identities bound into baseline profiles
 
 After the operator supplied model choices, the baseline was re-frozen with
-`claude-opus-5` and `gpt-6-astra`. All 24 slots were rerun under that immutable
+the selected Claude and Codex identities, preserved in the suite 7 manifest
+archive cited in `READINESS.md`. All 24 slots were rerun under that immutable
 profile and again recorded as infrastructure failures because host isolation
 remains uncertified. The candidate freeze now links to this model-bound
 baseline; candidate execution remains deferred until the isolation and hook
@@ -273,9 +274,11 @@ certification gate passes.
 
 ## Round 26 — bounded model-acceptance probes
 
-Read-only startup probes reached Claude with `claude-opus-5` and Codex with
-`gpt-6-astra`. Claude emitted the requested model identity before its budget
-boundary; Codex completed the read-only probe and emitted usage. These are
+Read-only startup probes reached Claude and Codex with their selected profiles
+(exact model identifiers are preserved in the suite 7 manifest archive cited in
+`READINESS.md`). Claude emitted its configured model identity before its budget
+boundary; Codex completed the read-only probe and emitted usage. The profile identifiers are
+recoverable from the cited manifest. These are
 model/authentication observations only. They do not certify outer filesystem
 isolation, global-instruction exclusion, or plugin-hook execution, so no
 candidate slot was consumed.
