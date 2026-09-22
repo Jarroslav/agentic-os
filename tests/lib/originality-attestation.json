@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-22T16:13:25Z",
+ "attested_at": "2026-09-22T16:14:36Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -16,6 +16,24 @@
   "hash_len": 12
  },
  "files": {
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/manifest.json": {
+   "sha256": "f6e33eba09587c5876178c29b5f0f455be75b65f2d76c86a1de2c9ec9290ecf3",
+   "line": 0.0111,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/scorecard.json": {
+   "sha256": "f6f1d8234b651c7c15ae93479db60a86fce316237f26b8b92e887da028ade6a5",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  ".agentic/work/framework-reliability/candidate-trials-2026-09-22/trial-summary.json": {
+   "sha256": "a55c8e15bd9642af1118485cc09a3e90765235d403b07c92eaf3ebc56193a993",
+   "line": 0.0,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   ".claude-plugin/marketplace.json": {
    "sha256": "de50f547555281e1fd033f10b2ef662ca24372c91e04fa5fb89ce5416918eae6",
    "line": 0.0,
