@@ -344,7 +344,8 @@ _INFRA_ERROR = re.compile(
     r"(?:missing|expired|invalid).*(?:api[ _-]?key|auth(?:entication)? token|access token)|"
     r"unauthorized|error (?:loading|parsing) (?:config|settings)|"
     r"(?:invalid|failed to (?:load|parse)) (?:configuration|config\.toml)|"
-    r"unexpected argument|unrecognized (?:option|argument)|unknown option",
+    r"unexpected argument|unrecognized (?:option|argument)|unknown option|"
+    r"usage limit|rate limit|out of credits|resetsat",
     re.IGNORECASE,
 )
 
@@ -388,11 +389,15 @@ def _trace_metadata(stdout_path: Path, *, host: str | None = None,
                         and model.strip().lower() not in _PLACEHOLDER_MODELS):
                     metadata["observed_model"] = model
             failed = (kind in ("turn.failed", "error") or
-                      (kind == "result" and event.get("is_error") is True))
+                      (kind == "result" and event.get("is_error") is True)
+                      or (kind == "rate_limit_event" and
+                          str((event.get("rate_limit_info") or {}).get("status", "")).lower()
+                          in {"rejected", "blocked"}))
             if failed:
                 metadata["failed"] = True
-                error = event.get("error", event.get("errors", event.get("result", "")))
-                if _INFRA_ERROR.search(json.dumps(error)):
+                error = event.get("error", event.get("errors", event.get("result",
+                                  event.get("message", event.get("rate_limit_info", "")))))
+                if kind == "rate_limit_event" or _INFRA_ERROR.search(json.dumps(error)):
                     metadata["infrastructure_failed"] = True
     # Codex CLI 0.155.1 does not include the selected model in JSON events.
     # Accept the frozen launch identity only when the host emitted a genuine
