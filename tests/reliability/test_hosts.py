@@ -170,6 +170,12 @@ class HostTests(unittest.TestCase):
         self.assertEqual(result["observed_model"], "fixture-model")
         self.assertIsNone(result["usage"])
 
+    def test_placeholder_diagnostic_model_does_not_overwrite_real_identity(self):
+        self.fake("print(json.dumps({'type':'assistant','message':{'model':'fixture-model'}}))\n"
+                  "print(json.dumps({'type':'assistant','message':{'model':'<synthetic>'}}))\n")
+        result = self.run_fake("claude")
+        self.assertEqual(result["observed_model"], "fixture-model")
+
     def test_only_explicit_command_receipts_are_exposed_as_evidence_inputs(self):
         valid = {"type": "agentic.command.completed", "evidence_id": "e1",
                  "run_id": "r", "source_revision": 2, "command": "pytest",
