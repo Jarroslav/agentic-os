@@ -187,6 +187,13 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
             for directory in reversed(parents):
                 argv += ['--dir', directory]
             argv += ['--ro-bind', source_name, target_name]
+    # Real CLIs may create private scratch directories below /tmp (Codex's
+    # nested workspace sandbox creates /tmp/.git). Give a host launch an
+    # ephemeral tmpfs there before layering the explicitly bound fixture,
+    # source, and state paths below it. The standalone canary omits
+    # writable_dirs and therefore keeps /tmp read-only for its escape check.
+    if writable:
+        argv += ['--tmpfs', '/tmp']
     for root in sorted({str(Path(p).resolve()) for p in (*runtime_roots, *plugin_roots)}):
         if not any(root == b or root.startswith(b + '/') for b in bound):
             parents = []
@@ -197,13 +204,6 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
             for directory in reversed(parents):
                 argv += ['--dir', directory]
             argv += ['--ro-bind', root, root]
-    # Real CLIs may create private scratch directories below /tmp (Codex's
-    # nested workspace sandbox creates /tmp/.git). Give a host launch an
-    # ephemeral tmpfs there, then layer the explicitly bound fixture, source,
-    # and state paths below it. The standalone canary omits writable_dirs and
-    # therefore keeps /tmp read-only for its escape assertion.
-    if writable_dirs:
-        argv += ['--tmpfs', '/tmp']
     # Bind the fixture first. Explicit read files are layered afterwards so a
     # credential mounted below a writable fixture cannot become writable by
     # bind-order accident. Create only the parent directories needed for those
