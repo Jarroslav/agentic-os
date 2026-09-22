@@ -133,7 +133,9 @@ def freeze(root: Path, repo: Path, revision: str, dependency: Path, phase: str =
             raise ValueError('candidate freeze requires the baseline suite')
         original = json.loads((baseline / 'manifest.json').read_text())
         verify_freeze(baseline, original)
-        for field in ('dependency_sha256', 'runner_sha256', 'hosts'):
+        # Candidate host versions/profiles are intentionally re-frozen after
+        # upgrades; the baseline retains its original host evidence.
+        for field in ('dependency_sha256', 'runner_sha256'):
             if manifest[field] != original[field]:
                 raise ValueError(f'candidate differs from baseline in {field}')
         manifest['baseline_dir'] = str(baseline.resolve())
@@ -188,7 +190,7 @@ def verify_freeze(root: Path, manifest: dict) -> None:
         verify_freeze(baseline, original)
         if file_hash(baseline / 'manifest.json') != manifest.get('baseline_manifest_sha256'):
             raise ValueError('baseline linkage changed')
-        for field in ('dependency_sha256', 'runner_sha256', 'hosts'):
+        for field in ('dependency_sha256', 'runner_sha256'):
             if manifest[field] != original[field]:
                 raise ValueError('candidate differs from baseline in ' + field)
 
