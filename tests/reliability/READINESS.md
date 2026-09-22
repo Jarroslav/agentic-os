@@ -5,11 +5,14 @@ Implementation branch: `codex/framework-reliability`.
 Live trials consumed: **48 of 48**. The 24 baseline slots were recorded on
 2026-09-21; every baseline trial ended as an infrastructure failure, producing
 **F / 0.0 demonstrated points with 240 unverified observations**. The 24
-candidate slots completed on 2026-09-22 against the frozen Linux profiles. Both
-hosts scored **F / 4.0 demonstrated points** (the lower host score is 4.0),
-with 72 unverified observations per host. The candidate run is therefore
-complete but **not accepted**: coverage is incomplete and the 90-point target
-is not met. The retained manifest, scorecard, and trial summary are in
+candidate slots completed on 2026-09-22 against the frozen Linux profiles,
+but provider five-hour usage limits rejected every model turn. The original
+runner mislabeled those records as product failures and reported F / 4.0 from
+preservation-only observations. After classifier correction `1aab142`, the
+demonstrated candidate score is **F / 0.0 on both hosts**, with all 240
+observations unverified. The candidate run is complete but invalid for product
+comparison and **not accepted**. The retained manifest, raw summary,
+correction record, and corrected scorecard are in
 `.agentic/work/framework-reliability/candidate-trials-2026-09-22/`.
 
 The initial blind review evaluated staged tree
@@ -22,7 +25,7 @@ harness tests do not establish evaluation coverage or host certification.
 
 | Finding | Current disposition |
 |---|---|
-| Only preservation can receive positive rubric credit | Confirmed by the candidate scorecard: preservation passed all three repetitions; every other scored assertion is either failed or unverified. This is a product/evidence gap, not a reason to relax the rubric. |
+| Only preservation can receive positive rubric credit | The first scorecard showed preservation-only credit, but raw traces prove provider rate-limit rejection. The corrected scorecard awards no product points and keeps every assertion unverified. |
 | Host defaults, model identity, global hooks/plugins not frozen | Closed for this candidate freeze. Explicit Claude/Codex profiles, startup evidence, drift checks and 30 Linux kernel-backed controls passed. Claude model identity ignores the CLI's trailing `<synthetic>` diagnostic label; Codex identity is bound to a frozen `--model` launch argument plus a real `thread.started` event. |
 | Interrupted process can restart instead of resume | Boundary snapshots added; authenticated ownership and budget comparisons remain open. |
 | Candidate can forge unittest output and exit successfully | Parent evaluates returned values; forged unittest text is rejected. Included in the passed definition-checkpoint review; live certification remains deferred. |
@@ -325,20 +328,17 @@ passed; these are behavior outcomes, not infrastructure gaps.
 With the immutable baseline suite transferred to the VM, candidate suite 7 was
 frozen against the upgraded host profiles and completed all 24 slots. Each
 slot retained a fixture, independent oracle input, execution receipt and raw
-host trace. Claude and Codex both reached every scenario; all 48 candidate
-host/scenario/repetition records were `product_failed` because the agents did
-not satisfy most fixture workflow assertions, while the host boundary and
-model evidence remained valid. The scorecard awarded only the three
-`contracts.preservation` observations for each host (4.0 points); 72 other
-observations per host remained unverified, so the run is measurable but fails
-the acceptance threshold.
+host trace. Every trace contains a rejected provider rate-limit event; no model
+turn was available for product evaluation. The original scorecard therefore
+contained false product-failure classifications. The correction record and
+derived scorecard reclassify all 24 slots as infrastructure failures, retaining
+all 240 observations as unverified.
 
 The deterministic proof after the final adapter changes is 102 runtime tests
 (run with `AGENTIC_HOST_KEY` unset; the VM's interactive shell exports that key,
-which breaks the test that expects it to be missing) and 112 evaluator tests
-with 9 macOS-only skips. The final code changes are pushed through
-`eb3f3e6`. Tracked text changed, so the originality attestation must be
-refreshed before the final commit. The 8 existing neutrality findings are
-unchanged. Remaining work is to diagnose the workflow/product failures and
-make the missing observations independently verifiable; the current live
-score does not justify acceptance.
+which breaks the test that expects it to be missing) and 114 evaluator tests
+with 6 macOS-only skips. The final code changes are pushed through `1aab142`.
+The 8 existing neutrality findings are unchanged. Remaining work is to rerun
+the candidate matrix after provider budgets reset, then diagnose any genuine
+workflow failures and make the missing observations independently verifiable;
+the current live score does not justify acceptance.

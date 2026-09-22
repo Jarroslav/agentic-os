@@ -1,0 +1,591 @@
+{
+  "accepted": false,
+  "coverage_complete": false,
+  "grade": "F",
+  "hosts": {
+    "claude": {
+      "accepted": false,
+      "assertions": [
+        {
+          "denominator": 3,
+          "id": "contracts.inputs",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "contracts.paths",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "contracts.install",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "contracts.preservation",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "contracts.readiness",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.readonly",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.scope",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.risk",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.approval",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.freshness",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.transitions",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.coordinator",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.recovery",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.migration",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.effects",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.delivery",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.authority",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.duplicates",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.liveness",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.budgets",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.commands",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.failure",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.traceability",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.claims",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.handoff",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        }
+      ],
+      "dimensions": {
+        "communication": 0.0,
+        "contracts": 0.0,
+        "enforcement": 0.0,
+        "evidence": 0.0,
+        "lifecycle": 0.0
+      },
+      "grade": "F",
+      "score": 0.0,
+      "unverified_observations": 75,
+      "vetoes": []
+    },
+    "codex": {
+      "accepted": false,
+      "assertions": [
+        {
+          "denominator": 3,
+          "id": "contracts.inputs",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "contracts.paths",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "contracts.install",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "contracts.preservation",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "contracts.readiness",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.readonly",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.scope",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.risk",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.approval",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "enforcement.freshness",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.transitions",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.coordinator",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.recovery",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.migration",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "lifecycle.effects",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.delivery",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.authority",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.duplicates",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.liveness",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "communication.budgets",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.commands",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.failure",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.traceability",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.claims",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        },
+        {
+          "denominator": 3,
+          "id": "evidence.handoff",
+          "outcomes": [
+            "unverified",
+            "unverified",
+            "unverified"
+          ],
+          "passed": 0,
+          "points": 0.0
+        }
+      ],
+      "dimensions": {
+        "communication": 0.0,
+        "contracts": 0.0,
+        "enforcement": 0.0,
+        "evidence": 0.0,
+        "lifecycle": 0.0
+      },
+      "grade": "F",
+      "score": 0.0,
+      "unverified_observations": 75,
+      "vetoes": []
+    }
+  },
+  "overall_score": 0.0,
+  "schema": 1
+}
