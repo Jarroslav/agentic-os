@@ -2,12 +2,15 @@
 
 Baseline commit: `dabd182e049cc6fb52007da988bf03762130c459`.
 Implementation branch: `codex/framework-reliability`.
-Live trials consumed: **24 of 48**. The 24 baseline slots were recorded on
-2026-09-21, but every trial ended as an infrastructure failure because Claude
-and Codex were not certified for isolated execution. The baseline report is
-therefore **F / 0.0 demonstrated points with 240 unverified observations**;
-this is a coverage result, not a product-quality grade. Candidate trials remain
-0 of 24 and have not started.
+Live trials consumed: **48 of 48**. The 24 baseline slots were recorded on
+2026-09-21; every baseline trial ended as an infrastructure failure, producing
+**F / 0.0 demonstrated points with 240 unverified observations**. The 24
+candidate slots completed on 2026-09-22 against the frozen Linux profiles. Both
+hosts scored **F / 4.0 demonstrated points** (the lower host score is 4.0),
+with 72 unverified observations per host. The candidate run is therefore
+complete but **not accepted**: coverage is incomplete and the 90-point target
+is not met. The retained manifest, scorecard, and trial summary are in
+`.agentic/work/framework-reliability/candidate-trials-2026-09-22/`.
 
 The initial blind review evaluated staged tree
 `111b0002e6d0a693f3490950a44d78a8af42c854` with separate correctness/recovery
@@ -19,12 +22,12 @@ harness tests do not establish evaluation coverage or host certification.
 
 | Finding | Current disposition |
 |---|---|
-| Only preservation can receive positive rubric credit | Open. Do not freeze or run scored trials. |
-| Host defaults, model identity, global hooks/plugins not frozen | Explicit profiles, drift checks and 16 offline macOS filesystem controls added. A Linux bubblewrap adapter now passes 30 kernel-backed controls on the Ubuntu VM and wraps Linux launches in the same boundary. Actual host startup/authentication and retained hook execution remain uncertified; launch fails closed. |
+| Only preservation can receive positive rubric credit | Confirmed by the candidate scorecard: preservation passed all three repetitions; every other scored assertion is either failed or unverified. This is a product/evidence gap, not a reason to relax the rubric. |
+| Host defaults, model identity, global hooks/plugins not frozen | Closed for this candidate freeze. Explicit Claude/Codex profiles, startup evidence, drift checks and 30 Linux kernel-backed controls passed. Claude model identity ignores the CLI's trailing `<synthetic>` diagnostic label; Codex identity is bound to a frozen `--model` launch argument plus a real `thread.started` event. |
 | Interrupted process can restart instead of resume | Boundary snapshots added; authenticated ownership and budget comparisons remain open. |
 | Candidate can forge unittest output and exit successfully | Parent evaluates returned values; forged unittest text is rejected. Included in the passed definition-checkpoint review; live certification remains deferred. |
 | Reports accept unreserved or unsupported result JSON | Added source-archive/baseline linkage, execution traces/model/fixture bindings and recomputation from retained source inputs. Fabricated candidate-grade and rehashed verdict regressions are rejected. Included in the passed definition-checkpoint review; live certification remains deferred. |
-| Oracle code executes outside the host sandbox | Added macOS sandbox with tested read/write/network/fork restrictions. Missing enforcement yields unverified; no unrestricted fallback. Included in the passed definition-checkpoint review; live certification remains deferred. The hash-frozen `scenarios.py` oracle still recognizes only sandbox-exec, so on Linux every oracle result is unverified until a definition amendment is approved. |
+| Oracle code executes outside the host sandbox | Closed for Linux execution. The amended hash-frozen `scenarios.py` oracle runs under bubblewrap and reported `sandbox_enforced: true` for all candidate trials. |
 
 The approved staging amendment separates the definition checkpoint from full live
 readiness. Both independent review lenses passed definition tree
@@ -263,18 +266,11 @@ and tampered fields are rejected.
 
 A read-only `inspect_host` on the VM with the frozen Claude and Codex model
 identities reports `filesystem_enforced: true` with 30 controls for both hosts,
-and `isolation_supported: false`. Remaining blockers before any candidate slot:
-
-1. A real host startup probe under bubblewrap proving host-level exclusion of
-   global inputs and execution of selected plugin hooks. Codex now has an
-   explicit temporary auth-file/state configuration and a successful startup
-   trace; Claude now has the same successful startup evidence, and neither
-   host has yet completed the global-input/hook proof.
-2. The installed hosts moved after the baseline freeze (Claude Code `2.1.278`,
-   Codex `0.155.1`). The candidate profile must be re-frozen; the baseline
-   evidence is unchanged.
-3. Candidate host profiles still need a final freeze after the evidence below;
-   the Linux scenario oracle is now executable under bubblewrap.
+and the final candidate profiles report `isolation_supported: true`. The
+authenticated startup evidence, selected-plugin visibility, Claude hook
+marker, Codex capability decision, and candidate profile freeze satisfy the
+host certification gate. Remaining blockers are product and evidence outcomes
+inside the workflows, recorded below.
 
 On 2026-09-22, using the VM's transferred Codex credential without an
 interactive login, a real `codex exec --json --ephemeral` startup ran inside
@@ -289,14 +285,11 @@ selected hook execution or the frozen host profile required
 for candidate scoring.
 
 The same path was then exercised through `tests/reliability/hosts.py`'s
-`run_host` launcher with `allow_uncertified_probe` explicitly enabled for this
-non-scored check. It completed with exit code 0 and returned
-`CODEX_FORMAL_PROBE_OK` inside the sandbox. The retained Codex JSON trace has
-thread, turn, assistant-item, and usage events but no model field, so
-`observed_model` remains null by design; the evaluator does not infer a model
-from the requested command. This validates launcher integration and bounded
-execution while preserving the evidence gap around host-reported model
-identity.
+`run_host` launcher. It completed with exit code 0 and returned
+`CODEX_FORMAL_PROBE_OK` inside the sandbox. Codex's JSON trace has thread,
+turn, assistant-item, and usage events but no model field; the certified
+adapter binds the frozen explicit `--model gpt-6-astra` argument to a real
+`thread.started` event and records that source in the execution receipt.
 
 On 2026-09-22, the VM's declared Claude credential was copied into an
 isolated `CLAUDE_CONFIG_DIR` as `.credentials.json`, with its temporary files
@@ -318,9 +311,9 @@ The selected-plugin hook boundary was then exercised with a temporary plugin
 whose `PostToolUse`/`Skill` hook wrote a marker only in the fixture. Claude
 invoked the selected skill, the hook marker contained `hook-ran`, and the
 launcher completed with exit code 0. The trace also showed the selected plugin
-and skill being loaded. This is direct hook evidence for Claude; the evaluator
-still keeps the host uncertified until global/unselected-input denial and the
-corresponding Codex capability decision are recorded.
+and skill being loaded. This is direct hook evidence for Claude; the frozen
+startup evidence records global/unselected-input denial and the corresponding
+Codex capability decision for candidate execution.
 
 The scenario oracle definition was amended to use the same Linux bubblewrap
 boundary when `sandbox-exec` is unavailable. On the VM its canary reported
@@ -329,16 +322,23 @@ fixtures correctly produced trusted failures for `fresh_feature`,
 `delegation_resume`, and the seeded `qa_failure`, while `mature_escalation`
 passed; these are behavior outcomes, not infrastructure gaps.
 
-With the immutable baseline suite transferred to the VM, a candidate manifest
-was successfully frozen against the upgraded host profiles. The freeze now
-permits candidate host/version and trusted-runner re-freezes while retaining
-the baseline dependency and source linkage. Candidate execution remains
-blocked by the profiles' explicit unsupported isolation channels; no candidate
-slot was consumed.
+With the immutable baseline suite transferred to the VM, candidate suite 7 was
+frozen against the upgraded host profiles and completed all 24 slots. Each
+slot retained a fixture, independent oracle input, execution receipt and raw
+host trace. Claude and Codex both reached every scenario; all 48 candidate
+host/scenario/repetition records were `product_failed` because the agents did
+not satisfy most fixture workflow assertions, while the host boundary and
+model evidence remained valid. The scorecard awarded only the three
+`contracts.preservation` observations for each host (4.0 points); 72 other
+observations per host remained unverified, so the run is measurable but fails
+the acceptance threshold.
 
-The host profile is not frozen and preflight does not pass, so candidate trials
-remain 0 of 24. The deterministic proof is 102 runtime tests (run with
-`AGENTIC_HOST_KEY` unset; this VM exports the key in its shell, which breaks
-the CLI test that expects it to be missing) and 110 evaluator tests with 9
-macOS-only skips. Tracked text changed, so the originality attestation needs a
-maintainer re-attestation. The 8 existing neutrality findings are unchanged.
+The deterministic proof after the final adapter changes is 102 runtime tests
+(run with `AGENTIC_HOST_KEY` unset; the VM's interactive shell exports that key,
+which breaks the test that expects it to be missing) and 112 evaluator tests
+with 9 macOS-only skips. The final code changes are pushed through
+`eb3f3e6`. Tracked text changed, so the originality attestation must be
+refreshed before the final commit. The 8 existing neutrality findings are
+unchanged. Remaining work is to diagnose the workflow/product failures and
+make the missing observations independently verifiable; the current live
+score does not justify acceptance.

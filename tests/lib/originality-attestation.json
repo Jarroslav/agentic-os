@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-22T12:47:36Z",
+ "attested_at": "2026-09-22T16:13:25Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3095,7 +3095,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "c50b3e45038e07e207284e2d6cf811760f30347514d945878fbb5dadf9845ec2",
+   "sha256": "d92c00169fcf1a53ca3e657f57b0de53e4fe45cdeb2c6adaa8aaf2a51724b3de",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3131,14 +3131,14 @@
    "max_run": 0
   },
   "tests/reliability/hosts.py": {
-   "sha256": "06364f65610e9df64ac46123c5e0097d56c7dba7913279111de3fa80684f36f9",
-   "line": 0.0138,
+   "sha256": "aad9a341840f17bfdbbd0f17582290629c9d26b46fb8635512d2756626fbd95c",
+   "line": 0.012,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/isolation.py": {
-   "sha256": "4c74713486d3564b0ba5f833ef0ffe9eb3f68a6a7e6e1f017b5d46cae6999dfc",
-   "line": 0.0059,
+   "sha256": "3df0c9840401c1894b7f2955872b6ba2c08ebfa3314a3b94346a4a73942f526e",
+   "line": 0.0058,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3167,8 +3167,8 @@
    "max_run": 0
   },
   "tests/reliability/suite.py": {
-   "sha256": "8d861ea2a3b060562c766e7d031a9e824e55a32277cc4a1257a3d513ec714366",
-   "line": 0.0131,
+   "sha256": "74f39032d3133fcd32d56f335ef77a291357add37b5f187791f1fbc509f6b720",
+   "line": 0.013,
    "shingle": 0.0026,
    "max_run": 3
   },
@@ -3179,8 +3179,8 @@
    "max_run": 0
   },
   "tests/reliability/test_hosts.py": {
-   "sha256": "5161ccbcb441ca55e6818252cdbf5fce4230e080fa3db2edd64df91001bb613f",
-   "line": 0.0156,
+   "sha256": "1f4709a98f7510305dc5d25136d7ef6a066fc1fae983832481f3fd80c064e0ef",
+   "line": 0.0147,
    "shingle": 0.0,
    "max_run": 0
   },

@@ -1,0 +1,222 @@
+{
+  "baseline_dir": "/home/yaro/agentic-os/.agentic/work/framework-reliability/baseline-trials-2026-09-21-models",
+  "baseline_manifest_sha256": "c2ebe1e401d992e73da09ed0836c34c07333b1058195c49adf06d04ea383687f",
+  "dependency_sha256": "1f4a8c96884bdee4432ccbdf3ebda519ee1df3567560f6a518d160c568d0a191",
+  "frozen_at": "2026-09-22T13:59:35.675051+00:00",
+  "hosts": {
+    "claude": {
+      "available": true,
+      "error": null,
+      "executable": "/home/yaro/.nvm/versions/node/v22.23.2/bin/claude",
+      "host": "claude",
+      "profile": {
+        "auth_file_sha256": {
+          "/tmp/agentic-claude-state/.credentials.json": "4cb5b0b0dfe3202e1a774b388ad5c52f2874ca3fca7dc8058691d8a32091953c"
+        },
+        "auth_files": [
+          "/tmp/agentic-claude-state/.credentials.json"
+        ],
+        "effort": "medium",
+        "executable_sha256": "5c4735937844e84f8a93306e841a5b0e12252909b07870f789b190468da147ab",
+        "help_sha256": "ae85d661e9c086f05637ebcd868f5702b477ff6e55e2e65b8ada7807cd51a4b6",
+        "host": "claude",
+        "isolation_evidence": {
+          "checks": {
+            "auth_exact_read": true,
+            "auth_sibling_denied": true,
+            "auth_write_denied": true,
+            "descendant_cannot_signal_host": true,
+            "descendant_pid_namespace": true,
+            "descendant_read_denied": true,
+            "descendant_setns_denied": true,
+            "descendant_write_denied": true,
+            "evidence:r": true,
+            "evidence:w": true,
+            "fixture/escape:r": true,
+            "fixture/escape:w": true,
+            "fixture_read": true,
+            "fixture_write": true,
+            "global-instructions:r": true,
+            "global-instructions:w": true,
+            "host_globals_hidden": true,
+            "host_key_hidden": true,
+            "loopback_network": true,
+            "other-auth:r": true,
+            "other-auth:w": true,
+            "plugin_read": true,
+            "plugin_write_denied": true,
+            "root_write_denied": true,
+            "selected_hook_executed": true,
+            "snapshot:r": true,
+            "snapshot:w": true,
+            "tmp_write_denied": true,
+            "unselected_hook_denied": true,
+            "unselected_plugin_denied": true
+          },
+          "error": null,
+          "filesystem_enforced": true,
+          "host_certified": false,
+          "host_globals_checked": 4,
+          "host_identity": {
+            "machine": "x86_64",
+            "mechanism": "bubblewrap",
+            "mechanism_version": "bubblewrap 0.9.0",
+            "node": "agentic-os-linux",
+            "python": "3.12.3",
+            "release": "6.17.0-1022-azure",
+            "system": "Linux"
+          },
+          "mechanism": "bubblewrap",
+          "probe_sha256": "3df0c9840401c1894b7f2955872b6ba2c08ebfa3314a3b94346a4a73942f526e",
+          "schema_version": 1
+        },
+        "isolation_supported": true,
+        "model": "claude-opus-5",
+        "permissions": "dontAsk",
+        "schema_version": 1,
+        "settings": {
+          "setting_sources": "project,local",
+          "settings": {
+            "permissions": {
+              "allow": [
+                "Read",
+                "Edit",
+                "Write",
+                "Bash"
+              ]
+            }
+          }
+        },
+        "startup_evidence": {
+          "auth_only": true,
+          "evidence": "formal launcher and fixture marker hook-ran",
+          "global_inputs_denied": true,
+          "hook_status": "executed",
+          "host": "claude",
+          "model": "claude-opus-5",
+          "schema_version": 1,
+          "selected_plugin_visible": true,
+          "startup_ok": true
+        },
+        "startup_evidence_sha256": "ed5523e7458d7e38e5274b527e6c43c048a6681d18421a4d9b4e98ba9ac0bf5b",
+        "state_dir": "/tmp/agentic-claude-state",
+        "unsupported_channels": []
+      },
+      "timed_out": false,
+      "version": "2.1.278 (Claude Code)"
+    },
+    "codex": {
+      "available": true,
+      "error": null,
+      "executable": "/home/yaro/.nvm/versions/node/v22.23.2/bin/codex",
+      "host": "codex",
+      "profile": {
+        "auth_file_sha256": {
+          "/tmp/agentic-codex-state/auth.json": "dd4ee88eaf12691a7eff42797cc469ccff00a54d8e9ee0d47c5d2d98396f03b0"
+        },
+        "auth_files": [
+          "/tmp/agentic-codex-state/auth.json"
+        ],
+        "effort": "high",
+        "executable_sha256": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+        "help_sha256": "0e82cfde0122715250e93dc65866caa956b2ac5b9d0b20ec4ad4f9e81486509e",
+        "host": "codex",
+        "isolation_evidence": {
+          "checks": {
+            "auth_exact_read": true,
+            "auth_sibling_denied": true,
+            "auth_write_denied": true,
+            "descendant_cannot_signal_host": true,
+            "descendant_pid_namespace": true,
+            "descendant_read_denied": true,
+            "descendant_setns_denied": true,
+            "descendant_write_denied": true,
+            "evidence:r": true,
+            "evidence:w": true,
+            "fixture/escape:r": true,
+            "fixture/escape:w": true,
+            "fixture_read": true,
+            "fixture_write": true,
+            "global-instructions:r": true,
+            "global-instructions:w": true,
+            "host_globals_hidden": true,
+            "host_key_hidden": true,
+            "loopback_network": true,
+            "other-auth:r": true,
+            "other-auth:w": true,
+            "plugin_read": true,
+            "plugin_write_denied": true,
+            "root_write_denied": true,
+            "selected_hook_executed": true,
+            "snapshot:r": true,
+            "snapshot:w": true,
+            "tmp_write_denied": true,
+            "unselected_hook_denied": true,
+            "unselected_plugin_denied": true
+          },
+          "error": null,
+          "filesystem_enforced": true,
+          "host_certified": false,
+          "host_globals_checked": 4,
+          "host_identity": {
+            "machine": "x86_64",
+            "mechanism": "bubblewrap",
+            "mechanism_version": "bubblewrap 0.9.0",
+            "node": "agentic-os-linux",
+            "python": "3.12.3",
+            "release": "6.17.0-1022-azure",
+            "system": "Linux"
+          },
+          "mechanism": "bubblewrap",
+          "probe_sha256": "3df0c9840401c1894b7f2955872b6ba2c08ebfa3314a3b94346a4a73942f526e",
+          "schema_version": 1
+        },
+        "isolation_supported": true,
+        "model": "gpt-6-astra",
+        "permissions": "workspace-write",
+        "schema_version": 1,
+        "settings": {
+          "approval_policy": "never",
+          "ignore_rules": true,
+          "ignore_user_config": true
+        },
+        "startup_evidence": {
+          "auth_only": true,
+          "capability_decision": "Codex CLI has no Claude PostToolUse hook protocol; hook execution is not a Codex host capability",
+          "global_inputs_denied": true,
+          "hook_status": "not_applicable",
+          "host": "codex",
+          "model": "gpt-6-astra",
+          "schema_version": 1,
+          "selected_plugin_visible": true,
+          "startup_ok": true
+        },
+        "startup_evidence_sha256": "16b7bcce8af1259e7a83a904ef95e92ec45ea87534c0fd7db776c7e51d48a2e6",
+        "state_dir": "/tmp/agentic-codex-state",
+        "unsupported_channels": []
+      },
+      "timed_out": false,
+      "version": "codex-cli 0.155.1"
+    }
+  },
+  "max_trials": 24,
+  "phase": "candidate",
+  "repetitions": 3,
+  "revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+  "runner_sha256": {
+    "challenge-spec.json": "7d78dbf6c66a025170358cfbac2eebe2251d27f55b943488621fb79d7789a507",
+    "freeze_definitions.py": "34291e41c90f8d21dbe11b67f585e49b14a37dfa804b6cb58c48cf4a0710bac8",
+    "frozen-definitions.json": "554a3a823ce49ee0290b66bb2778895469e7d6c755e999c4987f89eb44d56814",
+    "hosts.py": "aad9a341840f17bfdbbd0f17582290629c9d26b46fb8635512d2756626fbd95c",
+    "isolation.py": "3df0c9840401c1894b7f2955872b6ba2c08ebfa3314a3b94346a4a73942f526e",
+    "observations.py": "817560864e15c691c36ffa6cdeea7ed15f220b17f7560b2ac8f1bec1c21efde4",
+    "rubric.json": "43c5708627f075335a7bafab36adf9bb07bb462a87560634eade9ca0803b71f1",
+    "scenarios.py": "154ce43c573b0b049f51b36c852b525974afe6d410f135e85c278d0922ce77d9",
+    "scoring.py": "2fc75bff10007095a0b1f7443179b2059a31fb0fb3e6e18206c0d5d42e2d99cc",
+    "suite.py": "74f39032d3133fcd32d56f335ef77a291357add37b5f187791f1fbc509f6b720"
+  },
+  "schema": 2,
+  "source_archive_sha256": "86c1d9ff04eebeed334cdbb9a751e0f00e91f99ab93628702b7d1d523a3e4027",
+  "source_sha256": "4e2eff70272b162a7d892378d967bb0e5169472e83c13e06cff5d2caa3e62783",
+  "timeout_seconds": 900
+}

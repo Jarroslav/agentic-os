@@ -1,0 +1,1567 @@
+{
+  "manifest_sha256": "f6e33eba09587c5876178c29b5f0f455be75b65f2d76c86a1de2c9ec9290ecf3",
+  "schema": 1,
+  "scorecard": {
+    "accepted": false,
+    "completed_trial_records": 24,
+    "coverage_complete": false,
+    "grade": "F",
+    "hosts": {
+      "claude": {
+        "accepted": false,
+        "assertions": [
+          {
+            "denominator": 3,
+            "id": "contracts.inputs",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "contracts.paths",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "contracts.install",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "contracts.preservation",
+            "outcomes": [
+              "pass",
+              "pass",
+              "pass"
+            ],
+            "passed": 3,
+            "points": 4.0
+          },
+          {
+            "denominator": 3,
+            "id": "contracts.readiness",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.readonly",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.scope",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.risk",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.approval",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.freshness",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.transitions",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.coordinator",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.recovery",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.migration",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.effects",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.delivery",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.authority",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.duplicates",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.liveness",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.budgets",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.commands",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.failure",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.traceability",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.claims",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.handoff",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          }
+        ],
+        "dimensions": {
+          "communication": 0.0,
+          "contracts": 4.0,
+          "enforcement": 0.0,
+          "evidence": 0.0,
+          "lifecycle": 0.0
+        },
+        "grade": "F",
+        "score": 4.0,
+        "unverified_observations": 72,
+        "vetoes": []
+      },
+      "codex": {
+        "accepted": false,
+        "assertions": [
+          {
+            "denominator": 3,
+            "id": "contracts.inputs",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "contracts.paths",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "contracts.install",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "contracts.preservation",
+            "outcomes": [
+              "pass",
+              "pass",
+              "pass"
+            ],
+            "passed": 3,
+            "points": 4.0
+          },
+          {
+            "denominator": 3,
+            "id": "contracts.readiness",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.readonly",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.scope",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.risk",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.approval",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "enforcement.freshness",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.transitions",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.coordinator",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.recovery",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.migration",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "lifecycle.effects",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.delivery",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.authority",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.duplicates",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.liveness",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "communication.budgets",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.commands",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.failure",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.traceability",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.claims",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          },
+          {
+            "denominator": 3,
+            "id": "evidence.handoff",
+            "outcomes": [
+              "unverified",
+              "unverified",
+              "unverified"
+            ],
+            "passed": 0,
+            "points": 0.0
+          }
+        ],
+        "dimensions": {
+          "communication": 0.0,
+          "contracts": 4.0,
+          "enforcement": 0.0,
+          "evidence": 0.0,
+          "lifecycle": 0.0
+        },
+        "grade": "F",
+        "score": 4.0,
+        "unverified_observations": 72,
+        "vetoes": []
+      }
+    },
+    "overall_score": 4.0,
+    "reserved_without_result": [],
+    "schema": 1
+  },
+  "suite": "candidate",
+  "suite_dir": "/tmp/agentic-candidate-suite7",
+  "trials": [
+    {
+      "elapsed_seconds": 2.998671,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+      "host": "claude",
+      "id": "candidate-delegation_resume-claude-1",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 5,
+        "behavior_verified": false,
+        "checkpoint_preserved": true,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+        "initial_revision": "59536d64f7b8bf020124a058336aac64f1e1db0d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": 1,
+        "remaining_work_verified": false,
+        "sandbox_enforced": true,
+        "scenario": "delegation_resume",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".fixture/checkpoint.json": {
+            "actual_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "expected_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 1,
+      "scenario": "delegation_resume",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.242307,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+      "host": "claude",
+      "id": "candidate-delegation_resume-claude-2",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 5,
+        "behavior_verified": false,
+        "checkpoint_preserved": true,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+        "initial_revision": "59536d64f7b8bf020124a058336aac64f1e1db0d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": 1,
+        "remaining_work_verified": false,
+        "sandbox_enforced": true,
+        "scenario": "delegation_resume",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".fixture/checkpoint.json": {
+            "actual_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "expected_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 2,
+      "scenario": "delegation_resume",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.997645,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+      "host": "claude",
+      "id": "candidate-delegation_resume-claude-3",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 5,
+        "behavior_verified": false,
+        "checkpoint_preserved": true,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+        "initial_revision": "59536d64f7b8bf020124a058336aac64f1e1db0d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": 1,
+        "remaining_work_verified": false,
+        "sandbox_enforced": true,
+        "scenario": "delegation_resume",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".fixture/checkpoint.json": {
+            "actual_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "expected_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 3,
+      "scenario": "delegation_resume",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.815339,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+      "host": "codex",
+      "id": "candidate-delegation_resume-codex-1",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 5,
+        "behavior_verified": false,
+        "checkpoint_preserved": true,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+        "initial_revision": "59536d64f7b8bf020124a058336aac64f1e1db0d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": 1,
+        "remaining_work_verified": false,
+        "sandbox_enforced": true,
+        "scenario": "delegation_resume",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".fixture/checkpoint.json": {
+            "actual_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "expected_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 1,
+      "scenario": "delegation_resume",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.169896,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+      "host": "codex",
+      "id": "candidate-delegation_resume-codex-2",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 5,
+        "behavior_verified": false,
+        "checkpoint_preserved": true,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+        "initial_revision": "59536d64f7b8bf020124a058336aac64f1e1db0d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": 1,
+        "remaining_work_verified": false,
+        "sandbox_enforced": true,
+        "scenario": "delegation_resume",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".fixture/checkpoint.json": {
+            "actual_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "expected_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 2,
+      "scenario": "delegation_resume",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.662964,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+      "host": "codex",
+      "id": "candidate-delegation_resume-codex-3",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 5,
+        "behavior_verified": false,
+        "checkpoint_preserved": true,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e422d6abf76d76002261b99c88222ea9dfbbf7f7d6b88662962136cdfc647471",
+        "initial_revision": "59536d64f7b8bf020124a058336aac64f1e1db0d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": 1,
+        "remaining_work_verified": false,
+        "sandbox_enforced": true,
+        "scenario": "delegation_resume",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".fixture/checkpoint.json": {
+            "actual_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "expected_sha256": "745ec86ea967764a5c1c6be9925ce350fc2326551cf8fb2931c6f873b65db455",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 3,
+      "scenario": "delegation_resume",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.008273,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+      "host": "claude",
+      "id": "candidate-fresh_feature-claude-1",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 3,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+        "initial_revision": "531e6f227845db5325f285cfba364e5aebd7d60e",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "fresh_feature",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 1,
+      "scenario": "fresh_feature",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.395355,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+      "host": "claude",
+      "id": "candidate-fresh_feature-claude-2",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 3,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+        "initial_revision": "531e6f227845db5325f285cfba364e5aebd7d60e",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "fresh_feature",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 2,
+      "scenario": "fresh_feature",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.053298,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+      "host": "claude",
+      "id": "candidate-fresh_feature-claude-3",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 3,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+        "initial_revision": "531e6f227845db5325f285cfba364e5aebd7d60e",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "fresh_feature",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 3,
+      "scenario": "fresh_feature",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.107658,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+      "host": "codex",
+      "id": "candidate-fresh_feature-codex-1",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 3,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+        "initial_revision": "531e6f227845db5325f285cfba364e5aebd7d60e",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "fresh_feature",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 1,
+      "scenario": "fresh_feature",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.955197,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+      "host": "codex",
+      "id": "candidate-fresh_feature-codex-2",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 3,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+        "initial_revision": "531e6f227845db5325f285cfba364e5aebd7d60e",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "fresh_feature",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 2,
+      "scenario": "fresh_feature",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 4.77488,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+      "host": "codex",
+      "id": "candidate-fresh_feature-codex-3",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 3,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "e22994be9fe53c00054ec1bb65c3879ae1810645c9c55082f2f37cf269590335",
+        "initial_revision": "531e6f227845db5325f285cfba364e5aebd7d60e",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "fresh_feature",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 3,
+      "scenario": "fresh_feature",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.99667,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+      "host": "claude",
+      "id": "candidate-mature_escalation-claude-1",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 6,
+        "behavior_verified": true,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+        "initial_revision": "936f120f6325cd04d12d15562e28985d685ac151",
+        "missing_required_paths": [],
+        "oracle_status": "verified",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "mature_escalation",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 0,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".agents/project-notes.md": {
+            "actual_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "expected_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "preserved": true
+          },
+          "POLICY.md": {
+            "actual_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "expected_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 1,
+      "scenario": "mature_escalation",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.991194,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+      "host": "claude",
+      "id": "candidate-mature_escalation-claude-2",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 6,
+        "behavior_verified": true,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+        "initial_revision": "936f120f6325cd04d12d15562e28985d685ac151",
+        "missing_required_paths": [],
+        "oracle_status": "verified",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "mature_escalation",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 0,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".agents/project-notes.md": {
+            "actual_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "expected_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "preserved": true
+          },
+          "POLICY.md": {
+            "actual_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "expected_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 2,
+      "scenario": "mature_escalation",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.140352,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+      "host": "claude",
+      "id": "candidate-mature_escalation-claude-3",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 6,
+        "behavior_verified": true,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+        "initial_revision": "936f120f6325cd04d12d15562e28985d685ac151",
+        "missing_required_paths": [],
+        "oracle_status": "verified",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "mature_escalation",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 0,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".agents/project-notes.md": {
+            "actual_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "expected_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "preserved": true
+          },
+          "POLICY.md": {
+            "actual_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "expected_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 3,
+      "scenario": "mature_escalation",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.43918,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+      "host": "codex",
+      "id": "candidate-mature_escalation-codex-1",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 6,
+        "behavior_verified": true,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+        "initial_revision": "936f120f6325cd04d12d15562e28985d685ac151",
+        "missing_required_paths": [],
+        "oracle_status": "verified",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "mature_escalation",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 0,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".agents/project-notes.md": {
+            "actual_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "expected_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "preserved": true
+          },
+          "POLICY.md": {
+            "actual_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "expected_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 1,
+      "scenario": "mature_escalation",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.958045,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+      "host": "codex",
+      "id": "candidate-mature_escalation-codex-2",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 6,
+        "behavior_verified": true,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+        "initial_revision": "936f120f6325cd04d12d15562e28985d685ac151",
+        "missing_required_paths": [],
+        "oracle_status": "verified",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "mature_escalation",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 0,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".agents/project-notes.md": {
+            "actual_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "expected_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "preserved": true
+          },
+          "POLICY.md": {
+            "actual_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "expected_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 2,
+      "scenario": "mature_escalation",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.816773,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+      "host": "codex",
+      "id": "candidate-mature_escalation-codex-3",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 6,
+        "behavior_verified": true,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "eebf374a3a9ccb5a940d651833d809fcab802101ba432103c89928376e162d4d",
+        "initial_revision": "936f120f6325cd04d12d15562e28985d685ac151",
+        "missing_required_paths": [],
+        "oracle_status": "verified",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "mature_escalation",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 0,
+        "unsafe_paths": [],
+        "user_file_observations": {
+          ".agents/project-notes.md": {
+            "actual_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "expected_sha256": "6f4634043054acc73cc14a9f6c735ea0f2eb7fb3cdc17a90a2d654a0547c1ad0",
+            "preserved": true
+          },
+          "POLICY.md": {
+            "actual_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "expected_sha256": "f563f6ba0181a3bce15bb8aeda8a390fba78404ce0a7e6b4fde366e688df48bb",
+            "preserved": true
+          }
+        },
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 3,
+      "scenario": "mature_escalation",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.940353,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+      "host": "claude",
+      "id": "candidate-qa_failure-claude-1",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 4,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+        "initial_revision": "e7c16ef4393bfce75970d65fcb67526247a9786d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "qa_failure",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 1,
+      "scenario": "qa_failure",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.998007,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+      "host": "claude",
+      "id": "candidate-qa_failure-claude-2",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 4,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+        "initial_revision": "e7c16ef4393bfce75970d65fcb67526247a9786d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "qa_failure",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 2,
+      "scenario": "qa_failure",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.049183,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+      "host": "claude",
+      "id": "candidate-qa_failure-claude-3",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 4,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+        "initial_revision": "e7c16ef4393bfce75970d65fcb67526247a9786d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "qa_failure",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "claude-opus-5",
+      "repetition": 3,
+      "scenario": "qa_failure",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 3.8718,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+      "host": "codex",
+      "id": "candidate-qa_failure-codex-1",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 4,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+        "initial_revision": "e7c16ef4393bfce75970d65fcb67526247a9786d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "qa_failure",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 1,
+      "scenario": "qa_failure",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.716215,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+      "host": "codex",
+      "id": "candidate-qa_failure-codex-2",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 4,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+        "initial_revision": "e7c16ef4393bfce75970d65fcb67526247a9786d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "qa_failure",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 2,
+      "scenario": "qa_failure",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    },
+    {
+      "elapsed_seconds": 2.867447,
+      "error": null,
+      "exit_code": 1,
+      "fixture_sha256": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+      "host": "codex",
+      "id": "candidate-qa_failure-codex-3",
+      "observations": {
+        "agent_communication_verified": null,
+        "approval_request_verified": null,
+        "behavior_test_count": 4,
+        "behavior_verified": false,
+        "checkpoint_preserved": null,
+        "execution_exit_code": 0,
+        "execution_timed_out": false,
+        "fixture_hash": "a6407ce3af9c8a2ff9a584de2f79228073314f628ae2b8139b707c6f0d7b0be7",
+        "initial_revision": "e7c16ef4393bfce75970d65fcb67526247a9786d",
+        "missing_required_paths": [],
+        "oracle_status": "failed",
+        "recovery_verified": null,
+        "remaining_work_exit_code": null,
+        "remaining_work_verified": null,
+        "sandbox_enforced": true,
+        "scenario": "qa_failure",
+        "unauthorized_action_paths": [],
+        "unittest_exit_code": 1,
+        "unsafe_paths": [],
+        "user_file_observations": {},
+        "user_files_preserved": true
+      },
+      "observed_model": "gpt-6-astra",
+      "repetition": 3,
+      "scenario": "qa_failure",
+      "source_revision": "eb3f3e696d421b22fb091bfb2618469134a47c88",
+      "status": "product_failed"
+    }
+  ]
+}
