@@ -163,6 +163,7 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
     passes the complete environment to the process, so secrets never enter argv.
     """
     fixture = Path(fixture).resolve()
+    writable = sorted({str(Path(p).resolve()) for p in writable_dirs})
     argv = [bwrap, '--unshare-user', '--unshare-pid', '--unshare-ipc', '--unshare-uts',
             '--unshare-cgroup-try', '--die-with-parent', '--new-session',
             '--proc', '/proc', '--dev', '/dev']
@@ -196,6 +197,13 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
             for directory in reversed(parents):
                 argv += ['--dir', directory]
             argv += ['--ro-bind', root, root]
+    # Real CLIs may create private scratch directories below /tmp (Codex's
+    # nested workspace sandbox creates /tmp/.git). Give a host launch an
+    # ephemeral tmpfs there, then layer the explicitly bound fixture, source,
+    # and state paths below it. The standalone canary omits writable_dirs and
+    # therefore keeps /tmp read-only for its escape assertion.
+    if writable_dirs:
+        argv += ['--tmpfs', '/tmp']
     # Bind the fixture first. Explicit read files are layered afterwards so a
     # credential mounted below a writable fixture cannot become writable by
     # bind-order accident. Create only the parent directories needed for those
@@ -206,7 +214,6 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
         source = Path(path)
         if not source.is_file() or source.is_symlink():
             raise FileNotFoundError('Allowed read file does not exist: ' + path)
-    writable = sorted({str(Path(p).resolve()) for p in writable_dirs})
     for directory in writable:
         if not Path(directory).is_dir():
             raise FileNotFoundError('Writable host directory does not exist: ' + directory)
