@@ -147,7 +147,7 @@ def linux_executable() -> str | None:
 
 def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
                read_files: list[Path] = (), plugin_roots: list[Path] = (),
-               command: list[str] = ()) -> list[str]:
+               command: list[str] = (), writable_dirs: list[Path] = ()) -> list[str]:
     """Build a deny-by-default bubblewrap command.
 
     Only the listed paths exist inside the namespace. System roots, runtime roots,
@@ -176,10 +176,18 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
     # bind-order accident. Create only the parent directories needed for those
     # exact files; their siblings remain absent from the namespace.
     argv += ['--bind', str(fixture), str(fixture)]
-    for path in sorted({str(Path(p).resolve()) for p in read_files}):
+    read_paths = sorted({str(Path(p).resolve()) for p in read_files})
+    for path in read_paths:
         source = Path(path)
         if not source.is_file() or source.is_symlink():
             raise FileNotFoundError('Allowed read file does not exist: ' + path)
+    argv += ['--remount-ro', '/']
+    for directory in sorted({str(Path(p).resolve()) for p in writable_dirs}):
+        if not Path(directory).is_dir():
+            raise FileNotFoundError('Writable host directory does not exist: ' + directory)
+        argv += ['--bind', directory, directory]
+    for path in read_paths:
+        source = Path(path)
         parents = []
         parent = source.parent
         while parent != parent.parent and str(parent) != '/':
@@ -188,7 +196,7 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
         for directory in reversed(parents):
             argv += ['--dir', directory]
         argv += ['--ro-bind', path, path]
-    argv += ['--remount-ro', '/', '--chdir', str(fixture)]
+    argv += ['--chdir', str(fixture)]
     return argv + ['--', *command]
 
 
