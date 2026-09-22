@@ -159,6 +159,18 @@ class LinuxIsolationTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 isolation.linux_argv('/usr/bin/bwrap', root / 'fixture', read_files=[root / 'missing'])
 
+    def test_argv_binds_host_state_before_read_only_remount(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            (root / 'fixture').mkdir()
+            state = root / 'state' / 'codex'
+            state.mkdir(parents=True)
+            argv = isolation.linux_argv('/usr/bin/bwrap', root / 'fixture',
+                                        writable_dirs=[state], command=['/bin/true'])
+            bind = ['--bind', str(state), str(state)]
+            self.assertEqual(argv[argv.index('--remount-ro') - len(bind):argv.index('--remount-ro')], bind)
+            self.assertLess(argv.index('--bind'), argv.index('--remount-ro'))
+
 
 class IsolationReceiptTests(unittest.TestCase):
     def setUp(self):
