@@ -71,7 +71,8 @@ class ScenarioTests(unittest.TestCase):
         path, metadata = self.fixture('fresh_feature')
         outside = self.root / 'must-not-exist'
         (path / 'app.py').write_text(f'from pathlib import Path\nPath({str(outside)!r}).write_text("executed")\n')
-        with mock.patch.object(scenarios, '_sandbox_executable', return_value=None):
+        with mock.patch.object(scenarios, '_sandbox_executable', return_value=None), \
+             mock.patch.object(scenarios, '_linux_executable', return_value=None):
             result = oracle_observations(path, 'fresh_feature', metadata, '')
         self.assertFalse(outside.exists())
         self.assertIsNone(result['behavior_verified'])
@@ -80,7 +81,8 @@ class ScenarioTests(unittest.TestCase):
 
     def test_failed_sandbox_probe_fails_closed(self):
         path, metadata = self.fixture('fresh_feature')
-        with mock.patch.object(scenarios, '_sandbox_executable', return_value='/missing/sandbox-exec'):
+        with mock.patch.object(scenarios, '_sandbox_executable', return_value='/missing/sandbox-exec'), \
+             mock.patch.object(scenarios, '_linux_executable', return_value=None):
             result = oracle_observations(path, 'fresh_feature', metadata, '')
         self.assertIsNone(result['behavior_verified'])
         self.assertFalse(result['sandbox_enforced'])
