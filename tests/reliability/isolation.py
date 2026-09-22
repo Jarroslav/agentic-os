@@ -136,6 +136,12 @@ def probe_filesystem_boundary(timeout_seconds: float = 3) -> dict:
 # --- Linux: bubblewrap mount, PID, IPC and UTS namespaces -------------------
 
 _LINUX_SYSTEM_ROOTS = ('/usr', '/bin', '/sbin', '/lib', '/lib32', '/lib64', '/libx32')
+_LINUX_SYSTEM_FILES = (
+    ('/run/systemd/resolve/stub-resolv.conf', '/etc/resolv.conf'),
+    ('/etc/hosts', '/etc/hosts'),
+    ('/etc/nsswitch.conf', '/etc/nsswitch.conf'),
+    ('/etc/ssl/certs/ca-certificates.crt', '/etc/ssl/certs/ca-certificates.crt'),
+)
 
 
 def linux_executable() -> str | None:
@@ -168,6 +174,18 @@ def linux_argv(bwrap: str, fixture: Path, runtime_roots: list[Path] = (),
         elif path.is_dir():
             argv += ['--ro-bind', name, name]
             bound.add(name)
+    for source_name, target_name in _LINUX_SYSTEM_FILES:
+        source = Path(source_name)
+        if source.is_file() and not source.is_symlink():
+            target = Path(target_name)
+            parents = []
+            parent = target.parent
+            while parent != parent.parent and str(parent) != '/':
+                parents.append(str(parent))
+                parent = parent.parent
+            for directory in reversed(parents):
+                argv += ['--dir', directory]
+            argv += ['--ro-bind', source_name, target_name]
     for root in sorted({str(Path(p).resolve()) for p in (*runtime_roots, *plugin_roots)}):
         if not any(root == b or root.startswith(b + '/') for b in bound):
             argv += ['--ro-bind', root, root]
