@@ -432,3 +432,14 @@ preflight; the canary verifies a sibling of an allowed auth file remains
 unreadable. Real Claude/Codex authentication, selected-hook execution,
 and global-input exclusion under this exact launch wrapper still require
 separate startup certification; the canary alone does not authorize trials.
+
+## Startup-evidence freshness (2026-09-23)
+
+The Linux Claude credential expired and was refreshed on the VM. Startup proof
+now uses schema version 2 and must match the current credential-file hashes,
+host executable hash, isolation-probe hash, and host identity. An older proof,
+including the previously retained schema-1 proof, fails preflight rather than
+certifying a changed authentication or host configuration. The earlier Linux
+startup and hook observations remain historical evidence; they do not certify
+the refreshed profile. A new no-inference startup/hook/global-input check and
+reviewed profile freeze are required before more scored trials.

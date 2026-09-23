@@ -165,7 +165,11 @@ def _configured_state_dir(host: str) -> str | None:
     return str(path.resolve())
 
 
-def _configured_startup_evidence(host: str, model: str) -> tuple[dict | None, str | None, str | None]:
+def _configured_startup_evidence(host: str, model: str,
+                                 auth_file_sha256: dict[str, str],
+                                 executable_sha256: str,
+                                 isolation_evidence: dict
+                                 ) -> tuple[dict | None, str | None, str | None]:
     """Load operator-retained startup proof; never treat an env flag as proof."""
     raw = os.environ.get(f"RELIABILITY_{host.upper()}_STARTUP_EVIDENCE", "").strip()
     if not raw:
@@ -178,15 +182,25 @@ def _configured_startup_evidence(host: str, model: str) -> tuple[dict | None, st
     except (OSError, ValueError, RecursionError) as exc:
         return None, None, f"startup evidence is invalid: {type(exc).__name__}"
     required = ("schema_version", "host", "model", "startup_ok", "auth_only",
-                "global_inputs_denied", "selected_plugin_visible", "hook_status")
-    if (not isinstance(evidence, dict) or evidence.get("schema_version") != 1
+                "global_inputs_denied", "selected_plugin_visible", "hook_status",
+                "auth_file_sha256", "executable_sha256", "isolation_probe_sha256",
+                "host_identity")
+    if (not isinstance(evidence, dict) or evidence.get("schema_version") != 2
             or evidence.get("host") != host or evidence.get("model") != model
+            or not all(key in evidence for key in required)
             or not all(evidence.get(key) is True for key in
                        ("startup_ok", "auth_only", "global_inputs_denied", "selected_plugin_visible"))
             or evidence.get("hook_status") not in ("executed", "not_applicable")):
         return None, None, "startup evidence does not satisfy the certification contract"
     if host == "claude" and evidence.get("hook_status") != "executed":
         return None, None, "Claude certification requires selected hook execution"
+    if evidence.get("auth_file_sha256") != auth_file_sha256:
+        return None, None, "startup evidence auth file hash differs from current credentials"
+    if evidence.get("executable_sha256") != executable_sha256:
+        return None, None, "startup evidence executable hash differs from current host"
+    if (evidence.get("isolation_probe_sha256") != isolation_evidence.get("probe_sha256")
+            or evidence.get("host_identity") != isolation_evidence.get("host_identity")):
+        return None, None, "startup evidence isolation host identity differs from current host"
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     return evidence, digest, None
 
@@ -201,15 +215,19 @@ def _profile(host: str, executable: str, help_text: str,
                  "--config", "--ephemeral"])
     auth_files, auth_file_hashes = _configured_auth_files(host)
     state_dir = _configured_state_dir(host)
-    startup_evidence, startup_evidence_sha256, certification_error = _configured_startup_evidence(host, model)
+    executable_sha256 = hashlib.sha256(Path(executable).read_bytes()).hexdigest()
+    isolation_evidence = _isolation_evidence(timeout_seconds)
+    startup_evidence, startup_evidence_sha256, certification_error = _configured_startup_evidence(
+        host, model, auth_file_hashes, executable_sha256, isolation_evidence)
     base_limits = _isolation_limits(host)
     limits = [] if startup_evidence is not None else base_limits
+    if startup_evidence is not None and not auth_files:
+        limits.append("Certified host requires a declared auth-file allowlist")
     # An empty policy result is reserved for deterministic test doubles and
     # explicitly certified adapters; do not add a synthetic environment error
     # in that mode.
     if certification_error and base_limits:
         limits.append(certification_error)
-    isolation_evidence = _isolation_evidence(timeout_seconds)
     if not isolation_evidence["filesystem_enforced"]:
         limits.append(isolation_evidence["error"] or "Filesystem containment canary failed")
     if isolation_evidence.get("mechanism") == "sandbox-exec" and state_dir is None:
@@ -229,7 +247,7 @@ def _profile(host: str, executable: str, help_text: str,
         limits.append("Missing required CLI flags: " + ", ".join(missing))
     return {
         "schema_version": 1, "model": model or None,
-        "executable_sha256": hashlib.sha256(Path(executable).read_bytes()).hexdigest(),
+        "executable_sha256": executable_sha256,
         "help_sha256": hashlib.sha256(help_text.encode()).hexdigest(),
         "effort": "medium" if host == "claude" else "high",
         "permissions": "dontAsk" if host == "claude" else "workspace-write",
