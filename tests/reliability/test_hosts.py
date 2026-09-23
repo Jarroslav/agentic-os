@@ -30,6 +30,33 @@ ISOLATION_LIMITS = hosts._isolation_limits if hosts else None
 
 
 class HostTests(unittest.TestCase):
+    def test_file_path_import_resolves_sibling_tool_events(self):
+        root = Path(__file__).resolve().parents[2]
+        script = ("import importlib.util, pathlib, sys; "
+                  "sys.path.insert(0, sys.argv[1]); "
+                  "spec = importlib.util.spec_from_file_location('reliability_hosts', sys.argv[2]); "
+                  "module = importlib.util.module_from_spec(spec); "
+                  "spec.loader.exec_module(module); "
+                  "assert callable(module.extract_tool_events)")
+        result = subprocess.run([sys.executable, '-I', '-c', script,
+                                 str(root), str(HOSTS_PATH.resolve())],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_deeply_nested_trace_does_not_abort_host_metadata(self):
+        trace = self.root / 'deep-trace.jsonl'
+        trace.write_text('[' * 1_000_000 + '0' + ']' * 1_000_000)
+        metadata = hosts._trace_metadata(trace, host='codex')
+        self.assertEqual(metadata['tool_events'], [])
+        self.assertTrue(metadata['tool_event_issues'])
+
+    def test_malformed_metadata_cannot_supply_model_identity(self):
+        trace = self.root / 'conflicting-trace.jsonl'
+        trace.write_text('{"type":"system","model":"wrong","model":"claimed"}\n')
+        metadata = hosts._trace_metadata(trace, host='claude')
+        self.assertIsNone(metadata['observed_model'])
+        self.assertTrue(metadata['tool_event_issues'])
+
     def setUp(self):
         self.assertIsNotNone(hosts, "host execution adapter has not been implemented")
         self.temp = tempfile.TemporaryDirectory()
@@ -161,6 +188,21 @@ class HostTests(unittest.TestCase):
                   "print(json.dumps({'type':'turn.completed','usage':{'input_tokens':2}}))\n")
         result = self.run_fake("codex")
         self.assertEqual(result["observed_model"], "codex-fixture-1")
+
+    def test_host_result_retains_native_tool_attempts_without_tool_output(self):
+        self.fake("print(json.dumps({'type':'thread.started','thread_id':'t'}))\n"
+                  "print(json.dumps({'type':'item.started','item':{'id':'c1',"
+                  "'type':'command_execution','status':'in_progress',"
+                  "'command':'private command'}}))\n"
+                  "print(json.dumps({'type':'item.completed','item':{'id':'c1',"
+                  "'type':'command_execution','command':'private command',"
+                  "'exit_code':0,'status':'completed','aggregated_output':'private output'}}))\n")
+        result = self.run_fake("codex")
+        self.assertEqual(result["tool_event_issues"], [])
+        self.assertEqual(len(result["tool_events"]), 1)
+        self.assertEqual(result["tool_events"][0]["status"], "responded")
+        self.assertNotIn("private command", str(result["tool_events"]))
+        self.assertNotIn("private output", str(result["tool_events"]))
 
     def test_malformed_trace_lines_do_not_hide_later_metadata(self):
         self.fake("print('not-json')\nprint('[]')\n"

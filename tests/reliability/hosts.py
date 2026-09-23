@@ -25,6 +25,15 @@ from runtime.agentic_runtime.trace import command_receipt, ingest_command_event
 from runtime.agentic_runtime.adapter import adapt_json_lines
 
 
+_TOOL_EVENTS_SPEC = importlib.util.spec_from_file_location(
+    "reliability_tool_events", Path(__file__).with_name("tool_events.py"))
+_TOOL_EVENTS = importlib.util.module_from_spec(_TOOL_EVENTS_SPEC)
+_TOOL_EVENTS_SPEC.loader.exec_module(_TOOL_EVENTS)
+MAX_TRACE_BYTES = _TOOL_EVENTS.MAX_TRACE_BYTES
+extract_tool_events = _TOOL_EVENTS.extract_tool_events
+strict_json_line = _TOOL_EVENTS.strict_json_line
+
+
 _ISOLATION = None
 
 
@@ -165,8 +174,8 @@ def _configured_startup_evidence(host: str, model: str) -> tuple[dict | None, st
     if not path.is_absolute() or not path.is_file() or path.is_symlink():
         return None, None, "startup evidence file is not a regular absolute file"
     try:
-        evidence = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
+        evidence = strict_json_line(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, RecursionError) as exc:
         return None, None, f"startup evidence is invalid: {type(exc).__name__}"
     required = ("schema_version", "host", "model", "startup_ok", "auth_only",
                 "global_inputs_denied", "selected_plugin_visible", "hook_status")
@@ -361,8 +370,8 @@ def _trace_metadata(stdout_path: Path, *, host: str | None = None,
     with stdout_path.open(encoding="utf-8", errors="replace") as stream:
         for line in stream:
             try:
-                event = json.loads(line)
-            except ValueError:
+                event = strict_json_line(line)
+            except (ValueError, RecursionError):
                 continue
             if not isinstance(event, dict):
                 continue
@@ -409,6 +418,16 @@ def _trace_metadata(stdout_path: Path, *, host: str | None = None,
             and launch_model and metadata["thread_started"]):
         metadata["observed_model"] = launch_model
         metadata["model_identity_source"] = "frozen_launch_argument"
+    try:
+        if stdout_path.stat().st_size > MAX_TRACE_BYTES:
+            raise ValueError("host trace exceeds tool event limit")
+        native = extract_tool_events(stdout_path.read_text(encoding="utf-8", errors="replace"), host)
+        metadata["tool_events"] = native["events"]
+        metadata["tool_event_issues"] = native["issues"]
+    except (OSError, ValueError, RecursionError) as exc:
+        # An unusable stream never becomes positive tool evidence.
+        metadata["tool_events"] = []
+        metadata["tool_event_issues"] = [str(exc)]
     return metadata
 
 
@@ -553,7 +572,9 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
                                launch_model=(profile or {}).get("model"))
     result.update(observed_model=metadata["observed_model"], usage=metadata["usage"],
                   command_receipts=metadata["command_receipts"],
-                  invalid_command_receipts=metadata["invalid_command_receipts"])
+                  invalid_command_receipts=metadata["invalid_command_receipts"],
+                  tool_events=metadata["tool_events"],
+                  tool_event_issues=metadata["tool_event_issues"])
     if evidence_context:
         try:
             result["adapted_receipts"] = adapt_trace_receipts(

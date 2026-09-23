@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-23T05:06:26Z",
+ "attested_at": "2026-09-23T07:24:34Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3131,7 +3131,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "900fe9b6c05a1aafcbc476a95d47bb82a58e18b754ea2c28d882841494a71faa",
+   "sha256": "631a53e0b9f6770af920225c3f2a043a666800babb74e6a7cdb313223f3bf72a",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3167,8 +3167,8 @@
    "max_run": 0
   },
   "tests/reliability/hosts.py": {
-   "sha256": "3d59b07749b2754741636367355a5313557500ea14947e570609497df29670da",
-   "line": 0.0118,
+   "sha256": "c4e843c04e2861db09ea05ee5b6276ad19322e8231212761b8fe47aa0e783d0c",
+   "line": 0.009,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3221,8 +3221,8 @@
    "max_run": 0
   },
   "tests/reliability/test_hosts.py": {
-   "sha256": "11667010f0238af23918c730f6afe2a272d2dec370d2d5932511be85b543c718",
-   "line": 0.0145,
+   "sha256": "9d49f3639dd69e42688e7b4d6641a9f9482e2e9af1fcb79bbd05a568c8bb7d64",
+   "line": 0.0132,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3268,9 +3268,21 @@
    "shingle": 0.0,
    "max_run": 0
   },
+  "tests/reliability/test_tool_events.py": {
+   "sha256": "1da4dbd1408fc6dd974e78afed0b5273b036f48e65abe45d5efea4647c0015be",
+   "line": 0.0069,
+   "shingle": 0.0,
+   "max_run": 0
+  },
   "tests/reliability/test_workflow_authority.py": {
    "sha256": "7affb87b866e095a6ce16710d960fecacf2820777df28aeced91e65d865661e1",
    "line": 0.1154,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/tool_events.py": {
+   "sha256": "f30f39ac52be182ed772eac042b7272c2da3e0438a205b7ecc767055295b7049",
+   "line": 0.0062,
    "shingle": 0.0,
    "max_run": 0
   },
