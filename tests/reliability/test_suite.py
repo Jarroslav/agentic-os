@@ -1,4 +1,6 @@
 import json
+import base64
+import hashlib
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -198,6 +200,47 @@ class SuiteTests(unittest.TestCase):
             trial['evidence_sha256'][str(directory / 'oracle.json')] = file_hash(directory / 'oracle.json')
             (directory / 'result.json').write_text(json.dumps(trial))
             with self.assertRaisesRegex(ValueError, 'replayed'):
+                report(root)
+
+    @patch('suite.verify_freeze')
+    def test_report_rejects_forged_observer_source_even_with_rehashed_verdict(self, verify):
+        from observations import replay_observations
+        from suite import file_hash
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            directory = self.make_report_fixture(root)
+            inputs_path = directory / 'observer-inputs.json'
+            inputs = json.loads(inputs_path.read_text())
+            source = b'def normalize_tags(tags):\n    return sorted({tag.strip().lower() for tag in tags if tag.strip()})\n'
+            inputs['files']['app.py'] = {'kind': 'file', 'sha256': hashlib.sha256(source).hexdigest(),
+                                         'data': base64.b64encode(source).decode('ascii')}
+            inputs_path.write_text(json.dumps(inputs))
+            observations = replay_observations(inputs)
+            (directory / 'oracle.json').write_text(json.dumps(observations))
+            result_path = directory / 'result.json'
+            result = json.loads(result_path.read_text())
+            result['observations'] = observations
+            for path in (inputs_path, directory / 'oracle.json'):
+                result['evidence_sha256'][str(path)] = file_hash(path)
+            result_path.write_text(json.dumps(result))
+            with self.assertRaisesRegex(ValueError, 'fixture bytes'):
+                report(root)
+
+    @patch('suite.verify_freeze')
+    def test_report_rejects_unbound_backend_events(self, verify):
+        from suite import file_hash
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            directory = self.make_report_fixture(root)
+            inputs_path = directory / 'observer-inputs.json'
+            inputs = json.loads(inputs_path.read_text())
+            inputs['backend_events'] = [{'type': 'effect.committed', 'id': 'fabricated'}]
+            inputs_path.write_text(json.dumps(inputs))
+            result_path = directory / 'result.json'
+            result = json.loads(result_path.read_text())
+            result['evidence_sha256'][str(inputs_path)] = file_hash(inputs_path)
+            result_path.write_text(json.dumps(result))
+            with self.assertRaisesRegex(ValueError, 'backend events'):
                 report(root)
 
     @patch('scenarios.oracle_observations', return_value={'remaining_work_verified': False})

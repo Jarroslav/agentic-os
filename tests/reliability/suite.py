@@ -385,6 +385,17 @@ def validate_execution(directory: Path, trial: dict, manifest: dict, slot: dict)
             or inputs.get('execution_receipts') != segments or inputs.get('checkpoint') != checkpoint
             or inputs.get('trace') != Path(segments[-1]['raw_stdout_path']).read_text(errors='replace')):
         raise ValueError('observer inputs differ from retained execution and fixture receipts')
+    # The observer input file is an export, not an authoritative source. Rehashing
+    # it and its replayed verdict must not substitute different candidate bytes.
+    from observations import collect_observer_inputs
+    actual_files = collect_observer_inputs(directory / 'fixture', slot['scenario'],
+                                           fixture_metadata, '')['files']
+    if inputs.get('files') != actual_files:
+        raise ValueError('observer source differs from final fixture bytes')
+    # No independently retained mock-backend ledger is wired into this runner
+    # yet. Event-shaped records supplied in the export are therefore untrusted.
+    if inputs.get('backend_events') != []:
+        raise ValueError('observer backend events lack a bound backend ledger')
     if len(segments) == 2:
         if not {str(directory / name) for name in ('checkpoint-boundary.json', 'resume-boundary.json')}.issubset(trial['evidence']):
             raise ValueError('resume requires independently retained boundary evidence')
