@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-23T17:46:03Z",
+ "attested_at": "2026-09-23T18:01:29Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3131,7 +3131,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "940e5ca65dad7a61af1702840c437e9993a62c7577fc015e2990114ac48f0f73",
+   "sha256": "de450c199604c1c2ecc263e21d82506c1e3a6f269b45e672d7f5224b1e9f442f",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3179,8 +3179,8 @@
    "max_run": 0
   },
   "tests/reliability/observations.py": {
-   "sha256": "49c2bb3e91248e3e0150188cc0dc3a88244dc2d1ab21ab7dcb3408d5cc9b45b9",
-   "line": 0.0294,
+   "sha256": "dfd096782f01d3b1e13175e254ce0fb97c7e5a743c4371b33b9b54a9c9fb1fd1",
+   "line": 0.0323,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3209,8 +3209,8 @@
    "max_run": 0
   },
   "tests/reliability/suite.py": {
-   "sha256": "74f39032d3133fcd32d56f335ef77a291357add37b5f187791f1fbc509f6b720",
-   "line": 0.013,
+   "sha256": "fc08906baf36c6ccd981f29a39196c542fac2cdbdc2d1d7ff099ac5889275369",
+   "line": 0.0129,
    "shingle": 0.0026,
    "max_run": 3
   },
@@ -3239,8 +3239,8 @@
    "max_run": 0
   },
   "tests/reliability/test_observations.py": {
-   "sha256": "adf68fd27e3c833096fb17356a80ae100f97a5cae5f7df06951f10594638a8c3",
-   "line": 0.0278,
+   "sha256": "2d6189752eca7e6fecdad3883996905eaf9aefd5f08a9c590702ee934f42ce1b",
+   "line": 0.025,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3263,8 +3263,8 @@
    "max_run": 0
   },
   "tests/reliability/test_suite.py": {
-   "sha256": "1ada75cdca0717f12c185186434a16f4d41ad5d923849f5f1fb8d553687f8351",
-   "line": 0.0109,
+   "sha256": "613d7d6d8bd5cbbe8421ab81192e520bbc2fbf09b6aac9092091a2928f66c02d",
+   "line": 0.0105,
    "shingle": 0.0,
    "max_run": 0
   },

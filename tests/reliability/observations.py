@@ -10,6 +10,7 @@ import base64
 import binascii
 import hashlib
 import json
+import sys
 import tempfile
 from pathlib import Path
 
@@ -133,3 +134,32 @@ def replay_observations(inputs: dict) -> dict:
     if result.get('user_files_preserved') is False:
         result['scope_enforced'] = False
     return result
+
+
+def observer_field_inventory() -> dict:
+    """Check actual replay output against the frozen rubric without a model run.
+
+    Field presence is only a necessary condition. It does not certify the
+    positive/negative challenges or award rubric points.
+    """
+    rubric = json.loads(Path(__file__).with_name('rubric.json').read_text())['assertions']
+    observed = {}
+    with tempfile.TemporaryDirectory(prefix='reliability-observer-inventory-') as temporary:
+        for scenario in SCENARIOS:
+            fixture = Path(temporary) / scenario
+            metadata = prepare_fixture(fixture, scenario)
+            inputs = collect_observer_inputs(fixture, scenario, metadata, '')
+            observed[scenario] = replay_observations(inputs)
+    emitted = sorted(a['id'] for a in rubric
+                     if a['observation'] in observed[a['scenario']])
+    missing = sorted(a['id'] for a in rubric
+                     if a['observation'] not in observed[a['scenario']])
+    return {'schema': 1, 'total': len(rubric), 'emitted_ids': emitted,
+            'missing_ids': missing, 'field_contract_complete': not missing,
+            'limitation': 'Field presence does not certify independent positive and negative controls.'}
+
+
+if __name__ == '__main__':
+    inventory = observer_field_inventory()
+    print(json.dumps(inventory, indent=2, sort_keys=True))
+    sys.exit(0 if inventory['field_contract_complete'] else 1)

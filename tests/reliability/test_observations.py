@@ -4,11 +4,20 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from observations import collect_observer_inputs, replay_observations
+from observations import collect_observer_inputs, replay_observations, observer_field_inventory
 from scenarios import prepare_fixture
 
 
 class ObservationTests(unittest.TestCase):
+    def test_frozen_rubric_field_inventory_exposes_missing_observers(self):
+        inventory = observer_field_inventory()
+        self.assertEqual(inventory['total'], 25)
+        self.assertFalse(inventory['field_contract_complete'])
+        self.assertIn('contracts.inputs', inventory['missing_ids'])
+        self.assertIn('evidence.commands', inventory['missing_ids'])
+        self.assertIn('contracts.preservation', inventory['emitted_ids'])
+        self.assertEqual(len(inventory['missing_ids']), 22)
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
