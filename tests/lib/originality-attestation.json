@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-22T20:43:11Z",
+ "attested_at": "2026-09-23T05:06:26Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3131,7 +3131,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "e368de4e734c3a083665c22ab8f2a6578e5f2efd888bd770bbeb8a33209f0154",
+   "sha256": "900fe9b6c05a1aafcbc476a95d47bb82a58e18b754ea2c28d882841494a71faa",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3179,8 +3179,8 @@
    "max_run": 0
   },
   "tests/reliability/observations.py": {
-   "sha256": "817560864e15c691c36ffa6cdeea7ed15f220b17f7560b2ac8f1bec1c21efde4",
-   "line": 0.0323,
+   "sha256": "49c2bb3e91248e3e0150188cc0dc3a88244dc2d1ab21ab7dcb3408d5cc9b45b9",
+   "line": 0.0294,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3193,6 +3193,12 @@
   "tests/reliability/scenarios.py": {
    "sha256": "154ce43c573b0b049f51b36c852b525974afe6d410f135e85c278d0922ce77d9",
    "line": 0.0136,
+   "shingle": 0.0,
+   "max_run": 0
+  },
+  "tests/reliability/score-correction-suite9.json": {
+   "sha256": "d63426d3646201b2126cc3e04ed478fe66c6a7b3d15f57b94c94bb21c5362679",
+   "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3233,8 +3239,8 @@
    "max_run": 0
   },
   "tests/reliability/test_observations.py": {
-   "sha256": "771a4f08d22d131af71f78f5083479f4e85a69e7962a9e04280bf5080b68216f",
-   "line": 0.0345,
+   "sha256": "adf68fd27e3c833096fb17356a80ae100f97a5cae5f7df06951f10594638a8c3",
+   "line": 0.0278,
    "shingle": 0.0,
    "max_run": 0
   },
