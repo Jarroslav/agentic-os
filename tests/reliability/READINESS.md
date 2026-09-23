@@ -94,6 +94,15 @@ conflicting events remain unverified. This is an evidence input, not rubric
 credit: the stream alone does not establish worker identity, actual file effects,
 managed upgrades, or independently captured process argv and source revisions.
 
+The report validator now compares every retained observer source record with the
+final fixture bytes. Rehashing an observer export and its replayed verdict cannot
+substitute a different source file for the one retained in the trial fixture.
+Unbound mock-backend events are rejected; a future backend observer must first
+retain and authenticate its own ledger. This protects report consistency, but
+does not turn the fixture or an operator-edited archive into an authenticated
+external effect receipt. The field inventory still reports 22 of 25 rubric
+observations absent, so the trial gate remains closed.
+
 ## Frozen challenges required before baseline capture
 
 | Assertion | Challenge and independent positive control |

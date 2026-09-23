@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-23T18:01:29Z",
+ "attested_at": "2026-09-23T18:08:47Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3131,7 +3131,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "de450c199604c1c2ecc263e21d82506c1e3a6f269b45e672d7f5224b1e9f442f",
+   "sha256": "6bfc9da754e48bd92ac54e4c6e41e01ea7c72dc80844e51373bdf6f9b292606e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3209,9 +3209,9 @@
    "max_run": 0
   },
   "tests/reliability/suite.py": {
-   "sha256": "fc08906baf36c6ccd981f29a39196c542fac2cdbdc2d1d7ff099ac5889275369",
-   "line": 0.0129,
-   "shingle": 0.0026,
+   "sha256": "088fdb5d17a05b547fdc0f8c6d66697b76352a93fb2758b98104e503dfd2ee06",
+   "line": 0.0125,
+   "shingle": 0.0025,
    "max_run": 3
   },
   "tests/reliability/test_freeze_definitions.py": {
@@ -3263,8 +3263,8 @@
    "max_run": 0
   },
   "tests/reliability/test_suite.py": {
-   "sha256": "613d7d6d8bd5cbbe8421ab81192e520bbc2fbf09b6aac9092091a2928f66c02d",
-   "line": 0.0105,
+   "sha256": "bdab6a1e44715662c023b49223e96a080d594c47d671be9835da17800b687748",
+   "line": 0.0096,
    "shingle": 0.0,
    "max_run": 0
   },
