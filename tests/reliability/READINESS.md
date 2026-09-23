@@ -87,6 +87,13 @@ peer delivery events, approval interactions, command revisions and external-effe
 receipts. Unsupported channels remain unverified and earn zero. A lower score is
 not permission to remove assertions or change the acceptance thresholds.
 
+The host launcher now retains normalized Claude and Codex tool attempts paired
+with native result events. It records tool names, structured paths, input hashes
+and response status without copying command output into the summary. Unpaired or
+conflicting events remain unverified. This is an evidence input, not rubric
+credit: the stream alone does not establish worker identity, actual file effects,
+managed upgrades, or independently captured process argv and source revisions.
+
 ## Frozen challenges required before baseline capture
 
 | Assertion | Challenge and independent positive control |
