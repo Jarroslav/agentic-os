@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import signal
 import stat
 import subprocess
@@ -29,7 +30,102 @@ else:
 ISOLATION_LIMITS = hosts._isolation_limits if hosts else None
 
 
+class ContainmentTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'darwin' and shutil.which('claude'),
+                         'requires installed macOS Claude Code')
+    def test_installed_claude_version_starts_inside_host_wrapper(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            fixture = root / 'fixture'
+            state = root / 'state'
+            fixture.mkdir()
+            state.mkdir()
+            executable = shutil.which('claude')
+            profile = {'host': 'claude',
+                       'isolation_evidence': {'mechanism': 'sandbox-exec'},
+                       'auth_files': [], 'state_dir': str(state)}
+            argv = hosts._contain([executable, '--version'], profile,
+                                  executable, fixture, [])
+            run = subprocess.run(argv, cwd=fixture,
+                                 env=hosts._host_environment(profile),
+                                 capture_output=True, text=True, timeout=15)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertIn('Claude Code', run.stdout)
+
+    @unittest.skipUnless(sys.platform == 'darwin' and shutil.which('codex'),
+                         'requires installed macOS Codex CLI')
+    def test_installed_codex_version_starts_inside_host_wrapper(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            fixture = root / 'fixture'
+            state = root / 'state'
+            fixture.mkdir()
+            state.mkdir()
+            executable = shutil.which('codex')
+            profile = {'host': 'codex',
+                       'isolation_evidence': {'mechanism': 'sandbox-exec'},
+                       'auth_files': [], 'state_dir': str(state)}
+            argv = hosts._contain([executable, '--version'], profile,
+                                  executable, fixture, [])
+            run = subprocess.run(argv, cwd=fixture,
+                                 env=hosts._host_environment(profile),
+                                 capture_output=True, text=True, timeout=15)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertIn('codex-cli', run.stdout)
+
+    @unittest.skipUnless(sys.platform == 'darwin', 'requires macOS sandbox-exec')
+    def test_mac_host_launch_uses_sandbox_exec(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            fixture = root / 'fixture'
+            state = root / 'state'
+            fixture.mkdir()
+            state.mkdir()
+            profile = {'isolation_evidence': {'mechanism': 'sandbox-exec'},
+                       'auth_files': [], 'state_dir': str(state)}
+            argv = hosts._contain(['/usr/bin/python3', '--version'], profile,
+                                  '/usr/bin/python3', fixture, [])
+            self.assertEqual(argv[:2], ['/usr/bin/sandbox-exec', '-p'])
+            self.assertIn('(subpath ' + json.dumps(str(state.resolve())) + ')', argv[2])
+
+    def test_unknown_isolation_mechanism_fails_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with self.assertRaisesRegex(RuntimeError, 'Unknown host isolation mechanism'):
+                hosts._contain(['/bin/true'], {'isolation_evidence': {}},
+                               '/bin/true', Path(temp), [])
+
+
 class HostTests(unittest.TestCase):
+    def test_mac_profile_requires_writable_state_directory(self):
+        with mock.patch.object(hosts, '_isolation_evidence', return_value={
+                'mechanism': 'sandbox-exec', 'filesystem_enforced': True,
+                'host_certified': False, 'error': None}), \
+             mock.patch.dict(os.environ, {'RELIABILITY_CODEX_STATE_DIR': ''}):
+            profile = hosts._profile('codex', sys.executable,
+                '--ignore-user-config --ignore-rules --model --sandbox --config --ephemeral')
+        self.assertFalse(profile['isolation_supported'])
+        self.assertTrue(any('writable state directory' in limit
+                            for limit in profile['unsupported_channels']))
+
+    def test_mac_profile_rejects_auth_on_state_filesystem(self):
+        state = self.root / 'state'
+        state.mkdir()
+        auth = self.root / 'auth.json'
+        auth.write_text('synthetic')
+        with mock.patch.object(hosts, '_isolation_evidence', return_value={
+                'mechanism': 'sandbox-exec', 'filesystem_enforced': True,
+                'host_certified': False, 'error': None}), \
+             mock.patch.dict(os.environ, {
+                 'RELIABILITY_CODEX_STATE_DIR': str(state),
+                 'RELIABILITY_CODEX_AUTH_FILES': str(auth)}):
+            profile = hosts._profile('codex', sys.executable,
+                '--ignore-user-config --ignore-rules --model --sandbox --config --ephemeral')
+        self.assertFalse(profile['isolation_supported'])
+        self.assertTrue(any('separate filesystem' in limit
+                            for limit in profile['unsupported_channels']))
+        self.assertTrue(any('cannot be pinned' in limit
+                            for limit in profile['unsupported_channels']))
+
     def test_file_path_import_resolves_sibling_tool_events(self):
         root = Path(__file__).resolve().parents[2]
         script = ("import importlib.util, pathlib, sys; "
@@ -77,6 +173,10 @@ class HostTests(unittest.TestCase):
             "filesystem_enforced": True, "host_certified": False, "error": None})
         canary.start()
         self.addCleanup(canary.stop)
+        uncontained_test_double = mock.patch.object(
+            hosts, '_contain', side_effect=lambda argv, *_: argv)
+        uncontained_test_double.start()
+        self.addCleanup(uncontained_test_double.stop)
         env = mock.patch.dict(os.environ, {"RELIABILITY_CLAUDE_MODEL": "claude-fixture-1",
                                           "RELIABILITY_CODEX_MODEL": "codex-fixture-1"})
         env.start()
@@ -302,6 +402,17 @@ class HostTests(unittest.TestCase):
         self.assertEqual(result["status"], "infrastructure_failed")
         self.assertFalse(marker.exists())
 
+    def test_launch_auth_preflight_failure_returns_infrastructure_result(self):
+        self.fake("raise SystemExit('task must not run')\n")
+        with mock.patch.object(hosts, '_contain',
+                               side_effect=ValueError('Allowed auth file is hard-linked')):
+            result = self.run_fake()
+        self.assertEqual(result['status'], 'infrastructure_failed')
+        self.assertIn('Allowed auth file is hard-linked', result['error'])
+        self.assertIsNone(result['exit_code'])
+        self.assertTrue(Path(result['raw_stdout_path']).is_file())
+        self.assertTrue(Path(result['raw_stderr_path']).is_file())
+
     def test_real_isolation_limits_block_launch_with_named_channels(self):
         marker = self.root / "task-started"
         self.fake("open(" + repr(str(marker)) + ",'w').close()\n")
@@ -520,13 +631,15 @@ class LinuxContainedLaunchTests(unittest.TestCase):
         marker = self.fixture / "env"
         self.write_cli("pathlib.Path(" + repr(str(marker)) + ").write_text("
                        "str('AGENTIC_HOST_KEY' in os.environ))\n")
-        with self.evidence(None):
+        with self.evidence(None), mock.patch.object(
+                hosts, '_contain', side_effect=lambda argv, *_: argv):
             result = hosts.run_host("codex", self.fixture, "task", [], self.root / "traces",
                                     timeout_seconds=10, receipt_repository=self.repo)
         self.assertEqual(marker.read_text(), "False")
         self.assertEqual(result["isolation_receipt"]["model"], "codex-fixture-1")
         del os.environ["AGENTIC_HOST_KEY"]
-        with self.evidence(None):
+        with self.evidence(None), mock.patch.object(
+                hosts, '_contain', side_effect=lambda argv, *_: argv):
             result = hosts.run_host("codex", self.fixture, "task", [], self.root / "traces",
                                     timeout_seconds=10, receipt_repository=self.repo)
         self.assertNotIn("isolation_receipt", result)
