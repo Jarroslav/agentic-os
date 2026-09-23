@@ -24,6 +24,8 @@ def command_claims(event: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("command completion source_revision is invalid")
     if type(event["exit_status"]) is not int:
         raise ValueError("command completion exit_status is invalid")
+    if type(event.get("required", True)) is not bool:
+        raise ValueError("command completion required flag is invalid")
     return {
         "evidence_id": event["evidence_id"],
         "run_id": event["run_id"],
@@ -32,6 +34,7 @@ def command_claims(event: Mapping[str, Any]) -> dict[str, Any]:
         "cwd": event["cwd"],
         "source_hash": event["source_hash"],
         "exit_status": event["exit_status"],
+        "required": event.get("required", True),
     }
 
 
@@ -54,7 +57,7 @@ def ingest_command_event(store: Any, event: Mapping[str, Any], *,
         receipt["run_id"], receipt["evidence_id"], kind="host.command",
         source_revision=receipt["source_revision"], command=receipt["command"],
         cwd=receipt["cwd"], source_hash=receipt["source_hash"],
-        exit_status=receipt["exit_status"], expected_revision=expected_revision,
+        exit_status=receipt["exit_status"], required=receipt["required"], expected_revision=expected_revision,
         lease_epoch=lease_epoch, coordinator_id=coordinator_id,
         host_record=receipt["host_record"],
     )

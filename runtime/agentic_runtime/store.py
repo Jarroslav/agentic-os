@@ -242,6 +242,24 @@ class RuntimeStore:
             (record_id, claims["run_id"], claims["purpose"], claims["identity"], claims.get("assignment_id"), claims.get("assignment_revision"), encoded, self.clock()),
         )
 
+    def _evidence_claim_is_bound(self, item: sqlite3.Row) -> bool:
+        """Reject pre-binding receipts and damaged persisted host claims."""
+        if item["claims_json"] is None or item["accepted_at"] is None or self.host_key is None:
+            return False
+        try:
+            claims = verify_dispatch(json.loads(item["claims_json"]), self.host_key,
+                                     purpose="evidence.record", now=item["accepted_at"])
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return False
+        expected = {"record_id": item["host_record_id"], "run_id": item["run_id"],
+                    "evidence_id": item["evidence_id"], "kind": item["kind"],
+                    "command": item["command"], "cwd": item["cwd"],
+                    "source_revision": item["source_revision"],
+                    "source_hash": item["source_hash"], "exit_status": item["exit_status"]}
+        return (all(claims.get(field) == value for field, value in expected.items())
+                and claims.get("required") is bool(item["required"])
+                and item["accepted_at"] >= claims["issued_at"])
+
     @staticmethod
     def _json(value: Any) -> str:
         return json.dumps(value, sort_keys=True, separators=(",", ":"))
@@ -367,11 +385,23 @@ class RuntimeStore:
                 raise RuntimeError("run must be running before completion")
             self._accept_host_claim(db, claims)
             placeholders = ",".join("?" for _ in evidence_ids)
-            evidence = db.execute(f"SELECT * FROM evidence WHERE run_id=? AND evidence_id IN ({placeholders})", (run_id, *evidence_ids)).fetchall()
+            evidence = db.execute(f"SELECT e.*,h.claims_json,h.accepted_at FROM evidence e LEFT JOIN host_dispatches h ON h.record_id=e.host_record_id WHERE e.run_id=? AND e.evidence_id IN ({placeholders})", (run_id, *evidence_ids)).fetchall()
             if (len(evidence) != len(set(evidence_ids)) or
                     any(item["required"] and item["exit_status"] != 0 for item in evidence) or
-                    any(item["host_record_id"] is None for item in evidence) or
+                    not any(item["required"] and item["exit_status"] == 0 for item in evidence) or
+                    any(not self._evidence_claim_is_bound(item) for item in evidence) or
                     any(artifact_hashes.get(item["evidence_id"]) != item["source_hash"] for item in evidence)):
+                raise RuntimeError("required completion evidence is missing or failed")
+            # A gate may not cherry-pick a passing check while a different
+            # required check has failed. The latest signed result for each
+            # command stream must pass and be named by the gate.
+            latest_required = {}
+            for item in db.execute("SELECT e.rowid,e.*,h.claims_json,h.accepted_at FROM evidence e LEFT JOIN host_dispatches h ON h.record_id=e.host_record_id WHERE e.run_id=? AND e.required=1 AND e.host_record_id IS NOT NULL ORDER BY e.rowid", (run_id,)):
+                latest_required[(item["kind"], item["command"], item["cwd"])] = item
+            selected = set(evidence_ids)
+            if any(item["exit_status"] != 0 or item["evidence_id"] not in selected
+                   or not self._evidence_claim_is_bound(item)
+                   for item in latest_required.values()):
                 raise RuntimeError("required completion evidence is missing or failed")
             unfinished = db.execute("SELECT 1 FROM assignments WHERE run_id=? AND state NOT IN ('completed','failed','cancelled')", (run_id,)).fetchone()
             if unfinished:
@@ -1018,11 +1048,15 @@ class RuntimeStore:
             self._validate_versions(db)
             run = self._guard(db, run_id, expected_revision, lease_epoch, coordinator_id)
             if source_revision != run["revision"]: raise RuntimeError("evidence is stale for current revision")
-            if exit_status != 0 and required: raise RuntimeError("required verification failed")
+            if exit_status != 0 and required and host_record is None:
+                raise RuntimeError("required verification failed")
             host_record_id = None
             if host_record is not None:
                 claims = self._host_claims(host_record, purpose="evidence.record", run_id=run_id)
-                if claims.get("evidence_id") != evidence_id or claims.get("source_revision") != source_revision or claims.get("source_hash") != source_hash or claims.get("exit_status") != exit_status:
+                if (claims.get("evidence_id") != evidence_id or claims.get("source_revision") != source_revision
+                        or claims.get("source_hash") != source_hash or claims.get("exit_status") != exit_status
+                        or claims.get("kind") != kind or claims.get("command") != command
+                        or claims.get("cwd") != cwd or claims.get("required") is not required):
                     raise RuntimeError("host evidence record does not match receipt")
                 self._accept_host_claim(db, claims)
                 host_record_id = claims["record_id"]

@@ -124,6 +124,8 @@ def issue_evidence_record(event: Mapping[str, Any], key: bytes | str, *,
         "evidence_id": claims["evidence_id"],
         "source_revision": claims["source_revision"],
         "source_hash": claims["source_hash"], "exit_status": claims["exit_status"],
+        "kind": "host.command", "command": claims["command"], "cwd": claims["cwd"],
+        "required": claims["required"],
         "issued_at": issued_at, "expires_at": expires_at,
     }
     return sign_dispatch(record, key)

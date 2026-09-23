@@ -72,8 +72,18 @@ unanswered or cyclic exchange is escalated by `runtime.recover`.
 `evidence.record` stores receipts bound to a run revision. A host-signed
 `run.complete` record must name successful required evidence and an approved gate
 before completion. Host adapters use the signing helpers in `agentic_runtime.host`
-and keep the signing key outside repository state. Required failures are rejected
-at ingestion rather than retained as receipts.
+and keep the signing key outside repository state. Signed command receipts bind
+the command, working directory, check type, and required flag as well as the
+result. Failed required commands remain in the ledger; completion requires the
+latest signed result for each required command stream to pass and be named by
+the gate. Host adapters may explicitly mark exploratory command events
+`required: false` before signing; the default is required. Unsigned required
+failures remain rejected.
+Completion rechecks the retained signed host claim against each evidence row.
+Legacy receipts that did not sign the command identity cannot satisfy a new
+completion gate; rerun the affected checks to create current receipts.
+Named optional results may remain in a gate for context, but at least one
+successful signed required receipt is still required to prove completion.
 `agentic_runtime.trace.command_receipt` accepts only explicit
 `agentic.command.completed` adapter events, so model prose cannot become command
 evidence by inference.
