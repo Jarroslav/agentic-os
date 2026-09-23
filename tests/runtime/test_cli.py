@@ -144,11 +144,68 @@ class CLITests(unittest.TestCase):
             self.assertEqual(cancelled['result']['state'], 'cancelled')
 
     def test_run_start_rejects_conflicting_task_input_metadata(self):
-        code, result = self.request('run.start', task_input='authoritative input',
-                                    coordinator_id='c1', branch='feature/x', worktree='unused',
-                                    metadata={'task_input': 'conflicting input'})
-        self.assertEqual(code, 2)
-        self.assertIn('task_input metadata conflicts', result['error']['message'])
+        with tempfile.TemporaryDirectory() as root:
+            code, result = self.request('run.start', root=root, task_input='authoritative input',
+                                        coordinator_id='c1', branch='feature/x', worktree='unused',
+                                        metadata={'task_input': 'conflicting input'})
+            self.assertEqual(code, 2)
+            self.assertIn('task_input metadata conflicts', result['error']['message'])
+            self.assertFalse((pathlib.Path(root) / '.agentic').exists())
+
+    def test_run_start_rejects_wrong_branch_before_creating_runtime_state(self):
+        with tempfile.TemporaryDirectory() as root:
+            worktree = pathlib.Path(root) / 'worktree'
+            subprocess.run(['git', 'init', '-q', str(worktree)], check=True)
+            subprocess.run(['git', '-C', str(worktree), 'checkout', '-q', '-b', 'feature/actual'], check=True)
+            code, result = self.request('run.start', root=root, task_input='work',
+                                        coordinator_id='coordinator', branch='feature/requested',
+                                        worktree=str(worktree), precondition={'ownership': 'verified'})
+            self.assertEqual(code, 2, result)
+            self.assertIn('worktree branch does not match', result['error']['message'])
+            self.assertFalse((pathlib.Path(root) / '.agentic').exists())
+
+    def test_run_start_rejects_missing_ownership_before_creating_runtime_state(self):
+        with tempfile.TemporaryDirectory() as root:
+            worktree = pathlib.Path(root) / 'worktree'
+            subprocess.run(['git', 'init', '-q', str(worktree)], check=True)
+            subprocess.run(['git', '-C', str(worktree), 'checkout', '-q', '-b', 'feature/actual'], check=True)
+            code, result = self.request('run.start', root=root, task_input='work',
+                                        coordinator_id='coordinator', branch='feature/actual',
+                                        worktree=str(worktree))
+            self.assertEqual(code, 2, result)
+            self.assertIn('ownership must be verified', result['error']['message'])
+            self.assertFalse((pathlib.Path(root) / '.agentic').exists())
+
+    def test_run_start_rejects_malformed_coordinator_without_pending_run(self):
+        for identity in ({'bad': True}, ['bad']):
+            with self.subTest(identity=identity), tempfile.TemporaryDirectory() as root:
+                code, result = self.request('run.start', root=root, task_input='work',
+                                            coordinator_id=identity, branch=None, worktree=None)
+                self.assertEqual(code, 2, result)
+                self.assertIn('coordinator_id', result['error']['message'])
+                self.assertFalse((pathlib.Path(root) / '.agentic').exists())
+
+    def test_run_start_requires_owned_branch_and_worktree(self):
+        with tempfile.TemporaryDirectory() as root:
+            code, result = self.request('run.start', root=root, task_input='work',
+                                        coordinator_id='coordinator', branch=None, worktree=None)
+            self.assertEqual(code, 2, result)
+            self.assertIn('branch and worktree', result['error']['message'])
+            self.assertFalse((pathlib.Path(root) / '.agentic').exists())
+
+    def test_run_start_rejects_nested_directory_claimed_as_worktree(self):
+        with tempfile.TemporaryDirectory() as root:
+            worktree = pathlib.Path(root) / 'worktree'
+            nested = worktree / 'nested'
+            subprocess.run(['git', 'init', '-q', str(worktree)], check=True)
+            subprocess.run(['git', '-C', str(worktree), 'checkout', '-q', '-b', 'feature/actual'], check=True)
+            nested.mkdir()
+            code, result = self.request('run.start', root=root, task_input='work',
+                                        coordinator_id='coordinator', branch='feature/actual',
+                                        worktree=str(nested), precondition={'ownership': 'verified'})
+            self.assertEqual(code, 2, result)
+            self.assertIn('worktree root', result['error']['message'])
+            self.assertFalse((pathlib.Path(root) / '.agentic').exists())
 
     def test_interrupted_run_resumes_under_a_new_fenced_coordinator(self):
         with tempfile.TemporaryDirectory() as root:
