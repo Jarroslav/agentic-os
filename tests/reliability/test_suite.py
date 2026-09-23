@@ -232,10 +232,26 @@ class SuiteTests(unittest.TestCase):
                         run_trial(root, trial_schedule('baseline')[0])
                     self.assertFalse((root / 'trials').exists())
                 else:
-                    result = run_trial(root, trial_schedule('baseline')[0])
+                    with patch('suite.observer_field_inventory', return_value={
+                            'field_contract_complete': True, 'missing_ids': []}):
+                        result = run_trial(root, trial_schedule('baseline')[0])
                     self.assertEqual(result['status'], 'infrastructure_failed')
                     self.assertTrue((root / 'trials' / trial_schedule('baseline')[0]['id'] /
                                      'execution-receipt.json').is_file())
+
+    @patch('suite.verify_freeze')
+    @patch('hosts.inspect_host')
+    def test_missing_observer_fields_do_not_consume_trial_slot(self, inspect, verify):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            host = {'available': True, 'profile': {'model': 'fixture-model',
+                    'isolation_supported': True}}
+            write_new(root / 'manifest.json', {'phase': 'baseline', 'revision': 'fixed',
+                                               'hosts': {'claude': host}})
+            inspect.return_value = host
+            with self.assertRaisesRegex(RuntimeError, 'Observer field contract incomplete'):
+                run_trial(root, trial_schedule('baseline')[0])
+            self.assertFalse((root / 'trials').exists())
 
 
 if __name__ == '__main__':

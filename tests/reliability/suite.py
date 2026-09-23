@@ -14,6 +14,7 @@ import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from observations import observer_field_inventory
 from scoring import score_trials
 
 SCENARIOS = ('fresh_feature', 'mature_escalation', 'delegation_resume', 'qa_failure')
@@ -244,6 +245,10 @@ def run_trial(root: Path, slot: dict) -> dict:
     current_host = inspect_host(slot['host'])
     if current_host != manifest['hosts'][slot['host']]:
         raise ValueError('frozen host version or execution profile changed')
+    inventory = observer_field_inventory()
+    if not inventory['field_contract_complete']:
+        raise RuntimeError('Observer field contract incomplete before reservation: ' +
+                           ', '.join(inventory['missing_ids']))
     profile = current_host.get('profile') or {}
     # Reserve after the frozen profile comparison, but before the certification
     # gate. An unavailable or uncertified host is still an evaluation slot whose

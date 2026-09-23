@@ -443,3 +443,15 @@ certifying a changed authentication or host configuration. The earlier Linux
 startup and hook observations remain historical evidence; they do not certify
 the refreshed profile. A new no-inference startup/hook/global-input check and
 reviewed profile freeze are required before more scored trials.
+
+## Observer field inventory (2026-09-23)
+
+`python3 tests/reliability/observations.py` exercises the actual replay path
+against all four frozen pristine fixtures and compares emitted fields with the
+25 frozen rubric assertions. It currently emits fields for only 3 assertions;
+22 are absent. The three emitted values are not positive proof. The command
+exits nonzero and lists missing assertion IDs. `suite.run_trial` now checks
+this inventory before reserving a slot, so an incomplete observer surface
+cannot consume another scored trial. Field presence is necessary but remains
+insufficient: every assertion still needs independently reviewed positive and
+negative controls before live scoring is certified.
