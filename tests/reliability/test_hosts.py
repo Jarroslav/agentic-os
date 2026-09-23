@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -96,6 +97,93 @@ class ContainmentTests(unittest.TestCase):
 
 
 class HostTests(unittest.TestCase):
+    def test_startup_certification_is_bound_to_current_auth_bytes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            auth = root / 'auth.json'
+            auth.write_text('credential A')
+            evidence = root / 'startup.json'
+            auth_path = str(auth.resolve())
+            digest_a = hashlib.sha256(auth.read_bytes()).hexdigest()
+            executable_sha256 = 'a' * 64
+            isolation_evidence = {'probe_sha256': 'b' * 64,
+                                  'host_identity': {'system': 'Darwin', 'mechanism': 'sandbox-exec'}}
+            proof = {'schema_version': 2, 'host': 'claude', 'model': 'claude-test',
+                     'startup_ok': True, 'auth_only': True,
+                     'global_inputs_denied': True, 'selected_plugin_visible': True,
+                     'hook_status': 'executed',
+                     'auth_file_sha256': {auth_path: digest_a},
+                     'executable_sha256': executable_sha256,
+                     'isolation_probe_sha256': isolation_evidence['probe_sha256'],
+                     'host_identity': isolation_evidence['host_identity']}
+            evidence.write_text(json.dumps(proof))
+            with mock.patch.dict(os.environ, {'RELIABILITY_CLAUDE_STARTUP_EVIDENCE': str(evidence)}):
+                accepted, _, error = hosts._configured_startup_evidence(
+                    'claude', 'claude-test', {auth_path: digest_a},
+                    executable_sha256, isolation_evidence)
+                self.assertIsNone(error)
+                self.assertEqual(accepted, proof)
+                auth.write_text('credential B')
+                digest_b = hashlib.sha256(auth.read_bytes()).hexdigest()
+                rejected, _, error = hosts._configured_startup_evidence(
+                    'claude', 'claude-test', {auth_path: digest_b},
+                    executable_sha256, isolation_evidence)
+                self.assertIsNone(rejected)
+                self.assertIn('auth file hash', error)
+                rejected, _, error = hosts._configured_startup_evidence(
+                    'claude', 'claude-test', {auth_path: digest_a},
+                    'c' * 64, isolation_evidence)
+                self.assertIsNone(rejected)
+                self.assertIn('executable hash', error)
+                rejected, _, error = hosts._configured_startup_evidence(
+                    'claude', 'claude-test', {auth_path: digest_a},
+                    executable_sha256,
+                    {**isolation_evidence, 'probe_sha256': 'd' * 64})
+                self.assertIsNone(rejected)
+                self.assertIn('isolation host identity', error)
+                evidence.write_text(json.dumps({**proof, 'schema_version': 1}))
+                rejected, _, error = hosts._configured_startup_evidence(
+                    'claude', 'claude-test', {auth_path: digest_a},
+                    executable_sha256, isolation_evidence)
+                self.assertIsNone(rejected)
+                self.assertIn('certification contract', error)
+
+    def test_legacy_startup_proof_cannot_certify_host_profile(self):
+        self.fake("raise SystemExit('task must not run')\n")
+        auth = self.root / 'auth.json'
+        auth.write_text('credential')
+        evidence = self.root / 'startup.json'
+        evidence.write_text(json.dumps({
+            'schema_version': 1, 'host': 'claude', 'model': 'claude-fixture-1',
+            'startup_ok': True, 'auth_only': True,
+            'global_inputs_denied': True, 'selected_plugin_visible': True,
+            'hook_status': 'executed'}))
+        with mock.patch.object(hosts, '_isolation_limits', side_effect=ISOLATION_LIMITS), \
+             mock.patch.object(hosts, '_isolation_evidence', return_value={
+                 'mechanism': 'bubblewrap', 'filesystem_enforced': True,
+                 'probe_sha256': 'a' * 64, 'host_identity': {'system': 'Linux'},
+                 'error': None}), \
+             mock.patch.dict(os.environ, {
+                 'RELIABILITY_CLAUDE_AUTH_FILES': str(auth),
+                 'RELIABILITY_CLAUDE_STARTUP_EVIDENCE': str(evidence)}):
+            profile = hosts._profile('claude', str(self.executable),
+                '--setting-sources --settings --model --effort --permission-mode '
+                '--strict-mcp-config --plugin-dir')
+        self.assertFalse(profile['isolation_supported'])
+        self.assertTrue(any('certification contract' in reason
+                            for reason in profile['unsupported_channels']))
+
+    def test_certified_profile_requires_declared_auth_file(self):
+        self.fake("raise SystemExit('task must not run')\n")
+        with mock.patch.object(hosts, '_configured_startup_evidence',
+                               return_value=({'startup_ok': True}, 'digest', None)):
+            profile = hosts._profile('claude', str(self.executable),
+                '--setting-sources --settings --model --effort --permission-mode '
+                '--strict-mcp-config --plugin-dir')
+        self.assertFalse(profile['isolation_supported'])
+        self.assertTrue(any('auth-file allowlist' in reason
+                            for reason in profile['unsupported_channels']))
+
     def test_mac_profile_requires_writable_state_directory(self):
         with mock.patch.object(hosts, '_isolation_evidence', return_value={
                 'mechanism': 'sandbox-exec', 'filesystem_enforced': True,
