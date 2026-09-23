@@ -85,6 +85,33 @@ class ObservationTests(unittest.TestCase):
         self.assertFalse(result['checkpoint_preserved'])
         self.assertFalse(result['user_files_preserved'])
 
+    def test_unchanged_user_files_without_an_observed_upgrade_are_unverified(self):
+        fixture = self.root / 'mature-fixture'
+        metadata = prepare_fixture(fixture, 'mature_escalation')
+        inputs = collect_observer_inputs(fixture, 'mature_escalation', metadata, '')
+        result = replay_observations(inputs)
+        self.assertTrue(result['user_file_bytes_unchanged'])
+        self.assertIsNone(result['user_files_preserved'])
+
+    def test_unvalidated_upgrade_receipts_do_not_earn_preservation_credit(self):
+        fixture = self.root / 'mature-receipt-fixture'
+        metadata = prepare_fixture(fixture, 'mature_escalation')
+        inputs = collect_observer_inputs(fixture, 'mature_escalation', metadata, '')
+        inputs['execution_receipts'] = [{'type': 'managed.upgrade.completed', 'status': 'success'}]
+        inputs['backend_events'] = [{'type': 'managed.content.changed', 'paths': ['plugin/README.md']}]
+        result = replay_observations(inputs)
+        self.assertTrue(result['user_file_bytes_unchanged'])
+        self.assertIsNone(result['user_files_preserved'])
+
+    def test_changed_user_files_fail_even_when_upgrade_is_unobserved(self):
+        fixture = self.root / 'mature-changed-fixture'
+        metadata = prepare_fixture(fixture, 'mature_escalation')
+        (fixture / 'POLICY.md').write_text('changed by candidate\n')
+        inputs = collect_observer_inputs(fixture, 'mature_escalation', metadata, '')
+        result = replay_observations(inputs)
+        self.assertFalse(result['user_file_bytes_unchanged'])
+        self.assertFalse(result['user_files_preserved'])
+
 
 if __name__ == '__main__':
     unittest.main()

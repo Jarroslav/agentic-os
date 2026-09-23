@@ -114,6 +114,15 @@ def replay_observations(inputs: dict) -> dict:
                 raise ValueError('retained source does not match its digest')
             path.write_bytes(data)
         result = oracle_observations(fixture, inputs['scenario'], metadata, inputs['trace'])
+    if inputs['scenario'] == 'mature_escalation':
+        # Hash equality proves byte preservation only. This observer does not
+        # implement a validated independent managed-upgrade evidence schema, so
+        # unchanged files stay unverified for every input, including receipt-shaped
+        # claims. Add a verified evidence contract before awarding positive credit.
+        unchanged = result.get('user_files_preserved')
+        result['user_file_bytes_unchanged'] = unchanged
+        if unchanged is True:
+            result['user_files_preserved'] = None
     # Volatile process metadata is retained by execution collectors, not compared
     # as a semantic verdict. Sandbox stderr may contain ephemeral local paths.
     for name in ('execution_pid', 'execution_log', 'unittest_log', 'remaining_work_log', 'git_error'):

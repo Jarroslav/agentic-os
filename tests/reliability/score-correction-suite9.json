@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "suite": "candidate-trials-2026-09-22-sonnet-luna",
+  "original_corrected_scorecard": {
+    "sha256": "4e0cc5d6d035188edba2908812f6d6342a0016813ddc01d9e29bf7e514d4ce40",
+    "overall_score": 1.3333,
+    "claude_score": 1.3333,
+    "codex_score": 4.0,
+    "path": ".agentic/work/framework-reliability/candidate-trials-2026-09-22-sonnet-luna/corrected-scorecard.json"
+  },
+  "evidence_archive": {
+    "path": ".agentic/work/framework-reliability/candidate-trials-2026-09-22-sonnet-luna/evidence.tar.gz",
+    "sha256": "ab78d900d0383463682d677def26ff58e173fa94433bb2797b34aea81c722d14",
+    "note": "Retained candidate trial evidence archive used by the independent observer replay."
+  },
+  "observer": {
+    "path": "tests/reliability/observations.py",
+    "sha256": "cadccd0f092b131f91603ba57da9a4e410e20e228b99c0eb2e668d5dde7aec89"
+  },
+  "reason": "The frozen contracts.preservation positive control requires an actual managed upgrade and managed-change evidence as well as unchanged user-file hashes. The observer does not implement a validated independent managed-upgrade evidence schema, so unchanged files remain unverified even if a caller supplies receipt-shaped claims. All six mature_escalation candidate trials had no host command receipts, and the retained evidence contains no independent managed-change record. Matching hashes alone therefore establish byte equality, not a successful preservation challenge.",
+  "correction": {
+    "unchanged_user_files_without_upgrade_receipt": "unverified",
+    "changed_user_files": "failed",
+    "managed_upgrade_evidence_schema_supported": false,
+    "frozen_rubric_or_thresholds_changed": false,
+    "additional_model_trials": 0
+  },
+  "replayed_trial_count": 24,
+  "candidate_score": {
+    "overall_score": 0.0,
+    "grade": "F",
+    "accepted": false,
+    "hosts": {
+      "claude": {
+        "score": 0.0,
+        "unverified_observations": 75
+      },
+      "codex": {
+        "score": 0.0,
+        "unverified_observations": 75
+      }
+    }
+  },
+  "baseline_score_unchanged": {
+    "overall_score": 0.0,
+    "grade": "F",
+    "accepted": false,
+    "observations_unverified_per_host": 75,
+    "evidence": {
+      "path": ".agentic/work/framework-reliability/baseline-trials-2026-09-21-models/scorecard.json",
+      "sha256": "91ee4a101897ae205dfc05b4145402d7083f4c7002ef0afacaaf952595928b02",
+      "source_suite": "baseline-trials-2026-09-21-models",
+      "hosts": {
+        "claude": {
+          "score": 0.0,
+          "grade": "F",
+          "unverified_observations": 75
+        },
+        "codex": {
+          "score": 0.0,
+          "grade": "F",
+          "unverified_observations": 75
+        }
+      },
+      "source_archive": {
+        "path": ".agentic/work/framework-reliability/baseline-trials-2026-09-21-models/source.tar",
+        "sha256": "84c5556fa34c35019dd3baabc735d5189c2aeb81bed0a00181392b42267f0b2b",
+        "note": "Frozen baseline source snapshot archive; trial records and scorecard are retained alongside it in the same suite directory."
+      }
+    }
+  },
+  "interpretation": "This is an evidence score, not a demonstrated product reliability grade. The original scorecard and raw trial archive remain unchanged; this record supersedes the original 1.333 candidate score for acceptance decisions.",
+  "candidate_trial_scorecard": {
+    "path": ".agentic/work/framework-reliability/candidate-trials-2026-09-22-sonnet-luna/scorecard.json",
+    "sha256": "f6f1d8234b651c7c15ae93479db60a86fce316237f26b8b92e887da028ade6a5",
+    "note": "Original candidate scorecard before independent preservation replay."
+  }
+}

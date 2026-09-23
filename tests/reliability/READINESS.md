@@ -20,7 +20,18 @@ changed, the corrected score is **F / 1.333 overall**: Claude **1.333**, Codex
 observations and 72 of 75 Codex observations unverified; only directly observed
 user-file-preservation assertions earned points. The scenario oracle does not
 emit most requested rubric keys, so neither score demonstrates the planned
-measurement coverage.
+measurement coverage. A further acceptance-contract audit found that the
+preservation points were not supported: all six mature-repository trials had no
+host command receipts, and the retained evidence has no independent
+managed-change record. The frozen positive control requires an actual managed upgrade and managed-change evidence as well
+as unchanged user-file hashes. The observer does not yet validate an independent managed-upgrade evidence
+schema, so unchanged files remain unverified even when callers provide receipt-shaped
+claims; changed files remain a failure. Supporting positive preservation scoring
+requires a separately verified evidence contract. Replaying all 24 retained candidate records gives **F / 0.0** for both
+Claude and Codex, with all 75 observations per host unverified. This evidence
+score supersedes the earlier 1.333 report for acceptance; original scorecards
+and raw trial evidence remain unchanged. The correction is recorded in
+[`score-correction-suite9.json`](score-correction-suite9.json).
 
 Suite 9 retained 14 completed trial records, nine Claude authentication
 failures, and one Codex timeout. Codex recorded 11 completed trials and one
@@ -34,11 +45,12 @@ Suite 7's corrected evidence remains at
 excluded from score comparisons because it stopped after the model profile
 changed. Model-profile results are not pooled.
 
-Candidate acceptance is still open. The next evaluation step is to repair and
-independently review the rubric-to-oracle coverage, refresh the revoked Claude
-authentication through the controlled host setup, freeze an amended definition,
-and obtain a fresh live-trial budget before running another matrix. Suite 9's
-unverified assertions have not been inferred as passes or failures.
+Candidate acceptance is still open. The next evaluation step is to complete
+independent rubric-to-oracle coverage, certify current host authentication and
+observation channels, freeze any approved observer-definition amendment, and
+obtain a fresh paired baseline/candidate trial budget before running another
+matrix. Suite 9's unverified assertions have not been inferred as passes or
+failures.
 
 The initial blind review evaluated staged tree
 `111b0002e6d0a693f3490950a44d78a8af42c854` with separate correctness/recovery
@@ -50,7 +62,7 @@ harness tests do not establish evaluation coverage or host certification.
 
 | Finding | Current disposition |
 |---|---|
-| Only preservation can receive positive rubric credit | The first scorecard showed preservation-only credit, but raw traces prove provider rate-limit rejection. The corrected scorecard awards no product points and keeps every assertion unverified. |
+| Preservation can pass without an upgrade | Fixed: unchanged hashes alone no longer earn credit. All six suite 9 mature-repository trials lack host command receipts and independently retained managed-change evidence; their preservation result is now unverified and the candidate score is F / 0.0. |
 | Host defaults, model identity, global hooks/plugins not frozen | Closed for this candidate freeze. Explicit Claude/Codex profiles, startup evidence, drift checks and 30 Linux kernel-backed controls passed. Claude model identity ignores the CLI's trailing `<synthetic>` diagnostic label; Codex identity is bound to a frozen `--model` launch argument plus a real `thread.started` event. |
 | Interrupted process can restart instead of resume | Boundary snapshots added; authenticated ownership and budget comparisons remain open. |
 | Candidate can forge unittest output and exit successfully | Parent evaluates returned values; forged unittest text is rejected. Included in the passed definition-checkpoint review; live certification remains deferred. |
