@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-23T07:24:34Z",
+ "attested_at": "2026-09-23T17:31:47Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3131,7 +3131,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "631a53e0b9f6770af920225c3f2a043a666800babb74e6a7cdb313223f3bf72a",
+   "sha256": "d4959fb27d26511efef1c16082608527d3af5b1907f4164cbcdef2abf639e301",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3167,14 +3167,14 @@
    "max_run": 0
   },
   "tests/reliability/hosts.py": {
-   "sha256": "c4e843c04e2861db09ea05ee5b6276ad19322e8231212761b8fe47aa0e783d0c",
-   "line": 0.009,
+   "sha256": "e42b8eb41becf45ce5de329085bb554f4b41e8c9571f575760dd34a26cd736f5",
+   "line": 0.0087,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/isolation.py": {
-   "sha256": "3df0c9840401c1894b7f2955872b6ba2c08ebfa3314a3b94346a4a73942f526e",
-   "line": 0.0058,
+   "sha256": "9e07320e3a03d0beffbe2437ecc4eb31e142321c872235bf8aba06f77ed282a0",
+   "line": 0.0051,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3221,14 +3221,14 @@
    "max_run": 0
   },
   "tests/reliability/test_hosts.py": {
-   "sha256": "9d49f3639dd69e42688e7b4d6641a9f9482e2e9af1fcb79bbd05a568c8bb7d64",
-   "line": 0.0132,
+   "sha256": "b99e022320fc05f14959a8b7631e8b54dab0e2302342981bfa345ddb94b121a0",
+   "line": 0.0112,
    "shingle": 0.0,
    "max_run": 0
   },
   "tests/reliability/test_isolation.py": {
-   "sha256": "292dcbe18f2636a616e181bcfa37fefab134073ebe12f1a4592cb2c3af45558f",
-   "line": 0.0229,
+   "sha256": "3e5437a3c6fadef7a14e14ef66aa98a097795b5d4d6e6c8dbac2061c820e8b46",
+   "line": 0.0156,
    "shingle": 0.0,
    "max_run": 0
   },

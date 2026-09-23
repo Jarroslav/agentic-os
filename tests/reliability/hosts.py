@@ -212,6 +212,14 @@ def _profile(host: str, executable: str, help_text: str,
     isolation_evidence = _isolation_evidence(timeout_seconds)
     if not isolation_evidence["filesystem_enforced"]:
         limits.append(isolation_evidence["error"] or "Filesystem containment canary failed")
+    if isolation_evidence.get("mechanism") == "sandbox-exec" and state_dir is None:
+        limits.append("macOS host launch requires an explicit writable state directory")
+    if isolation_evidence.get("mechanism") == "sandbox-exec" and auth_files:
+        limits.append("macOS auth-file identity cannot be pinned across validation and launch")
+    if (isolation_evidence.get("mechanism") == "sandbox-exec" and state_dir
+            and any(Path(path).stat().st_dev == Path(state_dir).stat().st_dev
+                    for path in auth_files)):
+        limits.append("macOS auth files require a separate filesystem from writable state")
     if not model or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", model):
         limits.append(f"RELIABILITY_{host.upper()}_MODEL must name an explicit model ID")
     elif model in {"opus", "sonnet", "haiku", "fable", "default", "latest"}:
@@ -265,7 +273,7 @@ def inspect_host(host: str, timeout_seconds: float = 10) -> dict:
             raise subprocess.TimeoutExpired([executable, "isolation-canary"], timeout_seconds)
         result.update(available=True, version=probe.stdout.strip() or None,
                       profile=_profile(host, executable, help_probe.stdout, min(10, remaining)))
-    except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+    except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as exc:
         result["error"] = f"{host} profile probe failed ({type(exc).__name__})"
         result["timed_out"] = isinstance(exc, subprocess.TimeoutExpired)
     return result
@@ -285,23 +293,30 @@ def _build_command(host: str, fixture: Path, prompt: str,
 
 def _contain(argv: list[str], profile: dict, executable: str, fixture: Path,
              roots: list[Path]) -> list[str]:
-    """Wrap a Linux launch in the same bubblewrap boundary the canary proved."""
-    if (profile.get("isolation_evidence") or {}).get("mechanism") != "bubblewrap":
-        return argv
+    """Wrap a launch in the same kernel boundary the platform canary proved."""
+    mechanism = (profile.get("isolation_evidence") or {}).get("mechanism")
+    if mechanism not in ("bubblewrap", "sandbox-exec"):
+        raise RuntimeError("Unknown host isolation mechanism")
     isolation = _isolation()
-    bwrap = isolation.linux_executable()
-    if bwrap is None:
-        raise RuntimeError("Linux bubblewrap is unavailable at launch")
     resolved_executable = Path(executable).resolve()
     runtime_root = next((parent for parent in resolved_executable.parents
                          if str(parent) != "/"
                          and all((parent / name).is_dir() for name in ("bin", "lib"))),
                         resolved_executable.parent)
-    return isolation.linux_argv(bwrap, fixture, [runtime_root],
-                                [Path(p) for p in profile.get("auth_files", [])],
-                                roots, argv,
-                                writable_dirs=([Path(profile["state_dir"])]
-                                                if profile.get("state_dir") else []))
+    auth_files = [Path(p) for p in profile.get("auth_files", [])]
+    writable_dirs = ([Path(profile["state_dir"])]
+                     if profile.get("state_dir") else [])
+    if mechanism == "bubblewrap":
+        bwrap = isolation.linux_executable()
+        if bwrap is None:
+            raise RuntimeError("Linux bubblewrap is unavailable at launch")
+        return isolation.linux_argv(bwrap, fixture, [runtime_root], auth_files,
+                                    roots, argv, writable_dirs=writable_dirs)
+    sandbox = isolation.executable()
+    if sandbox is None:
+        raise RuntimeError("macOS sandbox-exec is unavailable at launch")
+    return isolation.mac_argv(sandbox, fixture, [runtime_root], auth_files,
+                              roots, argv, writable_dirs=writable_dirs)
 
 
 def _launch(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
@@ -561,7 +576,7 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
             result["status"] = ("timed_out" if time.monotonic() - started >= timeout_seconds
                                 else "infrastructure_failed")
             result["error"] = "Host configuration probe timed out"
-        except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
+        except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as exc:
             result["error"] = f"Host setup or execution failed: {exc}"
             stderr.write((result["error"] + "\n").encode("utf-8", errors="replace"))
         finally:

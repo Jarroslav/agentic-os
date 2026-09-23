@@ -26,24 +26,62 @@ def executable() -> str | None:
 
 
 def filesystem_profile(fixture: Path, runtime_roots: list[Path],
-                       read_files: list[Path] = ()) -> str:
+                       read_files: list[Path] = (),
+                       writable_dirs: list[Path] = ()) -> str:
     """Allow fixture writes, exact auth-file reads, runtime reads, and networking.
 
     No home directory permission is implied by an exact auth-file exception.
     This is an experimental outer boundary; it does not replace host tool policy.
     """
     fixture = fixture.resolve()
-    reads = sorted({str(fixture), *(str(p.resolve()) for p in runtime_roots)})
+    writes = sorted({str(fixture), *(str(p.resolve()) for p in writable_dirs)})
+    reads = sorted({*writes, *(str(p.resolve()) for p in runtime_roots)})
     literals = sorted({str(p.resolve()) for p in read_files})
+    if any(Path(auth).is_relative_to(Path(writable))
+           for auth in literals for writable in writes):
+        raise ValueError('Allowed auth file is inside a writable directory')
+    if any(Path(auth).is_relative_to(Path(read_root))
+           for auth in literals for read_root in reads):
+        raise ValueError('Allowed auth file is inside a broad read root')
     return ('(version 1)(deny default)'
-            '(allow process-exec process-fork signal sysctl-read mach-lookup network*)'
+            '(allow process-exec process-fork sysctl-read mach-lookup network*)'
             '(allow file-read-metadata)'
             '(allow file-read* (literal "/") (literal "/dev/null")'
             ' (literal "/dev/urandom") ' +
             ' '.join('(subpath ' + json.dumps(p) + ')' for p in reads) + ' ' +
             ' '.join('(literal ' + json.dumps(p) + ')' for p in literals) + ')'
-            '(allow file-write* (subpath ' + json.dumps(str(fixture)) + ')'
-            ' (literal "/dev/null"))')
+            '(allow file-write* '
+            + ' '.join('(subpath ' + json.dumps(p) + ')' for p in writes)
+            + ' (literal "/dev/null"))')
+
+
+def mac_argv(sandbox: str, fixture: Path, runtime_roots: list[Path] = (),
+             read_files: list[Path] = (), plugin_roots: list[Path] = (),
+             command: list[str] = (), writable_dirs: list[Path] = ()) -> list[str]:
+    """Run the host under the same deny-by-default profile as the macOS canary."""
+    fixture = Path(fixture)
+    if not fixture.is_dir():
+        raise FileNotFoundError('Fixture directory does not exist: ' + str(fixture))
+    for path in read_files:
+        path = Path(path)
+        if not path.is_file() or path.is_symlink():
+            raise FileNotFoundError('Allowed read file does not exist: ' + str(path))
+        if path.stat().st_nlink != 1:
+            raise ValueError('Allowed auth file is hard-linked')
+    for path in writable_dirs:
+        if not Path(path).is_dir():
+            raise FileNotFoundError('Writable host directory does not exist: ' + str(path))
+    system_roots = [Path('/System/Library'), Path('/usr/lib'),
+                    Path('/Library/Apple/System/Library'),
+                    Path('/private/var/db/timezone')]
+    profile = filesystem_profile(fixture, [*system_roots, *runtime_roots,
+                                           *plugin_roots],
+                                 read_files, writable_dirs)
+    writable_devices = {path.stat().st_dev for path in
+                        [fixture, *(Path(p) for p in writable_dirs)]}
+    if any(Path(auth).stat().st_dev in writable_devices for auth in read_files):
+        raise ValueError('Allowed auth file requires a separate filesystem')
+    return [sandbox, '-p', profile, *command]
 
 
 _PROGRAM = r'''
@@ -55,6 +93,25 @@ checks['fixture_read'] = (fixture / 'input').read_text() == 'allowed'
 (fixture / 'output').write_text('written')
 checks['fixture_write'] = (fixture / 'output').read_text() == 'written'
 checks['auth_exact_read'] = (root / 'auth' / 'auth.json').read_text() == 'synthetic auth'
+try:
+    (root / 'snapshot').stat()
+except PermissionError:
+    checks['outside_metadata_visible'] = False
+else:
+    checks['outside_metadata_visible'] = True
+try:
+    (root / 'auth' / 'sibling.json').read_text()
+except PermissionError:
+    checks['auth_sibling_read_denied'] = True
+else:
+    checks['auth_sibling_read_denied'] = False
+try:
+    with (root / 'auth' / 'auth.json').open('a'):
+        pass
+except PermissionError:
+    checks['auth_write_denied'] = True
+else:
+    checks['auth_write_denied'] = False
 checks['plugin_read'] = (root / 'plugin' / 'SKILL.md').read_text() == 'synthetic plugin'
 for name in ('snapshot', 'evidence', 'global-instructions', 'other-auth', 'fixture/escape'):
     path = root / name
@@ -85,9 +142,13 @@ print(json.dumps(checks, sort_keys=True))
 def probe_filesystem_boundary(timeout_seconds: float = 3) -> dict:
     """Retain bounded, secret-free canary evidence; fail closed on any mismatch."""
     sandbox = executable()
-    result = {'schema_version': 1, 'filesystem_enforced': False,
+    result = {'schema_version': 1, 'mechanism': 'sandbox-exec',
+              'filesystem_enforced': False,
+              'path_scoped_reads': True, 'inode_alias_isolation': False,
+              'auth_path_identity_stable': False,
               'host_certified': False, 'checks': {}, 'error': None,
-              'probe_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+              'probe_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              'host_identity': _host_identity('sandbox-exec', None)}
     if sandbox is None:
         result['error'] = 'macOS /usr/bin/sandbox-exec is unavailable'
         return result
@@ -100,6 +161,7 @@ def probe_filesystem_boundary(timeout_seconds: float = 3) -> dict:
             (root / name).write_text('protected')
         (root / 'auth').mkdir()
         (root / 'auth' / 'auth.json').write_text('synthetic auth')
+        (root / 'auth' / 'sibling.json').write_text('sibling secret')
         (root / 'plugin').mkdir()
         (root / 'plugin' / 'SKILL.md').write_text('synthetic plugin')
         (fixture / 'escape').symlink_to(root / 'snapshot')
@@ -116,7 +178,10 @@ def probe_filesystem_boundary(timeout_seconds: float = 3) -> dict:
                 result['error'] = 'Offline sandbox canary failed with exit ' + str(process.returncode)
                 return result
             checks = json.loads(process.stdout)
-            expected = {'fixture_read', 'fixture_write', 'auth_exact_read', 'plugin_read',
+            expected = {'fixture_read', 'fixture_write', 'auth_exact_read',
+                        'outside_metadata_visible',
+                        'auth_sibling_read_denied',
+                        'auth_write_denied', 'plugin_read',
                         'loopback_network', 'descendant_read_denied'} | {
                 name + ':' + mode for name in ('snapshot', 'evidence', 'global-instructions',
                                                'other-auth', 'fixture/escape') for mode in ('r', 'w')}
@@ -125,7 +190,9 @@ def probe_filesystem_boundary(timeout_seconds: float = 3) -> dict:
                                              and all(value is True for value in checks.values())
                                              and all((root / name).read_text() == 'protected'
                                                      for name in ('snapshot', 'evidence',
-                                                                  'global-instructions', 'other-auth')))
+                                                                  'global-instructions', 'other-auth'))
+                                             and (root / 'auth' / 'auth.json').read_text()
+                                             == 'synthetic auth')
             if not result['filesystem_enforced']:
                 result['error'] = 'Offline sandbox canary evidence did not match every required control'
         except (OSError, subprocess.SubprocessError, ValueError) as exc:

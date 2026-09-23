@@ -18,7 +18,7 @@ class IsolationTests(unittest.TestCase):
     def test_kernel_controls_preserve_allowed_io_and_deny_external_io(self):
         result = isolation.probe_filesystem_boundary()
         self.assertTrue(result['filesystem_enforced'], result)
-        self.assertEqual(len(result['checks']), 16)
+        self.assertEqual(len(result['checks']), 19)
         self.assertFalse(result['host_certified'])
 
     def test_missing_platform_is_not_certification(self):
@@ -47,6 +47,156 @@ class IsolationTests(unittest.TestCase):
         profile = isolation.filesystem_profile(Path('/private/fixture'), [], [home / 'auth.json'])
         self.assertIn('(literal "/private/synthetic-home/auth.json")', profile)
         self.assertNotIn('(subpath "/private/synthetic-home")', profile)
+
+    def test_mac_launch_profile_allows_only_declared_state_writes(self):
+        profile = isolation.filesystem_profile(
+            Path('/private/fixture'), [Path('/opt/runtime')],
+            [Path('/private/auth/token.json')], [Path('/private/state')])
+        self.assertIn('(subpath "/private/state")', profile)
+        self.assertIn('(literal "/private/auth/token.json")', profile)
+        self.assertNotIn('(subpath "/private/auth")', profile)
+        self.assertNotIn('(subpath "/private")', profile)
+
+    def test_mac_launch_rejects_auth_under_writable_state(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            fixture = root / 'fixture'
+            state = root / 'state'
+            fixture.mkdir()
+            state.mkdir()
+            auth = state / 'auth.json'
+            auth.write_text('secret')
+            with self.assertRaisesRegex(ValueError, 'writable'):
+                isolation.mac_argv('/usr/bin/sandbox-exec', fixture, [], [auth], [],
+                                   ['/bin/true'], [state])
+            self.assertEqual(auth.read_text(), 'secret')
+
+    def test_mac_launch_rejects_hardlinked_auth_alias(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            fixture = root / 'fixture'
+            state = root / 'state'
+            fixture.mkdir()
+            state.mkdir()
+            auth = root / 'auth.json'
+            auth.write_text('secret')
+            (state / 'alias').hardlink_to(auth)
+            with self.assertRaisesRegex(ValueError, 'hard-linked'):
+                isolation.mac_argv('/usr/bin/sandbox-exec', fixture, [], [auth], [],
+                                   ['/bin/true'], [state])
+            self.assertEqual(auth.read_text(), 'secret')
+
+    def test_mac_launch_rejects_auth_inside_broad_plugin_read_root(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            fixture = root / 'fixture'
+            plugin = root / 'plugin'
+            fixture.mkdir()
+            plugin.mkdir()
+            auth = plugin / 'auth.json'
+            auth.write_text('secret')
+            (plugin / 'sibling.json').write_text('sibling-secret')
+            with self.assertRaisesRegex(ValueError, 'broad read root'):
+                isolation.mac_argv('/usr/bin/sandbox-exec', fixture, [], [auth],
+                                   [plugin], ['/bin/true'])
+
+    def test_mac_launch_rejects_same_filesystem_auth_race(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            fixture = root / 'fixture'
+            state = root / 'state'
+            fixture.mkdir()
+            state.mkdir()
+            auth = root / 'auth.json'
+            auth.write_text('secret')
+            with self.assertRaisesRegex(ValueError, 'separate filesystem'):
+                isolation.mac_argv('/usr/bin/sandbox-exec', fixture, [], [auth], [],
+                                   ['/bin/true'], [state])
+            self.assertEqual(auth.read_text(), 'secret')
+
+    def test_mac_launch_argv_wraps_command_in_sandbox_exec(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = Path(temp).resolve()
+            argv = isolation.mac_argv('/usr/bin/sandbox-exec', fixture,
+                                      [Path('/opt/runtime')], [], [],
+                                      ['/opt/runtime/bin/host', '--version'])
+            self.assertEqual(argv[:2], ['/usr/bin/sandbox-exec', '-p'])
+            self.assertEqual(argv[-2:], ['/opt/runtime/bin/host', '--version'])
+            self.assertIn('(subpath ' + json.dumps(str(fixture)) + ')', argv[2])
+
+    @unittest.skipUnless(isolation.executable(), 'requires macOS sandbox-exec')
+    def test_mac_launch_wrapper_enforces_fixture_and_state_boundaries(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            fixture = root / 'fixture'
+            state = root / 'state'
+            fixture.mkdir()
+            state.mkdir()
+            outside = root / 'outside'
+            outside.write_text('protected')
+            program = (
+                "import json,pathlib,sys; "
+                "f,s,o=map(pathlib.Path,sys.argv[1:]); "
+                "(f/'ok').write_text('ok'); (s/'ok').write_text('ok'); "
+                "\ntry: o.read_text(); denied=False\n"
+                "except PermissionError: denied=True\n"
+                "print(json.dumps({'fixture':(f/'ok').read_text()=='ok',"
+                "'state':(s/'ok').read_text()=='ok','outside_denied':denied}))")
+            runtime = [Path(sys.prefix), Path(sys.base_prefix),
+                       Path(sys.executable).resolve().parent,
+                       Path('/System/Library'), Path('/usr/lib')]
+            argv = isolation.mac_argv(isolation.executable(), fixture, runtime,
+                                      command=[sys.executable, '-I', '-B', '-c', program,
+                                               str(fixture), str(state), str(outside)],
+                                      writable_dirs=[state])
+            run = subprocess.run(argv, cwd=fixture, capture_output=True, text=True)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertEqual(json.loads(run.stdout),
+                             {'fixture': True, 'state': True, 'outside_denied': True})
+
+    @unittest.skipUnless(isolation.executable(), 'requires macOS sandbox-exec')
+    def test_selected_plugin_hardlink_is_within_path_scoped_read_boundary(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            fixture = root / 'fixture'
+            plugin = root / 'plugin'
+            fixture.mkdir()
+            plugin.mkdir()
+            outside = root / 'outside'
+            outside.write_text('aliased content')
+            alias = plugin / 'alias'
+            alias.hardlink_to(outside)
+            program = (
+                "import json,pathlib,sys; outside,alias=map(pathlib.Path,sys.argv[1:]); "
+                "\ntry: outside.read_text(); direct_denied=False\n"
+                "except PermissionError: direct_denied=True\n"
+                "print(json.dumps({'direct_denied':direct_denied,"
+                "'selected_alias_visible':alias.read_text()=='aliased content'}))")
+            runtime = [Path(sys.prefix), Path(sys.base_prefix),
+                       Path(sys.executable).resolve().parent]
+            argv = isolation.mac_argv(isolation.executable(), fixture, runtime, [],
+                                      [plugin], [sys.executable, '-I', '-B', '-c',
+                                                 program, str(outside), str(alias)])
+            run = subprocess.run(argv, cwd=fixture, capture_output=True, text=True)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertEqual(json.loads(run.stdout),
+                             {'direct_denied': True, 'selected_alias_visible': True})
+
+    @unittest.skipUnless(isolation.executable(), 'requires macOS sandbox-exec')
+    def test_mac_wrapper_cannot_signal_outside_process(self):
+        with tempfile.TemporaryDirectory() as temp:
+            fixture = Path(temp).resolve()
+            victim = subprocess.Popen(['/bin/sleep', '30'])
+            try:
+                argv = isolation.mac_argv(isolation.executable(), fixture,
+                                          command=['/bin/kill', '-TERM', str(victim.pid)])
+                run = subprocess.run(argv, cwd=fixture, capture_output=True, text=True)
+                self.assertNotEqual(run.returncode, 0)
+                self.assertIn('Operation not permitted', run.stderr)
+                self.assertIsNone(victim.poll())
+            finally:
+                victim.terminate()
+                victim.wait(timeout=5)
 
 
 def _bwrap_usable() -> bool:
