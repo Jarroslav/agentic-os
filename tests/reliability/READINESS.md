@@ -112,6 +112,18 @@ truthy non-string coordinator IDs and nested directories misclaimed as worktrees
 public preflight removes the ordinary invalid-request artifact, but is not a
 cross-process lock against a concurrent branch change.
 
+The completion ledger now retains host-signed failed required commands, and a
+gate must include a passing latest result for every required command stream.
+The signed command identity and required flag prevent relabelling a result to
+sidestep a failure. This is deterministic runtime proof, not independent live
+evidence that either host ran the required workflow checks; the evaluator's
+`evidence.failure` field remains unverified.
+Blind review found that pre-change persisted receipts lacked the newly signed
+fields. Completion now revalidates the retained host claim against the evidence
+row; legacy receipts cannot authorize completion until the check is rerun.
+The gate may retain optional probes alongside a successful required check;
+optional results alone never count as completion proof.
+
 A proposed QA traceability observer was withheld after blind review found that
 candidate test code could alter its in-process result serializer and forge test
 identities, call records, and mutation failures. The false positive was reproduced

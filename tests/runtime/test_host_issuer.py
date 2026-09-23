@@ -42,6 +42,24 @@ class HostIssuerTests(unittest.TestCase):
                 exit_status=event["exit_status"], host_record=event["host_record"])
             self.assertEqual(evidence["host_record_id"], "e1")
 
+    def test_signed_command_cannot_be_relabelled_as_other_check_or_optional(self):
+        with tempfile.TemporaryDirectory() as temp:
+            store = RuntimeStore(temp, host_key=b"key", clock=lambda: 10)
+            store.create_run("r")
+            store.transition("r", "running")
+            event = self.event()
+            event["source_revision"] = store.get_run("r")["revision"]
+            claim = issue_evidence_record(event, b"key", identity="codex",
+                                          issued_at=10, expires_at=20)
+            for command, required in (("ruff check", True), ("pytest", False)):
+                with self.subTest(command=command, required=required):
+                    with self.assertRaisesRegex(RuntimeError, "does not match"):
+                        store.record_evidence(
+                            "r", "e1", kind="host.command", source_revision=event["source_revision"],
+                            command=command, cwd=".", source_hash="sha256:abc", exit_status=0,
+                            required=required, host_record=claim)
+            self.assertEqual(store.get_run("r")["revision"], event["source_revision"])
+
     def test_adapter_returns_ingestible_event(self):
         event = adapt_command_event(self.event(), b"key", identity="claude",
                                     issued_at=10, expires_at=20)

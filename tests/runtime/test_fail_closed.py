@@ -1,3 +1,4 @@
+import json
 import math
 import sqlite3
 import tempfile
@@ -234,7 +235,9 @@ class FailClosedTests(unittest.TestCase):
         evidence_record = sign_dispatch({
             'record_id': 'evidence-1', 'purpose': 'evidence.record', 'run_id': 'r',
             'identity': 'worker', 'evidence_id': 'verified', 'source_revision': run['revision'],
-            'source_hash': 'source', 'exit_status': 0, 'issued_at': 99, 'expires_at': 200,
+            'source_hash': 'source', 'exit_status': 0, 'kind': 'host.command',
+            'command': 'true', 'cwd': '/', 'required': True,
+            'issued_at': 99, 'expires_at': 200,
         }, key)
         evidence = self.store.record_evidence('r', 'verified', kind='host.command',
                                               source_revision=run['revision'], command='true', cwd='/',
@@ -268,6 +271,124 @@ class FailClosedTests(unittest.TestCase):
                               'issued_at': 99, 'expires_at': 200}, key)
         with self.assertRaisesRegex(RuntimeError, 'evidence'):
             self.store.complete_run('r', host_record=gate)
+
+    def test_failed_required_check_cannot_be_omitted_from_completion_gate(self):
+        key = b'test-host-key'
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=key)
+        self.store.assignment_transition('r', 'a', 'running', expected_assignment_revision=0)
+        self.store.assignment_transition('r', 'a', 'completed', expected_assignment_revision=1)
+
+        def record(evidence_id, command, exit_status):
+            run = self.store.get_run('r')
+            claim = sign_dispatch({
+                'record_id': evidence_id, 'purpose': 'evidence.record', 'run_id': 'r',
+                'identity': 'worker', 'evidence_id': evidence_id,
+                'source_revision': run['revision'], 'source_hash': 'source',
+                'exit_status': exit_status, 'command': command, 'cwd': '/',
+                'kind': 'host.command', 'required': True,
+                'issued_at': 99, 'expires_at': 200,
+            }, key)
+            return self.store.record_evidence(
+                'r', evidence_id, kind='host.command', source_revision=run['revision'],
+                command=command, cwd='/', source_hash='source', exit_status=exit_status,
+                host_record=claim)
+
+        failed = record('failed-test', 'pytest', 1)
+        self.assertEqual(failed['exit_status'], 1)
+        lint = record('passing-lint', 'ruff check', 0)
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=key)
+
+        def gate(record_id, evidence_ids):
+            return sign_dispatch({
+                'record_id': record_id, 'purpose': 'run.complete', 'run_id': 'r',
+                'identity': 'coordinator', 'gate_decision': 'approved',
+                'evidence_ids': evidence_ids,
+                'artifact_hashes': {name: 'source' for name in evidence_ids},
+                'issued_at': 99, 'expires_at': 200,
+            }, key)
+
+        with self.assertRaisesRegex(RuntimeError, 'required completion evidence'):
+            self.store.complete_run('r', host_record=gate('early-gate', [lint['evidence_id']]))
+        passing = record('passing-test', 'pytest', 0)
+        completed = self.store.complete_run(
+            'r', host_record=gate('final-gate', [lint['evidence_id'], passing['evidence_id']]))
+        self.assertEqual(completed['state'], 'completed')
+
+    def test_legacy_receipt_without_signed_command_identity_cannot_complete(self):
+        key = b'test-host-key'
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=key)
+        self.store.assignment_transition('r', 'a', 'running', expected_assignment_revision=0)
+        self.store.assignment_transition('r', 'a', 'completed', expected_assignment_revision=1)
+        run = self.store.get_run('r')
+        legacy_claim = sign_dispatch({
+            'record_id': 'legacy-evidence', 'purpose': 'evidence.record', 'run_id': 'r',
+            'identity': 'worker', 'evidence_id': 'legacy-evidence',
+            'source_revision': run['revision'], 'source_hash': 'source',
+            'exit_status': 0, 'issued_at': 99, 'expires_at': 200,
+        }, key)
+        with self.store._connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            db.execute('INSERT INTO host_dispatches(record_id,run_id,purpose,identity,claims_json,accepted_at) VALUES(?,?,?,?,?,?)',
+                       ('legacy-evidence', 'r', 'evidence.record', 'worker',
+                        json.dumps(legacy_claim, sort_keys=True, separators=(',', ':')), self.now))
+            db.execute('INSERT INTO evidence(run_id,evidence_id,kind,source_revision,command,cwd,source_hash,exit_status,required,created_at,host_record_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+                       ('r', 'legacy-evidence', 'host.command', run['revision'], 'pytest', '/',
+                        'source', 0, 1, self.now, 'legacy-evidence'))
+            db.commit()
+        gate = sign_dispatch({
+            'record_id': 'legacy-gate', 'purpose': 'run.complete', 'run_id': 'r',
+            'identity': 'coordinator', 'gate_decision': 'approved',
+            'evidence_ids': ['legacy-evidence'],
+            'artifact_hashes': {'legacy-evidence': 'source'},
+            'issued_at': 99, 'expires_at': 200,
+        }, key)
+        with self.assertRaisesRegex(RuntimeError, 'required completion evidence'):
+            self.store.complete_run('r', host_record=gate)
+
+    def test_named_optional_failure_does_not_block_but_cannot_prove_completion(self):
+        key = b'test-host-key'
+        self.store = RuntimeStore(self.tmp.name, clock=lambda: self.now, host_key=key)
+        self.store.assignment_transition('r', 'a', 'running', expected_assignment_revision=0)
+        self.store.assignment_transition('r', 'a', 'completed', expected_assignment_revision=1)
+
+        def record(evidence_id, command, exit_status, required):
+            run = self.store.get_run('r')
+            claim = sign_dispatch({
+                'record_id': evidence_id, 'purpose': 'evidence.record', 'run_id': 'r',
+                'identity': 'worker', 'evidence_id': evidence_id,
+                'source_revision': run['revision'], 'source_hash': 'source',
+                'exit_status': exit_status, 'kind': 'host.command',
+                'command': command, 'cwd': '/', 'required': required,
+                'issued_at': 99, 'expires_at': 200,
+            }, key)
+            return self.store.record_evidence(
+                'r', evidence_id, kind='host.command', source_revision=run['revision'],
+                command=command, cwd='/', source_hash='source', exit_status=exit_status,
+                required=required, host_record=claim)
+
+        def gate(record_id, evidence_ids):
+            return sign_dispatch({
+                'record_id': record_id, 'purpose': 'run.complete', 'run_id': 'r',
+                'identity': 'coordinator', 'gate_decision': 'approved',
+                'evidence_ids': evidence_ids,
+                'artifact_hashes': {name: 'source' for name in evidence_ids},
+                'issued_at': 99, 'expires_at': 200,
+            }, key)
+
+        optional = record('optional-failure', 'exploratory probe', 1, False)
+        with self.assertRaisesRegex(RuntimeError, 'required completion evidence'):
+            self.store.complete_run('r', host_record=gate('optional-only', [optional['evidence_id']]))
+        optional_pass = record('optional-pass', 'informational probe', 0, False)
+        with self.assertRaisesRegex(RuntimeError, 'required completion evidence'):
+            self.store.complete_run('r', host_record=gate('optional-pass-only', [optional_pass['evidence_id']]))
+        with self.assertRaisesRegex(RuntimeError, 'required completion evidence'):
+            self.store.complete_run('r', host_record=gate(
+                'optional-pair', [optional['evidence_id'], optional_pass['evidence_id']]))
+        required = record('required-pass', 'pytest', 0, True)
+        result = self.store.complete_run(
+            'r', host_record=gate('with-success', [optional['evidence_id'],
+                                               optional_pass['evidence_id'], required['evidence_id']]))
+        self.assertEqual(result['state'], 'completed')
 
     def test_dispatch_leases_enforce_concurrency_and_timeout_without_refund(self):
         reservations = []

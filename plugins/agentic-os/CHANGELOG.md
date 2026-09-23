@@ -9,6 +9,12 @@ Semantic Versioning. The plugin version lives in
 
 ### Reliability reopening
 
+- Retain signed failed required checks and require the latest result of every
+  required command stream in the completion gate; signed receipts now bind
+  command identity and required status so a failed check cannot be hidden by
+  citing an unrelated passing check. Completion revalidates persisted signed
+  claims, so older receipts without those fields require a fresh check.
+
 - Validate `run.start` input, coordinator identity, and the exact Git worktree
   root before the CLI creates SQLite state, so rejected starts do not leave a
   pending run or a new `.agentic` directory.
