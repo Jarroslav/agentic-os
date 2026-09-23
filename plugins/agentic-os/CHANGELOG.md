@@ -9,6 +9,10 @@ Semantic Versioning. The plugin version lives in
 
 ### Reliability reopening
 
+- Validate `run.start` input, coordinator identity, and the exact Git worktree
+  root before the CLI creates SQLite state, so rejected starts do not leave a
+  pending run or a new `.agentic` directory.
+
 - Treat the shared lifecycle and messaging runtime as experimental; host identity,
   trusted completion gates, installer integration, and live certification remain
   incomplete. Unsupported completion and mailbox access fail closed during the

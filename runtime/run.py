@@ -5,8 +5,8 @@ import os
 import sqlite3
 import sys
 
-from agentic_runtime.contracts import load_registry, resolve_policy, normalize_input, validate_transition, retry_allowed, lookup_contract
-from agentic_runtime.store import RuntimeStore
+from agentic_runtime.contracts import load_registry, resolve_policy, normalize_input, validate_identifier, validate_transition, retry_allowed, lookup_contract
+from agentic_runtime.store import RuntimeStore, validate_run_ownership
 from agentic_runtime.host import preflight, require_capabilities
 from agentic_runtime.trace import ingest_command_event
 from agentic_runtime.host import adapt_command_event
@@ -106,13 +106,26 @@ def main():
             value = remove_install(request['target'], request.get('paths'))
         else:
             root = request.get('root', os.getcwd())
-            store = RuntimeStore(root, host_key=os.environ.get('AGENTIC_HOST_KEY'))
             if operation == 'run.start':
+                # RuntimeStore initializes SQLite in its constructor. Validate
+                # every start precondition that can fail without state first.
                 normalized = normalize_input({'contract_version': '1.0.0', 'task_input': request['task_input']})
                 metadata = dict(request.get('metadata') or {})
                 if 'task_input' in metadata and metadata['task_input'] != normalized['task_input']:
                     raise ValueError('task_input metadata conflicts with the authoritative run input')
                 metadata['task_input'] = normalized['task_input']
+                if 'run_id' in request:
+                    validate_identifier(request['run_id'])
+                try:
+                    validate_identifier(request['coordinator_id'])
+                except ValueError as exc:
+                    raise ValueError('invalid coordinator_id') from exc
+                if (not isinstance(request['branch'], str) or not request['branch']
+                        or not isinstance(request['worktree'], str) or not request['worktree']):
+                    raise ValueError('branch and worktree are required for run.start')
+                validate_run_ownership(request['branch'], request['worktree'], request.get('precondition'))
+            store = RuntimeStore(root, host_key=os.environ.get('AGENTIC_HOST_KEY'))
+            if operation == 'run.start':
                 value = store.create_run(request.get('run_id'), branch=request['branch'], worktree=request['worktree'], metadata=metadata, precondition=request.get('precondition'))
                 value = store.acquire_lease(value['run_id'], request['coordinator_id'])
                 value = store.transition(value['run_id'], 'running', expected_revision=value['revision'], lease_epoch=value['lease_epoch'], coordinator_id=request['coordinator_id'])

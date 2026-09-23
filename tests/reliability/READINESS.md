@@ -103,6 +103,21 @@ does not turn the fixture or an operator-edited archive into an authenticated
 external effect receipt. The field inventory still reports 22 of 25 rubric
 observations absent, so the trial gate remains closed.
 
+The public `run.start` path now validates task input, coordinator identity, run
+identifier, and a required exact Git worktree root and branch before constructing the
+SQLite store. Rejected starts no longer create `.agentic/state/` or leave a
+pending run as a side effect. Blind review found and regression tests closed
+truthy non-string coordinator IDs and nested directories misclaimed as worktrees.
+`RuntimeStore.create_run` repeats ownership validation before insertion; the
+public preflight removes the ordinary invalid-request artifact, but is not a
+cross-process lock against a concurrent branch change.
+
+A proposed QA traceability observer was withheld after blind review found that
+candidate test code could alter its in-process result serializer and forge test
+identities, call records, and mutation failures. The false positive was reproduced
+with one dummy test. The observer was reverted before commit, so
+`evidence.traceability` remains unverified and the field gate still blocks trials.
+
 ## Frozen challenges required before baseline capture
 
 | Assertion | Challenge and independent positive control |

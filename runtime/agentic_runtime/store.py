@@ -23,6 +23,41 @@ from .host import verify_dispatch
 SCHEMA_VERSION = "1"
 
 
+def validate_run_ownership(branch: str | None, worktree: str | None,
+                           precondition: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Check branch/worktree ownership without creating runtime artifacts."""
+    if (branch is None) != (worktree is None):
+        raise ValueError("branch and worktree must be supplied together")
+    condition = dict(precondition or {})
+    if branch is not None:
+        if condition.get("ownership") != "verified":
+            raise ValueError("branch/worktree ownership must be verified before run creation")
+        worktree_path = Path(worktree)
+        if not worktree_path.is_dir():
+            raise ValueError("worktree must be an existing directory")
+        try:
+            inside = subprocess.run(
+                ["git", "-C", str(worktree_path), "rev-parse", "--is-inside-work-tree"],
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            current_branch = subprocess.run(
+                ["git", "-C", str(worktree_path), "branch", "--show-current"],
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            actual_root = subprocess.run(
+                ["git", "-C", str(worktree_path), "rev-parse", "--show-toplevel"],
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise ValueError("worktree ownership could not be verified") from exc
+        if Path(actual_root).resolve() != worktree_path.resolve():
+            raise ValueError("worktree root does not match requested worktree")
+        if inside != "true" or current_branch != branch:
+            raise ValueError("worktree branch does not match requested branch")
+        condition.update({"branch": branch, "worktree": worktree, "ownership": "verified"})
+    return condition
+
+
 class RuntimeStore:
     """Small transactional API for runtime state.
 
@@ -241,29 +276,7 @@ class RuntimeStore:
                    precondition: Mapping[str, Any] | None = None) -> dict[str, Any]:
         run_id = run_id or uuid4().hex
         validate_identifier(run_id)
-        if (branch is None) != (worktree is None):
-            raise ValueError("branch and worktree must be supplied together")
-        condition = dict(precondition or {})
-        if branch is not None:
-            if condition.get("ownership") != "verified":
-                raise ValueError("branch/worktree ownership must be verified before run creation")
-            worktree_path = Path(worktree)
-            if not worktree_path.is_dir():
-                raise ValueError("worktree must be an existing directory")
-            try:
-                inside = subprocess.run(
-                    ["git", "-C", str(worktree_path), "rev-parse", "--is-inside-work-tree"],
-                    check=True, capture_output=True, text=True,
-                ).stdout.strip()
-                current_branch = subprocess.run(
-                    ["git", "-C", str(worktree_path), "branch", "--show-current"],
-                    check=True, capture_output=True, text=True,
-                ).stdout.strip()
-            except (OSError, subprocess.CalledProcessError) as exc:
-                raise ValueError("worktree ownership could not be verified") from exc
-            if inside != "true" or current_branch != branch:
-                raise ValueError("worktree branch does not match requested branch")
-            condition.update({"branch": branch, "worktree": worktree, "ownership": "verified"})
+        condition = validate_run_ownership(branch, worktree, precondition)
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -284,8 +297,10 @@ class RuntimeStore:
             return self._run(db, run_id)
 
     def acquire_lease(self, run_id: str, coordinator_id: str, *, expected_revision: int | None = None) -> dict[str, Any]:
-        if not coordinator_id:
-            raise ValueError("coordinator_id is required")
+        try:
+            validate_identifier(coordinator_id)
+        except ValueError as exc:
+            raise ValueError("invalid coordinator_id") from exc
         now = self.clock()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
