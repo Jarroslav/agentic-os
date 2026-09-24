@@ -10,7 +10,7 @@ from agentic_runtime.store import RuntimeStore, validate_run_ownership
 from agentic_runtime.host import preflight, require_capabilities
 from agentic_runtime.trace import ingest_command_event
 from agentic_runtime.host import adapt_command_event
-from agentic_runtime.installer import plan_install, apply_install, remove_install, merge_settings_file
+from agentic_runtime.installer import plan_install, apply_install, remove_install, merge_settings_file, record_journal
 
 
 def unique_object(pairs):
@@ -63,7 +63,8 @@ def main():
                   'install.plan': ({'api_version', 'operation', 'target', 'files'}, set()),
                   'install.apply': ({'api_version', 'operation', 'target', 'files'}, {'agentic_os_version'}),
                   'install.merge-settings': ({'api_version', 'operation', 'target', 'path', 'fragment'}, {'agentic_os_version'}),
-                  'install.remove': ({'api_version', 'operation', 'target'}, {'paths'}),
+                  'install.remove': ({'api_version', 'operation', 'target'}, {'paths', 'confirm'}),
+                  'install.record': ({'api_version', 'operation', 'target', 'fields'}, set()),
                   'run.export': ({'api_version', 'operation', 'run_id'}, {'root'})}
         fields['legacy.export'] = ({'api_version', 'operation', 'run_id', 'destination'}, {'root'})
         fields['legacy.import'] = ({'api_version', 'operation', 'run_id', 'source'}, {'root'})
@@ -103,7 +104,10 @@ def main():
             value = merge_settings_file(request['target'], request['path'], request['fragment'],
                                         agentic_os_version=request.get('agentic_os_version'))
         elif operation == 'install.remove':
-            value = remove_install(request['target'], request.get('paths'))
+            value = remove_install(request['target'], request.get('paths'),
+                                   confirm=request.get('confirm'))
+        elif operation == 'install.record':
+            value = record_journal(request['target'], request['fields'])
         else:
             root = request.get('root', os.getcwd())
             if operation == 'run.start':

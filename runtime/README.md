@@ -124,9 +124,49 @@ Stored device, inode, and nanosecond modification time reduce accidental
 identity reuse; a replacement that reproduces all those attributes and bytes
 cannot be distinguished. Older journal entries without modification time are
 preserved as user-owned rather than deleted or overwritten.
-`install.remove` deletes only unchanged managed files; generated files need an
-individual operator decision and retain generated ownership under this generic
-operation. Modified managed files are preserved as user-owned.
+`install.remove` deletes only unchanged managed files; generated and user
+files are kept, and a modified managed file is kept as user-owned.
+
+Operator decisions are compare-and-swap on content. On `install.apply`, a file
+spec may carry `expect_sha256`, the SHA-256 of the exact bytes an operator
+reviewed; the file is replaced only while it still has those bytes, and if any
+confirmed file in a request is stale or absent, nothing in the request is
+written (`install.plan` reports it as `stale_confirmation`). A confirmation
+never raises ownership: the file is journaled user-owned unless the request
+states `managed` or `generated` and the journal already records that owner for
+the path, and a file that existed before agentic-os keeps
+`origin: adopted-existing`, including after later applies over it. A
+confirmed apply whose bytes already match disk does not change an existing
+journal entry; a plain apply may still demote an entry whose recorded identity
+no longer matches. Unknown file-spec fields are rejected.
+Shared files such as `CLAUDE.md` therefore stay user-owned and are edited only
+by confirmed apply.
+
+On `install.remove`, `confirm` maps selected journaled paths to reviewed
+digests. A confirmed path is deleted only while its bytes match, a stale
+confirmation deletes nothing, and a confirmation for an absent file is listed
+in `unapplied_confirmations`. Any journaled entry accepts a confirmation except
+files that existed before agentic-os (`origin: adopted-existing`, or a
+user-owned entry with no origin); a demoted managed or generated entry from an
+older journal without an origin stays confirmable. A managed or generated entry is dropped from
+the journal (`missing`) only when its directory is reachable and the file is
+absent; user entries are never dropped. Replaying an applied confirmed request
+fails closed; plan again before retrying an interrupted request.
+
+`install.record` replaces named top-level journal fields (`answers`,
+`stack_discovery`, `adoption`, `follow_ups`, `sdlc_skills`, `qe_blueprints`,
+`phase`, `agentic_os_version`), accepts only standard JSON values, and never
+accepts `files`. A journal containing NaN, Infinity or an out-of-range number
+is refused by every operation before any write, and `install.merge-settings` neither reads nor writes a settings
+file containing them. `confirm` keys must be canonical relative paths. It lets setup, upgrade and uninstall stop editing
+`install.json` directly; the skills migrate in a later stage.
+
+New installed files are created with mode `0666` minus the umask. A
+replacement keeps the destination's mode without setuid/setgid, applied after
+the content is written. The journal file is rewritten `0600` on every write;
+its directory follows the umask, so a permissive umask still exposes the
+journal to replacement by group members.
+
 `install.merge-settings` performs the same
 deterministic recursive object/unique-array merge used by setup, writes the
 result atomically after validating the journal, and preserves ownership of

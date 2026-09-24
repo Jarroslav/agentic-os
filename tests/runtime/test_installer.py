@@ -746,5 +746,473 @@ class InstallerTests(unittest.TestCase):
             self.assertTrue((pathlib.Path(temp) / ".claude/settings.json").is_file())
 
 
+class InstallerDecisionTests(unittest.TestCase):
+    """Operator decisions, journal recording and permission bits (G1-G7)."""
+
+    def journal(self, target):
+        return json.loads((pathlib.Path(target) / ".agentic/agentic-os/install.json").read_text())
+
+    def run_public(self, operation, **fields):
+        payload = {"api_version": "1.0.0", "operation": operation, **fields}
+        response = subprocess.run([sys.executable, str(ROOT / "runtime/run.py")],
+                                  input=json.dumps(payload), text=True, capture_output=True)
+        return response.returncode, json.loads(response.stdout)
+
+    @staticmethod
+    def digest(data):
+        return hashlib.sha256(data).hexdigest()
+
+    # G1 validation before writes
+
+    def test_g1_unknown_file_spec_fields_fail_before_any_write(self):
+        with tempfile.TemporaryDirectory() as temp:
+            for field in ("kind", "kinds", "Kind", "expect_sha", "mode"):
+                with self.assertRaisesRegex(ValueError, "unknown installation file field"):
+                    apply_install(temp, {"a.txt": "x\n", "b.txt": {"content": "y\n", field: "block"}})
+            self.assertEqual(os.listdir(temp), [])
+
+    def test_g1_digests_must_be_exact_lowercase_hex(self):
+        with tempfile.TemporaryDirectory() as temp:
+            for bad in ("ABC", "0" * 63, 7, "G" * 64, "A" * 64, "0" * 64 + "zz", "0" * 64 + "\n"):
+                with self.assertRaises(ValueError):
+                    plan_install(temp, {"x.md": {"content": "x", "expect_sha256": bad}})
+            apply_install(temp, {"a.md": "a\n"})
+            for bad in ({"a.md": "nope"}, {"a.md": 3}, ["a.md"], {"a.md": "0" * 64 + "zz"}):
+                with self.assertRaises(ValueError):
+                    remove_install(temp, confirm=bad)
+            self.assertTrue((pathlib.Path(temp) / "a.md").exists())
+
+    def test_g1_record_sets_fields_without_touching_file_entries(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            recorded = installer.record_journal(target, {"answers": {"presets": ["developer"]},
+                                                          "phase": "interview"})
+            self.assertEqual(recorded["recorded"], ["answers", "phase"])
+            apply_install(target, {"a.md": "a\n"}, agentic_os_version="1.2.3")
+            before = self.journal(target)
+            installer.record_journal(target, {"phase": "done", "follow_ups": ["review"],
+                                              "stack_discovery": {"language": "python"},
+                                              "sdlc_skills": ["gate-runner"], "qe_blueprints": [],
+                                              "adoption": {"mode": "adopt-existing"},
+                                              "agentic_os_version": "1.2.4"})
+            after = self.journal(target)
+            self.assertEqual(after["files"], before["files"])
+            self.assertEqual(after["answers"], {"presets": ["developer"]})
+            self.assertEqual((after["phase"], after["agentic_os_version"]), ("done", "1.2.4"))
+
+    def test_g1_record_rejects_files_unknown_keys_bad_values_and_nonstandard_json(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"a.md": "a\n"})
+            journal = (target / ".agentic/agentic-os/install.json").read_bytes()
+            for bad in ({}, {"files": {}}, {"files": []}, {"files": ["a.md"]}, {"other": 1},
+                        {"phase": "sideways"}, {"answers": ["x"]}, {"follow_ups": "x"},
+                        {"follow_ups": [1]}, {"agentic_os_version": "one"},
+                        {"answers": {"x": float("nan")}}, {"stack_discovery": {"y": float("inf")}},
+                        {"answers": {"x": "y" * 1_100_000}}, [1]):
+                with self.assertRaises(ValueError, msg=str(bad)[:40]):
+                    installer.record_journal(target, bad)
+            self.assertEqual((target / ".agentic/agentic-os/install.json").read_bytes(), journal)
+
+    def test_g1_record_rejects_nan_through_the_cli(self):
+        with tempfile.TemporaryDirectory() as temp:
+            payload = ('{"api_version":"1.0.0","operation":"install.record","target":%s,'
+                       '"fields":{"answers":{"x":NaN}}}' % json.dumps(temp))
+            response = subprocess.run([sys.executable, str(ROOT / "runtime/run.py")],
+                                      input=payload, text=True, capture_output=True)
+            self.assertEqual(response.returncode, 2)
+            self.assertFalse((pathlib.Path(temp) / ".agentic").exists())
+
+    def test_g1_record_refuses_an_invalid_journal_and_detects_a_concurrent_edit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            (target / ".agentic/agentic-os").mkdir(parents=True)
+            broken = target / ".agentic/agentic-os/install.json"
+            broken.write_text("{not json")
+            with self.assertRaises(RuntimeError):
+                installer.record_journal(target, {"phase": "done"})
+            self.assertEqual(broken.read_text(), "{not json")
+            broken.write_text("{}")
+            original = installer._journal
+
+            def racing(root):
+                value = original(root)
+                broken.write_text('{"phase": "verify"}')
+                return value
+            with patch.object(installer, "_journal", racing):
+                with self.assertRaises(RuntimeError):
+                    installer.record_journal(target, {"phase": "done"})
+            self.assertEqual(json.loads(broken.read_text()), {"phase": "verify"})
+
+    # G2 confirmed apply is compare-and-swap
+
+    def test_g2_confirmed_replacement_overwrites_only_the_reviewed_bytes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"guide.md": "v1\n"})
+            (target / "guide.md").write_text("user edit\n")
+            plain = {"guide.md": {"content": "v2\n"}}
+            self.assertEqual(plan_install(target, plain)["actions"][0]["action"], "preserve_modified")
+            confirmed = {"guide.md": {"content": "v2\n", "expect_sha256": self.digest(b"user edit\n")}}
+            self.assertEqual(plan_install(target, confirmed)["actions"][0]["action"], "replace_confirmed")
+            self.assertEqual(apply_install(target, confirmed)["applied"], ["guide.md"])
+            self.assertEqual((target / "guide.md").read_text(), "v2\n")
+            self.assertEqual(self.journal(target)["files"]["guide.md"]["sha256"], self.digest(b"v2\n"))
+
+    def test_g2_stale_or_absent_confirmation_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            (target / "guide.md").write_text("edited after review\n")
+            reviewed = self.digest(b"reviewed\n")
+            for files in ({"a-first.txt": "new\n", "guide.md": {"content": "v2\n", "expect_sha256": reviewed}},
+                          {"a-first.txt": "new\n", "gone.md": {"content": "x\n", "expect_sha256": reviewed}}):
+                self.assertIn("stale_confirmation",
+                              [item["action"] for item in plan_install(target, files)["actions"]])
+                with self.assertRaisesRegex(RuntimeError, "changed since it was reviewed"):
+                    apply_install(target, files)
+            self.assertEqual(sorted(os.listdir(target)), ["guide.md"])
+            self.assertEqual((target / "guide.md").read_text(), "edited after review\n")
+
+    # G3 confirmation never raises ownership
+
+    def test_g3_confirmed_apply_of_a_preexisting_file_stays_adopted_user(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            (target / "CLAUDE.md").write_text("MY NOTES\n")
+            apply_install(target, {"CLAUDE.md": {"content": "MY NOTES\nblock\n",
+                                                  "expect_sha256": self.digest(b"MY NOTES\n")}})
+            entry = self.journal(target)["files"]["CLAUDE.md"]
+            self.assertEqual((entry["owner"], entry["origin"]), ("user", "adopted-existing"))
+            apply_install(target, {"CLAUDE.md": {"content": "MY NOTES\nblock v2\n", "origin": "plugin",
+                                                  "expect_sha256": self.digest(b"MY NOTES\nblock\n")}})
+            entry = self.journal(target)["files"]["CLAUDE.md"]
+            self.assertEqual((entry["owner"], entry["origin"]), ("user", "adopted-existing"))
+            self.assertEqual(remove_install(target)["removed"], [])
+            with self.assertRaisesRegex(ValueError, "existed before agentic-os"):
+                remove_install(target, confirm={"CLAUDE.md": self.digest(b"MY NOTES\nblock v2\n")})
+            self.assertEqual((target / "CLAUDE.md").read_text(), "MY NOTES\nblock v2\n")
+
+    def test_g3_confirmation_cannot_claim_or_promote_ownership(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            (target / "secret.env").write_text("K=1\n")
+            apply_install(target, {"gen.md": {"content": "g\n", "owner": "generated"},
+                                   "mod.md": "m\n"})
+            (target / "mod.md").write_text("edited\n")
+            apply_install(target, {"mod.md": "m2\n"})          # demotes mod.md to user
+            cases = (("secret.env", b"K=1\n", "managed"), ("secret.env", b"K=1\n", "generated"),
+                     ("gen.md", b"g\n", "managed"), ("mod.md", b"edited\n", "managed"))
+            for path, current, owner in cases:
+                with self.assertRaisesRegex(RuntimeError, "cannot claim"):
+                    apply_install(target, {"a-first.txt": "x\n",
+                                           path: {"content": current.decode() + "+\n",
+                                                  "expect_sha256": self.digest(current), "owner": owner}})
+                self.assertFalse((target / "a-first.txt").exists())
+            self.assertEqual((target / "secret.env").read_text(), "K=1\n")
+
+    def test_g3_confirmation_may_keep_the_recorded_owner(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"gen.md": {"content": "g\n", "owner": "generated"},
+                                   "man.md": "m\n"})
+            apply_install(target, {"gen.md": {"content": "g2\n", "owner": "generated",
+                                              "expect_sha256": self.digest(b"g\n")},
+                                   "man.md": {"content": "m2\n", "owner": "managed",
+                                              "expect_sha256": self.digest(b"m\n")}})
+            files = self.journal(target)["files"]
+            self.assertEqual((files["gen.md"]["owner"], files["man.md"]["owner"]), ("generated", "managed"))
+            self.assertEqual(remove_install(target)["removed"], ["man.md"])
+            self.assertTrue((target / "gen.md").exists())
+
+    def test_g3_unchanged_bytes_never_change_an_existing_entry(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"m.md": "m\n"})
+            before = self.journal(target)["files"]["m.md"]
+            apply_install(target, {"m.md": {"content": "m\n", "owner": "generated",
+                                            "template": "other"}})
+            apply_install(target, {"m.md": {"content": "m\n", "expect_sha256": self.digest(b"m\n")}})
+            self.assertEqual(self.journal(target)["files"]["m.md"], before)
+
+    # G4 generic removal
+
+    def test_g4_generic_removal_keeps_generated_and_user_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            (target / "mine.md").write_text("mine\n")
+            apply_install(target, {"gen.md": {"content": "g\n", "owner": "generated"},
+                                   "mine.md": "mine\n", "man.md": "m\n", "mod.md": "x\n"})
+            (target / "mod.md").write_text("edited\n")
+            result = remove_install(target)
+            self.assertEqual(result["removed"], ["man.md"])
+            self.assertEqual(sorted(result["preserved"]), ["gen.md", "mine.md", "mod.md"])
+
+    # G5 confirmed removal
+
+    def test_g5_confirmed_removal_of_generated_and_modified_managed_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"gen.md": {"content": "g\n", "owner": "generated"},
+                                   "mod.md": "m\n", "keep.md": "k\n"})
+            (target / "mod.md").write_text("edited\n")
+            result = remove_install(target, confirm={"gen.md": self.digest(b"g\n"),
+                                                     "mod.md": self.digest(b"edited\n")})
+            self.assertEqual(sorted(result["removed"]), ["gen.md", "keep.md", "mod.md"])
+            self.assertEqual(self.journal(target)["files"], {})
+
+    def test_g5_entries_demoted_by_generic_removal_remain_confirmable(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"m.txt": "m\n", "o.txt": "o\n"})
+            (target / "m.txt").write_text("edited\n")
+            path = target / ".agentic/agentic-os/install.json"
+            journal = json.loads(path.read_text())
+            for key in ("device", "inode", "mtime_ns"):   # legacy entry without identity
+                journal["files"]["o.txt"].pop(key)
+            path.write_text(json.dumps(journal))
+            first = remove_install(target)
+            self.assertEqual(sorted(first["preserved"]), ["m.txt", "o.txt"])
+            self.assertEqual(self.journal(target)["files"]["m.txt"]["owner"], "user")
+            second = remove_install(target, confirm={"m.txt": self.digest(b"edited\n"),
+                                                     "o.txt": self.digest(b"o\n")})
+            self.assertEqual(sorted(second["removed"]), ["m.txt", "o.txt"])
+
+    def test_g5_stale_confirmation_deletes_nothing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"a.md": "a\n", "gen.md": {"content": "g\n", "owner": "generated"}})
+            (target / "gen.md").write_text("changed\n")
+            with self.assertRaisesRegex(RuntimeError, "changed since it was reviewed"):
+                remove_install(target, confirm={"gen.md": self.digest(b"g\n")})
+            self.assertTrue((target / "a.md").exists())
+            self.assertEqual((target / "gen.md").read_text(), "changed\n")
+
+    def test_g5_confirmation_is_bound_to_its_own_selected_path(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"a.md": {"content": "same\n", "owner": "generated"},
+                                   "b.md": {"content": "same\n", "owner": "generated"}})
+            digest = self.digest(b"same\n")
+            (target / "a.md").write_text("edited\n")
+            with self.assertRaisesRegex(RuntimeError, "changed since it was reviewed"):
+                remove_install(target, confirm={"a.md": digest})
+            with self.assertRaisesRegex(ValueError, "unselected path"):
+                remove_install(target, ["a.md"], confirm={"b.md": digest})
+            for alias in ("./b.md", "sub/../b.md", "b.md/", "/b.md"):
+                with self.assertRaises(ValueError, msg=alias):
+                    installer._relative_path(alias)
+                with self.assertRaises(ValueError, msg=alias):
+                    remove_install(target, ["b.md"], confirm={alias: digest})
+            (target / "a.md").write_text("same\n")
+            self.assertEqual(remove_install(target, ["a.md"], confirm={"a.md": digest})["removed"], ["a.md"])
+            self.assertTrue((target / "b.md").exists())
+
+    def test_g5_preexisting_files_never_accept_a_confirmation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            (target / "mine.md").write_text("mine\n")
+            apply_install(target, {"mine.md": "mine\n"})
+            with self.assertRaisesRegex(ValueError, "existed before agentic-os"):
+                remove_install(target, confirm={"mine.md": self.digest(b"mine\n")})
+            path = target / ".agentic/agentic-os/install.json"
+            journal = json.loads(path.read_text())
+            journal["files"]["mine.md"].pop("origin")      # older user entry without origin
+            path.write_text(json.dumps(journal))
+            with self.assertRaisesRegex(ValueError, "existed before agentic-os"):
+                remove_install(target, confirm={"mine.md": self.digest(b"mine\n")})
+            self.assertEqual((target / "mine.md").read_text(), "mine\n")
+
+    def test_g5_confirmation_for_an_absent_file_is_reported_unapplied(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"sub/g.md": {"content": "g\n", "owner": "generated"}})
+            (target / "sub").rename(target / "sub.bak")
+            result = remove_install(target, confirm={"sub/g.md": self.digest(b"g\n")})
+            self.assertEqual((result["removed"], result["unapplied_confirmations"]), ([], ["sub/g.md"]))
+
+    def test_g5_reapplying_over_a_preexisting_file_keeps_it_unconfirmable(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            (target / "CLAUDE.md").write_text("my own notes\n")
+            apply_install(target, {"CLAUDE.md": "template v1\n"})
+            apply_install(target, {"CLAUDE.md": "template v2\n"})
+            entry = self.journal(target)["files"]["CLAUDE.md"]
+            self.assertEqual((entry["owner"], entry["origin"]), ("user", "adopted-existing"))
+            apply_install(target, {"CLAUDE.md": {"content": "notes+\n",
+                                                  "expect_sha256": self.digest(b"my own notes\n")}})
+            apply_install(target, {"CLAUDE.md": "template v3\n"})
+            self.assertEqual(self.journal(target)["files"]["CLAUDE.md"]["origin"], "adopted-existing")
+            with self.assertRaisesRegex(ValueError, "existed before agentic-os"):
+                remove_install(target, confirm={"CLAUDE.md": self.digest(b"notes+\n")})
+            self.assertEqual((target / "CLAUDE.md").read_text(), "notes+\n")
+
+    def test_g5_modified_installer_file_stays_confirmable_after_reapply(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"a.md": "v1\n"})
+            (target / "a.md").write_text("edited\n")
+            apply_install(target, {"a.md": "v2\n"})
+            self.assertEqual(self.journal(target)["files"]["a.md"]["origin"], "user-modified")
+            result = remove_install(target, confirm={"a.md": self.digest(b"edited\n")})
+            self.assertEqual(result["removed"], ["a.md"])
+
+    def test_g5_confirmation_for_an_absent_managed_file_is_unapplied(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"g.md": {"content": "g\n", "owner": "generated"}})
+            (target / "g.md").unlink()
+            result = remove_install(target, confirm={"g.md": self.digest(b"g\n")})
+            self.assertEqual((result["missing"], result["unapplied_confirmations"]), (["g.md"], ["g.md"]))
+            with self.assertRaisesRegex(ValueError, "not journaled"):
+                remove_install(target, ["g.md"], confirm={"g.md": self.digest(b"g\n")})
+
+    def test_g1_nonstandard_json_in_an_existing_journal_is_refused(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"a.md": "a\n"})
+            path = target / ".agentic/agentic-os/install.json"
+            text = path.read_text().replace('"files"', '"answers": {"x": NaN},\n  "files"', 1)
+            path.write_text(text)
+            for step in (lambda: installer.record_journal(target, {"phase": "done"}),
+                         lambda: apply_install(target, {"b.md": "b\n"}),
+                         lambda: remove_install(target)):
+                with self.assertRaises(RuntimeError):
+                    step()
+            self.assertEqual(path.read_text(), text)
+            self.assertTrue((target / "a.md").exists())
+
+    def test_g1_settings_merge_never_reads_or_writes_nonstandard_json(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            with self.assertRaisesRegex(ValueError, "standard JSON"):
+                merge_settings_file(target, "s.json", {"x": float("nan")})
+            self.assertEqual(os.listdir(target), [])
+            (target / "s.json").write_text('{"a": Infinity}')
+            with self.assertRaises(RuntimeError):
+                merge_settings_file(target, "s.json", {"b": 1})
+            self.assertEqual((target / "s.json").read_text(), '{"a": Infinity}')
+            payload = ('{"api_version":"1.0.0","operation":"install.merge-settings","target":%s,'
+                       '"path":"t.json","fragment":{"x":NaN}}' % json.dumps(temp))
+            response = subprocess.run([sys.executable, str(ROOT / "runtime/run.py")],
+                                      input=payload, text=True, capture_output=True)
+            self.assertEqual(response.returncode, 2)
+            self.assertFalse((target / "t.json").exists())
+
+    def test_g5_confirmation_keys_that_name_the_same_path_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"g.md": {"content": "g\n", "owner": "generated"}})
+            with self.assertRaises(ValueError):
+                remove_install(target, confirm={"g.md": self.digest(b"g\n"), "./g.md": self.digest(b"x")})
+            self.assertTrue((target / "g.md").exists())
+
+    def test_g5_confirmed_apply_keeps_an_installer_origin_confirmable(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"a.md": "v1\n"})
+            (target / "a.md").write_text("edited\n")
+            remove_install(target, ["a.md"])                       # demoted, origin plugin
+            apply_install(target, {"a.md": {"content": "v2\n", "expect_sha256": self.digest(b"edited\n")}})
+            entry = self.journal(target)["files"]["a.md"]
+            self.assertEqual((entry["owner"], entry["origin"]), ("user", "plugin"))
+            self.assertEqual(remove_install(target, confirm={"a.md": self.digest(b"v2\n")})["removed"], ["a.md"])
+
+    def test_g5_legacy_entries_without_origin_stay_confirmable_after_demotion(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            path = target / ".agentic/agentic-os/install.json"
+            path.parent.mkdir(parents=True)
+            (target / "a.md").write_text("rendered-edited\n")
+            path.write_text(json.dumps({"files": {"a.md": {
+                "sha256": self.digest(b"rendered\n"), "template": "t", "owner": "managed"}}}))
+            self.assertEqual(remove_install(target)["preserved"], ["a.md"])
+            entry = self.journal(target)["files"]["a.md"]
+            self.assertEqual((entry["owner"], entry["origin"]), ("user", "user-modified"))
+            result = remove_install(target, confirm={"a.md": self.digest(b"rendered-edited\n")})
+            self.assertEqual((result["removed"], result["unapplied_confirmations"]), (["a.md"], []))
+
+    def test_g1_out_of_range_numbers_in_the_journal_are_refused_before_writes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"a.md": "a\n"})
+            path = target / ".agentic/agentic-os/install.json"
+            text = path.read_text().replace('"files"', '"answers": {"x": 1e400},\n  "files"', 1)
+            path.write_text(text)
+            for step in (lambda: apply_install(target, {"b.md": "b\n"}),
+                         lambda: remove_install(target),
+                         lambda: installer.record_journal(target, {"phase": "done"})):
+                with self.assertRaises(RuntimeError):
+                    step()
+            self.assertEqual(path.read_text(), text)
+            self.assertFalse((target / "b.md").exists())
+            self.assertTrue((target / "a.md").exists())
+
+    # G6 absent entries
+
+    def test_g6_absent_files_drop_only_managed_entries_in_reachable_directories(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            (target / "mine.md").write_text("mine\n")
+            apply_install(target, {"mine.md": "mine\n", "gone.md": "g\n",
+                                   "sub/moved.md": "m\n", "gen.md": {"content": "x\n", "owner": "generated"}})
+            (target / "mine.md").rename(target / "mine.bak")
+            (target / "gone.md").unlink()
+            (target / "gen.md").unlink()
+            (target / "sub").rename(target / "sub.bak")
+            result = remove_install(target)
+            self.assertEqual(sorted(result["missing"]), ["gen.md", "gone.md"])
+            self.assertEqual(sorted(result["preserved"]), ["mine.md", "sub/moved.md"])
+            self.assertEqual(sorted(self.journal(target)["files"]), ["mine.md", "sub/moved.md"])
+
+    # G7 permissions
+
+    def test_g7_new_files_follow_umask_and_replacements_keep_mode(self):
+        old = os.umask(0o022)
+        try:
+            with tempfile.TemporaryDirectory() as temp:
+                target = pathlib.Path(temp)
+                apply_install(target, {"a.txt": "one\n", "bin/tool.sh": "one\n"})
+                self.assertEqual(oct((target / "a.txt").stat().st_mode & 0o7777), "0o644")
+                os.chmod(target / "bin/tool.sh", 0o755)
+                os.chmod(target / "a.txt", 0o600)
+                apply_install(target, {"a.txt": "two\n", "bin/tool.sh": "two\n"})
+                self.assertEqual(oct((target / "bin/tool.sh").stat().st_mode & 0o7777), "0o755")
+                self.assertEqual(oct((target / "a.txt").stat().st_mode & 0o7777), "0o600")
+                merge_settings_file(target, "settings.json", {"a": 1})
+                self.assertEqual(oct((target / "settings.json").stat().st_mode & 0o7777), "0o644")
+                os.chmod(target / "bin/tool.sh", 0o4755)
+                apply_install(target, {"bin/tool.sh": "three\n"})
+                self.assertEqual(oct((target / "bin/tool.sh").stat().st_mode & 0o7777), "0o755")
+        finally:
+            os.umask(old)
+
+    def test_g7_journal_is_rewritten_owner_only(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"tool.sh": "one\n"})
+            journal = target / ".agentic/agentic-os/install.json"
+            self.assertEqual(oct(journal.stat().st_mode & 0o7777), "0o600")
+            for step in (lambda: apply_install(target, {"tool.sh": "two\n"}),
+                         lambda: installer.record_journal(target, {"phase": "done"}),
+                         lambda: merge_settings_file(target, "s.json", {"a": 1}),
+                         lambda: remove_install(target, ["s.json"])):
+                os.chmod(journal, 0o666)
+                step()
+                self.assertEqual(oct(journal.stat().st_mode & 0o7777), "0o600")
+
+    def test_public_operations_are_versioned(self):
+        with tempfile.TemporaryDirectory() as temp:
+            code, result = self.run_public("install.record", target=temp,
+                                           fields={"phase": "preflight", "answers": {"defaults": True}})
+            self.assertEqual(code, 0, result)
+            code, result = self.run_public("install.apply", target=temp, files={
+                "g.md": {"content": "g\n", "owner": "generated", "expect_sha256": None}})
+            self.assertEqual(code, 0, result)
+            code, result = self.run_public("install.remove", target=temp, paths=["g.md"],
+                                           confirm={"g.md": self.digest(b"g\n")})
+            self.assertEqual((code, result["result"]["removed"]), (0, ["g.md"]))
+            code, result = self.run_public("install.record", target=temp, fields={"files": {}})
+            self.assertEqual((code, result["ok"]), (2, False))
+
 if __name__ == "__main__":
     unittest.main()
