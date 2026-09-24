@@ -51,6 +51,14 @@ def _bind_root(operation):
     return bound
 
 
+_SPEC_KEYS = {"content", "owner", "template", "origin", "expect_sha256"}
+_SHA256 = re.compile(r"[0-9a-f]{64}")
+
+
+def _is_sha256(value: Any) -> bool:
+    return isinstance(value, str) and _SHA256.fullmatch(value) is not None
+
+
 def _valid_version(value: Any) -> bool:
     if not isinstance(value, str) or _VERSION.fullmatch(value) is None:
         return False
@@ -211,10 +219,18 @@ def _manifest(files: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
             spec = dict(raw_spec)
         else:
             raise ValueError("installation file spec must be a string or object")
+        unknown = set(spec) - _SPEC_KEYS
+        if unknown:
+            raise ValueError("unknown installation file field: " + ", ".join(sorted(map(str, unknown))))
         content = spec.get("content")
         if not isinstance(content, str):
             raise ValueError("installation file content must be text")
-        owner = spec.get("owner", "managed")
+        expected = spec.get("expect_sha256")
+        if expected is not None and not _is_sha256(expected):
+            raise ValueError("expect_sha256 must be a lowercase SHA-256 digest")
+        # A confirmation authorizes replacing reviewed bytes, not claiming the
+        # file for later unattended removal; ownership must then be stated.
+        owner = spec.get("owner", "user" if expected is not None else "managed")
         if owner not in {"managed", "user", "generated"}:
             raise ValueError("unknown installation owner")
         template = spec.get("template", "derived")
@@ -227,6 +243,7 @@ def _manifest(files: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
             "owner": owner,
             "template": template,
             "origin": origin,
+            "expect_sha256": expected,
         }
     _reject_path_collisions(result)
     return dict(sorted(result.items()))
@@ -294,6 +311,17 @@ def _record_identity(entry: dict[str, Any], snapshot: tuple[str, int, int, int])
     entry["device"], entry["inode"], entry["mtime_ns"] = snapshot[1:]
 
 
+def _finite_float(value: str) -> float:
+    number = float(value)
+    if number != number or number in (float("inf"), float("-inf")):
+        raise ValueError("install journal contains a non-finite number: " + value)
+    return number
+
+
+def _reject_constant(value: str) -> None:
+    raise ValueError("install journal contains a non-standard JSON constant: " + value)
+
+
 def _journal(target: Path) -> tuple[dict[str, Any], Path, tuple[str, int, int, int] | None]:
     path = _destination(target, JOURNAL_RELATIVE.as_posix())
     try:
@@ -307,7 +335,8 @@ def _journal(target: Path) -> tuple[dict[str, Any], Path, tuple[str, int, int, i
                 with os.fdopen(fd, "rb") as stream:
                     fd = -1
                     data = stream.read()
-                    value = json.loads(data)
+                    value = json.loads(data, parse_constant=_reject_constant,
+                                       parse_float=_finite_float)
                     snapshot = hashlib.sha256(data).hexdigest(), info.st_dev, info.st_ino, info.st_mtime_ns
             finally:
                 if fd >= 0:
@@ -367,12 +396,28 @@ def _atomic_write(root: Path, relative: str, content: str, *, prefix: str,
     with _parent_fd(root, relative, create=True) as (parent, leaf):
         temporary = prefix + secrets.token_hex(12)
         original_link = None
+        # A replacement keeps the destination's permission bits, so an
+        # executable script stays executable; a new file follows the caller's
+        # umask instead of being forced to owner-only.
+        try:
+            existing = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+            mode = (stat.S_IMODE(existing.st_mode) & ~(stat.S_ISUID | stat.S_ISGID)
+                    if stat.S_ISREG(existing.st_mode) else None)
+        except FileNotFoundError:
+            mode = None
+        if relative == JOURNAL_RELATIVE.as_posix():
+            # The journal decides which files an unattended removal may delete,
+            # so it is re-hardened on every write rather than inheriting a mode.
+            mode = 0o600
         fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
-                     0o600, dir_fd=parent)
+                     0o600 if mode is not None else 0o666, dir_fd=parent)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as stream:
                 stream.write(content)
                 stream.flush()
+                if mode is not None:
+                    # Widened only after the bytes are written, never before.
+                    os.fchmod(stream.fileno(), mode)
                 os.fsync(stream.fileno())
                 info = os.fstat(stream.fileno())
             current = _entry_snapshot(parent, leaf)
@@ -504,7 +549,7 @@ def merge_settings_file(target: str | os.PathLike[str], relative_path: str,
         raise RuntimeError("settings changed during merge planning")
     if before_bytes is not None:
         try:
-            current = json.loads(before_bytes.decode("utf-8"))
+            current = json.loads(before_bytes.decode("utf-8"), parse_constant=_reject_constant)
         except (OSError, ValueError, UnicodeError) as exc:
             raise RuntimeError("settings file is unreadable or invalid JSON") from exc
         if not isinstance(current, dict):
@@ -512,7 +557,11 @@ def merge_settings_file(target: str | os.PathLike[str], relative_path: str,
     else:
         current = {}
     merged = merge_settings(current, fragment)
-    content = json.dumps(merged, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    try:
+        content = json.dumps(merged, ensure_ascii=False, sort_keys=True, indent=2,
+                             allow_nan=False) + "\n"
+    except ValueError as exc:
+        raise ValueError("settings must be standard JSON") from exc
     desired_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     changed = before_hash != desired_hash
     written_snapshot = None
@@ -548,7 +597,7 @@ def merge_settings_file(target: str | os.PathLike[str], relative_path: str,
     updated["phase"] = updated.get("phase", "scaffold")
     updated["files"] = dict(sorted(files.items()))
     try:
-        _atomic_write(root, JOURNAL_RELATIVE.as_posix(), json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        _atomic_write(root, JOURNAL_RELATIVE.as_posix(), json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n",
                       prefix=".settings-journal.", expected=journal_snapshot)
     except Exception:
         if changed and _journal_entry_state(root, relative,
@@ -581,7 +630,16 @@ def plan_install(target: str | os.PathLike[str], files: Mapping[str, Any]) -> di
         managed_unchanged = (current is not None and isinstance(previous, Mapping) and
                              previous.get("sha256") == current and
                              previous.get("owner") == "managed" and identity_matches)
-        if current is None:
+        if spec["expect_sha256"] is not None:
+            # An operator confirmed these exact bytes. The confirmation is a
+            # compare-and-swap: it authorizes replacing that content only.
+            if current != spec["expect_sha256"]:
+                action = "stale_confirmation"
+            elif current == desired:
+                action = "unchanged"
+            else:
+                action = "replace_confirmed"
+        elif current is None:
             action = "create"
         elif prior_owned and not identity_matches:
             action = "preserve_modified"
@@ -616,6 +674,16 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
     _, _, current_journal_snapshot = _journal(root)
     if current_journal_snapshot != journal_snapshot:
         raise RuntimeError("install journal changed during planning")
+    stale = [item["path"] for item in plan["actions"] if item["action"] == "stale_confirmation"]
+    if stale:
+        raise RuntimeError("confirmed file changed since it was reviewed: " + ", ".join(stale))
+    for relative, spec in manifest.items():
+        prior = journal.get("files", {}).get(relative)
+        if spec["expect_sha256"] is not None and spec["owner"] in {"managed", "generated"}:
+            # A confirmation cannot raise ownership; it may only keep the owner
+            # the journal already records for this path.
+            if not (isinstance(prior, Mapping) and prior.get("owner") == spec["owner"]):
+                raise RuntimeError("a confirmation cannot claim managed or generated ownership: " + relative)
     journal_files = dict(journal.get("files", {}))
     applied = []
     preserved = []
@@ -633,7 +701,7 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
         before_bytes = None
         written_snapshot = None
         backup = None
-        if action["action"] in {"create", "replace"}:
+        if action["action"] in {"create", "replace", "replace_confirmed"}:
             before_bytes = _read_file(root, relative)
             backup = _backup_file(root, relative, before[relative])
             try:
@@ -659,18 +727,27 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
             elif action["action"] == "unchanged" and isinstance(previous, Mapping):
                 journal_files[relative] = dict(previous)
             else:
+                origin = spec["origin"]
+                if action["action"] == "replace_confirmed" and spec["owner"] == "user":
+                    # A reviewed replacement of a pre-existing file keeps its
+                    # adopted origin, so it is never deletable by the installer.
+                    origin = (previous.get("origin", "adopted-existing")
+                              if isinstance(previous, Mapping) else "adopted-existing")
                 journal_files[relative] = {
                     "sha256": action["desired_sha256"], "template": spec["template"],
-                    "owner": spec["owner"], "origin": spec["origin"],
+                    "owner": spec["owner"], "origin": origin,
                 }
                 snapshot = written_snapshot or before[relative]
                 if snapshot is not None:
                     _record_identity(journal_files[relative], snapshot)
         elif relative in journal_files:
             previous = dict(journal_files[relative])
+            adopted = _adopted(previous)
             previous["sha256"] = action["current_sha256"]
             previous["owner"] = "user"
-            previous["origin"] = "user-modified"
+            # Only a file agentic-os wrote becomes "user-modified"; a file that
+            # existed before agentic-os keeps its adopted origin.
+            previous["origin"] = "adopted-existing" if adopted else "user-modified"
             snapshot = before[relative]
             if snapshot is not None:
                 _record_identity(previous, snapshot)
@@ -683,7 +760,7 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
         updated["files"] = dict(sorted(journal_files.items()))
         try:
             journal_snapshot = _atomic_write(root, JOURNAL_RELATIVE.as_posix(),
-                      json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                      json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n",
                       prefix=".install.", expected=journal_snapshot)
         except Exception:
             if written_snapshot is not None and _journal_entry_state(
@@ -699,9 +776,36 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
             "actions": plan["actions"]}
 
 
+def _adopted(entry: Mapping[str, Any]) -> bool:
+    """A file that existed before agentic-os, which the installer never deletes."""
+    origin = entry.get("origin")
+    return origin == "adopted-existing" or (origin is None and entry.get("owner") == "user")
+
+
+def _leaf_absent(root: Path, relative: str) -> bool:
+    """True only when the parent directory is reachable and the leaf is absent."""
+    try:
+        with _parent_fd(root, relative) as (parent, leaf):
+            try:
+                os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+            except FileNotFoundError:
+                return True
+            return False
+    except (FileNotFoundError, ValueError):
+        return False
+
+
 @_bind_root
-def remove_install(target: str | os.PathLike[str], paths: list[str] | None = None) -> dict[str, Any]:
-    """Remove unchanged managed files; retain generated and user-owned files."""
+def remove_install(target: str | os.PathLike[str], paths: list[str] | None = None, *,
+                   confirm: Mapping[str, str] | None = None) -> dict[str, Any]:
+    """Remove unchanged managed files; retain generated and user-owned files.
+
+    ``confirm`` maps a journaled path to the SHA-256 of the exact bytes an
+    operator agreed to delete; the path is removed only while those bytes are
+    present. Files that existed before agentic-os (``origin: adopted-existing``)
+    never accept a confirmation. A managed or generated entry is dropped when
+    its file is absent from a reachable directory.
+    """
     root = _target(target)
     journal, journal_path, journal_snapshot = _journal(root)
     entries = journal.get("files", {})
@@ -711,9 +815,29 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
                               not all(isinstance(item, str) for item in paths)):
         raise ValueError("install.remove paths must be a list of strings")
     selected = sorted(entries) if paths is None else sorted({_relative_path(item) for item in paths})
+    if confirm is None:
+        confirm = {}
+    if (not isinstance(confirm, Mapping)
+            or not all(isinstance(key, str) and _is_sha256(value)
+                       for key, value in confirm.items())):
+        raise ValueError("install.remove confirm must map paths to SHA-256 digests")
+    normalized = {_relative_path(key): value for key, value in confirm.items()}
+    if len(normalized) != len(confirm):
+        raise ValueError("install.remove confirmation names the same path twice")
+    confirm = normalized
+    if not set(confirm) <= set(selected):
+        raise ValueError("install.remove confirmation names an unselected path")
     destinations = {relative: _destination(root, relative) for relative in selected}
     before_all = {relative: _snapshot(root, relative) for relative in selected}
-    removed, preserved = [], []
+    for relative, digest in confirm.items():
+        entry = entries.get(relative)
+        if not isinstance(entry, Mapping):
+            raise ValueError("removal confirmation names a path that is not journaled: " + relative)
+        if _adopted(entry):
+            raise ValueError("files that existed before agentic-os do not accept a removal confirmation: " + relative)
+        if before_all[relative] is not None and before_all[relative][0] != digest:
+            raise RuntimeError("confirmed file changed since it was reviewed: " + relative)
+    removed, preserved, missing = [], [], []
     updated_files = dict(entries)
     updated = dict(journal)
     for relative in selected:
@@ -726,8 +850,17 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
         removed_bytes = None
         backup = None
         identity_matches = _identity_matches(entry, before)
-        if (current is not None and current == entry.get("sha256")
-                and entry.get("owner") == "managed" and identity_matches):
+        if before is None:
+            if entry.get("owner") in {"managed", "generated"} and _leaf_absent(root, relative):
+                missing.append(relative)
+                updated_files.pop(relative, None)
+            else:
+                # User records, and any record whose directory is unreachable
+                # (for example moved aside), keep their ownership history.
+                preserved.append(relative)
+        elif ((current == entry.get("sha256") and entry.get("owner") == "managed"
+               and identity_matches)
+              or confirm.get(relative) == current):
             if before is None or before[0] != current:
                 raise RuntimeError("installation destination changed during uninstall: " + relative)
             removed_bytes = _read_file(root, relative)
@@ -747,12 +880,16 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
             preserved.append(relative)
             retained = dict(entry)
             retained["owner"] = "generated" if entry.get("owner") == "generated" else "user"
-            retained["origin"] = retained.get("origin", "adopted-existing")
+            # A managed or generated entry was written by agentic-os even when
+            # an older journal omitted its origin; only user entries default to
+            # "adopted-existing".
+            retained["origin"] = retained.get(
+                "origin", "adopted-existing" if entry.get("owner") == "user" else "user-modified")
             updated_files[relative] = retained
         updated["files"] = dict(sorted(updated_files.items()))
         try:
             journal_snapshot = _atomic_write(root, JOURNAL_RELATIVE.as_posix(),
-                      json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                      json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n",
                       prefix=".uninstall.", expected=journal_snapshot)
         except Exception:
             if removed_bytes is not None and _journal_entry_state(
@@ -762,4 +899,52 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
         finally:
             _discard_backup(root, relative, backup)
     return {"schema": 1, "target": str(root), "journal": str(journal_path),
-            "removed": removed, "preserved": preserved}
+            "removed": removed, "preserved": preserved, "missing": missing,
+            "unapplied_confirmations": sorted(set(confirm) - set(removed))}
+
+
+_RECORD_OBJECTS = {"answers", "stack_discovery", "adoption"}
+_RECORD_LISTS = {"follow_ups", "sdlc_skills", "qe_blueprints"}
+_RECORD_PHASES = {"preflight", "interview", "dependencies", "scaffold", "generate", "verify", "done"}
+_RECORD_LIMIT = 1_000_000
+
+
+@_bind_root
+def record_journal(target: str | os.PathLike[str], fields: Mapping[str, Any]) -> dict[str, Any]:
+    """Replace named top-level install-journal fields.
+
+    Skills record interview answers, discovery results and progress here rather
+    than editing ``install.json``. The ``files`` map is never accepted: file
+    entries change only through apply, merge and remove, which bind them to the
+    bytes and identity actually on disk.
+    """
+    root = _target(target)
+    if not isinstance(fields, Mapping) or not fields:
+        raise ValueError("journal fields must be a non-empty object")
+    for key, value in fields.items():
+        if key in _RECORD_OBJECTS:
+            valid = isinstance(value, Mapping)
+        elif key in _RECORD_LISTS:
+            valid = isinstance(value, list) and all(isinstance(item, str) for item in value)
+        elif key == "phase":
+            valid = value in _RECORD_PHASES
+        elif key == "agentic_os_version":
+            valid = _valid_version(value)
+        else:
+            raise ValueError("journal field is not recordable: " + str(key))
+        if not valid:
+            raise ValueError("journal field has an invalid value: " + key)
+    try:
+        encoded = json.dumps(fields, ensure_ascii=False, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("journal fields must be standard JSON") from exc
+    if len(encoded) > _RECORD_LIMIT:
+        raise ValueError("journal fields exceed the size limit")
+    journal, journal_path, journal_snapshot = _journal(root)
+    updated = dict(journal)
+    updated.update(deepcopy(dict(fields)))
+    _atomic_write(root, JOURNAL_RELATIVE.as_posix(),
+                  json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n",
+                  prefix=".record.", expected=journal_snapshot)
+    return {"schema": 1, "target": str(root), "journal": str(journal_path),
+            "recorded": sorted(fields)}

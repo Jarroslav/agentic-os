@@ -24,6 +24,17 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
   Generic uninstall now preserves generated files for an individual decision,
   matching the role-removal contract instead of deleting them automatically.
 
+- Add installer operations for operator decisions so setup, upgrade and
+  uninstall can stop editing files and the journal directly: compare-and-swap
+  confirmations on apply (`expect_sha256`) and remove (`confirm`) that act only
+  while the reviewed bytes are present and never raise a file's ownership;
+  files that existed before agentic-os are never deleted, even when confirmed.
+  Journal entries for managed files already deleted are dropped, unknown
+  file-spec fields are rejected, and `install.record` records answers and
+  progress. A journal containing NaN or Infinity is refused. New files follow
+  the umask, replacements keep their mode without setuid/setgid, and the
+  journal is rewritten owner-only.
+
 - Check all modern stored evidence claims before filtering required checks, so
   a damaged database row cannot hide a signed failed check by changing its
   required flag. Worker isolation from coordinator state remains a separate
