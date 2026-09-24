@@ -60,10 +60,12 @@ class InstallerTests(unittest.TestCase):
             target = pathlib.Path(temp)
             path = target / "config.txt"
             apply_install(target, {"config.txt": "same\n"})
-            old_inode = path.stat().st_ino
+            original = path.stat()
             path.unlink()
             path.write_text("same\n")
-            self.assertNotEqual(path.stat().st_ino, old_inode)
+            os.utime(path, ns=(original.st_atime_ns, original.st_mtime_ns + 1_000_000_000))
+            self.assertNotEqual((path.stat().st_ino, path.stat().st_mtime_ns),
+                                (original.st_ino, original.st_mtime_ns))
             result = apply_install(target, {"config.txt": "same\n"})
             self.assertEqual(result["preserved"], ["config.txt"])
             removed = remove_install(target)
@@ -100,8 +102,10 @@ class InstallerTests(unittest.TestCase):
             target = pathlib.Path(temp)
             path = target / "config.txt"
             apply_install(target, {"config.txt": "same\n"})
+            original = path.stat()
             path.unlink()
             path.write_text("same\n")
+            os.utime(path, ns=(original.st_atime_ns, original.st_mtime_ns + 1_000_000_000))
             result = remove_install(target)
             self.assertEqual(result["removed"], [])
             self.assertEqual(path.read_text(), "same\n")
@@ -565,6 +569,8 @@ class InstallerTests(unittest.TestCase):
                 {"phase": 42, "files": {}},
                 {"files": {"a": dict(entry, template=[]) }},
                 {"files": {"a": dict(entry, origin=None) }},
+                {"files": {"a": dict(entry, mtime_ns=1) }},
+                {"files": {"a": dict(entry, device=1, inode=2, mtime_ns=True) }},
             ):
                 journal.write_text(json.dumps(invalid))
                 with self.assertRaises(RuntimeError):

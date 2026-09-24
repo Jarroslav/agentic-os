@@ -250,7 +250,7 @@ def _read_file(root: Path, relative: str) -> bytes | None:
         return None
 
 
-def _entry_snapshot(parent: int, leaf: str) -> tuple[str, int, int] | None:
+def _entry_snapshot(parent: int, leaf: str) -> tuple[str, int, int, int] | None:
     try:
         fd = os.open(leaf, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
                      dir_fd=parent)
@@ -265,13 +265,13 @@ def _entry_snapshot(parent: int, leaf: str) -> tuple[str, int, int] | None:
             fd = -1
             for chunk in iter(lambda: stream.read(1024 * 1024), b""):
                 digest.update(chunk)
-        return digest.hexdigest(), info.st_dev, info.st_ino
+        return digest.hexdigest(), info.st_dev, info.st_ino, info.st_mtime_ns
     finally:
         if fd >= 0:
             os.close(fd)
 
 
-def _snapshot(root: Path, relative: str) -> tuple[str, int, int] | None:
+def _snapshot(root: Path, relative: str) -> tuple[str, int, int, int] | None:
     try:
         with _parent_fd(root, relative) as (parent, leaf):
             return _entry_snapshot(parent, leaf)
@@ -284,7 +284,17 @@ def _sha(root: Path, relative: str) -> str | None:
     return snapshot[0] if snapshot is not None else None
 
 
-def _journal(target: Path) -> tuple[dict[str, Any], Path, tuple[str, int, int] | None]:
+def _identity_matches(entry: Mapping[str, Any], snapshot: tuple[str, int, int, int] | None) -> bool:
+    return (snapshot is not None and entry.get("device") == snapshot[1]
+            and entry.get("inode") == snapshot[2]
+            and entry.get("mtime_ns") == snapshot[3])
+
+
+def _record_identity(entry: dict[str, Any], snapshot: tuple[str, int, int, int]) -> None:
+    entry["device"], entry["inode"], entry["mtime_ns"] = snapshot[1:]
+
+
+def _journal(target: Path) -> tuple[dict[str, Any], Path, tuple[str, int, int, int] | None]:
     path = _destination(target, JOURNAL_RELATIVE.as_posix())
     try:
         with _parent_fd(target, JOURNAL_RELATIVE.as_posix()) as (parent, leaf):
@@ -298,7 +308,7 @@ def _journal(target: Path) -> tuple[dict[str, Any], Path, tuple[str, int, int] |
                     fd = -1
                     data = stream.read()
                     value = json.loads(data)
-                    snapshot = hashlib.sha256(data).hexdigest(), info.st_dev, info.st_ino
+                    snapshot = hashlib.sha256(data).hexdigest(), info.st_dev, info.st_ino, info.st_mtime_ns
             finally:
                 if fd >= 0:
                     os.close(fd)
@@ -327,6 +337,10 @@ def _journal(target: Path) -> tuple[dict[str, Any], Path, tuple[str, int, int] |
                     (type(entry["device"]) is not int or entry["device"] < 0
                      or type(entry["inode"]) is not int or entry["inode"] < 0))):
             raise RuntimeError("install journal contains an invalid file identity")
+        if ("mtime_ns" in entry and
+                ("device" not in entry or type(entry["mtime_ns"]) is not int
+                 or entry["mtime_ns"] < 0)):
+            raise RuntimeError("install journal contains an invalid file modification time")
         if any(key in entry and (not isinstance(entry[key], str) or not entry[key])
                for key in ("template", "origin")):
             raise RuntimeError("install journal contains invalid file metadata")
@@ -349,7 +363,7 @@ def _journal_entry_state(root: Path, relative: str, old: Any, new: Any) -> str:
 
 
 def _atomic_write(root: Path, relative: str, content: str, *, prefix: str,
-                  expected: tuple[str, int, int] | None | object = ...) -> tuple[str, int, int]:
+                  expected: tuple[str, int, int, int] | None | object = ...) -> tuple[str, int, int, int]:
     with _parent_fd(root, relative, create=True) as (parent, leaf):
         temporary = prefix + secrets.token_hex(12)
         original_link = None
@@ -379,7 +393,7 @@ def _atomic_write(root: Path, relative: str, content: str, *, prefix: str,
                         raise RuntimeError("installation parent moved during write: " + relative)
             except Exception:
                 written = _entry_snapshot(parent, leaf)
-                if written is not None and written[1:] == (info.st_dev, info.st_ino):
+                if written is not None and written[1:3] == (info.st_dev, info.st_ino):
                     if original_link is None:
                         os.unlink(leaf, dir_fd=parent)
                     else:
@@ -387,7 +401,7 @@ def _atomic_write(root: Path, relative: str, content: str, *, prefix: str,
                         original_link = None
                     os.fsync(parent)
                 raise
-            return hashlib.sha256(content.encode("utf-8")).hexdigest(), info.st_dev, info.st_ino
+            return hashlib.sha256(content.encode("utf-8")).hexdigest(), info.st_dev, info.st_ino, info.st_mtime_ns
         finally:
             if original_link is not None:
                 os.unlink(original_link, dir_fd=parent)
@@ -397,7 +411,7 @@ def _atomic_write(root: Path, relative: str, content: str, *, prefix: str,
                 pass
 
 
-def _unlink(root: Path, relative: str, *, expected: tuple[str, int, int]) -> None:
+def _unlink(root: Path, relative: str, *, expected: tuple[str, int, int, int]) -> None:
     with _parent_fd(root, relative) as (parent, leaf):
         if _entry_snapshot(parent, leaf) != expected:
             raise RuntimeError("installation destination changed after validation: " + relative)
@@ -426,7 +440,7 @@ def _unlink(root: Path, relative: str, *, expected: tuple[str, int, int]) -> Non
 
 
 def _backup_file(root: Path, relative: str,
-                 expected: tuple[str, int, int] | None) -> str | None:
+                 expected: tuple[str, int, int, int] | None) -> str | None:
     """Hold the original inode for conditional rollback across journal failure."""
     if expected is None:
         return None
@@ -455,7 +469,7 @@ def _discard_backup(root: Path, relative: str, backup: str | None) -> None:
 
 
 def _restore_file(root: Path, relative: str, before: bytes | None,
-                  after: tuple[str, int, int] | None,
+                  after: tuple[str, int, int, int] | None,
                   backup: str | None = None) -> None:
     """Undo a file effect only while its exact post-write identity remains."""
     if before is None:
@@ -521,15 +535,13 @@ def merge_settings_file(target: str | os.PathLike[str], relative_path: str,
     owned = (before_hash is None or
              (isinstance(previous, Mapping) and previous.get("owner") == "managed"
               and previous.get("sha256") == before_hash
-              and before_snapshot is not None
-              and previous.get("device") == before_snapshot[1]
-              and previous.get("inode") == before_snapshot[2]))
+              and _identity_matches(previous, before_snapshot)))
     files[relative] = {"sha256": desired_hash, "template": "settings-merge",
                        "owner": "managed" if owned else "user",
                        "origin": "installer" if owned else "adopted-existing"}
     final_snapshot = written_snapshot if changed else before_snapshot
     if final_snapshot is not None:
-        files[relative]["device"], files[relative]["inode"] = final_snapshot[1:]
+        _record_identity(files[relative], final_snapshot)
     updated = dict(journal)
     if agentic_os_version is not None:
         updated["agentic_os_version"] = agentic_os_version
@@ -565,9 +577,7 @@ def plan_install(target: str | os.PathLike[str], files: Mapping[str, Any]) -> di
         previous = journal_files.get(relative, {})
         prior_owned = (isinstance(previous, Mapping) and
                        previous.get("owner") in {"managed", "generated"})
-        identity_matches = (current_snapshot is not None and prior_owned and
-                            previous.get("device") == current_snapshot[1] and
-                            previous.get("inode") == current_snapshot[2])
+        identity_matches = prior_owned and _identity_matches(previous, current_snapshot)
         managed_unchanged = (current is not None and isinstance(previous, Mapping) and
                              previous.get("sha256") == current and
                              previous.get("owner") == "managed" and identity_matches)
@@ -655,7 +665,7 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
                 }
                 snapshot = written_snapshot or before[relative]
                 if snapshot is not None:
-                    journal_files[relative]["device"], journal_files[relative]["inode"] = snapshot[1:]
+                    _record_identity(journal_files[relative], snapshot)
         elif relative in journal_files:
             previous = dict(journal_files[relative])
             previous["sha256"] = action["current_sha256"]
@@ -663,7 +673,7 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
             previous["origin"] = "user-modified"
             snapshot = before[relative]
             if snapshot is not None:
-                previous["device"], previous["inode"] = snapshot[1:]
+                _record_identity(previous, snapshot)
             journal_files[relative] = previous
         else:
             journal_files[relative] = {
@@ -715,8 +725,7 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
         current = before[0] if before is not None else None
         removed_bytes = None
         backup = None
-        identity_matches = (before is not None and entry.get("device") == before[1]
-                            and entry.get("inode") == before[2])
+        identity_matches = _identity_matches(entry, before)
         if (current is not None and current == entry.get("sha256")
                 and entry.get("owner") in {"managed", "generated"} and identity_matches):
             if before is None or before[0] != current:
