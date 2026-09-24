@@ -701,7 +701,7 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
 
 @_bind_root
 def remove_install(target: str | os.PathLike[str], paths: list[str] | None = None) -> dict[str, Any]:
-    """Remove journaled files only when their bytes are still managed-owned."""
+    """Remove unchanged managed files; retain generated and user-owned files."""
     root = _target(target)
     journal, journal_path, journal_snapshot = _journal(root)
     entries = journal.get("files", {})
@@ -727,7 +727,7 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
         backup = None
         identity_matches = _identity_matches(entry, before)
         if (current is not None and current == entry.get("sha256")
-                and entry.get("owner") in {"managed", "generated"} and identity_matches):
+                and entry.get("owner") == "managed" and identity_matches):
             if before is None or before[0] != current:
                 raise RuntimeError("installation destination changed during uninstall: " + relative)
             removed_bytes = _read_file(root, relative)
@@ -746,7 +746,7 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
         else:
             preserved.append(relative)
             retained = dict(entry)
-            retained["owner"] = "user"
+            retained["owner"] = "generated" if entry.get("owner") == "generated" else "user"
             retained["origin"] = retained.get("origin", "adopted-existing")
             updated_files[relative] = retained
         updated["files"] = dict(sorted(updated_files.items()))

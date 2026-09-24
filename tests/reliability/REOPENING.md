@@ -181,9 +181,13 @@ and full installer workflow trials remain unverified.
 
 ## Round 16 — journal-aware uninstall
 
-The shared installer now exposes `install.remove`. It removes only unchanged
-managed/generated files, preserves modified files, marks preserved paths as
-user-owned in the journal, and validates explicit path lists. The operation is
+The shared installer now exposes `install.remove`. At this checkpoint it removed
+unchanged managed/generated files, preserved modified files, marked preserved
+paths as user-owned in the journal, and validated explicit path lists. A later
+contract correction made the current generic operation preserve generated
+files with `owner: generated` so role removal can obtain the required individual
+decision; it still removes unchanged managed files and marks modified managed
+files as user-owned. The operation is
 bundled into both plugins and covered by direct and versioned installer tests.
 Full host-driven upgrade/uninstall workflow trials remain unverified.
 
@@ -332,4 +336,3 @@ repository revision and trial fixture. The VM needed a narrow AppArmor
 remains false: real host startup, declared auth files, host-level hook
 execution, a profile re-freeze after host upgrades, and a Linux scenario oracle
 are still required. No candidate slot was consumed.
-

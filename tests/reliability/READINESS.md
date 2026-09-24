@@ -255,6 +255,9 @@ This proves the deterministic installer checkpoint on both systems; full Stage
 5 remains open because shipped setup/upgrade/uninstall skills still contain
 direct journal/file mutation instructions and fleet workflow fixtures are not
 yet migrated to the shared operations. It does not certify live host behavior.
+The next bounded contract fix makes generic `install.remove` preserve generated
+files with generated ownership; a per-file approval path for deleting them remains part of
+the unfinished role-removal integration.
 Stage 6 remains
 partial: managed workflow documentation and guarded QA paths
 now route state through SQLite, but remaining workflow call sites and external

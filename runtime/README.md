@@ -124,8 +124,10 @@ Stored device, inode, and nanosecond modification time reduce accidental
 identity reuse; a replacement that reproduces all those attributes and bytes
 cannot be distinguished. Older journal entries without modification time are
 preserved as user-owned rather than deleted or overwritten.
-`install.remove` deletes only unchanged managed/generated files and
-marks modified files as user-owned. `install.merge-settings` performs the same
+`install.remove` deletes only unchanged managed files; generated files need an
+individual operator decision and retain generated ownership under this generic
+operation. Modified managed files are preserved as user-owned.
+`install.merge-settings` performs the same
 deterministic recursive object/unique-array merge used by setup, writes the
 result atomically after validating the journal, and preserves ownership of
 pre-existing or user-modified settings while retaining existing user scalar

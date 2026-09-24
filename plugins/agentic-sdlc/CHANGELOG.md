@@ -21,6 +21,8 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
   managed file.
   Record nanosecond modification time as well as device and inode, preventing
   an immediately reused inode from claiming a recreated user file.
+  Generic uninstall now preserves generated files for an individual decision,
+  matching the role-removal contract instead of deleting them automatically.
 
 - Check all modern stored evidence claims before filtering required checks, so
   a damaged database row cannot hide a signed failed check by changing its
