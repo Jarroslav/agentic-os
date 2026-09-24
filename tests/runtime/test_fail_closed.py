@@ -309,6 +309,12 @@ class FailClosedTests(unittest.TestCase):
 
         with self.assertRaisesRegex(RuntimeError, 'required completion evidence'):
             self.store.complete_run('r', host_record=gate('early-gate', [lint['evidence_id']]))
+        with self.store._connect() as db:
+            db.execute("UPDATE evidence SET required=0 WHERE run_id='r' AND evidence_id='failed-test'")
+        with self.assertRaisesRegex(RuntimeError, 'required completion evidence'):
+            self.store.complete_run('r', host_record=gate('damaged-projection', [lint['evidence_id']]))
+        with self.store._connect() as db:
+            db.execute("UPDATE evidence SET required=1 WHERE run_id='r' AND evidence_id='failed-test'")
         passing = record('passing-test', 'pytest', 0)
         completed = self.store.complete_run(
             'r', host_record=gate('final-gate', [lint['evidence_id'], passing['evidence_id']]))

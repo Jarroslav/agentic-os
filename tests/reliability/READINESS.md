@@ -123,6 +123,12 @@ fields. Completion now revalidates the retained host claim against the evidence
 row; legacy receipts cannot authorize completion until the check is rerun.
 The gate may retain optional probes alongside a successful required check;
 optional results alone never count as completion proof.
+Completion now scans all modern signed evidence claims before it filters on the
+database row's required flag, closing the reproduced single-column projection
+change. Direct deletion or rewrite of the coordinator database remains outside
+SQLite's protocol guarantees. The trial host binds the fixture writable while
+the runtime defaults its database under the selected root; actual worker access
+to coordinator state is therefore an open isolation proof, not a closed finding.
 
 A proposed QA traceability observer was withheld after blind review found that
 candidate test code could alter its in-process result serializer and forge test

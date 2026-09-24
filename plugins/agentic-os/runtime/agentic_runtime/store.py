@@ -384,6 +384,18 @@ class RuntimeStore:
             if current["state"] != "running":
                 raise RuntimeError("run must be running before completion")
             self._accept_host_claim(db, claims)
+            # Check modern persisted claims before filtering by the row's
+            # required projection. A damaged projection must not hide a
+            # signed required failure from the later stream scan. Legacy
+            # claims without this field can be superseded by fresh receipts.
+            for item in db.execute("SELECT e.*,h.claims_json,h.accepted_at FROM evidence e LEFT JOIN host_dispatches h ON h.record_id=e.host_record_id WHERE e.run_id=? AND e.host_record_id IS NOT NULL", (run_id,)):
+                try:
+                    persisted = json.loads(item["claims_json"])
+                except (TypeError, ValueError):
+                    raise RuntimeError("required completion evidence is missing or failed") from None
+                if not isinstance(persisted, dict) or (
+                        "required" in persisted and not self._evidence_claim_is_bound(item)):
+                    raise RuntimeError("required completion evidence is missing or failed")
             placeholders = ",".join("?" for _ in evidence_ids)
             evidence = db.execute(f"SELECT e.*,h.claims_json,h.accepted_at FROM evidence e LEFT JOIN host_dispatches h ON h.record_id=e.host_record_id WHERE e.run_id=? AND e.evidence_id IN ({placeholders})", (run_id, *evidence_ids)).fetchall()
             if (len(evidence) != len(set(evidence_ids)) or
