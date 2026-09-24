@@ -9,6 +9,11 @@ Semantic Versioning. The plugin version lives in
 
 ### Reliability reopening
 
+- Check all modern stored evidence claims before filtering required checks, so
+  a damaged database row cannot hide a signed failed check by changing its
+  required flag. Worker isolation from coordinator state remains a separate
+  host boundary.
+
 - Retain signed failed required checks and require the latest result of every
   required command stream in the completion gate; signed receipts now bind
   command identity and required status so a failed check cannot be hidden by

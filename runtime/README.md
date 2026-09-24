@@ -82,6 +82,11 @@ failures remain rejected.
 Completion rechecks the retained signed host claim against each evidence row.
 Legacy receipts that did not sign the command identity cannot satisfy a new
 completion gate; rerun the affected checks to create current receipts.
+Before filtering required checks, completion also rejects modern persisted rows
+whose stored fields disagree with their signed claims. This detects a damaged
+row projection; it does not protect a database that a worker can rewrite or
+delete directly. Worker access to coordinator state requires a separate host
+isolation boundary.
 Named optional results may remain in a gate for context, but at least one
 successful signed required receipt is still required to prove completion.
 `agentic_runtime.trace.command_receipt` accepts only explicit
