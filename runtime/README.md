@@ -105,11 +105,36 @@ and requires `AGENTIC_HOST_KEY`.
 `install.plan` computes journal-aware file actions without writes. `install.apply`
 recomputes that plan immediately before atomically applying create/managed-replace
 actions and updates `.agentic/agentic-os/install.json`; user-modified files are
-preserved. `install.remove` deletes only unchanged managed/generated files and
+preserved. Managed journal entries record the file's device and inode. A
+pre-existing file with identical desired bytes, or a later same-byte replacement
+with a different recorded identity, remains user-owned. Legacy journal entries
+without an identity are preserved rather than assumed safe to replace or delete.
+Installer paths reject symlinked components. File mutations use verified
+directory handles and bind the target and observed parent directory identities
+through each mutation. A post-mutation check rejects a detected directory
+move and conditionally undoes its file effect through the held handle.
+Uninstall validates every selected leaf before it deletes the first file. Replacements
+and deletions recheck the planned file hash and inode immediately before the
+mutation, and abort on a mismatch observed at that check. The check and the
+operating-system rename/unlink are separate operations; an unrelated writer
+can still race between them, or move a directory after the post-mutation
+check. The installer does not lock other processes out of the target repository.
+`install.remove` deletes only unchanged managed/generated files and
 marks modified files as user-owned. `install.merge-settings` performs the same
 deterministic recursive object/unique-array merge used by setup, writes the
-result atomically, and journals the resulting hash while preserving existing
-user scalar values. Skills remain responsible for interviews and stack-specific
+result atomically after validating the journal, and preserves ownership of
+pre-existing or user-modified settings while retaining existing user scalar
+values. Each applied file is journaled before the next file; a journal conflict
+aborts and conditionally restores the immediately affected file. Journal
+replacements also check the journal hash and inode read at validation. A
+temporary hard link holds an existing file's inode until its journal update
+commits, so a failed update can restore its prior managed identity. File and
+directory changes are fsynced. If a journal write fails after its rename, the
+installer inspects the visible journal entry before deciding whether rollback
+is safe; ambiguous outcomes require reconciliation. A process
+crash between a file effect and its journal write still needs recovery evidence;
+the installer does not claim a multi-file transaction. Skills remain responsible
+for interviews and stack-specific
 rendering.
 `legacy.export` regenerates `meta.json`, `events.jsonl`, and `decisions.jsonl`
 as compatibility views from SQLite; edits to those files are overwritten on

@@ -8,6 +8,18 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ### Reliability reopening
 
+- Preserve pre-existing settings and identical user files during setup and
+  uninstall, including after a detected user edit. Validate versions and the
+  settings journal before writing; reject unsafe journal entries and anchor
+  file mutations to directory handles against symlink path swaps. Recheck the
+  planned file hash and inode before replacement or deletion; journal each file
+  before advancing, and detect journal edits at the recheck before replacement.
+  Same-byte file replacements with a new inode become user-owned; legacy
+  journal entries without file identity are preserved conservatively.
+  Detected directory replacement during an operation is rejected, and conditional
+  rollback preserves the original inode so a retry can still recognize a
+  managed file.
+
 - Check all modern stored evidence claims before filtering required checks, so
   a damaged database row cannot hide a signed failed check by changing its
   required flag. Worker isolation from coordinator state remains a separate

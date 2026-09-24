@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-23T20:13:36Z",
+ "attested_at": "2026-09-24T12:55:27Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -233,7 +233,7 @@
    "max_run": 0
   },
   "mcp/content-index.json": {
-   "sha256": "1a3394d53ddbde62bd636d648cb6225665a8ac3663b6483143c0b68fd7b128f9",
+   "sha256": "7fd00c46f1b32877aa91fdd6e36770b95abc1f36d0ab4afbd1d9818ba2cf3489",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -491,7 +491,7 @@
    "max_run": 0
   },
   "plugins/agentic-os/CHANGELOG.md": {
-   "sha256": "af08e6562b9336acafcca5e41ad6acfa53a1fea02877dfeb2bc9510d291991f6",
+   "sha256": "443f893f7cc5cea3e5281be411217e1157181b392d3eba208e362dc7209b7639",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -743,8 +743,8 @@
    "max_run": 0
   },
   "plugins/agentic-os/runtime/agentic_runtime/installer.py": {
-   "sha256": "4bfa93dd737b102dfa30ce67056e714c1f8dc3a647dbc3c845d6aa0626383bfc",
-   "line": 0.0246,
+   "sha256": "0d63edbafdc2dcab1d77699fc50396c0e8ac84944839c0075669216a514423bc",
+   "line": 0.0156,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -1649,7 +1649,7 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/CHANGELOG.md": {
-   "sha256": "a4e8a443ea41061e1db40253f9100ae3445713037bddca6e079255ce16977e3a",
+   "sha256": "38523407b69ea210dd21d9e77a8f232827c03cbfda0ca072732ff32b43e4f965",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2009,8 +2009,8 @@
    "max_run": 0
   },
   "plugins/agentic-sdlc/runtime/agentic_runtime/installer.py": {
-   "sha256": "4bfa93dd737b102dfa30ce67056e714c1f8dc3a647dbc3c845d6aa0626383bfc",
-   "line": 0.0246,
+   "sha256": "0d63edbafdc2dcab1d77699fc50396c0e8ac84944839c0075669216a514423bc",
+   "line": 0.0156,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -2801,7 +2801,7 @@
    "max_run": 0
   },
   "runtime/README.md": {
-   "sha256": "62f465f2e7f290286120df1836541dc2a7862849d26691f114ef039e6a32a189",
+   "sha256": "ac8d4a926d90d33a67ddeed0a6ea2e6b963befca58efad753708ccc86794fc6e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -2831,8 +2831,8 @@
    "max_run": 0
   },
   "runtime/agentic_runtime/installer.py": {
-   "sha256": "4bfa93dd737b102dfa30ce67056e714c1f8dc3a647dbc3c845d6aa0626383bfc",
-   "line": 0.0246,
+   "sha256": "0d63edbafdc2dcab1d77699fc50396c0e8ac84944839c0075669216a514423bc",
+   "line": 0.0156,
    "shingle": 0.0,
    "max_run": 0
   },
@@ -3131,7 +3131,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "d862c6b38db92a73e4c90062143680e0876fe629270083cd483a5ac36ba9fafb",
+   "sha256": "35a029f6b246bdf28222e3fc68b3b667020f9c4553c79fee3b04e12d1cdec26e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
@@ -3341,8 +3341,8 @@
    "max_run": 0
   },
   "tests/runtime/test_installer.py": {
-   "sha256": "40df5a8ae278c03c01bc7275c1a3c8c5614a12f5aeb0f04b9ed4c1c5abf46454",
-   "line": 0.0108,
+   "sha256": "ffbe8400b0ffc44b775433eec091bbeccfb6b8eb46d5f72f55a64b8ecd5d5cd8",
+   "line": 0.003,
    "shingle": 0.0,
    "max_run": 0
   },

@@ -213,6 +213,33 @@ matrix with explicit enforcement boundaries. Settings-source merging, full
 upgrade/fleet fixtures, and certified host launch controls remain incomplete;
 settings merging is now centralized in the shared installer through the
 versioned `install.merge-settings` operation.
+The installer now rejects symlinked path components, validates its journal
+before a settings merge writes, and retains user ownership for pre-existing
+identical files and modified settings. File mutations now use verified
+directory handles and bind the target and observed parent directory identities
+for each operation. Detected post-mutation directory moves are conditionally
+undone through the held handle; an unrelated move after the final check remains
+outside the guarantee. Uninstall validates all selected leaves before deleting;
+malformed journal entries and invalid versions fail before foreseeable file
+changes. Planned replacements and deletions recheck file
+hash and inode immediately before mutation. An unrelated writer can still
+race after the check and before the operating-system rename/unlink; this is
+not a repository-wide lock. Journal writes check the validated
+journal hash and inode. Each completed file is journaled before the next one;
+on a detected journal conflict, the immediately affected file is conditionally
+restored with its original inode via a temporary hard link. File and parent
+directory changes are fsynced. Failed journal writes are classified from the
+visible journal entry before rollback, avoiding a rollback after the new entry
+has appeared. A process crash between a file effect and its journal write remains
+an explicit recovery gap. Newly managed files retain device/inode identity;
+same-byte replacements with a new identity and legacy managed entries without
+identity are preserved as user-owned. These deterministic fixes do not yet
+establish complete upgrade, fleet, or live host readiness.
+
+The September 24 instruction to finish the plan and resolve blockers without
+additional access was treated as authorization to continue this installer
+stage after its two planned remediation cycles. The stage remains unaccepted
+until fresh blind reviews pass the final staged tree.
 Stage 6 remains
 partial: managed workflow documentation and guarded QA paths
 now route state through SQLite, but remaining workflow call sites and external
