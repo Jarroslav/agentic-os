@@ -241,9 +241,20 @@ These deterministic fixes do not yet
 establish complete upgrade, fleet, or live host readiness.
 
 The September 24 instruction to finish the plan and resolve blockers without
-additional access was treated as authorization to continue this installer
-stage after its two planned remediation cycles. The stage remains unaccepted
-until fresh blind reviews pass the final staged tree.
+additional access was treated as authorization to continue installer
+remediation after its two planned cycles. The installer hardening checkpoint
+passed two fresh blind reviews at tree
+`ee0bdc434fba9028a115d3ee5d31bbfa84f78071` and was committed as
+`24a0bba`. Linux verification then exposed immediate inode reuse after an
+identical-byte user replacement. The follow-up passed Mac and Linux runtime
+and reliability suites and two fresh blind reviews at tree
+`42aef2e3bd901d08bd09414a3a4a2fb6944fb6d4`, committed as `4e3c9ec`.
+The existing 99-check installer matrix, 204 MCP tests, bundle drift, content
+index, originality attestation, neutrality, and documentation links also pass.
+This proves the deterministic installer checkpoint on both systems; full Stage
+5 remains open because shipped setup/upgrade/uninstall skills still contain
+direct journal/file mutation instructions and fleet workflow fixtures are not
+yet migrated to the shared operations. It does not certify live host behavior.
 Stage 6 remains
 partial: managed workflow documentation and guarded QA paths
 now route state through SQLite, but remaining workflow call sites and external
