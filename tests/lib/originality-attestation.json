@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "_doc": "Committed record of the originality check's per-file results (tests/lib/check-provenance.py). Holds no corpus fingerprints and no salt \u2014 only this repo's own file hashes and the scores they scored. Refresh with --attest after a local --build; CI re-checks it with --verify-attestation, which needs no corpus.",
- "attested_at": "2026-09-24T13:05:38Z",
+ "attested_at": "2026-09-24T13:13:25Z",
  "corpus_file_count": 1892,
  "store_id": "f71a506b3b67fbea651ccf2c01de780da08511c9cd3332402074e681373d6671",
  "salt_id": "21ba8718bed062a6",
@@ -3131,7 +3131,7 @@
    "max_run": 0
   },
   "tests/reliability/READINESS.md": {
-   "sha256": "78b2466e47a2eb4716c1d182c64f65674f351fc16dd4fa201443008122856177",
+   "sha256": "58fd8900537b25d03c87b6163d72350d991ec98b6ee51be1d3412a33175f5f8e",
    "line": 0.0,
    "shingle": 0.0,
    "max_run": 0
