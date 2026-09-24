@@ -114,11 +114,16 @@ directory handles and bind the target and observed parent directory identities
 through each mutation. A post-mutation check rejects a detected directory
 move and conditionally undoes its file effect through the held handle.
 Uninstall validates every selected leaf before it deletes the first file. Replacements
-and deletions recheck the planned file hash and inode immediately before the
+and deletions recheck the planned file hash, device, inode, and modification
+time immediately before the
 mutation, and abort on a mismatch observed at that check. The check and the
 operating-system rename/unlink are separate operations; an unrelated writer
 can still race between them, or move a directory after the post-mutation
 check. The installer does not lock other processes out of the target repository.
+Stored device, inode, and nanosecond modification time reduce accidental
+identity reuse; a replacement that reproduces all those attributes and bytes
+cannot be distinguished. Older journal entries without modification time are
+preserved as user-owned rather than deleted or overwritten.
 `install.remove` deletes only unchanged managed/generated files and
 marks modified files as user-owned. `install.merge-settings` performs the same
 deterministic recursive object/unique-array merge used by setup, writes the

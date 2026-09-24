@@ -233,7 +233,11 @@ visible journal entry before rollback, avoiding a rollback after the new entry
 has appeared. A process crash between a file effect and its journal write remains
 an explicit recovery gap. Newly managed files retain device/inode identity;
 same-byte replacements with a new identity and legacy managed entries without
-identity are preserved as user-owned. These deterministic fixes do not yet
+complete device/inode/modification-time identity are preserved as user-owned.
+Linux testing exposed inode reuse after deletion and recreation of identical
+bytes; the journal now also checks nanosecond modification time. A replacement
+with identical bytes and all identity metadata still cannot be distinguished.
+These deterministic fixes do not yet
 establish complete upgrade, fleet, or live host readiness.
 
 The September 24 instruction to finish the plan and resolve blockers without

@@ -20,6 +20,8 @@ Semantic Versioning. The plugin version lives in
   Detected directory replacement during an operation is rejected, and conditional
   rollback preserves the original inode so a retry can still recognize a
   managed file.
+  Record nanosecond modification time as well as device and inode, preventing
+  an immediately reused inode from claiming a recreated user file.
 
 - Check all modern stored evidence claims before filtering required checks, so
   a damaged database row cannot hide a signed failed check by changing its
