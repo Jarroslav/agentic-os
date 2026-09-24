@@ -124,6 +124,23 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(result["removed"], [])
             self.assertEqual(path.read_text(), "same\n")
 
+    def test_uninstall_preserves_generated_files_without_individual_decision(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"managed.txt": "managed\n", "generated.txt": {
+                "content": "generated\n", "owner": "generated", "origin": "generated"}})
+            result = remove_install(target)
+            self.assertEqual(result["removed"], ["managed.txt"])
+            self.assertEqual(result["preserved"], ["generated.txt"])
+            self.assertEqual((target / "generated.txt").read_text(), "generated\n")
+            journal = json.loads((target / ".agentic/agentic-os/install.json").read_text())
+            self.assertEqual(journal["files"]["generated.txt"]["owner"], "generated")
+            repeated = remove_install(target, ["generated.txt"])
+            self.assertEqual(repeated["removed"], [])
+            self.assertEqual(repeated["preserved"], ["generated.txt"])
+            self.assertEqual(json.loads((target / ".agentic/agentic-os/install.json").read_text())
+                             ["files"]["generated.txt"]["owner"], "generated")
+
     def test_detected_user_edit_remains_user_owned_after_bytes_restored(self):
         with tempfile.TemporaryDirectory() as temp:
             target = pathlib.Path(temp)
