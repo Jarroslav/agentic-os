@@ -8,15 +8,55 @@ resulting relative-path/content manifest to these operations.
 from __future__ import annotations
 
 import hashlib
+import errno
 import json
 import os
 from pathlib import Path
-import tempfile
+import re
+import secrets
+import stat
+from contextlib import contextmanager
+from contextvars import ContextVar
 from copy import deepcopy
+from functools import wraps
 from typing import Any, Mapping
 
 
 JOURNAL_RELATIVE = Path(".agentic/agentic-os/install.json")
+_VERSION = re.compile(
+    r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
+    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
+)
+_BOUND_ROOT: ContextVar[dict[str, Any] | None] = ContextVar("installer_bound_root", default=None)
+
+
+def _bind_root(operation):
+    """Keep a stable directory identity through one mutating operation."""
+    @wraps(operation)
+    def bound(target, *args, **kwargs):
+        root = _target(target)
+        if _BOUND_ROOT.get() is not None:
+            raise RuntimeError("nested installer mutations are unsupported")
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+        fd = os.open(root, flags)
+        token = _BOUND_ROOT.set({"root": root, "fd": fd,
+                                 "identity": (os.fstat(fd).st_dev, os.fstat(fd).st_ino),
+                                 "parents": {}})
+        try:
+            return operation(root, *args, **kwargs)
+        finally:
+            _BOUND_ROOT.reset(token)
+            os.close(fd)
+    return bound
+
+
+def _valid_version(value: Any) -> bool:
+    if not isinstance(value, str) or _VERSION.fullmatch(value) is None:
+        return False
+    prerelease = value.split("+", 1)[0].partition("-")[2]
+    return all(not (part.isdigit() and len(part) > 1 and part[0] == "0")
+               for part in prerelease.split(".") if part)
 
 
 def merge_settings(base: Mapping[str, Any], fragment: Mapping[str, Any]) -> dict[str, Any]:
@@ -70,14 +110,93 @@ def _target(target: str | os.PathLike[str]) -> Path:
 
 
 def _relative_path(value: Any) -> str:
-    if not isinstance(value, str) or not value or "\\" in value:
+    if not isinstance(value, str) or not value or "\\" in value or "\x00" in value:
         raise ValueError("installation paths must be non-empty POSIX-relative strings")
     path = Path(value)
-    if path.is_absolute() or any(part in ("", ".", "..") for part in path.parts):
+    if (not path.parts or path.is_absolute() or path.as_posix() != value
+            or any(part in ("", ".", "..") for part in path.parts)):
         raise ValueError("installation path escapes the target")
-    if value == JOURNAL_RELATIVE.as_posix():
-        raise ValueError("the install journal is owned by the installer")
+    journal = JOURNAL_RELATIVE.as_posix()
+    if value == journal or journal.startswith(value + "/") or value.startswith(journal + "/"):
+        raise ValueError("the install journal path is owned by the installer")
     return path.as_posix()
+
+
+def _reject_path_collisions(paths: Mapping[str, Any]) -> None:
+    for relative in paths:
+        parts = Path(relative).parts
+        if any("/".join(parts[:index]) in paths for index in range(1, len(parts))):
+            raise ValueError("installation paths contain ancestor collisions")
+
+
+def _destination(root: Path, relative: str) -> Path:
+    """Reject symlink traversal in an installation path, including the leaf."""
+    path = root
+    for part in Path(relative).parts:
+        path = path / part
+        if path.is_symlink():
+            raise ValueError("installation path traverses a symlink: " + relative)
+        if path != root / relative and path.exists() and not path.is_dir():
+            raise ValueError("installation path has a non-directory parent: " + relative)
+    return path
+
+
+@contextmanager
+def _parent_fd(root: Path, relative: str, *, create: bool = False):
+    """Hold directory handles and reject changed root/ancestor identities."""
+    if (not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY")
+            or not hasattr(os, "O_NONBLOCK")
+            or any(operation not in os.supports_dir_fd
+                   for operation in (os.open, os.mkdir, os.stat, os.unlink, os.rename, os.link))
+            or os.stat not in os.supports_follow_symlinks):
+        raise RuntimeError("safe installer directory handles are unavailable")
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    if relative != JOURNAL_RELATIVE.as_posix():
+        _relative_path(relative)
+    binding = _BOUND_ROOT.get()
+    if binding is not None:
+        if binding["root"] != root:
+            raise RuntimeError("installer target changed during operation")
+        try:
+            current_root = os.stat(root, follow_symlinks=False)
+        except FileNotFoundError as exc:
+            raise RuntimeError("installer target changed during operation") from exc
+        if (current_root.st_dev, current_root.st_ino) != binding["identity"]:
+            raise RuntimeError("installer target changed during operation")
+        fd = os.dup(binding["fd"])
+    else:
+        fd = os.open(root, flags)
+    try:
+        for index, component in enumerate(Path(relative).parts[:-1]):
+            prefix = "/".join(Path(relative).parts[:index + 1])
+            expected = binding["parents"].get(prefix, ...) if binding is not None else ...
+            created = False
+            try:
+                child = os.open(component, flags, dir_fd=fd)
+            except FileNotFoundError:
+                if binding is not None and expected is ...:
+                    binding["parents"][prefix] = None
+                if not create:
+                    raise
+                os.mkdir(component, dir_fd=fd)
+                os.fsync(fd)
+                child = os.open(component, flags, dir_fd=fd)
+                created = True
+            except OSError as exc:
+                if exc.errno in (errno.ELOOP, errno.ENOTDIR):
+                    raise ValueError("installation path traverses a symlink or non-directory: " + relative) from exc
+                raise
+            identity = (os.fstat(child).st_dev, os.fstat(child).st_ino)
+            if binding is not None:
+                if (expected is None and not created) or (expected is not ... and expected is not None and expected != identity):
+                    os.close(child)
+                    raise RuntimeError("installation parent changed after validation: " + relative)
+                binding["parents"][prefix] = identity
+            os.close(fd)
+            fd = child
+        yield fd, Path(relative).name
+    finally:
+        os.close(fd)
 
 
 def _manifest(files: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -98,66 +217,281 @@ def _manifest(files: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
         owner = spec.get("owner", "managed")
         if owner not in {"managed", "user", "generated"}:
             raise ValueError("unknown installation owner")
+        template = spec.get("template", "derived")
+        origin = spec.get("origin", "plugin")
+        if (not isinstance(template, str) or not template
+                or not isinstance(origin, str) or not origin):
+            raise ValueError("installation template and origin must be non-empty strings")
         result[path] = {
             "content": content,
             "owner": owner,
-            "template": spec.get("template", "derived"),
-            "origin": spec.get("origin", "plugin"),
+            "template": template,
+            "origin": origin,
         }
+    _reject_path_collisions(result)
     return dict(sorted(result.items()))
 
 
-def _sha(path: Path) -> str | None:
-    if not path.is_file():
-        return None
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _journal(target: Path) -> tuple[dict[str, Any], Path]:
-    path = target / JOURNAL_RELATIVE
-    if not path.exists():
-        return {}, path
+def _read_file(root: Path, relative: str) -> bytes | None:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
+        with _parent_fd(root, relative) as (parent, leaf):
+            fd = os.open(leaf, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+                         dir_fd=parent)
+            try:
+                if not stat.S_ISREG(os.fstat(fd).st_mode):
+                    raise ValueError("installation source is not a regular file: " + relative)
+                with os.fdopen(fd, "rb") as stream:
+                    fd = -1
+                    return stream.read()
+            finally:
+                if fd >= 0:
+                    os.close(fd)
+    except FileNotFoundError:
+        return None
+
+
+def _entry_snapshot(parent: int, leaf: str) -> tuple[str, int, int] | None:
+    try:
+        fd = os.open(leaf, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+                     dir_fd=parent)
+    except FileNotFoundError:
+        return None
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode):
+            raise ValueError("installation source is not a regular file: " + leaf)
+        digest = hashlib.sha256()
+        with os.fdopen(fd, "rb") as stream:
+            fd = -1
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest(), info.st_dev, info.st_ino
+    finally:
+        if fd >= 0:
+            os.close(fd)
+
+
+def _snapshot(root: Path, relative: str) -> tuple[str, int, int] | None:
+    try:
+        with _parent_fd(root, relative) as (parent, leaf):
+            return _entry_snapshot(parent, leaf)
+    except FileNotFoundError:
+        return None
+
+
+def _sha(root: Path, relative: str) -> str | None:
+    snapshot = _snapshot(root, relative)
+    return snapshot[0] if snapshot is not None else None
+
+
+def _journal(target: Path) -> tuple[dict[str, Any], Path, tuple[str, int, int] | None]:
+    path = _destination(target, JOURNAL_RELATIVE.as_posix())
+    try:
+        with _parent_fd(target, JOURNAL_RELATIVE.as_posix()) as (parent, leaf):
+            fd = os.open(leaf, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+                         dir_fd=parent)
+            try:
+                info = os.fstat(fd)
+                if not stat.S_ISREG(info.st_mode):
+                    raise RuntimeError("install journal is not a regular file")
+                with os.fdopen(fd, "rb") as stream:
+                    fd = -1
+                    data = stream.read()
+                    value = json.loads(data)
+                    snapshot = hashlib.sha256(data).hexdigest(), info.st_dev, info.st_ino
+            finally:
+                if fd >= 0:
+                    os.close(fd)
+    except FileNotFoundError:
+        return {}, path, None
+    except (OSError, ValueError, UnicodeError) as exc:
         raise RuntimeError("install journal is unreadable") from exc
     if not isinstance(value, dict):
         raise RuntimeError("install journal must be an object")
-    if value.get("files") is not None and not isinstance(value["files"], dict):
+    if "files" in value and not isinstance(value["files"], dict):
         raise RuntimeError("install journal files must be an object")
-    return value, path
+    if "agentic_os_version" in value and not _valid_version(value["agentic_os_version"]):
+        raise RuntimeError("install journal has an invalid agentic_os_version")
+    if "phase" in value and value["phase"] not in {
+            "preflight", "interview", "dependencies", "scaffold", "generate", "verify", "done"}:
+        raise RuntimeError("install journal has an invalid phase")
+    for relative, entry in value.get("files", {}).items():
+        _relative_path(relative)
+        if (not isinstance(entry, dict) or entry.get("owner") not in {"managed", "user", "generated"}
+                or not isinstance(entry.get("sha256"), str)
+                or len(entry["sha256"]) != 64
+                or any(char not in "0123456789abcdef" for char in entry["sha256"])):
+            raise RuntimeError("install journal contains an invalid file entry")
+        if (("device" in entry) != ("inode" in entry)
+                or ("device" in entry and
+                    (type(entry["device"]) is not int or entry["device"] < 0
+                     or type(entry["inode"]) is not int or entry["inode"] < 0))):
+            raise RuntimeError("install journal contains an invalid file identity")
+        if any(key in entry and (not isinstance(entry[key], str) or not entry[key])
+               for key in ("template", "origin")):
+            raise RuntimeError("install journal contains invalid file metadata")
+    _reject_path_collisions(value.get("files", {}))
+    return value, path, snapshot
 
 
-def _atomic_write(path: Path, content: str, *, prefix: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temporary = tempfile.mkstemp(prefix=prefix, dir=path.parent)
+def _journal_entry_state(root: Path, relative: str, old: Any, new: Any) -> str:
+    """Classify a failed journal write without trusting its exception timing."""
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            stream.write(content)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
+        current, _, _ = _journal(root)
+        entry = current.get("files", {}).get(relative)
+    except Exception:
+        return "unknown"
+    if entry == new:
+        return "new"
+    if entry == old:
+        return "old"
+    return "unknown"
 
 
+def _atomic_write(root: Path, relative: str, content: str, *, prefix: str,
+                  expected: tuple[str, int, int] | None | object = ...) -> tuple[str, int, int]:
+    with _parent_fd(root, relative, create=True) as (parent, leaf):
+        temporary = prefix + secrets.token_hex(12)
+        original_link = None
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                     0o600, dir_fd=parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+                info = os.fstat(stream.fileno())
+            current = _entry_snapshot(parent, leaf)
+            if expected is not ... and current != expected:
+                raise RuntimeError("installation destination changed after validation: " + relative)
+            if current is not None:
+                original_link = ".install-before." + secrets.token_hex(12)
+                os.link(leaf, original_link, src_dir_fd=parent, dst_dir_fd=parent,
+                        follow_symlinks=False)
+                if _entry_snapshot(parent, original_link) != current:
+                    raise RuntimeError("installation destination changed before rename: " + relative)
+            os.rename(temporary, leaf, src_dir_fd=parent, dst_dir_fd=parent)
+            os.fsync(parent)
+            try:
+                with _parent_fd(root, relative) as (reachable, _):
+                    if (os.fstat(reachable).st_dev, os.fstat(reachable).st_ino) != (
+                            os.fstat(parent).st_dev, os.fstat(parent).st_ino):
+                        raise RuntimeError("installation parent moved during write: " + relative)
+            except Exception:
+                written = _entry_snapshot(parent, leaf)
+                if written is not None and written[1:] == (info.st_dev, info.st_ino):
+                    if original_link is None:
+                        os.unlink(leaf, dir_fd=parent)
+                    else:
+                        os.rename(original_link, leaf, src_dir_fd=parent, dst_dir_fd=parent)
+                        original_link = None
+                    os.fsync(parent)
+                raise
+            return hashlib.sha256(content.encode("utf-8")).hexdigest(), info.st_dev, info.st_ino
+        finally:
+            if original_link is not None:
+                os.unlink(original_link, dir_fd=parent)
+            try:
+                os.unlink(temporary, dir_fd=parent)
+            except FileNotFoundError:
+                pass
+
+
+def _unlink(root: Path, relative: str, *, expected: tuple[str, int, int]) -> None:
+    with _parent_fd(root, relative) as (parent, leaf):
+        if _entry_snapshot(parent, leaf) != expected:
+            raise RuntimeError("installation destination changed after validation: " + relative)
+        original_link = ".install-before." + secrets.token_hex(12)
+        os.link(leaf, original_link, src_dir_fd=parent, dst_dir_fd=parent,
+                follow_symlinks=False)
+        try:
+            if _entry_snapshot(parent, original_link) != expected:
+                raise RuntimeError("installation destination changed before deletion: " + relative)
+            os.unlink(leaf, dir_fd=parent)
+            os.fsync(parent)
+            try:
+                with _parent_fd(root, relative) as (reachable, _):
+                    if (os.fstat(reachable).st_dev, os.fstat(reachable).st_ino) != (
+                            os.fstat(parent).st_dev, os.fstat(parent).st_ino):
+                        raise RuntimeError("installation parent moved during deletion: " + relative)
+            except Exception:
+                if _entry_snapshot(parent, leaf) is None:
+                    os.rename(original_link, leaf, src_dir_fd=parent, dst_dir_fd=parent)
+                    original_link = None
+                    os.fsync(parent)
+                raise
+        finally:
+            if original_link is not None:
+                os.unlink(original_link, dir_fd=parent)
+
+
+def _backup_file(root: Path, relative: str,
+                 expected: tuple[str, int, int] | None) -> str | None:
+    """Hold the original inode for conditional rollback across journal failure."""
+    if expected is None:
+        return None
+    with _parent_fd(root, relative) as (parent, leaf):
+        backup = ".install-backup." + secrets.token_hex(12)
+        os.link(leaf, backup, src_dir_fd=parent, dst_dir_fd=parent,
+                follow_symlinks=False)
+        try:
+            if _entry_snapshot(parent, backup) != expected:
+                raise RuntimeError("installation source changed before backup: " + relative)
+            return backup
+        except Exception:
+            os.unlink(backup, dir_fd=parent)
+            raise
+
+
+def _discard_backup(root: Path, relative: str, backup: str | None) -> None:
+    if backup is None:
+        return
+    with _parent_fd(root, relative) as (parent, _):
+        try:
+            os.unlink(backup, dir_fd=parent)
+        except FileNotFoundError:
+            return
+        os.fsync(parent)
+
+
+def _restore_file(root: Path, relative: str, before: bytes | None,
+                  after: tuple[str, int, int] | None,
+                  backup: str | None = None) -> None:
+    """Undo a file effect only while its exact post-write identity remains."""
+    if before is None:
+        if after is not None:
+            _unlink(root, relative, expected=after)
+    elif backup is not None:
+        with _parent_fd(root, relative) as (parent, leaf):
+            if _entry_snapshot(parent, leaf) != after:
+                raise RuntimeError("installation destination changed before rollback: " + relative)
+            os.rename(backup, leaf, src_dir_fd=parent, dst_dir_fd=parent)
+            os.fsync(parent)
+    else:
+        _atomic_write(root, relative, before.decode("utf-8"),
+                      prefix=".install-rollback.", expected=after)
+
+
+@_bind_root
 def merge_settings_file(target: str | os.PathLike[str], relative_path: str,
                         fragment: Mapping[str, Any], *,
                         agentic_os_version: str | None = None) -> dict[str, Any]:
     """Merge a JSON settings fragment and journal the resulting managed file."""
     root = _target(target)
     relative = _relative_path(relative_path)
-    destination = root / relative
-    before_hash = _sha(destination)
-    if destination.exists():
+    destination = _destination(root, relative)
+    journal, journal_path, journal_snapshot = _journal(root)
+    if agentic_os_version is not None and not _valid_version(agentic_os_version):
+        raise ValueError("agentic_os_version must be a semantic version")
+    before_bytes = _read_file(root, relative)
+    before_hash = hashlib.sha256(before_bytes).hexdigest() if before_bytes is not None else None
+    before_snapshot = _snapshot(root, relative)
+    if (before_snapshot[0] if before_snapshot else None) != before_hash:
+        raise RuntimeError("settings changed during merge planning")
+    if before_bytes is not None:
         try:
-            current = json.loads(destination.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:
+            current = json.loads(before_bytes.decode("utf-8"))
+        except (OSError, ValueError, UnicodeError) as exc:
             raise RuntimeError("settings file is unreadable or invalid JSON") from exc
         if not isinstance(current, dict):
             raise RuntimeError("settings file must contain a JSON object")
@@ -167,22 +501,50 @@ def merge_settings_file(target: str | os.PathLike[str], relative_path: str,
     content = json.dumps(merged, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
     desired_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     changed = before_hash != desired_hash
+    written_snapshot = None
+    backup = _backup_file(root, relative, before_snapshot) if changed else None
     if changed:
-        _atomic_write(destination, content, prefix=f".{destination.name}.")
+        try:
+            written_snapshot = _atomic_write(root, relative, content, prefix=f".{destination.name}.",
+                                             expected=before_snapshot)
+        except Exception:
+            try:
+                current = _snapshot(root, relative)
+                if current is not None and current[0] == desired_hash and current != before_snapshot:
+                    _restore_file(root, relative, before_bytes, current, backup)
+            finally:
+                _discard_backup(root, relative, backup)
+            raise
 
-    journal, journal_path = _journal(root)
     files = dict(journal.get("files", {}))
+    previous = files.get(relative)
+    owned = (before_hash is None or
+             (isinstance(previous, Mapping) and previous.get("owner") == "managed"
+              and previous.get("sha256") == before_hash
+              and before_snapshot is not None
+              and previous.get("device") == before_snapshot[1]
+              and previous.get("inode") == before_snapshot[2]))
     files[relative] = {"sha256": desired_hash, "template": "settings-merge",
-                       "owner": "managed", "origin": "installer"}
+                       "owner": "managed" if owned else "user",
+                       "origin": "installer" if owned else "adopted-existing"}
+    final_snapshot = written_snapshot if changed else before_snapshot
+    if final_snapshot is not None:
+        files[relative]["device"], files[relative]["inode"] = final_snapshot[1:]
     updated = dict(journal)
     if agentic_os_version is not None:
-        if not isinstance(agentic_os_version, str) or not agentic_os_version:
-            raise ValueError("agentic_os_version must be a non-empty string")
         updated["agentic_os_version"] = agentic_os_version
     updated["phase"] = updated.get("phase", "scaffold")
     updated["files"] = dict(sorted(files.items()))
-    _atomic_write(journal_path, json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
-                  prefix=".settings-journal.")
+    try:
+        _atomic_write(root, JOURNAL_RELATIVE.as_posix(), json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                      prefix=".settings-journal.", expected=journal_snapshot)
+    except Exception:
+        if changed and _journal_entry_state(root, relative,
+                journal.get("files", {}).get(relative), files[relative]) == "old":
+            _restore_file(root, relative, before_bytes, written_snapshot, backup)
+        raise
+    finally:
+        _discard_backup(root, relative, backup)
     return {"schema": 1, "target": str(root), "path": relative,
             "journal": str(journal_path), "changed": changed,
             "before_sha256": before_hash, "after_sha256": desired_hash}
@@ -192,19 +554,27 @@ def plan_install(target: str | os.PathLike[str], files: Mapping[str, Any]) -> di
     """Return deterministic create/replace/preserve actions without writing."""
     root = _target(target)
     manifest = _manifest(files)
-    journal, journal_path = _journal(root)
+    journal, journal_path, _ = _journal(root)
     journal_files = journal.get("files", {})
     actions = []
     for relative, spec in manifest.items():
-        destination = root / relative
+        destination = _destination(root, relative)
         desired = hashlib.sha256(spec["content"].encode("utf-8")).hexdigest()
-        current = _sha(destination)
+        current_snapshot = _snapshot(root, relative)
+        current = current_snapshot[0] if current_snapshot else None
         previous = journal_files.get(relative, {})
+        prior_owned = (isinstance(previous, Mapping) and
+                       previous.get("owner") in {"managed", "generated"})
+        identity_matches = (current_snapshot is not None and prior_owned and
+                            previous.get("device") == current_snapshot[1] and
+                            previous.get("inode") == current_snapshot[2])
         managed_unchanged = (current is not None and isinstance(previous, Mapping) and
                              previous.get("sha256") == current and
-                             previous.get("owner", "managed") == "managed")
+                             previous.get("owner") == "managed" and identity_matches)
         if current is None:
             action = "create"
+        elif prior_owned and not identity_matches:
+            action = "preserve_modified"
         elif current == desired:
             action = "unchanged"
         elif managed_unchanged:
@@ -218,6 +588,7 @@ def plan_install(target: str | os.PathLike[str], files: Mapping[str, Any]) -> di
             "actions": actions}
 
 
+@_bind_root
 def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
                   agentic_os_version: str | None = None) -> dict[str, Any]:
     """Apply safe actions atomically and update the install journal.
@@ -227,68 +598,102 @@ def apply_install(target: str | os.PathLike[str], files: Mapping[str, Any], *,
     """
     root = _target(target)
     manifest = _manifest(files)
+    if agentic_os_version is not None and not _valid_version(agentic_os_version):
+        raise ValueError("agentic_os_version must be a semantic version")
+    journal, journal_path, journal_snapshot = _journal(root)
+    before = {relative: _snapshot(root, relative) for relative in manifest}
     plan = plan_install(root, manifest)
-    journal, journal_path = _journal(root)
+    _, _, current_journal_snapshot = _journal(root)
+    if current_journal_snapshot != journal_snapshot:
+        raise RuntimeError("install journal changed during planning")
     journal_files = dict(journal.get("files", {}))
     applied = []
     preserved = []
+    updated = dict(journal)
+    if agentic_os_version is not None:
+        updated["agentic_os_version"] = agentic_os_version
+    updated["phase"] = updated.get("phase", "scaffold")
     for action in plan["actions"]:
         relative = action["path"]
         spec = manifest[relative]
-        destination = root / relative
+        prior_entry = deepcopy(journal_files.get(relative))
+        destination = _destination(root, relative)
+        if _snapshot(root, relative) != before[relative]:
+            raise RuntimeError("installation destination changed during planning: " + relative)
+        before_bytes = None
+        written_snapshot = None
+        backup = None
         if action["action"] in {"create", "replace"}:
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            fd, temporary = tempfile.mkstemp(prefix=f".{destination.name}.", dir=destination.parent)
+            before_bytes = _read_file(root, relative)
+            backup = _backup_file(root, relative, before[relative])
             try:
-                with os.fdopen(fd, "w", encoding="utf-8") as stream:
-                    stream.write(spec["content"])
-                    stream.flush()
-                    os.fsync(stream.fileno())
-                os.replace(temporary, destination)
-            finally:
-                if os.path.exists(temporary):
-                    os.unlink(temporary)
-            applied.append(relative)
+                written_snapshot = _atomic_write(root, relative, spec["content"], prefix=f".{destination.name}.",
+                                                 expected=before[relative])
+            except Exception:
+                try:
+                    current = _snapshot(root, relative)
+                    if current is not None and current[0] == action["desired_sha256"] and current != before[relative]:
+                        _restore_file(root, relative, before_bytes, current, backup)
+                finally:
+                    _discard_backup(root, relative, backup)
+                raise
         elif action["action"] == "preserve_modified":
             preserved.append(relative)
         if action["action"] != "preserve_modified":
-            journal_files[relative] = {
-                "sha256": action["desired_sha256"], "template": spec["template"],
-                "owner": spec["owner"], "origin": spec["origin"],
-            }
-        elif relative not in journal_files:
+            previous = journal_files.get(relative)
+            if action["action"] == "unchanged" and not isinstance(previous, Mapping):
+                journal_files[relative] = {
+                    "sha256": action["desired_sha256"], "template": "adopted",
+                    "owner": "user", "origin": "adopted-existing",
+                }
+            elif action["action"] == "unchanged" and isinstance(previous, Mapping):
+                journal_files[relative] = dict(previous)
+            else:
+                journal_files[relative] = {
+                    "sha256": action["desired_sha256"], "template": spec["template"],
+                    "owner": spec["owner"], "origin": spec["origin"],
+                }
+                snapshot = written_snapshot or before[relative]
+                if snapshot is not None:
+                    journal_files[relative]["device"], journal_files[relative]["inode"] = snapshot[1:]
+        elif relative in journal_files:
+            previous = dict(journal_files[relative])
+            previous["sha256"] = action["current_sha256"]
+            previous["owner"] = "user"
+            previous["origin"] = "user-modified"
+            snapshot = before[relative]
+            if snapshot is not None:
+                previous["device"], previous["inode"] = snapshot[1:]
+            journal_files[relative] = previous
+        else:
             journal_files[relative] = {
                 "sha256": action["current_sha256"], "template": "adopted",
                 "owner": "user", "origin": "adopted-existing",
             }
-    journal_path.parent.mkdir(parents=True, exist_ok=True)
-    updated = dict(journal)
-    if agentic_os_version is not None:
-        if not isinstance(agentic_os_version, str) or not agentic_os_version:
-            raise ValueError("agentic_os_version must be a non-empty string")
-        updated["agentic_os_version"] = agentic_os_version
-    updated["phase"] = updated.get("phase", "scaffold")
-    updated["files"] = dict(sorted(journal_files.items()))
-    fd, temporary = tempfile.mkstemp(prefix=".install.", dir=journal_path.parent)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(updated, stream, ensure_ascii=False, sort_keys=True, indent=2)
-            stream.write("\n")
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, journal_path)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
+        updated["files"] = dict(sorted(journal_files.items()))
+        try:
+            journal_snapshot = _atomic_write(root, JOURNAL_RELATIVE.as_posix(),
+                      json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                      prefix=".install.", expected=journal_snapshot)
+        except Exception:
+            if written_snapshot is not None and _journal_entry_state(
+                    root, relative, prior_entry, journal_files[relative]) == "old":
+                _restore_file(root, relative, before_bytes, written_snapshot, backup)
+            raise
+        finally:
+            _discard_backup(root, relative, backup)
+        if written_snapshot is not None:
+            applied.append(relative)
     return {"schema": 1, "target": str(root), "journal": str(journal_path),
             "applied": applied, "preserved": preserved,
             "actions": plan["actions"]}
 
 
+@_bind_root
 def remove_install(target: str | os.PathLike[str], paths: list[str] | None = None) -> dict[str, Any]:
     """Remove journaled files only when their bytes are still managed-owned."""
     root = _target(target)
-    journal, journal_path = _journal(root)
+    journal, journal_path, journal_snapshot = _journal(root)
     entries = journal.get("files", {})
     if not isinstance(entries, dict):
         raise RuntimeError("install journal files must be an object")
@@ -296,16 +701,37 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
                               not all(isinstance(item, str) for item in paths)):
         raise ValueError("install.remove paths must be a list of strings")
     selected = sorted(entries) if paths is None else sorted({_relative_path(item) for item in paths})
+    destinations = {relative: _destination(root, relative) for relative in selected}
+    before_all = {relative: _snapshot(root, relative) for relative in selected}
     removed, preserved = [], []
     updated_files = dict(entries)
+    updated = dict(journal)
     for relative in selected:
         entry = entries.get(relative)
         if not isinstance(entry, Mapping):
             continue
-        destination = root / relative
-        current = _sha(destination)
-        if current is not None and current == entry.get("sha256") and entry.get("owner", "managed") in {"managed", "generated"}:
-            destination.unlink()
+        destination = destinations[relative]
+        before = before_all[relative]
+        current = before[0] if before is not None else None
+        removed_bytes = None
+        backup = None
+        identity_matches = (before is not None and entry.get("device") == before[1]
+                            and entry.get("inode") == before[2])
+        if (current is not None and current == entry.get("sha256")
+                and entry.get("owner") in {"managed", "generated"} and identity_matches):
+            if before is None or before[0] != current:
+                raise RuntimeError("installation destination changed during uninstall: " + relative)
+            removed_bytes = _read_file(root, relative)
+            backup = _backup_file(root, relative, before)
+            try:
+                _unlink(root, relative, expected=before)
+            except Exception:
+                try:
+                    if _snapshot(root, relative) is None:
+                        _restore_file(root, relative, removed_bytes, None, backup)
+                finally:
+                    _discard_backup(root, relative, backup)
+                raise
             removed.append(relative)
             updated_files.pop(relative, None)
         else:
@@ -314,19 +740,17 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
             retained["owner"] = "user"
             retained["origin"] = retained.get("origin", "adopted-existing")
             updated_files[relative] = retained
-    updated = dict(journal)
-    updated["files"] = dict(sorted(updated_files.items()))
-    journal_path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temporary = tempfile.mkstemp(prefix=".uninstall.", dir=journal_path.parent)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(updated, stream, ensure_ascii=False, sort_keys=True, indent=2)
-            stream.write("\n")
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, journal_path)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
+        updated["files"] = dict(sorted(updated_files.items()))
+        try:
+            journal_snapshot = _atomic_write(root, JOURNAL_RELATIVE.as_posix(),
+                      json.dumps(updated, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+                      prefix=".uninstall.", expected=journal_snapshot)
+        except Exception:
+            if removed_bytes is not None and _journal_entry_state(
+                    root, relative, entry, updated_files.get(relative)) == "old":
+                _restore_file(root, relative, removed_bytes, None, backup)
+            raise
+        finally:
+            _discard_backup(root, relative, backup)
     return {"schema": 1, "target": str(root), "journal": str(journal_path),
             "removed": removed, "preserved": preserved}
