@@ -249,9 +249,13 @@ def converge(target: Path, journal: dict, desired: dict[str, Path], p_new: list[
             confirm[rel] = current
             removed_rel.append(rel)
             continue
-        # B0 — never touch.
+        # B0 — never touch. Files agentic-os wrote that an earlier run kept are
+        # user-owned too; report them as kept rather than as the user's own.
         if entry.get("owner") == "user" or entry.get("origin") == "adopted-existing":
-            never_touch.append(rel)
+            if entry.get("origin") in (None, "adopted-existing"):
+                never_touch.append(rel)
+            else:
+                kept_by_choice.append("%s (kept earlier, user-owned)" % rel)
             continue
         if rel in desired:
             # Retained. Re-render when the desired content differs.

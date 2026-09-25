@@ -9,6 +9,9 @@ Semantic Versioning. The plugin version lives in
 
 ### Reliability reopening
 
+- agentic-upgrade explains how to refresh an existing `.ao-new` merge file
+  (a confirmation of its current bytes).
+
 - agentic-init re-runs refresh only unmodified managed files; user-owned files
   are never refreshed silently.
 
