@@ -1147,6 +1147,21 @@ class InstallerDecisionTests(unittest.TestCase):
             self.assertFalse((target / "b.md").exists())
             self.assertTrue((target / "a.md").exists())
 
+    def test_kept_files_record_their_current_bytes_but_generated_keeps_its_hash(self):
+        with tempfile.TemporaryDirectory() as temp:
+            target = pathlib.Path(temp)
+            apply_install(target, {"m.md": "m\n", "g.md": {"content": "g\n", "owner": "generated"}})
+            (target / "m.md").write_text("edited\n")
+            (target / "g.md").write_text("g edited\n")
+            remove_install(target)
+            files = self.journal(target)["files"]
+            self.assertEqual((files["m.md"]["owner"], files["m.md"]["sha256"]), ("user", self.digest(b"edited\n")))
+            self.assertEqual(files["m.md"]["inode"], (target / "m.md").stat().st_ino)
+            self.assertEqual((files["g.md"]["owner"], files["g.md"]["sha256"]), ("generated", self.digest(b"g\n")))
+            # The refreshed record is still confirmable at the bytes on disk.
+            self.assertEqual(remove_install(target, ["m.md"], confirm={"m.md": self.digest(b"edited\n")})["removed"],
+                             ["m.md"])
+
     # G6 absent entries
 
     def test_g6_absent_files_drop_only_managed_entries_in_reachable_directories(self):

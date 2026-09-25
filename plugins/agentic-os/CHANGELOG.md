@@ -9,6 +9,10 @@ Semantic Versioning. The plugin version lives in
 
 ### Reliability reopening
 
+- When uninstall keeps a file, its journal entry now records the bytes and
+  identity actually on disk (a kept generated file keeps its recorded hash, so
+  the user's edit stays detectable).
+
 - Preserve pre-existing settings and identical user files during setup and
   uninstall, including after a detected user edit. Validate versions and the
   settings journal before writing; reject unsafe journal entries and anchor

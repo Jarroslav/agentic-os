@@ -412,7 +412,7 @@ by a focused recheck. Logged follow-ups, non-blocking:
 - Uninstall report buckets ("never-touch", "kept by choice") can disagree with
   the journal warning; counts are cosmetic.
 - A hook the user chose to keep (no `--assume-delete`) is un-wired but kept.
-- `install.remove` keeps a preserved file's old sha256 in the journal
-  (runtime); `.ao-new` re-runs need a confirmation to refresh.
+- `.ao-new` re-runs need a confirmation to refresh. (The stale sha256 of
+  files kept by `install.remove` was fixed in the following commit.)
 - Empty matcher groups and agentic-os `permissions.deny` entries remain in a
   user-owned settings file after `--all`.

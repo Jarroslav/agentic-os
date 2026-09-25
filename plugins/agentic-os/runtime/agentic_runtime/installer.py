@@ -885,6 +885,12 @@ def remove_install(target: str | os.PathLike[str], paths: list[str] | None = Non
             # "adopted-existing".
             retained["origin"] = retained.get(
                 "origin", "adopted-existing" if entry.get("owner") == "user" else "user-modified")
+            if retained["owner"] == "user" and before is not None:
+                # The journal describes disk: a kept user file records the bytes
+                # and identity actually present. A kept generated file keeps its
+                # recorded hash so the user's edit stays detectable.
+                retained["sha256"] = before[0]
+                _record_identity(retained, before)
             updated_files[relative] = retained
         updated["files"] = dict(sorted(updated_files.items()))
         try:
