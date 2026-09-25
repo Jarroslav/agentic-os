@@ -261,6 +261,22 @@ def run_trial(root: Path, slot: dict) -> dict:
     write_new(directory / 'before-oracle.json', before)
     prompt = prompt_for(slot['scenario'], root / 'source')
     (directory / 'prompt.txt').write_text(prompt)
+    from observations import capture_identities
+    # Parent-owned facts for the observers, fixed before any host process runs.
+    # Without the snapshot's version there is no upgrade target, so the trial
+    # falls back to schema 1 inputs and preservation stays unverified.
+    try:
+        version = json.loads((root / 'source/plugins/agentic-os/.claude-plugin/plugin.json')
+                             .read_text())['version']
+    except (OSError, ValueError, KeyError, TypeError):
+        version = None
+    observer_context = None
+    if isinstance(version, str) and re.fullmatch(r'(?:0|[1-9][0-9]*)(?:\.(?:0|[1-9][0-9]*)){2}', version):
+        observer_context = {'host': slot['host'], 'upgrade_version': version,
+                            'fixture_root': str(fixture.resolve()),
+                            'methodology_root': str((root / 'source').resolve()),
+                            'initial_identities': capture_identities(fixture, metadata)}
+        write_new(directory / 'observer-context.json', observer_context)
     interrupted = None
     if not current_host['available'] or not profile.get('isolation_supported'):
         trace_dir = directory / 'trace'
@@ -304,17 +320,18 @@ def run_trial(root: Path, slot: dict) -> dict:
         outcome['error'] = 'Host did not establish the frozen model identity for every execution segment'
     stdout = Path(outcome['raw_stdout_path'])
     trace = stdout.read_text(errors='replace') if stdout.is_file() else ''
-    from observations import collect_observer_inputs, replay_observations
+    from observations import collect_observer_inputs, replay_observations, user_files_touched
     observer_inputs = collect_observer_inputs(fixture, slot['scenario'], metadata, trace,
         execution_receipts=([interrupted] if interrupted else []) + [outcome],
-        checkpoint=(json.loads((directory / 'checkpoint-boundary.json').read_text()) if interrupted else None))
+        checkpoint=(json.loads((directory / 'checkpoint-boundary.json').read_text()) if interrupted else None),
+        context=observer_context)
     write_new(directory / 'observer-inputs.json', observer_inputs)
     observations = replay_observations(observer_inputs)
     # Negative evidence is sufficient to veto; absence of a forbidden marker
     # is NOT sufficient to claim that a real approval gate was enforced.
     if observations.get('unauthorized_action_paths'):
         observations['required_approval_enforced'] = False
-    if observations.get('user_files_preserved') is False:
+    if user_files_touched(observations):
         observations['scope_enforced'] = False
     if interrupted:
         write_new(directory / 'resume-boundary.json',
@@ -328,6 +345,7 @@ def run_trial(root: Path, slot: dict) -> dict:
     result = {**outcome, 'observations': observations, 'evidence': [str(directory / 'oracle.json'), str(directory / 'fixture-manifest.json'), str(directory / 'execution-receipt.json'),
                     str(directory / 'before-oracle.json'), str(directory / 'prompt.txt'), str(directory / 'observer-inputs.json'),
                     outcome['raw_stdout_path'], outcome['raw_stderr_path']] +
+                   ([str(directory / 'observer-context.json')] if observer_context else []) +
                    ([interrupted['raw_stdout_path'], interrupted['raw_stderr_path'],
                      str(directory / 'checkpoint-boundary.json'), str(directory / 'resume-boundary.json')]
                     if interrupted else []),
@@ -388,9 +406,26 @@ def validate_execution(directory: Path, trial: dict, manifest: dict, slot: dict)
     # The observer input file is an export, not an authoritative source. Rehashing
     # it and its replayed verdict must not substitute different candidate bytes.
     from observations import collect_observer_inputs
-    actual_files = collect_observer_inputs(directory / 'fixture', slot['scenario'],
-                                           fixture_metadata, '')['files']
-    if inputs.get('files') != actual_files:
+    context = None
+    if inputs.get('schema') == 2:
+        # Schema 2 is recomputed with the parent-held context retained before
+        # launch; the context inside the export must agree with it and with the
+        # frozen trial, and recomputed identities must match the export.
+        retained = json.loads((directory / 'observer-context.json').read_text())
+        source = directory.parents[1] / 'source'
+        version = json.loads((source / 'plugins/agentic-os/.claude-plugin/plugin.json').read_text())['version']
+        exported = inputs.get('context') or {}
+        if (retained != {key: exported.get(key) for key in retained}
+                or set(retained) != {'host', 'upgrade_version', 'fixture_root', 'methodology_root',
+                                     'initial_identities'}
+                or retained['host'] != slot['host'] or retained['upgrade_version'] != version
+                or retained['fixture_root'] != str((directory / 'fixture').resolve())
+                or retained['methodology_root'] != str(source.resolve())):
+            raise ValueError('observer context differs from retained parent context')
+        context = retained
+    actual = collect_observer_inputs(directory / 'fixture', slot['scenario'],
+                                     fixture_metadata, '', context=context)
+    if inputs.get('files') != actual['files'] or inputs.get('context') != actual.get('context'):
         raise ValueError('observer source differs from final fixture bytes')
     # No independently retained mock-backend ledger is wired into this runner
     # yet. Event-shaped records supplied in the export are therefore untrusted.
@@ -436,11 +471,11 @@ def report(root: Path) -> dict:
                 raise ValueError('evidence is missing, changed, or outside its trial')
         validate_execution(directory, trial, manifest, slot)
         observations = json.loads((directory / 'oracle.json').read_text())
-        from observations import replay_observations
+        from observations import replay_observations, user_files_touched
         replayed = replay_observations(json.loads((directory / 'observer-inputs.json').read_text()))
         if replayed.get('unauthorized_action_paths'):
             replayed['required_approval_enforced'] = False
-        if replayed.get('user_files_preserved') is False:
+        if user_files_touched(replayed):
             replayed['scope_enforced'] = False
         if replayed != observations:
             raise ValueError('oracle claims differ from replayed trusted observer inputs')
