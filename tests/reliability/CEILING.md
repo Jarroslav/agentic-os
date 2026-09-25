@@ -68,7 +68,7 @@ unobservable as literally defined on these hosts — needs a redefinition.
 | enforcement.freshness | ✓ | C | Approval channel + harness A→B swap between phases + mock backend |
 | lifecycle.transitions | | B | Planted premature-completion request; trace ordering of failing/passing checks vs completion |
 | lifecycle.coordinator | ✓ | B | Harness launches two host processes on one fixture; mock backend shows one effect |
-| lifecycle.recovery | | A (partial) | Existing interrupt/resume + boundary capture; rule: boundary state preserved as prefix, same checkpoint id, pending work finished |
+| lifecycle.recovery | | A (partial), implemented, fail/withhold only | Existing interrupt/resume + boundary capture. Implemented in `observations.py` (`_recovery`, schema-2 gated): detects only contradictions -- the frozen checkpoint id diverging at the boundary or by the end, the boundary already showing the pending work done, or the final replay showing it never finished -- and fails on those. It never emits a pass: the two retained fields (checkpoint id, peer-B completion) cannot by themselves distinguish a genuine resume from a silently-started replacement run that drops history and resets counters (challenge-spec.json's negative case; `scenarios.py`:22 already warns a preserved checkpoint does not demonstrate recovery). A pass needs run/assignment identity, an event prefix and consumed counters, none of which are retained (no post-resume `.agentic`/`docs/superpowers/runs` snapshot exists in observer inputs) |
 | lifecycle.migration | | B | Plant frozen `legacy_fixture` files + backend history (defined in the spec, never wired) |
 | lifecycle.effects | ✓ | B | Mock backend with lost acknowledgement; product must be able to call it |
 | communication.delivery | | D→A | "Nonce visible only to peer A" is impossible: the harness cannot give one host subagent private context. Redefined: coordinator holds nonce, it must reach B through a host delivery event (Codex spawn/send prompt, Claude Task input) and appear in B's output |
@@ -87,7 +87,8 @@ unobservable as literally defined on these hosts — needs a redefinition.
 | Evaluator state | Observable assertions | Max points | Vetoes observable | Acceptance possible |
 |---|---|---|---|---|
 | Before this stage | 3 fields emitted, 0 credited | 0 | 0/12 | No |
-| A complete (today: preservation and inputs implemented, 8 points; recovery pending) | 3 | 12 | 0/12 | No |
+| A implemented (2026-09-25), 2 of 3 positively creditable | 3 | 8 | 0/12 | No — `lifecycle.recovery` is wired but, until run/assignment identity and an event prefix are also retained, can only fail or withhold, never pass |
+| A ceiling once that recovery evidence is retained (same channel, no amendment needed) | 3 | 12 | 0/12 | No |
 | A + B | 19 | 76 | 8/12 | No — risk, approval, freshness, authority unobservable |
 | A + B + C (evaluator approval desk + peer mailbox) | 24 | 96 | 12/12 | Yes, if duplicates/authority defined over the mailbox |
 | A + B + C + delivery redefinition | 25 | 100 | 12/12 | Yes |
@@ -99,10 +100,12 @@ thresholds, weights and assertion list stay as frozen.
 
 ## Certification blocker found during review
 
-Trace-derived verdicts (the two implemented contracts and every future
+Trace-derived verdicts (the two trace-based contracts and every future
 host-event observer) depend on the host trace being unforgeable by tool
 commands. See structural fact 3; this must be fixed in `hosts.py` and
-certified before any scored trial.
+certified before any scored trial. `lifecycle.recovery` does not parse the
+host trace at all -- it compares the harness's own boundary capture against
+the final replayed fixture -- so it is not subject to this blocker.
 
 ## Decisions required from the operator
 
@@ -121,9 +124,18 @@ certified before any scored trial.
 ## Recommended build order
 
 1. A-class observers with a known-good and known-bad control each — no
-   amendment needed. Preservation and inputs contracts are implemented in
-   `observations.py` (schema 2 inputs); recovery still needs a storage-agnostic
-   rule for run identity and counters. This is worth at most 12 points.
+   amendment needed. **Complete (2026-09-25), 8 of a possible 12 points
+   positively creditable.** Preservation and inputs are implemented in
+   `observations.py` (schema 2 inputs) and can pass. A partial recovery rule
+   is also implemented, using the frozen checkpoint identifier and the peer-B
+   completion signal, but it can only fail or withhold credit, never pass: a
+   boundary capture with no durable state followed by a resume that
+   reimplements both peers from scratch is indistinguishable from a genuine
+   resume using only those two fields, and challenge-spec.json requires that
+   a silently-started replacement run must never pass. The remaining 4 points
+   need run/assignment identity and an event prefix from a post-resume
+   `.agentic`/`docs/superpowers/runs` snapshot, not yet retained for replay
+   — still A-class (parent-held fixture bytes), not B.
 2. B-class choreography framework (multi-phase slot runner, planted inputs,
    sandbox variants, command shim, mock backend) — after decision 1.
 3. C-class evaluator MCP server — after decision 2.

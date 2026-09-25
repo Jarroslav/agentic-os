@@ -557,12 +557,15 @@ The observer layer now has schema-2 inputs with parent-held context (host,
 snapshot version, pre-launch user-file inode/ctime identities). Two evidence
 contracts are implemented with known-good and known-bad controls:
 `contracts.preservation` (unchanged bytes and identities, no host write-tool
-attempt on a user path under the fixture root, a successful host read of the
-exact snapshot upgrade skill, a trace without extraction issues, and a
-journal stamped with the snapshot version keeping user records) and
+attempt on a user path under the fixture root, a successful host invocation of
+the exact snapshot upgrade skill -- a `Read` of the exact file or the exact
+plugin-namespaced `Skill` form, see Stage 7a below -- a trace without
+extraction issues, and a journal stamped with the snapshot version keeping
+user records) and
 `contracts.inputs` (requested setup options recorded type-exactly in the
-installation and both exact entrypoint files read). Claude `Skill`-tool
-invocations are not yet recognised and yield unverified. The scope veto now fails only when user files were
+installation and both exact entrypoint files read). A Claude `Skill`-tool
+invocation naming the shipped skill exactly now also counts as an invocation
+alongside a `Read` of it (see Stage 7a below). The scope veto now fails only when user files were
 actually touched, not when an upgrade was skipped. All 24 retained suite 9
 records replay identically under the previous and new observer code. The field
 inventory reports 21 of 25 assertions missing. No trial has run.
@@ -572,6 +575,79 @@ is written to a regular file and tool commands share the host's PID namespace,
 so a same-user child could plausibly forge trace events through `/proc`. Host
 stdout must be piped to the parent and that access removed, then certified,
 before any scored trial.
+
+## Stage 7a (2026-09-25)
+
+Advances CEILING.md's "Recommended build order" step 1 (the A-class observer
+set) with two narrow additions, both with known-good and known-bad controls in
+`test_observations.py`. A blind-review round blocked the first cut of this
+stage on `lifecycle.recovery` granting false credit; the fix below is the
+remediated version.
+
+- `_skill_read` now also recognises a Claude assistant `tool_use` block named
+  `Skill` whose `skill` input names the shipped skill's exact
+  plugin-namespaced form (`plugin:skill`, the owning plugin's own manifest
+  name -- neither shipped manifest under `plugins/` declares any other
+  namespace) with a `responded` result, exactly as it already did for a
+  matching `Read`. The bare skill-directory name is deliberately rejected, not
+  just unhandled: `hosts.py` launches Claude with
+  `--setting-sources project,local`, so a bare name can resolve to a
+  same-named project skill the candidate plants at `.claude/skills/<name>`
+  inside the fixture, crediting a candidate-authored stand-in as the shipped
+  skill. A wrong name, a similarly spelled name, the bare name, a wrong
+  namespace, a prose mention, an errored result, a missing result, a
+  non-string `skill` input, a non-string tool id, and the same block
+  appearing under a Codex host context all still yield unverified.
+  The namespaced form is not a proof of origin on its own. Review showed, on
+  Claude Code 2.1.281, that a project skill at
+  `.claude/skills/agentic-os:agentic-init/` present at launch overrides the
+  plugin skill and produces an identical `Skill` event; only the following
+  "Base directory for this skill" text differs. This is unreachable in the
+  two scenarios that use the rule (single launches into harness-written
+  fixtures; skills planted mid-run were not picked up), but it must be closed
+  by also binding that base directory to the snapshot before the rule is
+  applied to a resumed segment, where the first run could plant a skill.
+- `lifecycle.recovery` (`recovery_verified`, scenario `delegation_resume`) is
+  now a partial A-class observer, gated on schema 2 like the other two
+  contracts, that **can only fail or withhold credit -- it never passes.** It
+  compares the harness's own pre-resume boundary snapshot (`checkpoint`,
+  already captured by `suite.py`) against the final replayed oracle result,
+  using two fields both sides already report: `checkpoint_preserved` (byte
+  identity of the frozen `.fixture/checkpoint.json` identifier) and
+  `remaining_work_verified` (independent sandboxed execution of the peer-B
+  function required to stay unfinished until resume). It fails on an observed
+  contradiction -- the checkpoint identifier diverging at the boundary or by
+  the end, the boundary already showing the pending work done, or the final
+  replay showing it never finished -- and is unverified otherwise, including
+  the case that looks like a clean resume (checkpoint held, boundary still
+  open, final replay finished). That case is deliberately never credited: a
+  boundary capture with empty `artifact_claims` (no handoff, no durable task
+  state -- run 1 only dropped the interrupt sentinel) followed by a "resume"
+  that reimplements both peers from scratch with no `.agentic` state at all
+  produces exactly that pattern, and challenge-spec.json's `lifecycle.recovery`
+  negative case requires that a silently-started replacement run which drops
+  history and resets counters must never pass -- `scenarios.py` already
+  documents that a preserved checkpoint does not demonstrate recovery. Neither
+  retained field says anything about run/assignment identity, an event
+  prefix, or consumed counters, and no post-resume snapshot of
+  `.agentic`/`docs/superpowers/runs` is retained in observer inputs, so a pass
+  verdict has to wait on that evidence -- explicitly future work. Gating on
+  schema 2 keeps every retained suite 9 `delegation_resume` record (all schema
+  1) replaying to the unchanged `None` it always produced; this is checked
+  directly against the six real suite 9 `delegation_resume` traces in
+  `test_observations.py` (tracked in-repo in the suite 9 evidence archive),
+  which all replay byte-for-byte identically, and separately against the
+  reviewer's exact false-credit repro (real fixture, real `capture_boundary`,
+  real oracle, no mocks), which now replays to `None`.
+
+The field inventory count is unchanged (`lifecycle.recovery`'s key was already
+present, defaulted to `None`); what changed is that its value is now computed
+instead of hardcoded. Because a pass is not yet reachable, `lifecycle.recovery`
+contributes 0 of its 4 points even on a perfect run; the A-class ceiling today
+is 8 points (preservation and inputs), with 12 remaining the ceiling once the
+missing recovery evidence is retained. B-class choreography, the C-class
+evaluator channel, and launcher trace hardening remain deferred per the
+operator's 2026-09-25 direction to avoid over-engineering (see Status below).
 
 ## Status as of 2026-09-25
 
@@ -584,8 +660,13 @@ before any scored trial.
   direct write to legacy run ledgers is scoped to unmanaged runs, and managed
   runs use runtime operations (`sdlc-runs`, QA helpers, telemetry export).
   Host-level wiring remains uncertified.
-- **Stage 7 (evaluation):** two evidence contracts exist (`180ab06`). Per the
-  operator's 2026-09-25 direction to avoid over-engineering, wiring the frozen
+- **Stage 7 (evaluation):** CEILING.md's A-class build-order step is
+  implemented but not fully creditable: two evidence contracts that can pass
+  (`180ab06`), plus Claude `Skill`-tool recognition and a partial
+  `lifecycle.recovery` rule that can only fail or withhold, never pass, until
+  run/assignment identity and an event prefix are retained (Stage 7a, above).
+  Today's A-class ceiling is 8 of a possible 12 points. Per the operator's
+  2026-09-25 direction to avoid over-engineering, wiring the frozen
   challenges into scenarios, the evaluator-owned approval/peer channel and
   launcher trace hardening are deferred. Consequently the 90-point acceptance
   cannot be claimed and no scored trial is planned.
