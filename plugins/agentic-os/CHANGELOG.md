@@ -25,6 +25,18 @@ Semantic Versioning. The plugin version lives in
   Generic uninstall now preserves generated files for an individual decision,
   matching the role-removal contract instead of deleting them automatically.
 
+- Setup, upgrade and uninstall now make journal and scaffold-file writes
+  through the shared runtime (`install.apply`, `install.record`,
+  `install.remove`, `install.merge-settings`) instead of editing `install.json`
+  or scaffold files directly; `.gitignore` lines, the instruction scorecard and
+  git hooks remain direct writes. Uninstall removes only wiring for hook
+  scripts agentic-os installed, and un-wires (rather than deletes) an adopted
+  settings file under `--all`; settings are always removed or un-wired before
+  any hook script they wire. Merges into a user's existing `CLAUDE.md` or settings, and
+  confirmed deletions, are compare-and-swap confirmations of the bytes shown.
+  The reference install/uninstall executors run the same operations, so the
+  acceptance matrix now exercises the shipped installer end to end.
+
 - Add installer operations for operator decisions so setup, upgrade and
   uninstall can stop editing files and the journal directly: compare-and-swap
   confirmations on apply (`expect_sha256`) and remove (`confirm`) that act only

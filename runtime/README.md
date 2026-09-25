@@ -159,7 +159,8 @@ fails closed; plan again before retrying an interrupted request.
 accepts `files`. A journal containing NaN, Infinity or an out-of-range number
 is refused by every operation before any write, and `install.merge-settings` neither reads nor writes a settings
 file containing them. `confirm` keys must be canonical relative paths. It lets setup, upgrade and uninstall stop editing
-`install.json` directly; the skills migrate in a later stage.
+`install.json` directly; the agentic-os setup, upgrade and uninstall skills
+now use these operations.
 
 New installed files are created with mode `0666` minus the umask. A
 replacement keeps the destination's mode without setuid/setgid, applied after
