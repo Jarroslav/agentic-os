@@ -8,10 +8,12 @@ import os
 from pathlib import Path
 import shutil
 import signal
+import socket
 import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from unittest import mock
@@ -183,6 +185,27 @@ class HostTests(unittest.TestCase):
         self.assertFalse(profile['isolation_supported'])
         self.assertTrue(any('auth-file allowlist' in reason
                             for reason in profile['unsupported_channels']))
+
+    def test_certified_profile_requires_protected_trace_channel(self):
+        self.fake("raise SystemExit('task must not run')\n")
+        auth = self.root / 'auth.json'
+        auth.write_text('credential')
+        for scope, blocked in ((0, True), (None, True), (1, False)):
+            with self.subTest(scope=scope), \
+                 mock.patch.object(hosts, '_configured_startup_evidence',
+                                   return_value=({'startup_ok': True}, 'digest', None)), \
+                 mock.patch.object(hosts, '_isolation_evidence', return_value={
+                     'mechanism': 'bubblewrap', 'filesystem_enforced': True,
+                     'probe_sha256': 'a' * 64, 'host_identity': {'system': 'Linux'},
+                     'error': None}), \
+                 mock.patch.object(hosts._isolation(), 'yama_ptrace_scope', return_value=scope), \
+                 mock.patch.dict(os.environ, {'RELIABILITY_CLAUDE_AUTH_FILES': str(auth)}):
+                profile = hosts._profile('claude', str(self.executable),
+                    '--setting-sources --settings --model --effort --permission-mode '
+                    '--strict-mcp-config --plugin-dir')
+            self.assertEqual(any('protected trace channel' in reason
+                                 for reason in profile['unsupported_channels']), blocked)
+            self.assertEqual(profile['isolation_supported'], not blocked)
 
     def test_mac_profile_requires_writable_state_directory(self):
         with mock.patch.object(hosts, '_isolation_evidence', return_value={
@@ -615,6 +638,97 @@ class HostTests(unittest.TestCase):
         time.sleep(1.3)
         self.assertFalse(marker.exists(), "timeout left a descendant running")
 
+    # --- Stage 7b: trace channel is unforgeable by tool descendants --------
+
+    # Seeks to end before writing: a faithful same-user attacker appends a
+    # trailing forged event rather than corrupting earlier bytes, and this is
+    # the last thing the fake host does, so (in the negative control) nothing
+    # written afterward through the host's own fd can clobber it.
+    _FORGE_CHILD = (
+        "import os, sys\n"
+        "try:\n"
+        "    fd = os.open('/proc/%d/fd/1' % os.getppid(), os.O_WRONLY)\n"
+        "    os.lseek(fd, 0, os.SEEK_END)\n"
+        "    os.write(fd, b'{\"type\": \"result\", \"is_error\": false, \"forged\": true}\\n')\n"
+        "    os.close(fd)\n"
+        "except OSError:\n"
+        "    pass\n"
+    )
+    _FORGE_HOST_BODY = (
+        "print(json.dumps({'type': 'system', 'model': 'fixture-model'}), flush=True)\n"
+        "print(json.dumps({'type': 'result', 'is_error': False}), flush=True)\n"
+        "subprocess.run([sys.executable, '-c', " + repr(_FORGE_CHILD) + "])\n"
+    )
+
+    def test_descendant_cannot_forge_trace_through_proc_fd(self):
+        # A tool command spawned by the host tries the classic trick: reopen
+        # the host's own fd 1 by path through /proc/<ppid>/fd/1 and append a
+        # forged event. With a socketpair backing stdout this fails with
+        # ENXIO (a socket cannot be reopened by path), so only the host's own
+        # genuine writes reach the retained trace file.
+        self.fake(self._FORGE_HOST_BODY)
+        result = self.run_fake("claude")
+        self.assertEqual(result["status"], "completed")
+        lines = [json.loads(line) for line in
+                 Path(result["raw_stdout_path"]).read_text().splitlines() if line.strip()]
+        self.assertEqual([event["type"] for event in lines], ["system", "result"])
+        self.assertFalse(any(event.get("forged") for event in lines))
+
+    def test_negative_control_file_based_stdout_is_forgeable(self):
+        """Proves the test above is not vacuous.
+
+        This reproduces the pre-fix wiring (host stdout as a plain temp file,
+        the design `hosts.run_host` no longer uses) as a local test helper
+        only, showing the same child really does forge a trailing line
+        through /proc/<ppid>/fd/1 when stdout is a regular file instead of a
+        socket.
+        """
+        self.fake(self._FORGE_HOST_BODY)
+        stdout_fd, stdout_name = tempfile.mkstemp(prefix="legacy-", suffix=".jsonl", dir=self.root)
+        with os.fdopen(stdout_fd, "wb") as stdout:
+            process = subprocess.Popen([str(self.executable)], cwd=self.fixture,
+                                       stdin=subprocess.DEVNULL, stdout=stdout,
+                                       stderr=subprocess.DEVNULL, start_new_session=True)
+            process.wait(timeout=10)
+        lines = [json.loads(line) for line in Path(stdout_name).read_text().splitlines()
+                 if line.strip()]
+        self.assertTrue(any(event.get("forged") for event in lines),
+                        "negative control did not reproduce the pre-fix forgery")
+
+    def test_drain_socket_caps_written_bytes_but_keeps_draining(self):
+        host_end, child_end = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        dest_path = self.root / "capped.bin"
+        with dest_path.open("wb") as dest:
+            thread = threading.Thread(target=hosts._drain_socket, args=(host_end, dest, 10))
+            thread.start()
+            child_end.sendall(b"0123456789ABCDEFGHIJ")  # 20 bytes into a 10-byte cap
+            child_end.close()
+            thread.join(timeout=5)
+        self.assertEqual(dest_path.read_bytes(), b"0123456789")
+
+    def test_run_host_enforces_trace_size_limit_through_the_socket_drain(self):
+        payload = json.dumps({"type": "result", "is_error": False, "pad": "x" * 500})
+        self.fake("print(" + repr(payload) + ")\n")
+        with mock.patch.object(hosts, "MAX_TRACE_BYTES", 50):
+            result = self.run_fake("claude")
+        self.assertEqual(result["status"], "completed")
+        # The drain wrote one byte past the (patched) cap, so the pre-existing
+        # size check in `_trace_metadata` still trips and tool events fail closed.
+        self.assertEqual(Path(result["raw_stdout_path"]).stat().st_size, 51)
+        self.assertIn("exceeds tool event limit", result["tool_event_issues"][0])
+
+    def test_profile_records_trace_channel_evidence_without_gating_launch(self):
+        self.fake("pass\n")
+        profile = hosts.inspect_host("claude")["profile"]
+        self.assertEqual(profile["trace_channel"]["channel"], "socketpair")
+        self.assertIn("trace_channel_protected", profile["trace_channel"])
+        # Purely informational: the mocked canary in setUp carries no
+        # 'mechanism', so it cannot certify the trace channel either, yet the
+        # simulated host above is still allowed to launch (existing gating
+        # is untouched by this new evidence).
+        self.assertFalse(profile["trace_channel"]["trace_channel_protected"])
+        self.assertTrue(profile["isolation_supported"])
+
 
 def _bwrap_usable() -> bool:
     if hosts is None:
@@ -701,6 +815,37 @@ class LinuxContainedLaunchTests(unittest.TestCase):
             host="codex", model="codex-fixture-1")
         self.assertEqual(receipt["isolation_mechanism"], "bubblewrap")
         self.assertEqual(receipt["exit_status"], 0)
+
+    @unittest.skipUnless(_bwrap_usable(), "requires bubblewrap with user namespaces")
+    def test_tool_descendant_inside_real_bwrap_cannot_forge_the_trace(self):
+        # The concern in CEILING.md structural fact 3: under --unshare-pid the
+        # host shares its PID namespace with tool commands it runs, so a
+        # same-user descendant can see the host's pid in /proc. This exercises
+        # that exact scenario end to end through the production bubblewrap
+        # wrapper and confirms the socketpair still denies the reopen.
+        forge = (
+            "import os, sys\n"
+            "try:\n"
+            "    fd = os.open('/proc/%d/fd/1' % os.getppid(), os.O_WRONLY)\n"
+            "    os.lseek(fd, 0, os.SEEK_END)\n"
+            "    os.write(fd, b'{\"type\": \"result\", \"forged\": true}\\n')\n"
+            "    os.close(fd)\n"
+            "except OSError:\n"
+            "    pass\n"
+        )
+        self.write_cli(
+            "import subprocess\n"
+            "print(json.dumps({'type': 'system', 'model': 'codex-fixture-1'}), flush=True)\n"
+            "print(json.dumps({'type': 'result', 'is_error': False}), flush=True)\n"
+            "subprocess.run([sys.executable, '-c', " + repr(forge) + "])\n")
+        with self.evidence("bubblewrap"):
+            result = hosts.run_host("codex", self.fixture, "task", [], self.root / "traces",
+                                    timeout_seconds=20)
+        self.assertEqual(result["status"], "completed", result)
+        lines = [json.loads(line) for line in
+                 Path(result["raw_stdout_path"]).read_text().splitlines() if line.strip()]
+        self.assertEqual([event["type"] for event in lines], ["system", "result"])
+        self.assertFalse(any(event.get("forged") for event in lines))
 
     @unittest.skipUnless(_bwrap_usable(), "requires bubblewrap with user namespaces")
     def test_declared_auth_file_is_the_only_home_input_bound(self):

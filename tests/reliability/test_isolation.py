@@ -226,6 +226,11 @@ class LinuxIsolationTests(unittest.TestCase):
         self.assertEqual(set(result['checks']), isolation.LINUX_CHECKS)
         self.assertFalse(result['host_certified'])
         self.assertEqual(result['host_identity']['mechanism'], 'bubblewrap')
+        # The sandboxed grandchild's attempts to forge the probe's own trace
+        # channel (reopen /proc/<pid>/fd/1, pidfd_getfd, ptrace attach) must
+        # all be denied for this to certify.
+        self.assertTrue(result['checks']['descendant_trace_forgery_denied'], result)
+        self.assertIsInstance(result['yama_ptrace_scope'], int)
 
     @unittest.skipUnless(_bwrap_usable(), 'requires bubblewrap with user namespaces')
     def test_evidence_is_stable_so_frozen_profiles_do_not_drift(self):
@@ -255,6 +260,21 @@ class LinuxIsolationTests(unittest.TestCase):
         self.assertTrue({'snapshot:r', 'snapshot:w', 'auth_sibling_denied', 'plugin_write_denied',
                          'unselected_hook_denied', 'host_globals_hidden',
                          'descendant_read_denied', 'descendant_pid_namespace'} <= failed, failed)
+        # Unlike the bwrap-dependent controls above, trace-forgery denial
+        # comes from the socketpair (always used, bwrap or not) plus the
+        # host's own Yama ptrace_scope, not from mount/PID namespaces, so it
+        # is expected to still pass here even with the sandbox bypassed.
+        self.assertTrue(result['checks']['descendant_trace_forgery_denied'], result)
+
+    @unittest.skipUnless(sys.platform.startswith('linux'), 'reads a Linux-only kernel path')
+    def test_yama_ptrace_scope_reads_the_kernel_value(self):
+        scope = isolation.yama_ptrace_scope()
+        expected = int(Path('/proc/sys/kernel/yama/ptrace_scope').read_text().strip())
+        self.assertEqual(scope, expected)
+
+    def test_yama_ptrace_scope_is_none_off_linux(self):
+        with mock.patch.object(isolation.sys, 'platform', 'darwin'):
+            self.assertIsNone(isolation.yama_ptrace_scope())
 
     def test_missing_bubblewrap_is_not_certification(self):
         with mock.patch.object(isolation, 'linux_executable', return_value=None):
@@ -263,9 +283,11 @@ class LinuxIsolationTests(unittest.TestCase):
         self.assertIn('bubblewrap', result['error'])
 
     def test_namespace_failure_is_not_certification(self):
+        # The probe's own stdout capture goes through the socketpair helper,
+        # not a bare subprocess.run, so that is what a fake host failure mocks.
         failure = subprocess.CompletedProcess([], 1, '', 'bwrap: setting up uid map: Permission denied\n')
         with mock.patch.object(isolation, 'linux_executable', return_value='/usr/bin/bwrap'), \
-             mock.patch.object(isolation.subprocess, 'run', return_value=failure):
+             mock.patch.object(isolation, '_run_with_socketpair_stdout', return_value=failure):
             result = isolation.probe_linux_boundary()
         self.assertFalse(result['filesystem_enforced'])
         self.assertIn('uid map', result['error'])
@@ -273,7 +295,7 @@ class LinuxIsolationTests(unittest.TestCase):
     def test_forged_all_true_output_without_hook_side_effect_fails(self):
         forged = json.dumps({name: True for name in isolation.LINUX_CHECKS})
         with mock.patch.object(isolation, 'linux_executable', return_value='/usr/bin/bwrap'), \
-             mock.patch.object(isolation.subprocess, 'run',
+             mock.patch.object(isolation, '_run_with_socketpair_stdout',
                                return_value=subprocess.CompletedProcess([], 0, forged, '')):
             result = isolation.probe_linux_boundary()
         self.assertFalse(result['filesystem_enforced'])
