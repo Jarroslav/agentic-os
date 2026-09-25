@@ -17,8 +17,10 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import socket
 import subprocess
 import tempfile
+import threading
 import time
 
 from runtime.agentic_runtime.trace import command_receipt, ingest_command_event
@@ -103,6 +105,64 @@ def _cleanup(process: subprocess.Popen) -> None:
     elif process.poll() is None:
         process.kill()
     process.wait(timeout=5)
+
+
+def _drain_socket(sock: socket.socket, dest, cap: int) -> None:
+    """Copy one host stdio stream from a socketpair end into its trace file.
+
+    The peer end is the host's actual fd 0>1 or stderr, so ``dest`` receives
+    exactly what a direct-file redirect would have, except a same-user tool
+    descendant can no longer reopen it through /proc/<pid>/fd/N (a socket,
+    unlike a pipe or regular file, cannot be reopened by path; the kernel
+    returns ENXIO). Writes stop at ``cap`` bytes so a runaway or hostile host
+    cannot grow the trace file without bound, but the socket keeps being
+    drained past that point so the host is never blocked on a full send
+    buffer; the file therefore lands one byte over ``cap`` on overflow, which
+    still trips the pre-existing MAX_TRACE_BYTES check downstream.
+    """
+    written = 0
+    try:
+        while True:
+            try:
+                chunk = sock.recv(65536)
+            except OSError:
+                return
+            if not chunk:
+                return
+            if written < cap:
+                take = chunk[:cap - written]
+                dest.write(take)
+                dest.flush()
+                written += len(take)
+    finally:
+        try:
+            sock.close()
+        except OSError:
+            pass
+
+
+def _trace_channel_evidence(isolation_evidence: dict) -> dict:
+    """Record how this launch protects host stdio from descendant forgery.
+
+    A socketpair defeats /proc/<host pid>/fd/N reopening unconditionally (the
+    kernel returns ENXIO for a socket, regardless of permissions), but a
+    same-user descendant can still duplicate the fd directly via
+    pidfd_getfd(2) or attach with ptrace(2) unless the kernel's Yama LSM
+    restricts those to a process's own descendants. A host with startup
+    evidence is certified only when this is protected (Yama scope 0 or
+    unreadable, or a non-Linux mechanism never verified here, is a limit).
+    """
+    scope = _isolation().yama_ptrace_scope()
+    mechanism = isolation_evidence.get("mechanism")
+    protected = mechanism == "bubblewrap" and isinstance(scope, int) and scope > 0
+    if protected:
+        reason = None
+    elif mechanism == "bubblewrap":
+        reason = "kernel.yama.ptrace_scope is 0 or unreadable"
+    else:
+        reason = "trace channel forgery protection is not verified for this platform/mechanism"
+    return {"channel": "socketpair", "yama_ptrace_scope": scope,
+            "trace_channel_protected": protected, "reason": reason}
 
 
 def _probe(argv: list[str], cwd: Path | None = None,
@@ -217,12 +277,19 @@ def _profile(host: str, executable: str, help_text: str,
     state_dir = _configured_state_dir(host)
     executable_sha256 = hashlib.sha256(Path(executable).read_bytes()).hexdigest()
     isolation_evidence = _isolation_evidence(timeout_seconds)
+    # A certified host also needs a trace channel its tool descendants cannot
+    # forge; test doubles without startup evidence are unaffected.
+    trace_channel = _trace_channel_evidence(isolation_evidence)
+    isolation_evidence = {**isolation_evidence, "trace_channel": trace_channel}
     startup_evidence, startup_evidence_sha256, certification_error = _configured_startup_evidence(
         host, model, auth_file_hashes, executable_sha256, isolation_evidence)
     base_limits = _isolation_limits(host)
     limits = [] if startup_evidence is not None else base_limits
     if startup_evidence is not None and not auth_files:
         limits.append("Certified host requires a declared auth-file allowlist")
+    if startup_evidence is not None and not trace_channel["trace_channel_protected"]:
+        limits.append("Certified host requires a protected trace channel: "
+                      + trace_channel["reason"])
     # An empty policy result is reserved for deterministic test doubles and
     # explicitly certified adapters; do not add a synthetic environment error
     # in that mode.
@@ -256,7 +323,8 @@ def _profile(host: str, executable: str, help_text: str,
             if host == "claude" else {"ignore_user_config": True, "ignore_rules": True,
                                      "approval_policy": "never"}),
         "isolation_supported": not limits, "unsupported_channels": limits,
-        "isolation_evidence": isolation_evidence, "auth_files": auth_files,
+        "isolation_evidence": isolation_evidence, "trace_channel": trace_channel,
+        "auth_files": auth_files,
         "auth_file_sha256": auth_file_hashes,
         "state_dir": state_dir,
         "host": host,
@@ -563,6 +631,8 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
     started = time.monotonic()
     process = None
     profile = None
+    drain_threads: list[threading.Thread] = []
+    host_ends: list[socket.socket] = []
     with os.fdopen(stdout_fd, "wb") as stdout, os.fdopen(stderr_fd, "wb") as stderr:
         try:
             result["argv"], profile = _launch(host, fixture, prompt, plugin_roots,
@@ -573,10 +643,33 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
             if remaining <= 0:
                 result["status"] = "timed_out"
             else:
-                process = subprocess.Popen(result["argv"], cwd=fixture,
-                                           stdin=subprocess.DEVNULL, stdout=stdout,
-                                           stderr=stderr, start_new_session=True,
-                                           env=_host_environment(profile))
+                # The host's stdout/stderr are one end of an AF_UNIX
+                # socketpair, not a regular file: a same-user tool descendant
+                # that tries to reopen the host's fd via /proc/<pid>/fd/N gets
+                # ENXIO (a socket cannot be reopened by path). The parent
+                # drains its end concurrently into the same retained trace
+                # files a direct redirect would have produced.
+                host_out, child_out = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+                host_err, child_err = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+                host_ends = [host_out, host_err]
+                try:
+                    process = subprocess.Popen(result["argv"], cwd=fixture,
+                                               stdin=subprocess.DEVNULL, stdout=child_out,
+                                               stderr=child_err, start_new_session=True,
+                                               env=_host_environment(profile))
+                finally:
+                    # This process's own copies keep the connection open even
+                    # after the host exits; drop them so EOF reaches the
+                    # drain threads once every holder of the fd is gone.
+                    child_out.close()
+                    child_err.close()
+                cap = MAX_TRACE_BYTES + 1
+                drain_threads = [
+                    threading.Thread(target=_drain_socket, args=(host_out, stdout, cap), daemon=True),
+                    threading.Thread(target=_drain_socket, args=(host_err, stderr, cap), daemon=True),
+                ]
+                for thread in drain_threads:
+                    thread.start()
                 while True:
                     if checkpoint_path is not None and checkpoint_path.is_file():
                         result.update(status="interrupted", checkpoint_observed=True)
@@ -596,11 +689,21 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
             result["error"] = "Host configuration probe timed out"
         except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as exc:
             result["error"] = f"Host setup or execution failed: {exc}"
-            stderr.write((result["error"] + "\n").encode("utf-8", errors="replace"))
+            # Only reachable before any drain thread exists (a pre-launch
+            # configuration/probe failure): no concurrent writer to race.
+            if not drain_threads:
+                stderr.write((result["error"] + "\n").encode("utf-8", errors="replace"))
         finally:
             if process is not None:
                 _cleanup(process)
                 result["exit_code"] = process.returncode
+            for thread in drain_threads:
+                thread.join(timeout=5)
+            for end in host_ends:
+                try:
+                    end.close()
+                except OSError:
+                    pass
     metadata = _trace_metadata(Path(stdout_name), host=host,
                                launch_model=(profile or {}).get("model"))
     result.update(observed_model=metadata["observed_model"], usage=metadata["usage"],

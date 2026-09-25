@@ -14,9 +14,11 @@ import json
 import os
 from pathlib import Path
 import secrets
+import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 
@@ -374,6 +376,74 @@ setns = subprocess.run([sys.executable, '-I', '-B', '-c',
     "import os; os.setns(os.open('/proc/1/ns/mnt', os.O_RDONLY), 0); print(open('/etc/hostname').read())"],
     capture_output=True, text=True)
 checks['descendant_setns_denied'] = setns.returncode != 0
+# This process is itself the sandboxed "host": stdin/argv mirror what
+# hosts.run_host launches, and fd 1 is a socketpair end set up by
+# probe_linux_boundary the same way run_host sets up a real host's stdout.
+# Run the forgery attempts from a GRANDCHILD (spawned by a child, neither of
+# which inherits this fd, matching a host that captures tool-command output
+# rather than leaking its own trace fd downward) and require every technique
+# to fail: reopening /proc/<host>/fd/1 (denied because it names a socket, not
+# a regular file or pipe: ENXIO), pidfd_getfd on fd 1 (x86_64 syscall number;
+# denied by ptrace_scope), and PTRACE_ATTACH (denied by ptrace_scope, since a
+# descendant is attaching to an ancestor).
+own_pid, trace_ino = os.getpid(), -1
+try:
+    trace_ino = os.fstat(1).st_ino
+except OSError:
+    pass
+forge = (
+    "import ctypes, json, os, sys\n"
+    "own_pid, trace_ino = int(sys.argv[1]), int(sys.argv[2])\n"
+    "checks = {}\n"
+    "try:\n"
+    "    checks['fd1_is_not_trace_socket'] = os.fstat(1).st_ino != trace_ino\n"
+    "except OSError:\n"
+    "    checks['fd1_is_not_trace_socket'] = True\n"
+    "try:\n"
+    "    fd = os.open('/proc/%d/fd/1' % own_pid, os.O_WRONLY)\n"
+    "    os.write(fd, b'forged\\n')\n"
+    "    os.close(fd)\n"
+    "    checks['proc_fd1_reopen_denied'] = False\n"
+    "except OSError:\n"
+    "    checks['proc_fd1_reopen_denied'] = True\n"
+    "try:\n"
+    "    pfd = os.pidfd_open(own_pid, 0)\n"
+    "    libc = ctypes.CDLL(None, use_errno=True)\n"
+    "    got = libc.syscall(438, pfd, 1, 0)\n"
+    "    checks['pidfd_getfd_denied'] = got < 0\n"
+    "    if got >= 0:\n"
+    "        os.close(got)\n"
+    "    os.close(pfd)\n"
+    "except (AttributeError, OSError):\n"
+    "    checks['pidfd_getfd_denied'] = True\n"
+    "libc = ctypes.CDLL(None, use_errno=True)\n"
+    "rc = libc.ptrace(16, own_pid, 0, 0)\n"
+    "checks['ptrace_attach_denied'] = rc != 0\n"
+    "if rc == 0:\n"
+    "    libc.ptrace(17, own_pid, 0, 0)\n"
+    "print(json.dumps(checks))\n"
+)
+launcher = (
+    "import subprocess, sys\n"
+    "r = subprocess.run([sys.executable, '-I', '-B', '-c', sys.argv[1], sys.argv[2], sys.argv[3]],\n"
+    "                   capture_output=True, text=True)\n"
+    "sys.stdout.write(r.stdout)\n"
+    "sys.stderr.write(r.stderr)\n"
+    "sys.exit(r.returncode)\n"
+)
+grandchild = subprocess.run(
+    [sys.executable, '-I', '-B', '-c', launcher, forge, str(own_pid), str(trace_ino)],
+    capture_output=True, text=True)
+try:
+    forge_checks = json.loads(grandchild.stdout)
+except ValueError:
+    forge_checks = {}
+checks['descendant_trace_forgery_denied'] = (
+    grandchild.returncode == 0 and isinstance(forge_checks, dict)
+    and forge_checks.get('fd1_is_not_trace_socket') is True
+    and forge_checks.get('proc_fd1_reopen_denied') is True
+    and forge_checks.get('pidfd_getfd_denied') is True
+    and forge_checks.get('ptrace_attach_denied') is True)
 print(json.dumps(checks, sort_keys=True))
 '''
 
@@ -384,6 +454,7 @@ LINUX_CHECKS = frozenset({
     'selected_hook_executed', 'unselected_hook_denied', 'loopback_network',
     'descendant_read_denied', 'descendant_write_denied', 'descendant_pid_namespace',
     'descendant_cannot_signal_host', 'descendant_setns_denied',
+    'descendant_trace_forgery_denied',
 } | {name + ':' + mode for name in ('snapshot', 'evidence', 'global-instructions',
                                     'other-auth', 'fixture/escape') for mode in ('r', 'w')})
 
@@ -412,6 +483,65 @@ def _host_identity(mechanism: str, version: str | None) -> dict:
             'mechanism': mechanism, 'mechanism_version': version}
 
 
+def yama_ptrace_scope() -> int | None:
+    """Read kernel.yama.ptrace_scope; None means unknown (missing, unreadable,
+
+    or not Linux). Scope 0 permits same-uid PTRACE_ATTACH/pidfd_getfd from any
+    process, including a non-ancestor; scope 1-3 restrict attach to a process's
+    own descendants, which denies a host's tool-command descendant from
+    reaching back up to duplicate or attach to the host's own trace fd.
+    """
+    if not sys.platform.startswith('linux'):
+        return None
+    try:
+        return int(Path('/proc/sys/kernel/yama/ptrace_scope').read_text().strip())
+    except (OSError, ValueError):
+        return None
+
+
+def _run_with_socketpair_stdout(argv: list[str], *, timeout_seconds: float,
+                                env: dict, cwd: Path) -> subprocess.CompletedProcess:
+    """Capture argv's stdout through an AF_UNIX socketpair, not a pipe.
+
+    Mirrors the production host launcher (`hosts.run_host`) so a canary running
+    under this helper is exposed to the same descendant-forgery surface a real
+    host is: /proc/<pid>/fd/1 on the launched process resolves to a socket, not
+    a reopenable pipe or regular file.
+    """
+    host_out, child_out = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+    chunks: list[bytes] = []
+    try:
+        process = subprocess.Popen(argv, stdout=child_out, stderr=subprocess.PIPE,
+                                   env=env, cwd=cwd)
+    finally:
+        child_out.close()
+
+    def _drain() -> None:
+        try:
+            while True:
+                chunk = host_out.recv(65536)
+                if not chunk:
+                    return
+                chunks.append(chunk)
+        except OSError:
+            return
+
+    reader = threading.Thread(target=_drain, daemon=True)
+    reader.start()
+    try:
+        _, stderr = process.communicate(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.communicate()
+        raise
+    finally:
+        reader.join(timeout=5)
+        host_out.close()
+    return subprocess.CompletedProcess(argv, process.returncode,
+                                       b''.join(chunks).decode('utf-8', errors='replace'),
+                                       stderr.decode('utf-8', errors='replace'))
+
+
 def probe_linux_boundary(timeout_seconds: float = 10, home: Path | None = None) -> dict:
     """Run the Linux canary under bubblewrap; any mismatch fails closed."""
     bwrap = linux_executable()
@@ -423,6 +553,7 @@ def probe_linux_boundary(timeout_seconds: float = 10, home: Path | None = None) 
         result['error'] = 'Linux bubblewrap (/usr/bin/bwrap) is unavailable'
         return result
     result['host_identity'] = _host_identity('bubblewrap', _bwrap_version(bwrap))
+    result['yama_ptrace_scope'] = yama_ptrace_scope()
     globals_ = host_global_paths(home)
     result['host_globals_checked'] = len(globals_)
     with tempfile.TemporaryDirectory(prefix='host-isolation-') as temp:
@@ -453,9 +584,11 @@ def probe_linux_boundary(timeout_seconds: float = 10, home: Path | None = None) 
                           [sys.executable, '-I', '-B', '-c', _LINUX_PROGRAM, str(root), nonce,
                            str(os.getpid()), host_init, json.dumps(globals_)])
         try:
-            process = subprocess.run(argv, capture_output=True, text=True,
-                                     timeout=timeout_seconds, env={'PATH': '/usr/bin:/bin'},
-                                     cwd=fixture)
+            # A socketpair, not subprocess.run's ordinary pipe, so the canary's
+            # own descendant-forgery checks exercise the exact channel type
+            # `hosts.run_host` uses for a real launch.
+            process = _run_with_socketpair_stdout(argv, timeout_seconds=timeout_seconds,
+                                                  env={'PATH': '/usr/bin:/bin'}, cwd=fixture)
             if process.returncode:
                 detail = process.stderr.strip().splitlines()[-1:] if process.stderr else []
                 result['error'] = ('Linux sandbox canary failed with exit ' +
@@ -558,6 +691,9 @@ def sign_command_receipt(*, key: bytes, host: str, model: str, argv: list[str],
         'isolation_mechanism': isolation.get('mechanism'),
         'isolation_probe_sha256': isolation.get('probe_sha256'),
         'filesystem_enforced': isolation.get('filesystem_enforced') is True,
+        'trace_channel': (isolation.get('trace_channel') or {}).get('channel'),
+        'trace_channel_protected': (isolation.get('trace_channel') or {}).get(
+            'trace_channel_protected') is True,
         'host_certified': False,
         'issued_at': time.time() if issued_at is None else issued_at,
     }
