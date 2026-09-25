@@ -125,7 +125,9 @@ identity reuse; a replacement that reproduces all those attributes and bytes
 cannot be distinguished. Older journal entries without modification time are
 preserved as user-owned rather than deleted or overwritten.
 `install.remove` deletes only unchanged managed files; generated and user
-files are kept, and a modified managed file is kept as user-owned.
+files are kept, and a modified managed file is kept as user-owned. A kept
+user-owned file's journal entry is updated to the bytes and identity on disk;
+a kept generated file keeps its recorded hash so an edit stays detectable.
 
 Operator decisions are compare-and-swap on content. On `install.apply`, a file
 spec may carry `expect_sha256`, the SHA-256 of the exact bytes an operator
