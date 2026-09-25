@@ -400,3 +400,19 @@ exact-byte confirmations, so `--all` converges; adopted user files, the
 repo's own hooks and user text in CLAUDE.md are still never removed. `.gitignore` additions and the instruction scorecard
 remain direct writes (never journaled). Live host runs of the skills remain
 uncertified.
+
+Committed as `5656c4b` after seven review rounds; the final delta was verified
+by a focused recheck. Logged follow-ups, non-blocking:
+
+- Journals written by the old reference executor record a pre-existing
+  `CLAUDE.md` or settings as managed with no origin; after demotion a later
+  `--all --assume-delete` can remove them (the old executor removed them even
+  without the flag). Real skill-written journals record pre-existing files as
+  adopted.
+- Uninstall report buckets ("never-touch", "kept by choice") can disagree with
+  the journal warning; counts are cosmetic.
+- A hook the user chose to keep (no `--assume-delete`) is un-wired but kept.
+- `install.remove` keeps a preserved file's old sha256 in the journal
+  (runtime); `.ao-new` re-runs need a confirmation to refresh.
+- Empty matcher groups and agentic-os `permissions.deny` entries remain in a
+  user-owned settings file after `--all`.
