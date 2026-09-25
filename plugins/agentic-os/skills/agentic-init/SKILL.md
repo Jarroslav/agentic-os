@@ -150,9 +150,11 @@ idempotent.
    resume:
    - Pre-fill every interview answer from `journal.answers`.
    - If `journal.phase != "done"`, resume at the recorded phase.
-   - On a completed re-run, for each journaled file: if its current sha256
-     matches the journal, silently re-render/refresh it; if it differs
-     (user-modified), **skip it and warn** — never overwrite; files not yet
+   - On a completed re-run, for each journaled `owner: "managed"` file: if
+     its current sha256 matches the journal, silently re-render/refresh it; if
+     it differs (user-modified), **skip it and warn** — never overwrite.
+     `owner: "user"` files are never refreshed this way (merge targets such as
+     `CLAUDE.md` follow the merge rule); `generated` ones follow Phase 5; files not yet
      journaled are scaffolded normally. **One exception**:
      `.agentic/guides/agent-registry.md` (`template: "governance/agent-registry"`)
      is **never** blindly re-rendered here, matched sha256 or not — the
