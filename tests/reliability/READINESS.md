@@ -572,3 +572,25 @@ is written to a regular file and tool commands share the host's PID namespace,
 so a same-user child could plausibly forge trace events through `/proc`. Host
 stdout must be piped to the parent and that access removed, then certified,
 before any scored trial.
+
+## Status as of 2026-09-25
+
+- **Stage 5 (installer and setup/upgrade/uninstall):** implemented. The shared
+  installer has compare-and-swap operator decisions (`d0c4f10`); the three
+  agentic-os skills and the reference executors route journal and scaffold
+  writes through it (`5656c4b`), and the acceptance matrix exercises the
+  shipped installer. Live host runs of the skills remain uncertified.
+- **Stage 6 (workflow integration):** at the skill-text level every remaining
+  direct write to legacy run ledgers is scoped to unmanaged runs, and managed
+  runs use runtime operations (`sdlc-runs`, QA helpers, telemetry export).
+  Host-level wiring remains uncertified.
+- **Stage 7 (evaluation):** two evidence contracts exist (`180ab06`). Per the
+  operator's 2026-09-25 direction to avoid over-engineering, wiring the frozen
+  challenges into scenarios, the evaluator-owned approval/peer channel and
+  launcher trace hardening are deferred. Consequently the 90-point acceptance
+  cannot be claimed and no scored trial is planned.
+- **Originality attestation:** the fingerprint store used to regenerate
+  `tests/lib/originality-attestation.json` is not available to the operator or
+  this environment. CI's `--verify-attestation` step therefore fails for files
+  changed since the last attestation until someone with the store re-attests
+  or the maintainer retires that check. No other check depends on it.

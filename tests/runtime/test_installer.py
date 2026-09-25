@@ -1151,12 +1151,15 @@ class InstallerDecisionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             target = pathlib.Path(temp)
             apply_install(target, {"m.md": "m\n", "g.md": {"content": "g\n", "owner": "generated"}})
-            (target / "m.md").write_text("edited\n")
+            (target / "m.md").unlink()
+            (target / "m.md").write_text("edited\n")        # new inode as well as new bytes
             (target / "g.md").write_text("g edited\n")
             remove_install(target)
             files = self.journal(target)["files"]
             self.assertEqual((files["m.md"]["owner"], files["m.md"]["sha256"]), ("user", self.digest(b"edited\n")))
-            self.assertEqual(files["m.md"]["inode"], (target / "m.md").stat().st_ino)
+            info = (target / "m.md").stat()
+            self.assertEqual((files["m.md"]["device"], files["m.md"]["inode"], files["m.md"]["mtime_ns"]),
+                             (info.st_dev, info.st_ino, info.st_mtime_ns))
             self.assertEqual((files["g.md"]["owner"], files["g.md"]["sha256"]), ("generated", self.digest(b"g\n")))
             # The refreshed record is still confirmable at the bytes on disk.
             self.assertEqual(remove_install(target, ["m.md"], confirm={"m.md": self.digest(b"edited\n")})["removed"],

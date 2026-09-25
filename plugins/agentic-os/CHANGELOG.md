@@ -9,6 +9,9 @@ Semantic Versioning. The plugin version lives in
 
 ### Reliability reopening
 
+- agentic-init re-runs refresh only unmodified managed files; user-owned files
+  are never refreshed silently.
+
 - When uninstall keeps a file, its journal entry now records the bytes and
   identity actually on disk (a kept generated file keeps its recorded hash, so
   the user's edit stays detectable).
