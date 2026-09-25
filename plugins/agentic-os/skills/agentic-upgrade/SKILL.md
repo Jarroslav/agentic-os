@@ -72,7 +72,10 @@ which would preserve the file and record it user-owned);
 **keep mine** → `install.apply` without a
 confirmation (the installer preserves it and records it user-owned);
 **merge by hand** → `install.apply` for the `.ao-new` path with
-`owner: "user"`, so a later uninstall never deletes it as a managed file. The journal stamp in
+`owner: "user"`, so a later uninstall never deletes it as a managed file; if a
+previous upgrade already left that `.ao-new`, send its current sha256 as
+`expect_sha256` (with `owner: "user"`) to refresh it — a plain apply is
+reported `preserved` and leaves the old render. The journal stamp in
 Phase 4 is the `agentic_os_version` field of those requests or
 `install.record`.
 
