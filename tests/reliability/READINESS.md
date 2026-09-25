@@ -649,6 +649,28 @@ missing recovery evidence is retained. B-class choreography, the C-class
 evaluator channel, and launcher trace hardening remain deferred per the
 operator's 2026-09-25 direction to avoid over-engineering (see Status below).
 
+## Stage 7b (2026-09-25): trace channel hardened
+
+`hosts.run_host` now gives the host its stdout and stderr as `AF_UNIX`
+socketpair ends and drains them into the same retained trace files, keeping
+the size limit (an oversized trace is cut at `MAX_TRACE_BYTES + 1`, which
+still fails the existing check). A tool descendant that reopens
+`/proc/<host pid>/fd/1` gets `ENXIO`; `pidfd_getfd`, `PTRACE_ATTACH` and
+`/proc/<pid>/mem` are denied by Yama `ptrace_scope` 1, which review confirmed
+still holds inside bubblewrap's user namespace. A host with startup evidence
+is certified only with bubblewrap and `ptrace_scope` > 0. The Linux canary now
+passes 31 controls, adding `descendant_trace_forgery_denied`; with its stdout
+swapped back to a plain pipe the grandchild's forged write reaches the output
+and the probe fails closed. Launch profiles and signed command receipts record
+the trace channel. Committed after two blind reviews passed.
+
+This removes the forgery path found in review; it does not certify the hosts.
+Retained startup evidence no longer matches the probe hash and must be
+re-captured. macOS is never trace-certified (no equivalent control verified).
+The fix assumes the real host does not hand its own stdout to tool commands,
+hooks or MCP servers; startup re-certification must check that for both
+hosts. Review follow-ups are logged in REOPENING.md, Round 33.
+
 ## Status as of 2026-09-25
 
 - **Stage 5 (installer and setup/upgrade/uninstall):** implemented. The shared
@@ -667,8 +689,9 @@ operator's 2026-09-25 direction to avoid over-engineering (see Status below).
   run/assignment identity and an event prefix are retained (Stage 7a, above).
   Today's A-class ceiling is 8 of a possible 12 points. Per the operator's
   2026-09-25 direction to avoid over-engineering, wiring the frozen
-  challenges into scenarios, the evaluator-owned approval/peer channel and
-  launcher trace hardening are deferred. Consequently the 90-point acceptance
+  challenges into scenarios and the evaluator-owned approval/peer channel
+  were deferred; launcher trace hardening is done (Stage 7b, above) but the
+  hosts still need re-certification. Consequently the 90-point acceptance
   cannot be claimed and no scored trial is planned.
 - **Originality attestation:** the fingerprint store used to regenerate
   `tests/lib/originality-attestation.json` is not available to the operator or

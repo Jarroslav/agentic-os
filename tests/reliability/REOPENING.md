@@ -416,3 +416,27 @@ by a focused recheck. Logged follow-ups, non-blocking:
   files kept by `install.remove` was fixed in the following commit.)
 - Empty matcher groups and agentic-os `permissions.deny` entries remain in a
   user-owned settings file after `--all`.
+
+## Round 33 — Stage 7 observers and trace channel
+
+Stage 7a (`e9c3aea`): two blind reviews blocked the first tree because
+`recovery_verified` passed a run with no recovery (checkpoint bytes and
+finished work only); the rule now only fails or withholds. The second round
+blocked on a crash from an unhashable tool id; a focused recheck found the
+same crash for unhashable tool names; both are guarded and tested. Stage 7b
+(`11fdd15`) passed both blind reviews on the first tree. Logged follow-ups,
+non-blocking:
+
+- Bind a Claude `Skill` event to the "Base directory for this skill" text
+  under `methodology_root` before using `_skill_read` on a resumed segment.
+- The trace canary counts any error as a denial; require `ENXIO` for the
+  `/proc` reopen and `EPERM` for `pidfd_getfd` and ptrace, and call
+  `pidfd_open` by raw syscall where `os.pidfd_open` is missing.
+- Mark an oversized trace failed outright instead of reading its truncated
+  prefix for metadata and receipts.
+- Drain threads joined with a 5s timeout can outlive `run_host`; the error
+  message is no longer copied into the stderr trace; a failed second
+  `socketpair()` leaks the first pair.
+- A Yama-0 kernel fails `filesystem_enforced` with a generic message rather
+  than a dedicated limit; two isolation tests assume Yama >= 1.
+- The new receipt fields are not versioned.

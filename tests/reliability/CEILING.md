@@ -107,6 +107,12 @@ certified before any scored trial. `lifecycle.recovery` does not parse the
 host trace at all -- it compares the harness's own boundary capture against
 the final replayed fixture -- so it is not subject to this blocker.
 
+Update (Stage 7b, 2026-09-25): host stdout and stderr are now socketpairs
+drained by the parent, and certification requires Yama `ptrace_scope` > 0
+plus a passing `descendant_trace_forgery_denied` canary control. The forgery
+path is closed on Linux; certification itself still needs re-captured
+startup evidence on both hosts (READINESS.md, Stage 7b).
+
 ## Decisions required from the operator
 
 1. Approve amending the frozen scenario inputs (fixtures, prompts, in-slot
