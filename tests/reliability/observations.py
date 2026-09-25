@@ -267,6 +267,11 @@ def replay_observations(inputs: dict) -> dict:
             result['user_files_preserved'] = None
     if inputs['scenario'] == 'fresh_feature' and inputs['schema'] == 2:
         result.update(_entry_inputs(inputs))
+    if inputs['scenario'] == 'delegation_resume' and inputs['schema'] == 2:
+        # Schema 1 predates parent-held context; every retained suite 9
+        # delegation_resume record is schema 1 and must keep replaying to the
+        # unchanged ``recovery_verified: None`` default it always produced.
+        result.update(_recovery(inputs, result))
     # Volatile process metadata is retained by execution collectors, not compared
     # as a semantic verdict. Sandbox stderr may contain ephemeral local paths.
     for name in ('execution_pid', 'execution_log', 'unittest_log', 'remaining_work_log', 'git_error'):
@@ -339,7 +344,8 @@ def _raw_write_paths(trace: str, host: str) -> list[str]:
             blocks = message.get('content') if isinstance(message, dict) else None
             for block in blocks if isinstance(blocks, list) else []:
                 if (isinstance(block, dict) and block.get('type') == 'tool_use'
-                        and block.get('name') in WRITE_TOOLS and isinstance(block.get('input'), dict)):
+                        and isinstance(block.get('name'), str) and block['name'] in WRITE_TOOLS
+                        and isinstance(block.get('input'), dict)):
                     keys = [key for key in ('file_path', 'notebook_path', 'path') if key in block['input']]
                     found.extend(block['input'][key] for key in keys)
                     if not keys:
@@ -429,15 +435,38 @@ def _reads_exactly(command: str, target: str) -> bool:
             and _COUNT.fullmatch(operands[1]) is not None and operands[2] == target)
 
 
-def _skill_read(inputs: dict, relative_skill: str) -> bool:
-    """A successful host event that read the exact shipped skill file.
+def _skill_name(relative_skill: str) -> str:
+    """The one exact Claude ``Skill``-tool identifier for a shipped skill path.
 
-    Claude: a ``Read`` of that absolute path. Codex: a completed, zero-exit
-    ``command_execution`` that only reads that path. Writes, prose, echoes and
-    similarly named files never count.
+    Only the plugin-namespaced form (``plugin:skill``, the owning plugin's own
+    manifest name -- no shipped manifest under ``plugins/`` declares any other
+    namespace). The bare skill directory name is deliberately NOT accepted:
+    ``hosts.py`` launches Claude with ``--setting-sources project,local``, so
+    a bare name can resolve to a same-named project skill the candidate plants
+    at ``.claude/skills/<name>`` inside the fixture instead of the shipped
+    plugin skill -- crediting a candidate-authored stand-in as the real thing.
+    The namespaced form does not prove origin either: a project skill named
+    ``plugin:skill`` present at launch overrides the plugin skill. Callers
+    rely on launching into harness-written fixtures (READINESS.md, Stage 7a).
+    """
+    parts = relative_skill.split('/')
+    plugin, skill = parts[1], parts[3]
+    return plugin + ':' + skill
+
+
+def _skill_read(inputs: dict, relative_skill: str) -> bool:
+    """A successful host event that read or invoked the exact shipped skill.
+
+    Claude: a ``Read`` of that absolute path, or a ``Skill`` tool_use whose
+    ``skill`` input names the shipped skill's exact plugin-namespaced form
+    (``plugin:skill`` -- never the bare name; see ``_skill_name``). Codex: a
+    completed, zero-exit ``command_execution`` that only reads that path.
+    Writes, prose, echoes, near-miss names and similarly named files never
+    count.
     """
     context = inputs['context']
     target = posixpath.join(context['methodology_root'], relative_skill)
+    name = _skill_name(relative_skill)
     extracted = extract_tool_events(inputs['trace'], context['host'])
     statuses = {event['id']: event['status'] for event in extracted['events']}
     for line in inputs['trace'].split('\n'):
@@ -451,17 +480,23 @@ def _skill_read(inputs: dict, relative_skill: str) -> bool:
             message = record.get('message')
             blocks = message.get('content') if isinstance(message, dict) else None
             for block in blocks if isinstance(blocks, list) else []:
-                if (isinstance(block, dict) and block.get('type') == 'tool_use'
-                        and block.get('name') == 'Read' and isinstance(block.get('input'), dict)
+                if not (isinstance(block, dict) and block.get('type') == 'tool_use'
+                        and isinstance(block.get('id'), str)
+                        and statuses.get(block['id']) == 'responded'):
+                    continue
+                if (block.get('name') == 'Read' and isinstance(block.get('input'), dict)
                         and _plain_absolute(block['input'].get('file_path'))
-                        and block['input']['file_path'] == target
-                        and statuses.get(block.get('id')) == 'responded'):
+                        and block['input']['file_path'] == target):
+                    return True
+                if (block.get('name') == 'Skill' and isinstance(block.get('input'), dict)
+                        and type(block['input'].get('skill')) is str
+                        and block['input']['skill'] == name):
                     return True
         elif context['host'] == 'codex' and record.get('type') == 'item.completed':
             item = record.get('item')
             if (isinstance(item, dict) and item.get('type') == 'command_execution'
-                    and isinstance(item.get('command'), str)
-                    and statuses.get(item.get('id')) == 'responded'
+                    and isinstance(item.get('command'), str) and isinstance(item.get('id'), str)
+                    and statuses.get(item['id']) == 'responded'
                     and _reads_exactly(item['command'], target)):
                 return True
     return False
@@ -536,9 +571,10 @@ def _entry_inputs(inputs: dict) -> dict:
     SDLC workflow. From parent-held evidence: the resulting installation must
     record exactly those options (journal answers, the active mode in the AI
     policy, and the test command as a quality gate or discovered command), and
-    host events must show both entrypoints being read. A missing installation or
-    any conflicting value fails; matching values without observed invocations
-    are unverified.
+    host events must show both entrypoints invoked -- a ``Read`` of the exact
+    file or the exact plugin-namespaced ``Skill`` form (see ``_skill_read``).
+    A missing installation or any conflicting value fails; matching values
+    without observed invocations are unverified.
     """
     try:
         journal = strict_json_line(_text(inputs, JOURNAL) or 'null')
@@ -573,6 +609,70 @@ def _entry_inputs(inputs: dict) -> dict:
         verdict = None
     return {'entry_inputs_consistent': verdict,
             'entry_inputs_evidence': {'observed': observed, 'invocations': invocations}}
+
+
+def _recovery(inputs: dict, final: dict) -> dict:
+    """Partial evidence contract for ``recovery_verified`` (lifecycle.recovery).
+
+    Only two parent-held facts are retained across the interruption boundary:
+    ``suite.py``'s own pre-resume snapshot (``inputs['checkpoint']``, captured
+    before any resumed run touches the fixture) and the oracle recomputed here
+    against the final replayed fixture (``final``). Both already carry
+    ``checkpoint_preserved`` (byte equality of the frozen
+    ``.fixture/checkpoint.json`` identifier -- the "original checkpoint
+    identifier" the frozen task asks to be kept, never recreated) and
+    ``remaining_work_verified`` (independent sandboxed execution of the peer-B
+    function the frozen task requires to stay unfinished until resume).
+
+    This rule can only ever emit ``False`` or ``None``, never ``True``. A
+    boundary capture with empty ``artifact_claims`` (no handoff, no durable
+    task state -- run 1 only dropped the interrupt sentinel) followed by a
+    "resume" that reimplements both peers from scratch with no ``.agentic``
+    state at all is, from these two fields alone, indistinguishable from a
+    genuine resume: both show the same frozen checkpoint id and
+    ``remaining_work_verified`` flipping False-to-True. But
+    challenge-spec.json's lifecycle.recovery negative case requires that a
+    silently-started replacement run which drops history and resets counters
+    must never pass, and frozen `scenarios.py` already documents that "a
+    preserved checkpoint does not demonstrate interruption or successful
+    recovery." Neither field says anything about run/assignment identity, an
+    event prefix, or consumed counters, so that combination -- and every
+    other combination that isn't an observed contradiction -- stays
+    unverified. Only contradictions are ever positively decided: the
+    checkpoint identifier diverging at the boundary or by the end, the
+    boundary already showing the pending work done (a resume can't still be
+    pending what was already finished before the interruption), or the final
+    replay showing the pending work never finished. Anything else -- no
+    interruption recorded, a malformed boundary capture, a non-boolean field
+    on either side, or the fully-matching-but-unproven case above -- withholds
+    credit as unverified.
+
+    This is a harness-owned filesystem/oracle check, not an internal
+    run/coordinator identity or event-count proof: the retained inputs carry
+    no post-resume snapshot of ``.agentic``/``docs/superpowers/runs`` (only
+    the pre-resume one, inside ``checkpoint``), and neither field observed
+    here says anything about run identity, event prefix or counters. A True
+    verdict must wait on that evidence also being retained -- explicitly
+    future work, not implemented here.
+    """
+    checkpoint = inputs.get('checkpoint')
+    boundary = checkpoint.get('behavior') if isinstance(checkpoint, dict) else None
+    if not isinstance(boundary, dict):
+        return {'recovery_verified': None}
+    boundary_checkpoint = boundary.get('checkpoint_preserved')
+    boundary_remaining = boundary.get('remaining_work_verified')
+    final_checkpoint = final.get('checkpoint_preserved')
+    final_remaining = final.get('remaining_work_verified')
+    evidence = {'boundary_checkpoint_preserved': boundary_checkpoint,
+                'boundary_remaining_work_verified': boundary_remaining,
+                'final_checkpoint_preserved': final_checkpoint,
+                'final_remaining_work_verified': final_remaining}
+    if (boundary_checkpoint is False or final_checkpoint is False
+            or boundary_remaining is True or final_remaining is False):
+        verdict = False
+    else:
+        verdict = None
+    return {'recovery_verified': verdict, 'recovery_evidence': evidence}
 
 
 def observer_field_inventory() -> dict:
