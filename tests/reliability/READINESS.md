@@ -542,3 +542,33 @@ this inventory before reserving a slot, so an incomplete observer surface
 cannot consume another scored trial. Field presence is necessary but remains
 insufficient: every assertion still needs independently reviewed positive and
 negative controls before live scoring is certified.
+
+## Evaluation ceiling and first evidence contracts (2026-09-24)
+
+[`CEILING.md`](CEILING.md) classifies every assertion by the channel that
+could observe it. Before this stage the evaluator could credit nothing; A-class
+observers alone reach at most 12 points; wiring the frozen
+challenges into the trials (amending scenario inputs) reaches 76 with 8 of 12
+vetoes observable; only evaluator-owned approval and peer channels make all
+12 vetoes observable. Acceptance is structurally unreachable until the
+operator decides on those amendments; no product work changes that.
+
+The observer layer now has schema-2 inputs with parent-held context (host,
+snapshot version, pre-launch user-file inode/ctime identities). Two evidence
+contracts are implemented with known-good and known-bad controls:
+`contracts.preservation` (unchanged bytes and identities, no host write-tool
+attempt on a user path under the fixture root, a successful host read of the
+exact snapshot upgrade skill, a trace without extraction issues, and a
+journal stamped with the snapshot version keeping user records) and
+`contracts.inputs` (requested setup options recorded type-exactly in the
+installation and both exact entrypoint files read). Claude `Skill`-tool
+invocations are not yet recognised and yield unverified. The scope veto now fails only when user files were
+actually touched, not when an upgrade was skipped. All 24 retained suite 9
+records replay identically under the previous and new observer code. The field
+inventory reports 21 of 25 assertions missing. No trial has run.
+
+Review found a certification blocker for all trace-derived credit: host stdout
+is written to a regular file and tool commands share the host's PID namespace,
+so a same-user child could plausibly forge trace events through `/proc`. Host
+stdout must be piped to the parent and that access removed, then certified,
+before any scored trial.

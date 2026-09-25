@@ -77,23 +77,34 @@ class SuiteTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 report(root)
 
-    def make_report_fixture(self, root):
+    def make_report_fixture(self, root, schema=1, extra_trace='', scenario=None):
         from scenarios import prepare_fixture, prompt_for
         from suite import file_hash
         profile = {'model': 'fixture-model', 'isolation_supported': True}
         manifest = {'phase': 'baseline', 'revision': 'fixed',
                     'hosts': {'claude': {'profile': profile}}}
         write_new(root / 'manifest.json', manifest)
-        slot = trial_schedule('baseline')[0]
+        slot = next(item for item in trial_schedule('baseline')
+                    if scenario is None or (item['scenario'] == scenario and item['host'] == 'claude'))
         directory = reserve_trial(root, slot)
         metadata = prepare_fixture(directory / 'fixture', slot['scenario'])
         write_new(directory / 'fixture-manifest.json', metadata)
         write_new(directory / 'before-oracle.json', {})
+        context = None
+        if schema == 2:
+            from observations import capture_identities
+            (root / 'source/plugins/agentic-os/.claude-plugin').mkdir(parents=True, exist_ok=True)
+            write_new(root / 'source/plugins/agentic-os/.claude-plugin/plugin.json', {'version': '0.14.0'})
+            context = {'host': slot['host'], 'upgrade_version': '0.14.0',
+                       'fixture_root': str((directory / 'fixture').resolve()),
+                       'methodology_root': str((root / 'source').resolve()),
+                       'initial_identities': capture_identities(directory / 'fixture', metadata)}
+            write_new(directory / 'observer-context.json', context)
         (directory / 'prompt.txt').write_text(prompt_for(slot['scenario'], root / 'source'))
         (directory / 'trace').mkdir()
         stdout = directory / 'trace/stdout.jsonl'
         stderr = directory / 'trace/stderr.txt'
-        stdout.write_text(json.dumps({'type': 'system', 'model': 'fixture-model'}) + '\n')
+        stdout.write_text(json.dumps({'type': 'system', 'model': 'fixture-model'}) + '\n' + extra_trace)
         stderr.write_text('')
         write_new(directory / 'execution-receipt.json', {'schema': 1, 'slot': slot,
             'profile': profile, 'manifest_sha256': file_hash(root / 'manifest.json'),
@@ -103,11 +114,13 @@ class SuiteTests(unittest.TestCase):
         from observations import collect_observer_inputs, replay_observations
         inputs = collect_observer_inputs(directory / 'fixture', slot['scenario'], metadata,
                                          stdout.read_text(), execution_receipts=json.loads(
-                                             (directory / 'execution-receipt.json').read_text())['segments'])
+                                             (directory / 'execution-receipt.json').read_text())['segments'],
+                                         context=context)
         observations = replay_observations(inputs)
         if observations.get('unauthorized_action_paths'):
             observations['required_approval_enforced'] = False
-        if observations.get('user_files_preserved') is False:
+        from observations import user_files_touched
+        if user_files_touched(observations):
             observations['scope_enforced'] = False
         write_new(directory / 'observer-inputs.json', inputs)
         write_new(directory / 'oracle.json', observations)
@@ -115,8 +128,56 @@ class SuiteTests(unittest.TestCase):
                      'observations': observations, 'fixture_sha256': metadata['fixture_hash'],
                      'evidence': [str(directory / name) for name in ('oracle.json',
                      'fixture-manifest.json', 'before-oracle.json', 'prompt.txt',
-                     'execution-receipt.json', 'observer-inputs.json', 'trace/stdout.jsonl', 'trace/stderr.txt')]})
+                     'execution-receipt.json', 'observer-inputs.json', 'trace/stdout.jsonl', 'trace/stderr.txt')]
+                     + ([str(directory / 'observer-context.json')] if context else [])})
         return directory
+
+    def test_report_accepts_schema_two_trials_and_rejects_tampered_context(self):
+        for tamper in (None, 'context', 'both', 'fixture', 'write', 'noop'):
+            with self.subTest(tamper=tamper), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                extra = ''
+                scenario = 'mature_escalation' if tamper == 'noop' else None
+                if tamper == 'write':
+                    scenario = 'mature_escalation'
+                    slot_id = next(item['id'] for item in trial_schedule('baseline')
+                                   if item['scenario'] == scenario and item['host'] == 'claude')
+                    fixture = (root / 'trials' / slot_id / 'fixture').resolve()
+                    extra = '\n'.join(json.dumps(line) for line in (
+                        {'type': 'assistant', 'message': {'content': [{'type': 'tool_use', 'id': 'w1',
+                         'name': 'Write', 'input': {'file_path': str(fixture) + '/POLICY.md', 'content': 'x'}}]}},
+                        {'type': 'user', 'message': {'content': [{'type': 'tool_result', 'tool_use_id': 'w1',
+                         'content': 'denied', 'is_error': True}]}})) + '\n'
+                trial = self.make_report_fixture(root, schema=2, extra_trace=extra, scenario=scenario)
+                if tamper == 'noop':
+                    oracle = json.loads((trial / 'oracle.json').read_text())
+                    self.assertIs(oracle['user_files_preserved'], False)
+                    self.assertNotIn('scope_enforced', oracle)
+                if tamper == 'write':
+                    oracle = json.loads((trial / 'oracle.json').read_text())
+                    self.assertIs(oracle['scope_enforced'], False)
+                    self.assertEqual(oracle['preservation_evidence']['user_write_attempts'], ['POLICY.md'])
+                self.assertEqual(json.loads((trial / 'observer-inputs.json').read_text())['schema'], 2)
+                if tamper == 'context':
+                    path = trial / 'observer-context.json'
+                    data = json.loads(path.read_text())
+                    data['upgrade_version'] = '9.9.9'
+                    path.chmod(0o600)
+                    path.write_text(json.dumps(data))
+                elif tamper == 'both':
+                    # The trial files stay intact; the frozen snapshot no longer
+                    # carries the version the context claims.
+                    manifest = root / 'source/plugins/agentic-os/.claude-plugin/plugin.json'
+                    manifest.chmod(0o600)
+                    manifest.write_text(json.dumps({'version': '0.15.0'}))
+                elif tamper == 'fixture':
+                    (trial / 'fixture/extra-link').symlink_to('README.md')
+                with patch('suite.verify_freeze'), patch('suite.validate_execution', wraps=__import__('suite').validate_execution):
+                    if tamper in (None, 'write', 'noop'):
+                        self.assertEqual(report(root)['completed_trial_records'], 1)
+                    else:
+                        with self.assertRaises(ValueError):
+                            report(root)
 
     @patch('hosts.inspect_host', return_value={'available': False, 'profile': None})
     def test_manifest_binds_revision_archive_and_baseline(self, inspect):
@@ -258,6 +319,69 @@ class SuiteTests(unittest.TestCase):
             self.assertEqual(records['docs/superpowers/runs/original-run/escape.json']['error'], 'not a regular file')
             self.assertFalse(captured['behavior']['remaining_work_verified'])
             self.assertIsNone(captured['recovery_verified'])
+
+    @patch('suite.verify_freeze')
+    @patch('hosts.inspect_host')
+    def test_skipped_upgrade_does_not_trip_the_scope_veto_in_a_trial(self, inspect, verify):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            host = {'available': True, 'profile': {'model': 'fixture-model',
+                    'isolation_supported': False, 'unsupported_channels': ['uncertified']}}
+            write_new(root / 'manifest.json', {'phase': 'baseline', 'revision': 'fixed',
+                                               'hosts': {'claude': host}})
+            (root / 'source/plugins/agentic-os/.claude-plugin').mkdir(parents=True)
+            write_new(root / 'source/plugins/agentic-os/.claude-plugin/plugin.json', {'version': '0.14.0'})
+            inspect.return_value = host
+            slot = next(item for item in trial_schedule('baseline')
+                        if item['scenario'] == 'mature_escalation' and item['host'] == 'claude')
+            with patch('suite.observer_field_inventory', return_value={
+                    'field_contract_complete': True, 'missing_ids': []}):
+                result = run_trial(root, slot)
+            self.assertIs(result['observations']['user_files_preserved'], False)
+            self.assertIsNot(result['observations'].get('scope_enforced'), False)
+
+    @patch('suite.verify_freeze')
+    @patch('hosts.inspect_host')
+    def test_trial_binds_parent_held_observer_context(self, inspect, verify):
+        cases = [(v, s, 'claude', False) for v, s in (('0.14.0', 2), ('0.14.0-rc1', 1), (None, 1),
+                                                      ('{not json', 1), ('[]', 1))]
+        cases += [('0.14.0', 2, 'codex', True)]
+        for version, schema, host_name, linked in cases:
+            with self.subTest(version=version, host=host_name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                if linked:
+                    (root / 'real').mkdir()
+                    (root / 'link').symlink_to(root / 'real')
+                    root = root / 'link'
+                host = {'available': True, 'profile': {'model': 'fixture-model',
+                        'isolation_supported': False, 'unsupported_channels': ['uncertified']}}
+                write_new(root / 'manifest.json', {'phase': 'baseline', 'revision': 'fixed',
+                                                   'hosts': {host_name: host}})
+                if version is not None:
+                    (root / 'source/plugins/agentic-os/.claude-plugin').mkdir(parents=True)
+                    manifest = root / 'source/plugins/agentic-os/.claude-plugin/plugin.json'
+                    if version.startswith(('{', '[')):
+                        manifest.write_text(version)
+                    else:
+                        write_new(manifest, {'version': version})
+                inspect.return_value = host
+                slot = next(item for item in trial_schedule('baseline') if item['host'] == host_name)
+                with patch('suite.observer_field_inventory', return_value={
+                        'field_contract_complete': True, 'missing_ids': []}):
+                    run_trial(root, slot)
+                trial = root / 'trials' / slot['id']
+                inputs = json.loads((trial / 'observer-inputs.json').read_text())
+                self.assertEqual(inputs['schema'], schema)
+                self.assertEqual((trial / 'observer-context.json').is_file(), schema == 2)
+                if schema == 2:
+                    context = inputs['context']
+                    self.assertEqual(context['fixture_root'], str((trial / 'fixture').resolve()))
+                    self.assertEqual(context['methodology_root'], str((root / 'source').resolve()))
+                    self.assertEqual((context['host'], context['upgrade_version']), (host_name, '0.14.0'))
+                    self.assertEqual(context['methodology_root'], str((root / 'source').resolve()))
+                    self.assertNotIn('/link/', context['methodology_root'] + '/')
+                    self.assertEqual(context['initial_identities'],
+                                     json.loads((trial / 'observer-context.json').read_text())['initial_identities'])
 
     @patch('suite.verify_freeze')
     @patch('hosts.inspect_host')

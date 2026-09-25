@@ -336,3 +336,32 @@ repository revision and trial fixture. The VM needed a narrow AppArmor
 remains false: real host startup, declared auth files, host-level hook
 execution, a profile re-freeze after host upgrades, and a Linux scenario oracle
 are still required. No candidate slot was consumed.
+
+## Round 31 — minimal operator decisions and a convergent review process
+
+On 2026-09-24 the operator approved three process changes after three blind
+review rounds of a larger installer design ended BLOCK: compute the evaluation
+ceiling first, cut the installer change to its smallest safe form, and review
+each staged tree against a written guarantee spec so that findings outside the
+spec become logged follow-ups instead of blockers. The larger design (a
+`kind: "block"` marker and ownership promotion under confirmation) was dropped.
+
+Commit `d0c4f10` adds compare-and-swap `expect_sha256` on `install.apply`,
+`confirm` on `install.remove`, `install.record`, standard-JSON enforcement,
+and mode handling. Spec-bound reviews converged: each round's lenses reported
+one or two precise spec violations until both lenses passed tree
+`28386f1b448b44fb483223abe65bba3ed00ca16e`. Skills do not yet call these
+operations (Stage 5b). Logged follow-ups, non-blocking:
+
+- A confirmed apply over an older-journal managed/generated entry without an
+  origin labels it `adopted-existing` (conservative; `install.remove` uses
+  `user-modified`). `merge-settings` also relabels demoted entries adopted.
+- No test pins the `adopted-existing` default for an origin-less user entry
+  under confirmed apply; the code is correct.
+- Callers may set `origin: adopted-existing` on a create, making it
+  unconfirmable; `expect_sha256: null` is treated as unconfirmed.
+- Raw `TypeError` text for unhashable `install.record` values (CLI fails
+  closed); `_leaf_absent` can abort a multi-path removal on
+  `NotADirectoryError` after earlier paths were processed.
+- "Never deleted" for pre-existing files holds as far as the journal knows:
+  a user file recreated at a path still journaled as managed is confirmable.
