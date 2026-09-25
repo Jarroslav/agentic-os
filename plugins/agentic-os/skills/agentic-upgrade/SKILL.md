@@ -61,6 +61,21 @@ write is indistinguishable from corruption.
 
 ## Phase 2 — Per-file three-way reconciliation
 
+Every write below goes through the runtime operations in init's "How journal
+and file writes happen": **overwrite** an untouched managed file →
+`install.apply` (no confirmation needed); **take new** on a user-modified file →
+`install.apply` with `expect_sha256` = `CURRENT` and the owner the journal
+records (`managed` or `generated`) — the replacement content is ours again;
+**accept regeneration** of an `owner: "generated"` file → `install.apply` with
+`expect_sha256` = `CURRENT` and `owner: "generated"` (never a plain apply,
+which would preserve the file and record it user-owned);
+**keep mine** → `install.apply` without a
+confirmation (the installer preserves it and records it user-owned);
+**merge by hand** → `install.apply` for the `.ao-new` path with
+`owner: "user"`, so a later uninstall never deletes it as a managed file. The journal stamp in
+Phase 4 is the `agentic_os_version` field of those requests or
+`install.record`.
+
 For every journal entry with a template ID (the destination map lives in
 `skills/agentic-init/SKILL.md` Phase 4), compute:
 `RECORDED` = journaled sha256, `CURRENT` = sha256 of the file on disk,
@@ -107,6 +122,9 @@ agents; init Phase 4 step 7)**
 
 **Managed blocks (`CLAUDE.md`, and `AGENTS.md` when it was installed as an
 appended block on a mature repo)**
+- A block file the journal records user-owned (it pre-existed install) is
+  still refreshed: apply the merged text under init's merge rule
+  (`expect_sha256` of its current bytes); it stays user-owned.
 - Replace the content between `<!-- agentic-os:begin v… -->` and
   `<!-- agentic-os:end -->` **wholesale** with the newly rendered block (the
   begin marker carries the new version stamp — it is rendered from

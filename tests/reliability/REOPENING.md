@@ -365,3 +365,38 @@ operations (Stage 5b). Logged follow-ups, non-blocking:
   `NotADirectoryError` after earlier paths were processed.
 - "Never deleted" for pre-existing files holds as far as the journal knows:
   a user file recreated at a path still journaled as managed is confirmable.
+
+## Round 32 — setup, upgrade and uninstall use the shared installer (Stage 5b)
+
+The operator asked on 2026-09-25 to take the quick, useful decisions without
+over-engineering. Recorded decisions: `communication.delivery` may be
+redefined as a host delivery event carrying the coordinator's nonce to peer B
+(documentation only, not yet applied to frozen definitions); wiring frozen
+challenges into scenarios is limited to challenges that exercise existing
+product features and deferred; the evaluator-owned MCP server and launcher
+trace hardening are deferred (so the 90-point acceptance cannot be claimed);
+a new trial budget comes after evaluator certification.
+
+The agentic-init, agentic-upgrade and agentic-uninstall skills now route every
+journal and file write through `install.apply`, `install.record`,
+`install.remove` and `install.merge-settings`. The reference executors
+(`tests/lib/refinstall.py`, `tests/lib/refuninstall.py`) call the shipped
+plugin runtime the same way; the 99-check matrix passes, and disabling file
+deletion in the bundled `install.remove` makes several round-trip checks fail,
+so the matrix now exercises the shipped installer. Review found and closed
+two executor regressions (a user-owned settings file left wired to deleted
+scripts under `--all`; an edited managed CLAUDE.md or settings file silently
+not refreshed on role addition), and the uninstaller now removes only wiring
+for scripts agentic-os installed. Further review rounds closed: the repo's
+own same-named hook being un-wired; an edited managed settings file deleted
+without `--assume-delete`; scripts deleted before their settings wiring; a
+settings file kept by the installer (new identity, same bytes) left wired to
+deleted scripts; the journal deleted while agentic-os files (including an
+edited CLAUDE.md or settings) remained; and un-wiring that relabelled a user's
+edited settings as managed content. Reports now reflect installer results.
+With `--assume-delete`, files agentic-os wrote that an earlier run kept (for
+example after a re-clone changed every file identity) are removed under
+exact-byte confirmations, so `--all` converges; adopted user files, the
+repo's own hooks and user text in CLAUDE.md are still never removed. `.gitignore` additions and the instruction scorecard
+remain direct writes (never journaled). Live host runs of the skills remain
+uncertified.
