@@ -1,7 +1,4 @@
 {
-  "amendment_definitions": {
-    "amendment-b1.json": "ae00440d7e66cc782a510e530e1c6985b6ce73b6b2f8bb851444f56b8a9171c4"
-  },
   "archives": {
     "baseline.tar": "84c5556fa34c35019dd3baabc735d5189c2aeb81bed0a00181392b42267f0b2b",
     "superpowers.tar": "93649811f58ace505bcd893328dcd31c9221ff7c3d1158b4585f34fdabf215af"

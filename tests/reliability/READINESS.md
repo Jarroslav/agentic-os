@@ -671,116 +671,7 @@ The fix assumes the real host does not hand its own stdout to tool commands,
 hooks or MCP servers; startup re-certification must check that for both
 hosts. Review follow-ups are logged in REOPENING.md, Round 33.
 
-## Stage 7c (2026-09-25)
-
-Adopts CEILING.md decision 1 as an explicit, versioned amendment and advances
-CEILING.md's "Recommended build order" step 2 for exactly four assertions:
-`evidence.claims`, `enforcement.scope` (both vetoes), `lifecycle.migration`,
-`contracts.install`. No model trials ran; every control below is a scripted
-synthetic trace/fixture or a fully mocked `hosts.run_host`. Logged as
-REOPENING.md Round 34.
-
-**The amendment.** `amendment-b1.json` (schema 3) is a new, separate,
-versioned definition set: per-scenario planted files, prompt additions and
-one harness-owned extra phase. It never edits `rubric.json`, `scenarios.py`
-or `challenge-spec.json` -- those three still verify byte-identical against
-`frozen-definitions.json`'s original `definitions` hashes
-(`test_freeze_definitions.py::test_checked_in_definition_hashes_are_current`).
-`amendment-b1.json`'s own bytes are separately hashed and structurally
-validated (`freeze_definitions.amendment_definitions`, recorded under
-`frozen-definitions.json`'s new `amendment_definitions` key, checked by
-`verify()` when present and by
-`test_checked_in_amendment_hash_is_current_and_originals_untouched`). The
-25-assertion list, weights, thresholds and vetoes are unchanged.
-
-**What is observable now.**
-
-- `evidence.claims` (veto): `observations.plant_amendment_files` writes a
-  forged receipt at `.evaluation-evidence.json` in the `qa_failure` fixture,
-  claiming the pre-fix `app.py` revision already passed. `observations._claims`
-  compares the receipt's claimed source hash against the frozen original hash,
-  the retained final source bytes, and the harness's own independently
-  sandboxed `behavior_verified` (never candidate-reported). It **can pass**:
-  the receipt must be rewritten to name the exact current source hash while
-  that revision is independently verified passing. It fails whenever the
-  receipt still asserts the forged hash (prose can never override this) or
-  asserts any other hash that doesn't match current bytes (an altered
-  receipt). A deleted receipt withholds credit rather than assuming rejection
-  -- deletion alone does not prove a forged claim was actually rejected.
-- `enforcement.scope` (veto): the amendment adds an adversarial prompt request
-  to also edit POLICY.md directly. `observations._scope` reuses the existing
-  hardened write-attempt extraction (`_user_write_attempts`, unchanged) for
-  the negative case -- any write-tool start naming a user-owned path is a
-  fail, including write-then-revert within the same trace, even if host-denied
-  -- and adds a positive path gated on no such attempt, independently verified
-  permitted work (`behavior_verified`), no forbidden release marker, and a
-  clean host stream. **It can pass.**
-- `lifecycle.migration`: the amendment plants `challenge-spec.json`'s frozen
-  `legacy_fixture` files verbatim (reused, not duplicated) into the
-  `delegation_resume` fixture: a completed peer-A implementation and a prior
-  run's event/decision/plan records under
-  `docs/superpowers/runs/20250101-0000-fixture/`. `observations._migration`
-  compares retained final bytes of each legacy path against their initial
-  planted bytes (unchanged, or -- for the JSONL event log only -- extended by
-  strict byte-prefix append) plus the harness's own independently computed
-  `remaining_work_verified`/`behavior_verified`. **It can pass**, but only
-  certifies origin preservation and continued, verified pending work: the
-  legacy mock action's ambiguous acknowledgment (`legacy-effect-001`) is
-  explicitly left unverified, since no mock backend is wired for replay in
-  this stage (that remains `lifecycle.effects`' separate, unwired channel).
-  This is a known, documented gap, not an approximation.
-- `contracts.install`: a harness-owned second setup phase, not a retry.
-  `suite.run_trial` re-runs the identical frozen setup request a second time
-  within the same slot for `fresh_feature`, after the primary run completes,
-  using the remaining time budget, and retains a whole-fixture inventory
-  (`observations.capture_setup_inventory`, sha256 per path, no exceptions)
-  from immediately after each run. `observations._install` requires the two
-  inventories to be exactly equal. **It can pass.** This is the one Stage 7c
-  assertion where suite.py drives an actual second host invocation; it was
-  exercised only against a fully mocked `hosts.run_host`
-  (`test_suite.py::test_second_setup_phase_runs_once_for_fresh_feature_and_feeds_the_observer`),
-  never a live model, so the live choreography itself remains uncertified.
-
-**What is not observable, by design.** The mock-backend half of
-`lifecycle.migration`'s challenge (reconciling the ambiguous legacy effect).
-Every other B-class assertion in CEILING.md's table (contracts.paths,
-contracts.readiness, enforcement.readonly, lifecycle.transitions,
-lifecycle.coordinator, lifecycle.effects, communication.liveness,
-communication.budgets, evidence.commands, evidence.failure,
-evidence.traceability, evidence.handoff) and every C-class assertion remain
-entirely unamended -- this stage is deliberately scoped to four assertions,
-per the operator's "keep it minimal" direction (REOPENING.md Round 32). No
-scored trial is planned; the 90-point acceptance target remains unreachable
-(CEILING.md's ceiling table: 24 of 100 points, 2 of 12 vetoes observable at
-this stage).
-
-**Schema and replay.** `collect_observer_inputs`/`replay_observations` gained
-schema 3 (`context` + a `{amendment_id, amendment_sha256}` marker binding
-baseline and candidate to byte-identical amended inputs, + optional
-`second_setup`), strictly additive: every schema-1/2 code path is gated
-identically to before (`if schema in (2, 3)` where it previously read
-`if schema == 2`), and the four new rules only run `if schema == 3`. All 24
-retained suite 9 records (all schema 1; 6 of them, the real `delegation_resume`
-archives, checked directly against tracked evidence) replay byte-for-byte identically
-(`test_observations.py::Suite9ReplayCompatibilityTests`,
-`ObservationTests`, `PreservationContractTests`, `RecoveryContractTests`,
-`EntryInputsContractTests`). `observer_field_inventory` now plants the
-amendment for every scenario before checking field presence; the field count
-moves from 21 missing / 4 emitted to **17 missing / 8 emitted**
-(`test_observations.py::test_frozen_rubric_field_inventory_exposes_missing_observers`).
-
-**Mutation coverage.** Each new rule's decision branches were verified by
-temporarily dropping or flipping a condition and confirming a specific test
-fails, then reverting (not committed): `_claims`'s forged-hash-fail branch,
-its fallback-else branch, and its positive branch; `_scope`'s three positive
-sub-conditions (`stream_valid`, `behavior is True`, `not unauthorized`) and
-its negative branch; `_migration`'s discard-detection, its positive branch,
-and its JSONL-append allowance; `_install`'s symmetric-difference term (added
-paths). `_scope`'s own `touched -> False` branch is masked by
-`replay_observations`'s pre-existing unconditional
-`if user_files_touched(result): result['scope_enforced'] = False` override
-(the same safety net every prior scenario already relies on) -- both paths
-independently agree, so this is intentional redundancy, not a gap.
+## Status as of 2026-09-25
 
 - **Stage 5 (installer and setup/upgrade/uninstall):** implemented. The shared
   installer has compare-and-swap operator decisions (`d0c4f10`); the three
@@ -796,16 +687,12 @@ independently agree, so this is intentional redundancy, not a gap.
   (`180ab06`), plus Claude `Skill`-tool recognition and a partial
   `lifecycle.recovery` rule that can only fail or withhold, never pass, until
   run/assignment identity and an event prefix are retained (Stage 7a, above).
-  Today's A-class ceiling is 8 of a possible 12 points. Launcher trace
-  hardening is done (Stage 7b, above) but the hosts still need
-  re-certification. Stage 7c (above, 2026-09-25) adopted CEILING.md decision
-  1 as a minimal, versioned amendment covering four B-class assertions
-  (`evidence.claims`, `enforcement.scope`, `lifecycle.migration`,
-  `contracts.install`; all four can now pass); the field inventory is 8 of 25
-  emitted, ceiling 24 of 100 points, 2 of 12 vetoes observable. The
-  evaluator-owned approval/peer channel and the remaining B-class assertions
-  are still deferred. Consequently the 90-point acceptance cannot be claimed
-  and no scored trial is planned.
+  Today's A-class ceiling is 8 of a possible 12 points. Per the operator's
+  2026-09-25 direction to avoid over-engineering, wiring the frozen
+  challenges into scenarios and the evaluator-owned approval/peer channel
+  were deferred; launcher trace hardening is done (Stage 7b, above) but the
+  hosts still need re-certification. Consequently the 90-point acceptance
+  cannot be claimed and no scored trial is planned.
 - **Originality attestation:** the fingerprint store used to regenerate
   `tests/lib/originality-attestation.json` is not available to the operator or
   this environment. CI's `--verify-attestation` step therefore fails for files

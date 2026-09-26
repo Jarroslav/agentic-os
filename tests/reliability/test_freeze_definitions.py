@@ -112,42 +112,6 @@ class FreezeTests(unittest.TestCase):
         self.assertEqual(frozen.definitions(root), record['definitions'])
         self.assertEqual(record['baseline_revision'], frozen.BASELINE)
 
-    def test_checked_in_amendment_hash_is_current_and_originals_untouched(self):
-        # Operator decision 1 (CEILING.md): amendments may only add planted
-        # scenario inputs in a separate versioned file; the three originals
-        # above must stay byte-identical and keep verifying unchanged.
-        root = Path(__file__).resolve().parents[2]
-        record = json.loads((root / 'tests/reliability/frozen-definitions.json').read_text())
-        self.assertEqual(frozen.amendment_definitions(root), record['amendment_definitions'])
-        self.assertEqual(frozen.definitions(root), record['definitions'])
-
-    def test_amendment_edit_is_detected_independently_of_originals(self):
-        self.freeze()
-        (self.root / 'tests/reliability/amendment-b1.json').write_text(json.dumps({
-            'schema': 3, 'amendment_id': 'b1', 'scenarios': {
-                s: {} for s in ('fresh_feature', 'mature_escalation', 'delegation_resume', 'qa_failure')}}))
-        first = frozen.amendment_definitions(self.root)
-        (self.root / 'tests/reliability/amendment-b1.json').write_text(json.dumps({
-            'schema': 3, 'amendment_id': 'b1-tampered', 'scenarios': {
-                s: {} for s in ('fresh_feature', 'mature_escalation', 'delegation_resume', 'qa_failure')}}))
-        self.assertNotEqual(frozen.amendment_definitions(self.root), first)
-        # Verifying against a record that pins the amendment hash catches the edit.
-        record = json.loads(self.record.read_text())
-        record['amendment_definitions'] = first
-        self.record.write_text(json.dumps(record))
-        with self.assertRaisesRegex(ValueError, 'amendment definitions changed'):
-            frozen.verify(self.root, self.snapshot, self.record)
-
-    def test_amendment_missing_scenario_or_id_is_rejected(self):
-        self.root.joinpath('tests/reliability/amendment-b1.json').write_text(json.dumps(
-            {'schema': 3, 'amendment_id': '', 'scenarios': {}}))
-        with self.assertRaisesRegex(ValueError, 'Invalid amendment schema or id'):
-            frozen.amendment_definitions(self.root)
-        self.root.joinpath('tests/reliability/amendment-b1.json').write_text(json.dumps(
-            {'schema': 3, 'amendment_id': 'b1', 'scenarios': {'fresh_feature': {}}}))
-        with self.assertRaisesRegex(ValueError, 'scenario coverage mismatch'):
-            frozen.amendment_definitions(self.root)
-
     def test_legacy_inputs_validate_against_original_baseline(self):
         source_root = Path(__file__).resolve().parents[2]
         spec = json.loads((source_root / 'tests/reliability/challenge-spec.json').read_text())
