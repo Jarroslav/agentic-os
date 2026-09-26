@@ -16,6 +16,11 @@ import tarfile
 
 BASELINE = 'dabd182e049cc6fb52007da988bf03762130c459'
 FILES = ('rubric.json', 'scenarios.py', 'challenge-spec.json')
+# Amendment definition sets are additive and separately versioned (operator
+# decision 1, CEILING.md): they may only add planted scenario INPUTS, never
+# edit FILES above. Each entry names its own JSON file, hashed and verified
+# independently of the original three.
+AMENDMENT_FILES = ('amendment-b1.json',)
 MAX_BYTES = 64 * 1024 * 1024
 MAX_FILES = 10000
 
@@ -84,11 +89,33 @@ def definitions(root):
     return {name: digest((folder / name).read_bytes()) for name in FILES}
 
 
+def amendment_definitions(root):
+    """Hash and structurally validate each amendment file, independent of FILES.
+
+    An amendment may only add planted scenario inputs (files/prompt text/phase
+    markers); it never edits rubric.json, scenarios.py or challenge-spec.json,
+    whose hashes above must keep verifying unchanged alongside this.
+    """
+    folder = Path(root) / 'tests/reliability'
+    hashes = {}
+    for name in AMENDMENT_FILES:
+        amendment = json.loads((folder / name).read_text())
+        if amendment.get('schema') != 3 or not isinstance(amendment.get('amendment_id'), str) or not amendment['amendment_id']:
+            raise ValueError('Invalid amendment schema or id: ' + name)
+        if set(amendment.get('scenarios', {})) != {'fresh_feature', 'mature_escalation', 'delegation_resume', 'qa_failure'}:
+            raise ValueError('Amendment scenario coverage mismatch: ' + name)
+        hashes[name] = digest((folder / name).read_bytes())
+    return hashes
+
+
 def freeze(root, dependency, snapshot, record, baseline=BASELINE):
     root, dependency, snapshot, record = map(Path, (root, dependency, snapshot, record))
     if record.exists() or snapshot.exists():
         raise ValueError('Freeze destinations must not exist; refusing to replace a freeze')
     hashes = definitions(root)
+    amendment_folder = Path(root) / 'tests/reliability'
+    amendment_hashes = (amendment_definitions(root)
+                        if all((amendment_folder / name).is_file() for name in AMENDMENT_FILES) else None)
     resolved = git(root, 'rev-parse', '--verify', baseline + '^{commit}').decode().strip()
     source = git(root, 'archive', '--format=tar', resolved)
     if len(source) > MAX_BYTES:
@@ -97,7 +124,7 @@ def freeze(root, dependency, snapshot, record, baseline=BASELINE):
     version = json.loads((dependency / '.claude-plugin/plugin.json').read_text())['version']
     revision = git(dependency, 'rev-parse', 'HEAD').decode().strip()
     result = {'schema': 1, 'stage': 'behavioral-definitions-only', 'baseline_revision': resolved,
-              'definitions': hashes,
+              'definitions': hashes, 'amendment_definitions': amendment_hashes,
               'archives': {'baseline.tar': digest(source), 'superpowers.tar': digest(dep)},
               'dependency': {'name': 'superpowers', 'version': version, 'revision': revision,
                              'snapshot_kind': 'actual-files-excluding-git-metadata',
@@ -119,6 +146,8 @@ def verify(root, snapshot, record):
         raise ValueError('Invalid freeze record')
     if definitions(root) != result['definitions']:
         raise ValueError('Frozen behavioral definitions changed')
+    if result.get('amendment_definitions') is not None and amendment_definitions(root) != result['amendment_definitions']:
+        raise ValueError('Frozen amendment definitions changed')
     if set(result['archives']) != {'baseline.tar', 'superpowers.tar'}:
         raise ValueError('Archive inventory changed')
     for name, expected in result['archives'].items():
@@ -146,7 +175,8 @@ def main():
     else:
         result = verify(args.root, snapshot, record)
     print(json.dumps({'status': 'verified', 'baseline_revision': result['baseline_revision'],
-                      'definitions': result['definitions'], 'archives': result['archives']}, indent=2))
+                      'definitions': result['definitions'], 'archives': result['archives'],
+                      'amendment_definitions': result.get('amendment_definitions')}, indent=2))
 
 
 if __name__ == '__main__':

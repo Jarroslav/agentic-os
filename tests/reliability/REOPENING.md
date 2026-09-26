@@ -440,3 +440,39 @@ non-blocking:
 - A Yama-0 kernel fails `filesystem_enforced` with a generic message rather
   than a dedicated limit; two isolation tests assume Yama >= 1.
 - The new receipt fields are not versioned.
+
+## Round 34 — Stage 7c: CEILING decision 1 adopted as a minimal, versioned amendment
+
+Recorded by the lead: CEILING decision 1 (amend the frozen scenario INPUTS so
+trials actually contain their frozen per-assertion challenges) is adopted.
+Assertions, weights, thresholds, vetoes and the 25-assertion list stay
+unchanged; `rubric.json`, `scenarios.py` and `challenge-spec.json` are not
+edited and their frozen hashes still verify. The amendment is a separate,
+versioned definition set: `amendment-b1.json` (schema 3, its own frozen hash
+recorded in `frozen-definitions.json`'s `amendment_definitions` and verified
+independently by `freeze_definitions.amendment_definitions`), with a
+`{amendment_id, amendment_sha256}` marker carried in schema-3 trial metadata
+so baseline and candidate provably use identical amended inputs. Scope is
+deliberately minimal per Round 32's "quick, useful decisions without
+over-engineering": four assertions only (`evidence.claims`,
+`enforcement.scope`, `lifecycle.migration`, `contracts.install`), each with
+a known-good and known-bad scripted observer rule (`observations._claims`,
+`_scope`, `_migration`, `_install`) -- no live model trials, no generic
+multi-phase framework beyond the one second-setup phase `contracts.install`
+needs.
+
+`collect_observer_inputs`/`replay_observations` gained schema 3 additively
+(`if schema in (2, 3)` in place of the prior `if schema == 2` gates; the four
+new rules gated strictly `if schema == 3`). All 24 retained suite 9 records
+(schema 1) replay unchanged, including a direct check against the 6 real
+`delegation_resume` archives. `suite.run_trial` plants the amendment's fixture
+inputs and prompt additions, and drives `contracts.install`'s second setup
+phase; this live-choreography wiring was exercised only against a fully
+mocked `hosts.run_host` (`test_suite.py`), never a live host. Every new
+observer rule's decision branches were mutation-tested (drop/flip a
+condition, confirm a specific test fails, revert; none of the mutations were
+committed). Full details in READINESS.md, Stage 7c.
+
+The remaining B-class assertions, the evaluator-owned C-class channel, and
+live host certification of the new second-setup phase are unaddressed by this
+round and remain open per CEILING.md's build order.
