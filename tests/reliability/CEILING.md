@@ -1,5 +1,8 @@
 # Evaluation ceiling analysis (2026-09-24)
 
+> **Superseded (2026-09-26):** the 90-point target was dropped (see
+> READINESS.md). The decisions and build order below are not being pursued.
+
 Question: with a perfect product, what can the current evaluator score, and what
 must change for the 90-point / 16-per-dimension / all-vetoes acceptance to be
 reachable? Sources: `rubric.json`, `challenge-spec.json`, `scoring.py`,

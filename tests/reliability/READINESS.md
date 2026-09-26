@@ -1,4 +1,13 @@
-# Evaluation readiness — candidate acceptance remains open
+# Evaluation readiness — benchmark target dropped
+
+**Status (2026-09-26):** the operator dropped the 90-point benchmark
+acceptance target. The harness in this directory stays as offline regression
+tests for the runtime and installer, and CI runs it. It is not an acceptance
+gate, and nothing here claims a reliability score. Changes are accepted when
+every check that passes on `main` still passes and the new tests pass. Stage
+7c (amendment b1) was reverted unremediated. The history below records how
+the benchmark work got to this point.
+
 
 Baseline commit: `dabd182e049cc6fb52007da988bf03762130c459`.
 Implementation branch: `codex/framework-reliability`.
