@@ -343,9 +343,11 @@ class SuiteTests(unittest.TestCase):
     @patch('suite.verify_freeze')
     @patch('hosts.inspect_host')
     def test_trial_binds_parent_held_observer_context(self, inspect, verify):
-        cases = [(v, s, 'claude', False) for v, s in (('0.14.0', 2), ('0.14.0-rc1', 1), (None, 1),
+        # Stage 7c amendment: a schema-2-eligible version now always also gets
+        # the amendment (schema 3), since it needs the same parent-held context.
+        cases = [(v, s, 'claude', False) for v, s in (('0.14.0', 3), ('0.14.0-rc1', 1), (None, 1),
                                                       ('{not json', 1), ('[]', 1))]
-        cases += [('0.14.0', 2, 'codex', True)]
+        cases += [('0.14.0', 3, 'codex', True)]
         for version, schema, host_name, linked in cases:
             with self.subTest(version=version, host=host_name), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
@@ -372,8 +374,8 @@ class SuiteTests(unittest.TestCase):
                 trial = root / 'trials' / slot['id']
                 inputs = json.loads((trial / 'observer-inputs.json').read_text())
                 self.assertEqual(inputs['schema'], schema)
-                self.assertEqual((trial / 'observer-context.json').is_file(), schema == 2)
-                if schema == 2:
+                self.assertEqual((trial / 'observer-context.json').is_file(), schema in (2, 3))
+                if schema in (2, 3):
                     context = inputs['context']
                     self.assertEqual(context['fixture_root'], str((trial / 'fixture').resolve()))
                     self.assertEqual(context['methodology_root'], str((root / 'source').resolve()))
@@ -382,6 +384,64 @@ class SuiteTests(unittest.TestCase):
                     self.assertNotIn('/link/', context['methodology_root'] + '/')
                     self.assertEqual(context['initial_identities'],
                                      json.loads((trial / 'observer-context.json').read_text())['initial_identities'])
+
+    @patch('suite.verify_freeze')
+    @patch('hosts.inspect_host')
+    @patch('hosts.run_host')
+    def test_second_setup_phase_runs_once_for_fresh_feature_and_feeds_the_observer(self, run_host, inspect, verify):
+        # Stage 7c amendment: contracts.install's harness-owned second phase.
+        # No live host is launched here -- hosts.run_host is fully mocked, so
+        # this only proves the wiring: the phase runs exactly once, only for
+        # fresh_feature, only after a completed primary run, and its
+        # before/after inventories reach the schema-3 observer inputs and the
+        # retained second-setup.json evidence identically.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            host = {'available': True, 'profile': {'model': 'fixture-model', 'isolation_supported': True}}
+            write_new(root / 'manifest.json', {'phase': 'baseline', 'revision': 'fixed',
+                                               'hosts': {'claude': host}})
+            (root / 'source/plugins/agentic-os/.claude-plugin').mkdir(parents=True)
+            write_new(root / 'source/plugins/agentic-os/.claude-plugin/plugin.json', {'version': '0.14.0'})
+            inspect.return_value = host
+
+            def fake_run_host(host_name, fixture, prompt, plugins, trace_dir, *, timeout_seconds,
+                              checkpoint_path=None, expected_profile=None):
+                trace_dir = Path(trace_dir)
+                trace_dir.mkdir(parents=True, exist_ok=True)
+                stdout = trace_dir / 'stdout.jsonl'
+                stderr = trace_dir / 'stderr.log'
+                stdout.write_text(json.dumps({'type': 'system', 'model': 'fixture-model'}) + '\n')
+                stderr.write_text('')
+                return {'host': host_name, 'status': 'completed', 'exit_code': 0, 'elapsed_seconds': 1,
+                        'observed_model': 'fixture-model', 'usage': None, 'argv': ['fixture-host'],
+                        'raw_stdout_path': str(stdout), 'raw_stderr_path': str(stderr)}
+            run_host.side_effect = fake_run_host
+
+            slot = next(item for item in trial_schedule('baseline')
+                       if item['scenario'] == 'fresh_feature' and item['host'] == 'claude')
+            with patch('suite.observer_field_inventory', return_value={
+                    'field_contract_complete': True, 'missing_ids': []}):
+                result = run_trial(root, slot)
+            self.assertEqual(run_host.call_count, 2)
+            trial = root / 'trials' / slot['id']
+            self.assertTrue((trial / 'second-setup.json').is_file())
+            inputs = json.loads((trial / 'observer-inputs.json').read_text())
+            self.assertEqual(inputs['schema'], 3)
+            second_setup = json.loads((trial / 'second-setup.json').read_text())
+            self.assertEqual(inputs['second_setup'], second_setup)
+            self.assertEqual(second_setup['before'], second_setup['after'])
+            self.assertIs(result['observations']['installation_idempotent'], True)
+            self.assertIn(str(trial / 'second-setup.json'), result['evidence'])
+            with patch('suite.verify_freeze'):
+                self.assertEqual(report(root)['completed_trial_records'], 1)
+            # Tampering the retained second-setup evidence must be caught by
+            # ``validate_execution``'s non-substitution check, the same
+            # guarantee ``checkpoint`` already has for delegation_resume.
+            tampered = json.loads((trial / 'second-setup.json').read_text())
+            tampered['after']['app.py'] = '0' * 64
+            (trial / 'second-setup.json').write_text(json.dumps(tampered))
+            with patch('suite.verify_freeze'), self.assertRaises(ValueError):
+                report(root)
 
     @patch('suite.verify_freeze')
     @patch('hosts.inspect_host')

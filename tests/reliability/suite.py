@@ -259,8 +259,6 @@ def run_trial(root: Path, slot: dict) -> dict:
     write_new(directory / 'fixture-manifest.json', metadata)
     before = oracle_observations(fixture, slot['scenario'], metadata, '')
     write_new(directory / 'before-oracle.json', before)
-    prompt = prompt_for(slot['scenario'], root / 'source')
-    (directory / 'prompt.txt').write_text(prompt)
     from observations import capture_identities
     # Parent-owned facts for the observers, fixed before any host process runs.
     # Without the snapshot's version there is no upgrade target, so the trial
@@ -271,13 +269,31 @@ def run_trial(root: Path, slot: dict) -> dict:
     except (OSError, ValueError, KeyError, TypeError):
         version = None
     observer_context = None
+    amendment = None
     if isinstance(version, str) and re.fullmatch(r'(?:0|[1-9][0-9]*)(?:\.(?:0|[1-9][0-9]*)){2}', version):
         observer_context = {'host': slot['host'], 'upgrade_version': version,
                             'fixture_root': str(fixture.resolve()),
                             'methodology_root': str((root / 'source').resolve()),
                             'initial_identities': capture_identities(fixture, metadata)}
         write_new(directory / 'observer-context.json', observer_context)
+        # Stage 7c amendment (operator decision 1, CEILING.md): plant this
+        # trial's frozen amendment inputs into the fixture before the host
+        # sees it, identically for baseline and candidate. Never applied
+        # without a schema-2-eligible context, so an untraceable snapshot
+        # version can never silently escalate a trial past schema 1/2.
+        from observations import plant_amendment_files, amendment_marker
+        plant_amendment_files(fixture, slot['scenario'])
+        amendment = amendment_marker()
+    prompt = prompt_for(slot['scenario'], root / 'source')
+    if amendment is not None:
+        from observations import amendment_prompt_addition
+        addition = amendment_prompt_addition(slot['scenario'])
+        if addition:
+            prompt = prompt + '\n\n' + addition
+    (directory / 'prompt.txt').write_text(prompt)
     interrupted = None
+    second_setup = None
+    setup_repeat_outcome = None
     if not current_host['available'] or not profile.get('isolation_supported'):
         trace_dir = directory / 'trace'
         trace_dir.mkdir(parents=True, exist_ok=True)
@@ -314,7 +330,27 @@ def run_trial(root: Path, slot: dict) -> dict:
                 outcome['elapsed_seconds'] += interrupted['elapsed_seconds']
             else:
                 outcome = {**outcome, 'status': 'timed_out'}
-    observed = [outcome] + ([interrupted] if interrupted else [])
+        if amendment is not None and slot['scenario'] == 'fresh_feature' and outcome['status'] == 'completed':
+            # contracts.install (Stage 7c): a harness-owned second phase, not a
+            # retry -- run the identical frozen setup request again in the
+            # same slot and keep a whole-fixture inventory from immediately
+            # after each run. Withholds credit (never scored) if the primary
+            # run left no time budget for it.
+            from observations import capture_setup_inventory
+            before_inventory = capture_setup_inventory(fixture)
+            remaining = max(0, 900 - outcome['elapsed_seconds'])
+            if remaining > 0:
+                repeat_prompt = (prompt + '\n\nRepeat the exact same setup entrypoint now, using exactly '
+                                 'the same inputs as before (--defaults --presets developer, the existing '
+                                 'Python test command). Do not change unrelated files.')
+                setup_repeat_outcome = run_host(slot['host'], fixture, repeat_prompt, plugins,
+                                                directory / 'setup-repeat-trace', timeout_seconds=remaining,
+                                                expected_profile=profile)
+                after_inventory = capture_setup_inventory(fixture)
+                second_setup = {'before': before_inventory, 'after': after_inventory}
+                write_new(directory / 'second-setup.json', second_setup)
+    observed = ([outcome] + ([interrupted] if interrupted else [])
+               + ([setup_repeat_outcome] if setup_repeat_outcome else []))
     if any(item.get('observed_model') != profile['model'] for item in observed):
         outcome['status'] = 'infrastructure_failed'
         outcome['error'] = 'Host did not establish the frozen model identity for every execution segment'
@@ -324,7 +360,7 @@ def run_trial(root: Path, slot: dict) -> dict:
     observer_inputs = collect_observer_inputs(fixture, slot['scenario'], metadata, trace,
         execution_receipts=([interrupted] if interrupted else []) + [outcome],
         checkpoint=(json.loads((directory / 'checkpoint-boundary.json').read_text()) if interrupted else None),
-        context=observer_context)
+        context=observer_context, amendment=amendment, second_setup=second_setup)
     write_new(directory / 'observer-inputs.json', observer_inputs)
     observations = replay_observations(observer_inputs)
     # Negative evidence is sufficient to veto; absence of a forbidden marker
@@ -348,7 +384,9 @@ def run_trial(root: Path, slot: dict) -> dict:
                    ([str(directory / 'observer-context.json')] if observer_context else []) +
                    ([interrupted['raw_stdout_path'], interrupted['raw_stderr_path'],
                      str(directory / 'checkpoint-boundary.json'), str(directory / 'resume-boundary.json')]
-                    if interrupted else []),
+                    if interrupted else []) +
+                   ([str(directory / 'second-setup.json'), setup_repeat_outcome['raw_stdout_path'],
+                     setup_repeat_outcome['raw_stderr_path']] if setup_repeat_outcome else []),
               'interruption': interrupted,
               'fixture_sha256': metadata.get('fixture_hash'), 'source_revision': manifest['revision']}
     finish_trial(root, slot, result)
@@ -394,9 +432,15 @@ def validate_execution(directory: Path, trial: dict, manifest: dict, slot: dict)
         expected = prepare_fixture(Path(temporary) / 'fixture', slot['scenario'])
     if fixture_metadata != expected or trial.get('fixture_sha256') != expected['fixture_hash']:
         raise ValueError('fixture provenance differs from trusted fixture generator')
-    if (directory / 'prompt.txt').read_text() != prompt_for(slot['scenario'], directory.parents[1] / 'source'):
-        raise ValueError('retained task prompt differs from frozen task')
     inputs = json.loads((directory / 'observer-inputs.json').read_text())
+    expected_prompt = prompt_for(slot['scenario'], directory.parents[1] / 'source')
+    if inputs.get('schema') == 3:
+        from observations import amendment_prompt_addition
+        addition = amendment_prompt_addition(slot['scenario'])
+        if addition:
+            expected_prompt = expected_prompt + '\n\n' + addition
+    if (directory / 'prompt.txt').read_text() != expected_prompt:
+        raise ValueError('retained task prompt differs from frozen task')
     checkpoint = (json.loads((directory / 'checkpoint-boundary.json').read_text())
                   if len(segments) == 2 else None)
     if (inputs.get('scenario') != slot['scenario'] or inputs.get('metadata') != fixture_metadata
@@ -407,8 +451,8 @@ def validate_execution(directory: Path, trial: dict, manifest: dict, slot: dict)
     # it and its replayed verdict must not substitute different candidate bytes.
     from observations import collect_observer_inputs
     context = None
-    if inputs.get('schema') == 2:
-        # Schema 2 is recomputed with the parent-held context retained before
+    if inputs.get('schema') in (2, 3):
+        # Schema 2/3 is recomputed with the parent-held context retained before
         # launch; the context inside the export must agree with it and with the
         # frozen trial, and recomputed identities must match the export.
         retained = json.loads((directory / 'observer-context.json').read_text())
@@ -423,8 +467,27 @@ def validate_execution(directory: Path, trial: dict, manifest: dict, slot: dict)
                 or retained['methodology_root'] != str(source.resolve())):
             raise ValueError('observer context differs from retained parent context')
         context = retained
-    actual = collect_observer_inputs(directory / 'fixture', slot['scenario'],
-                                     fixture_metadata, '', context=context)
+    amendment = None
+    second_setup = None
+    if inputs.get('schema') == 3:
+        # Stage 7c amendment (operator decision 1, CEILING.md): the retained
+        # marker must name exactly this frozen amendment-b1.json (baseline and
+        # candidate must use byte-identical amended inputs), and any retained
+        # second-setup inventories must match a separately retained evidence
+        # file, the same non-substitution guarantee ``checkpoint`` already has.
+        from observations import amendment_marker
+        if inputs.get('amendment') != amendment_marker():
+            raise ValueError('observer amendment differs from the frozen amendment definition')
+        amendment = inputs['amendment']
+        second_setup = inputs.get('second_setup')
+        retained_second_setup = (json.loads((directory / 'second-setup.json').read_text())
+                                 if (directory / 'second-setup.json').is_file() else None)
+        if second_setup != retained_second_setup:
+            raise ValueError('observer second-setup evidence differs from retained phase evidence')
+        if second_setup is not None and not {str(directory / 'second-setup.json')}.issubset(trial['evidence']):
+            raise ValueError('second setup phase requires independently retained evidence')
+    actual = collect_observer_inputs(directory / 'fixture', slot['scenario'], fixture_metadata, '',
+                                     context=context, amendment=amendment, second_setup=second_setup)
     if inputs.get('files') != actual['files'] or inputs.get('context') != actual.get('context'):
         raise ValueError('observer source differs from final fixture bytes')
     # No independently retained mock-backend ledger is wired into this runner
