@@ -5,8 +5,7 @@ managed-runtime boundary and guarded integration points, but full workflow
 migration and live certification are not established. Host adapters can issue
 short-lived signed dispatch records for
 identity-bound mailbox reads and trusted completion gates; without a configured
-host key those operations remain fail-closed. The reopening ledger
-at `tests/reliability/REOPENING.md` tracks the current acceptance gaps.
+host key those operations remain fail-closed.
 
 `agentic_runtime/registry.json` is the canonical contract source. Run
 `python3 runtime/generate_bundles.py` after a source change; CI uses `--check`

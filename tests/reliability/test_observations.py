@@ -1,7 +1,6 @@
 import copy
 import json
 import os
-import tarfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -656,8 +655,8 @@ class RecoveryContractTests(unittest.TestCase):
         self.assertIsNone(result['recovery_verified'])
 
     def test_schema_one_records_never_compute_recovery(self):
-        # Every retained suite 9 delegation_resume record predates parent-held
-        # context and is schema 1; it must keep replaying to the unchanged
+        # Retained schema-1 delegation_resume records predate parent-held
+        # context; they must keep replaying to the unchanged
         # None the prior code always produced, even with a boundary capture
         # that would otherwise pass.
         result = self.observe(self.boundary(True, False), True, True, schema2=False)
@@ -816,46 +815,27 @@ class EntryInputsContractTests(unittest.TestCase):
             self.assertIsNone(self.observe(trace)['entry_inputs_consistent'])
 
 
-class Suite9ReplayCompatibilityTests(unittest.TestCase):
-    """Retained suite 9 delegation_resume trials must keep replaying unchanged.
+class DelegationResumeReplayTests(unittest.TestCase):
+    """Real delegation_resume trial records must keep replaying unchanged.
 
-    The evidence archive is tracked in-repo at a stable path, so this replays
-    the six real records directly rather than trusting the schema-1 gate by
-    convention alone. Skipped, not failed, if that archive is ever absent.
+    The fixture keeps six schema-1 records: the retained source snapshot, the
+    frozen fixture metadata and the oracle verdict recorded at trial time.
     """
 
-    ARCHIVE = (Path(__file__).resolve().parents[2] / '.agentic' / 'work' / 'framework-reliability'
-               / 'candidate-trials-2026-09-22-sonnet-luna' / 'evidence.tar.gz')
-    # (host, repetition) rather than a joined literal: a bare "claude-<digit>"
-    # source token trips the neutrality scanner's vendor_model_id pattern.
-    HOSTS_AND_REPETITIONS = (('claude', 1), ('claude', 2), ('claude', 3),
-                             ('codex', 1), ('codex', 2), ('codex', 3))
+    FIXTURE = Path(__file__).resolve().parent / 'fixtures' / 'delegation-resume-replay.json'
 
     def test_six_real_delegation_resume_records_replay_unchanged(self):
-        if not self.ARCHIVE.is_file():
-            self.skipTest('suite 9 evidence archive not present at its stable in-repo path')
         # Replay re-executes the retained candidate code under the scenario
         # sandbox; without one every oracle field is honestly 'unverified'.
         import scenarios
         if not (scenarios._sandbox_executable() or scenarios._linux_sandbox_enforced()[0]):
             self.skipTest('replay needs an enforceable oracle sandbox on this machine')
-        checked = 0
-        with tarfile.open(self.ARCHIVE) as archive:
-            for host, repetition in self.HOSTS_AND_REPETITIONS:
-                name = '%s-%d' % (host, repetition)
-                prefix = 'trials/candidate-delegation_resume-%s/' % name
-                try:
-                    inputs_member = archive.getmember(prefix + 'observer-inputs.json')
-                    oracle_member = archive.getmember(prefix + 'oracle.json')
-                except KeyError:
-                    continue
-                inputs = json.loads(archive.extractfile(inputs_member).read())
-                original = json.loads(archive.extractfile(oracle_member).read())
-                with self.subTest(trial=name):
-                    self.assertEqual(inputs.get('schema'), 1)
-                    self.assertEqual(replay_observations(inputs), original)
-                checked += 1
-        self.assertEqual(checked, 6)
+        records = json.loads(self.FIXTURE.read_text())['records']
+        self.assertEqual(len(records), 6)
+        for record in records:
+            with self.subTest(host=record['host'], repetition=record['repetition']):
+                self.assertEqual(record['inputs'].get('schema'), 1)
+                self.assertEqual(replay_observations(record['inputs']), record['expected'])
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ Semantic Versioning. The plugin version lives in
 
 ## [Unreleased]
 
-### Reliability reopening
+### Runtime and installer reliability
 
 - agentic-upgrade explains how to refresh an existing `.ao-new` merge file
   (a confirmation of its current bytes).

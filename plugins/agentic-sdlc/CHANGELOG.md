@@ -6,7 +6,7 @@ uses Semantic Versioning and its own release tag (`agentic-sdlc-v<X.Y.Z>`).
 
 ## [Unreleased]
 
-### Reliability reopening
+### Runtime and installer reliability
 
 - When uninstall keeps a file, its journal entry now records the bytes and
   identity actually on disk (a kept generated file keeps its recorded hash, so

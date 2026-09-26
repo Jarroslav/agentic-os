@@ -268,9 +268,9 @@ def replay_observations(inputs: dict) -> dict:
     if inputs['scenario'] == 'fresh_feature' and inputs['schema'] == 2:
         result.update(_entry_inputs(inputs))
     if inputs['scenario'] == 'delegation_resume' and inputs['schema'] == 2:
-        # Schema 1 predates parent-held context; every retained suite 9
-        # delegation_resume record is schema 1 and must keep replaying to the
-        # unchanged ``recovery_verified: None`` default it always produced.
+        # Schema 1 predates parent-held context; retained schema-1
+        # delegation_resume records must keep replaying to the unchanged
+        # ``recovery_verified: None`` default they always produced.
         result.update(_recovery(inputs, result))
     # Volatile process metadata is retained by execution collectors, not compared
     # as a semantic verdict. Sandbox stderr may contain ephemeral local paths.
@@ -447,7 +447,7 @@ def _skill_name(relative_skill: str) -> str:
     plugin skill -- crediting a candidate-authored stand-in as the real thing.
     The namespaced form does not prove origin either: a project skill named
     ``plugin:skill`` present at launch overrides the plugin skill. Callers
-    rely on launching into harness-written fixtures (READINESS.md, Stage 7a).
+    rely on launching into harness-written fixtures.
     """
     parts = relative_skill.split('/')
     plugin, skill = parts[1], parts[3]

@@ -638,7 +638,7 @@ class HostTests(unittest.TestCase):
         time.sleep(1.3)
         self.assertFalse(marker.exists(), "timeout left a descendant running")
 
-    # --- Stage 7b: trace channel is unforgeable by tool descendants --------
+    # --- Trace channel is unforgeable by tool descendants ----------------
 
     # Seeks to end before writing: a faithful same-user attacker appends a
     # trailing forged event rather than corrupting earlier bytes, and this is
@@ -829,9 +829,9 @@ class LinuxContainedLaunchTests(unittest.TestCase):
 
     @unittest.skipUnless(_bwrap_usable(), "requires bubblewrap with user namespaces")
     def test_tool_descendant_inside_real_bwrap_cannot_forge_the_trace(self):
-        # The concern in CEILING.md structural fact 3: under --unshare-pid the
-        # host shares its PID namespace with tool commands it runs, so a
-        # same-user descendant can see the host's pid in /proc. This exercises
+        # Under --unshare-pid the host shares its PID namespace with tool
+        # commands it runs, so a same-user descendant can see the host's pid
+        # in /proc. This exercises
         # that exact scenario end to end through the production bubblewrap
         # wrapper and confirms the socketpair still denies the reopen.
         forge = (
