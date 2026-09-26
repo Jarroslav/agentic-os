@@ -476,3 +476,22 @@ committed). Full details in READINESS.md, Stage 7c.
 The remaining B-class assertions, the evaluator-owned C-class channel, and
 live host certification of the new second-setup phase are unaddressed by this
 round and remain open per CEILING.md's build order.
+
+## Round 35 — Round 33 trace-channel follow-ups closed on Linux (2026-09-26)
+
+Closed three Round 33 follow-ups and verified them on the Linux VM (bubblewrap
+0.9.0, Yama `ptrace_scope` 1). The live canary passes all 31 controls.
+- The trace-forgery canary now requires `ENXIO` for the `/proc` reopen and
+  `EPERM` for `pidfd_getfd` and `PTRACE_ATTACH`, and opens the pidfd by raw
+  syscall. Substituting a wrong errno for each requirement in turn makes the
+  live canary fail closed.
+- `run_host` marks a launch whose stdout or stderr trace exceeds the size
+  limit `infrastructure_failed` and never reads the truncated prefix for
+  identity, usage, tool events or receipts. Removing the gate fails both
+  tests.
+- A failed second `socketpair()` now closes the first pair.
+
+These changes were not blind-reviewed. Still open from Round 33: binding
+`Skill` events to the base-directory text, drain threads that can outlive
+`run_host`, the Yama-0 error message, and receipt-field versioning. The
+Stage 7c rules committed in `4983fbd` remain review-blocked (Round 34).
