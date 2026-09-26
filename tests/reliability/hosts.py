@@ -117,8 +117,8 @@ def _drain_socket(sock: socket.socket, dest, cap: int) -> None:
     returns ENXIO). Writes stop at ``cap`` bytes so a runaway or hostile host
     cannot grow the trace file without bound, but the socket keeps being
     drained past that point so the host is never blocked on a full send
-    buffer; the file therefore lands one byte over ``cap`` on overflow, which
-    still trips the pre-existing MAX_TRACE_BYTES check downstream.
+    buffer; the file therefore lands one byte over ``cap`` on overflow, and
+    ``run_host`` then fails the launch without reading the truncated trace.
     """
     written = 0
     try:
@@ -650,8 +650,13 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
                 # drains its end concurrently into the same retained trace
                 # files a direct redirect would have produced.
                 host_out, child_out = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-                host_err, child_err = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-                host_ends = [host_out, host_err]
+                host_ends = [host_out]
+                try:
+                    host_err, child_err = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+                except OSError:
+                    child_out.close()
+                    raise
+                host_ends.append(host_err)
                 try:
                     process = subprocess.Popen(result["argv"], cwd=fixture,
                                                stdin=subprocess.DEVNULL, stdout=child_out,
@@ -704,14 +709,28 @@ def run_host(host: str, fixture: Path, prompt: str, plugin_roots: list[Path],
                     end.close()
                 except OSError:
                     pass
-    metadata = _trace_metadata(Path(stdout_name), host=host,
-                               launch_model=(profile or {}).get("model"))
+    oversized = any(Path(name).stat().st_size > MAX_TRACE_BYTES
+                    for name in (stdout_name, stderr_name))
+    if oversized:
+        # The drain stopped writing at the cap, so the retained trace is a
+        # truncated prefix: never read it for identity, usage or receipts.
+        result.update(status="infrastructure_failed", error="host trace exceeds size limit")
+        metadata = {"observed_model": None, "usage": None, "failed": False,
+                    "infrastructure_failed": True, "command_receipts": [],
+                    "invalid_command_receipts": 0, "tool_events": [],
+                    "tool_event_issues": ["host trace exceeds tool event limit"]}
+    else:
+        metadata = _trace_metadata(Path(stdout_name), host=host,
+                                   launch_model=(profile or {}).get("model"))
     result.update(observed_model=metadata["observed_model"], usage=metadata["usage"],
                   command_receipts=metadata["command_receipts"],
                   invalid_command_receipts=metadata["invalid_command_receipts"],
                   tool_events=metadata["tool_events"],
                   tool_event_issues=metadata["tool_event_issues"])
-    if evidence_context:
+    if evidence_context and oversized:
+        result["adapted_receipts"] = []
+        result["evidence_adapter_error"] = "host trace exceeds size limit"
+    elif evidence_context:
         try:
             result["adapted_receipts"] = adapt_trace_receipts(
                 Path(stdout_name), evidence_key, identity=evidence_identity,

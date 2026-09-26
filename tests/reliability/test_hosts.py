@@ -711,11 +711,21 @@ class HostTests(unittest.TestCase):
         self.fake("print(" + repr(payload) + ")\n")
         with mock.patch.object(hosts, "MAX_TRACE_BYTES", 50):
             result = self.run_fake("claude")
-        self.assertEqual(result["status"], "completed")
-        # The drain wrote one byte past the (patched) cap, so the pre-existing
-        # size check in `_trace_metadata` still trips and tool events fail closed.
+        # The drain wrote one byte past the (patched) cap; the truncated
+        # prefix is never read for identity, usage or receipts.
         self.assertEqual(Path(result["raw_stdout_path"]).stat().st_size, 51)
+        self.assertEqual(result["status"], "infrastructure_failed")
+        self.assertEqual(result["error"], "host trace exceeds size limit")
+        self.assertIsNone(result["observed_model"])
+        self.assertEqual(result["command_receipts"], [])
+        self.assertEqual(result["tool_events"], [])
         self.assertIn("exceeds tool event limit", result["tool_event_issues"][0])
+
+    def test_run_host_fails_on_oversized_stderr(self):
+        self.fake("import sys\nsys.stderr.write('e' * 200)\n")
+        with mock.patch.object(hosts, "MAX_TRACE_BYTES", 50):
+            result = self.run_fake("claude")
+        self.assertEqual(result["status"], "infrastructure_failed")
 
     def test_profile_records_trace_channel_evidence_without_gating_launch(self):
         self.fake("pass\n")

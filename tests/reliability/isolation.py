@@ -382,17 +382,20 @@ checks['descendant_setns_denied'] = setns.returncode != 0
 # Run the forgery attempts from a GRANDCHILD (spawned by a child, neither of
 # which inherits this fd, matching a host that captures tool-command output
 # rather than leaking its own trace fd downward) and require every technique
-# to fail: reopening /proc/<host>/fd/1 (denied because it names a socket, not
-# a regular file or pipe: ENXIO), pidfd_getfd on fd 1 (x86_64 syscall number;
-# denied by ptrace_scope), and PTRACE_ATTACH (denied by ptrace_scope, since a
-# descendant is attaching to an ancestor).
+# to fail for the expected reason, not merely with some error: reopening
+# /proc/<host>/fd/1 must fail with ENXIO (it names a socket, not a regular file
+# or pipe); pidfd_getfd on fd 1 must fail with EPERM (ptrace_scope); and
+# PTRACE_ATTACH must fail with EPERM (ptrace_scope, since a descendant is
+# attaching to an ancestor). pidfd_open and pidfd_getfd use raw x86_64 syscall
+# numbers, so a Python without os.pidfd_open cannot turn a missing API into a
+# denial.
 own_pid, trace_ino = os.getpid(), -1
 try:
     trace_ino = os.fstat(1).st_ino
 except OSError:
     pass
 forge = (
-    "import ctypes, json, os, sys\n"
+    "import ctypes, errno, json, os, sys\n"
     "own_pid, trace_ino = int(sys.argv[1]), int(sys.argv[2])\n"
     "checks = {}\n"
     "try:\n"
@@ -404,21 +407,22 @@ forge = (
     "    os.write(fd, b'forged\\n')\n"
     "    os.close(fd)\n"
     "    checks['proc_fd1_reopen_denied'] = False\n"
-    "except OSError:\n"
-    "    checks['proc_fd1_reopen_denied'] = True\n"
-    "try:\n"
-    "    pfd = os.pidfd_open(own_pid, 0)\n"
-    "    libc = ctypes.CDLL(None, use_errno=True)\n"
+    "except OSError as exc:\n"
+    "    checks['proc_fd1_reopen_denied'] = exc.errno == errno.ENXIO\n"
+    "libc = ctypes.CDLL(None, use_errno=True)\n"
+    "libc.syscall.restype = ctypes.c_long\n"
+    "pfd = libc.syscall(434, own_pid, 0)\n"
+    "if pfd < 0:\n"
+    "    checks['pidfd_getfd_denied'] = False\n"
+    "else:\n"
     "    got = libc.syscall(438, pfd, 1, 0)\n"
-    "    checks['pidfd_getfd_denied'] = got < 0\n"
+    "    checks['pidfd_getfd_denied'] = got < 0 and ctypes.get_errno() == errno.EPERM\n"
     "    if got >= 0:\n"
     "        os.close(got)\n"
     "    os.close(pfd)\n"
-    "except (AttributeError, OSError):\n"
-    "    checks['pidfd_getfd_denied'] = True\n"
-    "libc = ctypes.CDLL(None, use_errno=True)\n"
+    "ctypes.set_errno(0)\n"
     "rc = libc.ptrace(16, own_pid, 0, 0)\n"
-    "checks['ptrace_attach_denied'] = rc != 0\n"
+    "checks['ptrace_attach_denied'] = rc != 0 and ctypes.get_errno() == errno.EPERM\n"
     "if rc == 0:\n"
     "    libc.ptrace(17, own_pid, 0, 0)\n"
     "print(json.dumps(checks))\n"
