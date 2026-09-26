@@ -702,8 +702,6 @@ hosts. Review follow-ups are logged in REOPENING.md, Round 33.
   were deferred; launcher trace hardening is done (Stage 7b, above) but the
   hosts still need re-certification. Consequently the 90-point acceptance
   cannot be claimed and no scored trial is planned.
-- **Originality attestation:** the fingerprint store used to regenerate
-  `tests/lib/originality-attestation.json` is not available to the operator or
-  this environment. CI's `--verify-attestation` step therefore fails for files
-  changed since the last attestation until someone with the store re-attests
-  or the maintainer retires that check. No other check depends on it.
+- **Originality attestation:** re-attested on 2026-09-26 with the maintainer's
+  fingerprint store; `--verify-attestation` holds again. Any later change to a
+  tracked file needs a fresh `--attest` from a machine with the store.
