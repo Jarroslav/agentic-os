@@ -834,6 +834,11 @@ class Suite9ReplayCompatibilityTests(unittest.TestCase):
     def test_six_real_delegation_resume_records_replay_unchanged(self):
         if not self.ARCHIVE.is_file():
             self.skipTest('suite 9 evidence archive not present at its stable in-repo path')
+        # Replay re-executes the retained candidate code under the scenario
+        # sandbox; without one every oracle field is honestly 'unverified'.
+        import scenarios
+        if not (scenarios._sandbox_executable() or scenarios._linux_sandbox_enforced()[0]):
+            self.skipTest('replay needs an enforceable oracle sandbox on this machine')
         checked = 0
         with tarfile.open(self.ARCHIVE) as archive:
             for host, repetition in self.HOSTS_AND_REPETITIONS:
