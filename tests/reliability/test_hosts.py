@@ -674,6 +674,7 @@ class HostTests(unittest.TestCase):
         self.assertEqual([event["type"] for event in lines], ["system", "result"])
         self.assertFalse(any(event.get("forged") for event in lines))
 
+    @unittest.skipUnless(os.path.isdir("/proc/self/fd"), "forgery path needs /proc (Linux)")
     def test_negative_control_file_based_stdout_is_forgeable(self):
         """Proves the test above is not vacuous.
 

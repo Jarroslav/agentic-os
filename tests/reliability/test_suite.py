@@ -135,7 +135,7 @@ class SuiteTests(unittest.TestCase):
     def test_report_accepts_schema_two_trials_and_rejects_tampered_context(self):
         for tamper in (None, 'context', 'both', 'fixture', 'write', 'noop'):
             with self.subTest(tamper=tamper), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
+                root = Path(directory).resolve()
                 extra = ''
                 scenario = 'mature_escalation' if tamper == 'noop' else None
                 if tamper == 'write':
